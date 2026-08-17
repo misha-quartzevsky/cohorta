@@ -12,6 +12,7 @@ import { pb } from "../lib/pocketbase";
 import type { Course, Lecture } from "../lib/types";
 import { FIELDS } from "../lib/types";
 import { slugify, uniqueSlug } from "../lib/slugify";
+import { applyLectureTags } from "./tagService";
 
 /**
  * Fetch a single course by its PocketBase ID.
@@ -168,19 +169,21 @@ export async function createUnassignedLecture(
 }
 
 /**
- * Update an existing lecture's title and content.
+ * Update an existing lecture's title, content and tags.
  *
  * A missing slug is generated lazily (legacy records).
  *
  * @param id      — PocketBase record ID of the lecture to update
  * @param title   — new heading
  * @param content — new body text
+ * @param tags    — optional: tag ids to assign (skip to leave tags untouched)
  * @returns The updated Lecture record.
  */
 export async function updateLecture(
   id: string,
   title: string,
-  content: string
+  content: string,
+  tags?: string[]
 ): Promise<Lecture> {
   const existing = await pb.collection("lectures").getOne<Lecture>(id);
   const payload: Record<string, unknown> = {
@@ -191,7 +194,11 @@ export async function updateLecture(
   if (!existing[FIELDS.lectureSlug]) {
     payload[FIELDS.lectureSlug] = await uniqueLectureSlug(title);
   }
-  return pb.collection("lectures").update<Lecture>(id, payload);
+  const updated = await pb.collection("lectures").update<Lecture>(id, payload);
+  if (tags !== undefined) {
+    await applyLectureTags(id, tags);
+  }
+  return updated;
 }
 
 /**

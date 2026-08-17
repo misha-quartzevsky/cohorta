@@ -31,6 +31,16 @@ export interface Semester {
   [key: string]: unknown;
 }
 
+export interface Tag {
+  id: string;
+  name: string;
+  color?: string;
+  // Multiple-relation to lectures (the field lives on the tags collection).
+  lectures?: string[];
+  created: string;
+  [key: string]: unknown;
+}
+
 // Поля, используемые при работе с PocketBase.
 const COURSE_NAME_FIELD = "name";
 const COURSE_COLOR_FIELD = "color";
@@ -48,6 +58,11 @@ const LECTURE_SLUG_FIELD = "slug";
 const SEMESTER_SLUG_FIELD = "slug";
 // Поле в courses, которое ссылается на семестр (id из semesters)
 const COURSE_SEMESTER_FIELD = "semesters";
+// Поля коллекции tags
+const TAG_NAME_FIELD = "name";
+const TAG_COLOR_FIELD = "color";
+// Поле в tags, которое ссылается на лекции (multiple-relation)
+const TAG_LECTURES_FIELD = "lectures";
 
 export const FIELDS = {
   courseName: COURSE_NAME_FIELD,
@@ -62,6 +77,9 @@ export const FIELDS = {
   lectureSlug: LECTURE_SLUG_FIELD,
   semesterSlug: SEMESTER_SLUG_FIELD,
   courseSemester: COURSE_SEMESTER_FIELD,
+  tagName: TAG_NAME_FIELD,
+  tagColor: TAG_COLOR_FIELD,
+  tagLectures: TAG_LECTURES_FIELD,
 };
 
 // Вспомогательные геттеры, защищающие от разной схемы в БД
@@ -124,4 +142,19 @@ export function semesterSlug(s: Semester): string {
 /** PocketBase id of the semester a course belongs to ("" = none). */
 export function courseSemesterId(c: Course): string {
   return String(c[COURSE_SEMESTER_FIELD] ?? "");
+}
+
+export function tagName(t: Tag): string {
+  return String(t[TAG_NAME_FIELD] ?? t.name ?? "Без названия");
+}
+
+export function tagColor(t: Tag): string {
+  const v = t[TAG_COLOR_FIELD] ?? t.color ?? "";
+  return v ? String(v) : "";
+}
+
+/** Lecture ids that carry this tag (from the tags side of the relation). */
+export function tagLectureIds(t: Tag): string[] {
+  const v = t[TAG_LECTURES_FIELD] ?? t.lectures;
+  return Array.isArray(v) ? v.map(String) : [];
 }

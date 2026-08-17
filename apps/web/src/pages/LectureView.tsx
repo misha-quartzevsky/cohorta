@@ -3,47 +3,56 @@
  *  LectureView.tsx — Страница лекции / заметки
  * ============================================
  *
- * Показывает полное содержимое одной записи
- * (заголовок, текст, дата) с действиями
- * «Редактировать» и «Удалить».
- * 
- * Внедрена индикация сохранения с debounce (2 сек).
+ * Три колонки: список лекций курса (glass), белая карточка
+ * с контентом, живое оглавление справа.
  */
 
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Pencil, Trash2 } from "lucide-react";
 
 import type { Lecture } from "../lib/types";
 import {
-  lectureTitle,
+  courseName,
   lectureContent,
   lectureCourseId,
+  lectureTitle,
 } from "../lib/types";
-import { fetchLectureBySlug, deleteLecture } from "../services/lectureService";
+import { deleteLecture, fetchLectureBySlug } from "../services/lectureService";
+import { useLectures } from "../hooks/useLectures";
 
 import Header from "../components/Header";
 import ErrorBanner from "../components/ErrorBanner";
 import LoadingState from "../components/LoadingState";
 import ConfirmDialog from "../components/ConfirmDialog";
+import LectureSidebar from "../components/LectureSidebar";
+import TableOfContents from "../components/TableOfContents";
+import TagBadges from "../components/TagBadges";
 
 function LectureView() {
-  const { semesterSlug, courseSlug, lectureSlug } = useParams();
+  const {
+    semesterSlug,
+    courseSlug,
+    lectureSlug: lectureSlugParam,
+  } = useParams();
   const navigate = useNavigate();
 
   const [lecture, setLecture] = useState<Lecture | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [content, setContent] = useState<string>("");
+  const [content, setContent] = useState("");
+  const contentRef = useRef<HTMLDivElement | null>(null);
+
+  const isCourseContext = !!courseSlug;
+  const { course, lectures } = useLectures(courseSlug || "");
 
   useEffect(() => {
-    if (!lectureSlug) return;
+    if (!lectureSlugParam) return;
     let cancelled = false;
     setLoading(true);
     setError("");
-    setSaving(false);
-    fetchLectureBySlug(lectureSlug)
+    fetchLectureBySlug(lectureSlugParam)
       .then((rec) => {
         if (!cancelled) {
           setLecture(rec);
@@ -51,8 +60,8 @@ function LectureView() {
         }
       })
       .catch((e) => {
+        console.error("Ошибка загрузки записи:", e);
         if (!cancelled) {
-          console.error("Ошибка загрузки записи:", e);
           setError(
             "Не удалось загрузить запись: " +
               (e instanceof Error ? e.message : String(e))
@@ -65,14 +74,7 @@ function LectureView() {
     return () => {
       cancelled = true;
     };
-  }, [lectureSlug]);
-
-  // Debounced saving indicator
-  useEffect(() => {
-    const timer = setTimeout(() => setSaving(false), 2000);
-    setSaving(true);
-    return () => clearTimeout(timer);
-  }, [content]);
+  }, [lectureSlugParam]);
 
   if (loading) return <LoadingState />;
 
@@ -87,14 +89,15 @@ function LectureView() {
 
   const title = lectureTitle(lecture);
   const unassigned = !lectureCourseId(lecture);
-  // Route context: "/note/" routes have no courseSlug segment.
-  const isCourseContext = !!courseSlug;
+  const isHtmlContent = /<[a-z][\s\S]*>/i.test(content);
+
+  const goToCourse = () => navigate(`/s/${semesterSlug}/${courseSlug}`);
 
   const handleEdit = () => {
     if (isCourseContext) {
-      navigate(`/s/${semesterSlug}/${courseSlug}/${lectureSlug}/edit`);
+      navigate(`/s/${semesterSlug}/${courseSlug}/${lectureSlugParam}/edit`);
     } else {
-      navigate(`/s/${semesterSlug}/note/${lectureSlug}/edit`);
+      navigate(`/s/${semesterSlug}/note/${lectureSlugParam}/edit`);
     }
   };
 
@@ -111,42 +114,67 @@ function LectureView() {
   return (
     <div className="page">
       <Header onBack={() => navigate(-1)} />
-
       <ErrorBanner message={error} />
 
-      <article className="lecture-view">
-        <p className="lecture-view-meta">
-          {new Date(lecture.created).toLocaleDateString("ru-RU", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}
-          {unassigned && " · Не привязана к курсу"}
-        </p>
-
-                <h1 className="lecture-view-title">{title}</h1>
-
-        {saving ? (
-          <p className="lecture-view-saving">Сохраняем…</p>
-        ) : (
-          <div className="lecture-view-content"
-            dangerouslySetInnerHTML={{ __html: content || "" }} />
-
+      <div className={`workspace${isCourseContext ? "" : " no-sidebar"}`}>
+        {isCourseContext && (
+          <LectureSidebar
+            courseName={course ? courseName(course) : "Курс"}
+            lectures={lectures}
+            activeSlug={lectureSlugParam || ""}
+            onSelect={(slug) =>
+              navigate(`/s/${semesterSlug}/${courseSlug}/${slug}`)
+            }
+            onBack={goToCourse}
+          />
         )}
 
-        <div className="actions-row">
-          <button className="btn btn-primary" type="button" onClick={handleEdit}>
-            Редактировать
-          </button>
-          <button
-            className="btn btn-danger"
-            type="button"
-            onClick={() => setConfirmOpen(true)}
-          >
-            Удалить
-          </button>
-        </div>
-      </article>
+        <main className="workspace-main">
+          <article className="lecture-card">
+            <header className="lecture-card-head">
+              <p className="lecture-card-meta">
+                {new Date(lecture.created).toLocaleDateString("ru-RU", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+                {unassigned && " · Не привязана к курсу"}
+              </p>
+              <h1 className="lecture-card-title">{title}</h1>
+              <TagBadges lectureId={lecture.id} />
+              <div className="lecture-card-actions">
+                <button
+                  className="icon-btn"
+                  type="button"
+                  onClick={handleEdit}
+                  title="Редактировать"
+                >
+                  <Pencil size={15} />
+                </button>
+                <button
+                  className="icon-btn danger"
+                  type="button"
+                  onClick={() => setConfirmOpen(true)}
+                  title="Удалить"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            </header>
+            <div
+              ref={contentRef}
+              className={`lecture-card-body lecture-view-content ${
+                isHtmlContent ? "is-html" : "is-plain"
+              }`}
+              dangerouslySetInnerHTML={{ __html: content || "" }}
+            />
+          </article>
+        </main>
+
+        <aside className="workspace-toc">
+          <TableOfContents containerRef={contentRef} version={content} />
+        </aside>
+      </div>
 
       <ConfirmDialog
         open={confirmOpen}

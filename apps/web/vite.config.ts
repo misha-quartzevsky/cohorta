@@ -8,7 +8,12 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      // main.tsx регистрирует SW вручную через '/sw.js' (graceful degradation
+      // в dev). Инъекция скрипта отключена: она ссылалась на
+      // /dev-dist/registerSW.js и падала с ENOENT, если dev-dist
+      // очищается при работающем dev-сервере (vite-plugin-pwa
+      // генерирует dev-dist только при старте).
+      injectRegister: false,
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
         cleanupOutdatedCaches: true,
