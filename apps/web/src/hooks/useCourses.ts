@@ -26,28 +26,43 @@ export interface UseCoursesResult {
   loading: boolean;
   error: string;
   refetch: () => Promise<void>;
-  createCourse: (name: string, color?: string) => Promise<void>;
-  updateCourse: (id: string, name: string, color?: string) => Promise<void>;
+  createCourse: (
+    name: string,
+    color?: string,
+    semesterId?: string
+  ) => Promise<void>;
+  updateCourse: (
+    id: string,
+    name: string,
+    color?: string,
+    semesterId?: string
+  ) => Promise<void>;
   deleteCourse: (id: string) => Promise<void>;
 }
 
 /**
  * React hook that manages the courses data lifecycle.
  *
+ * Courses are scoped to a semester: pass its PocketBase id,
+ * and only that semester's courses are fetched and created.
+ *
+ * @param semesterId — PocketBase id of the current semester
+ *                     ("" disables fetching entirely)
  * @returns {UseCoursesResult} current courses, loading/error
  *          flags, a refetch function, and CRUD mutators.
  */
-export function useCourses(): UseCoursesResult {
+export function useCourses(semesterId?: string): UseCoursesResult {
   const [courses, setCourses] = useState<Course[]>([]);
   const [featured, setFeatured] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
+    if (!semesterId) return;
     setLoading(true);
     setError("");
     try {
-      const records = await fetchCourses();
+      const records = await fetchCourses(semesterId);
       setCourses(records);
 
       if (records.length > 0) {
@@ -63,18 +78,19 @@ export function useCourses(): UseCoursesResult {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [semesterId]);
 
   /**
    * Create a new course and refresh the list.
    *
-   * @param name  — display name for the course
-   * @param color — optional HEX color (random default if omitted)
+   * @param name       — display name for the course
+   * @param color      — optional HEX color (random default if omitted)
+   * @param semesterId — optional semester to assign the course to
    */
   const createCourse = useCallback(
-    async (name: string, color?: string) => {
+    async (name: string, color?: string, semesterId?: string) => {
       try {
-        await createCourseService(name, color);
+        await createCourseService(name, color, semesterId);
         await load();
       } catch (e) {
         console.error("Ошибка создания курса:", e);
@@ -90,14 +106,15 @@ export function useCourses(): UseCoursesResult {
   /**
    * Update a course's name and/or color and refresh the list.
    *
-   * @param id    — PocketBase record ID
-   * @param name  — new display name
-   * @param color — optional new HEX color
+   * @param id         — PocketBase record ID
+   * @param name       — new display name
+   * @param color      — optional new HEX color
+   * @param semesterId — optional new semester id (moves the course)
    */
   const updateCourse = useCallback(
-    async (id: string, name: string, color?: string) => {
+    async (id: string, name: string, color?: string, semesterId?: string) => {
       try {
-        await updateCourseService(id, name, color);
+        await updateCourseService(id, name, color, semesterId);
         await load();
       } catch (e) {
         console.error("Ошибка обновления курса:", e);
@@ -132,8 +149,14 @@ export function useCourses(): UseCoursesResult {
   );
 
   useEffect(() => {
+    if (!semesterId) {
+      setCourses([]);
+      setFeatured({});
+      setLoading(false);
+      return;
+    }
     void load();
-  }, [load]);
+  }, [load, semesterId]);
 
   return {
     courses,

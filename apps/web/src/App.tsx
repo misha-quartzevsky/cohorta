@@ -3,54 +3,91 @@
  *  App.tsx — Application Entry Point
  * ============================================
  *
- * Sets up client-side routing with React Router:
+ * Sets up client-side routing with React Router.
+ * Every route is scoped to a semester:
  *
- *   /                   → Dashboard (recent courses + recent files)
- *   /courses            → CoursesPage (all courses)
- *   /courses/:courseId  → LecturesPage (lectures of one course)
+ *   /                                          → redirect to last/first semester
+ *   /s/:semesterSlug                           → semester dashboard
+ *   /s/:semesterSlug/courses                   → all courses of the semester
+ *   /s/:semesterSlug/:courseSlug               → lectures of a course
+ *   /s/:semesterSlug/:courseSlug/:lectureSlug  → lecture view
+ *   /s/:semesterSlug/:courseSlug/:lectureSlug/edit → lecture edit
+ *   /s/:semesterSlug/note/:lectureSlug(+/edit) → unassigned notes
  */
 
-import { BrowserRouter, Routes, Route, useNavigate, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
 import CoursesPage from "./pages/CoursesPage";
 import LecturesPage from "./pages/LecturesPage";
 import LectureView from "./pages/LectureView";
 import LectureEdit from "./pages/LectureEdit";
+import Header from "./components/Header";
+import LoadingState from "./components/LoadingState";
+import { SemesterProvider } from "./lib/SemesterProvider";
+import {
+  useSemester,
+  LAST_SEMESTER_KEY,
+} from "./lib/semesterContext";
+import { semesterSlug } from "./lib/types";
 import "./App.css";
 
-/** Wrapper that routes a course click to its lectures page. */
-function CoursesRoute() {
-  const navigate = useNavigate();
-  return (
-    <CoursesPage
-      onOpen={(courseId) => navigate(`/courses/${courseId}`)}
-    />
-  );
-}
+/**
+ * Redirects "/" to the last visited semester
+ * (or the first one when there is no history).
+ * Shows a hint when no semesters exist yet.
+ */
+function HomeRedirect() {
+  const { semesters, loading } = useSemester();
 
-/** Wrapper that injects the courseId from the URL and handles "back". */
-function LecturesRoute() {
-  const { courseId } = useParams();
-  const navigate = useNavigate();
-  return (
-    <LecturesPage
-      courseId={courseId ?? ""}
-      onBack={() => navigate("/")}
-    />
-  );
+  if (loading) return <LoadingState />;
+
+  if (semesters.length === 0) {
+    return (
+      <div className="page">
+        <Header />
+        <div className="empty">
+          Нет семестров. Создайте их в админке PocketBase.
+        </div>
+      </div>
+    );
+  }
+
+  const last = localStorage.getItem(LAST_SEMESTER_KEY);
+  const target = semesters.some((s) => semesterSlug(s) === last)
+    ? (last as string)
+    : semesterSlug(semesters[0]);
+  return <Navigate to={`/s/${target}`} replace />;
 }
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/courses" element={<CoursesRoute />} />
-        <Route path="/courses/:courseId" element={<LecturesRoute />} />
-        <Route path="/lectures/:lectureId" element={<LectureView />} />
-        <Route path="/lectures/:lectureId/edit" element={<LectureEdit />} />
-      </Routes>
+      <SemesterProvider>
+        <Routes>
+          <Route path="/" element={<HomeRedirect />} />
+          <Route path="/s/:semesterSlug" element={<Dashboard />} />
+          <Route path="/s/:semesterSlug/courses" element={<CoursesPage />} />
+          <Route path="/s/:semesterSlug/:courseSlug" element={<LecturesPage />} />
+          <Route
+            path="/s/:semesterSlug/:courseSlug/:lectureSlug"
+            element={<LectureView />}
+          />
+          <Route
+            path="/s/:semesterSlug/:courseSlug/:lectureSlug/edit"
+            element={<LectureEdit />}
+          />
+          <Route
+            path="/s/:semesterSlug/note/:lectureSlug"
+            element={<LectureView />}
+          />
+          <Route
+            path="/s/:semesterSlug/note/:lectureSlug/edit"
+            element={<LectureEdit />}
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </SemesterProvider>
     </BrowserRouter>
   );
 }

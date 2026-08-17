@@ -21,17 +21,19 @@ Cohorta — edtech PWA для студентов: конспекты лекци�
 - Проверки после правок: `npm run build` + `npm run lint` (не поднимать dev-server без надобности)
 
 ## Карта кода apps/web/src
-- `App.tsx` — роутинг (react-router)
-- `pages/` — CoursesPage, LecturesPage, Dashboard, LectureView (просмотр), LectureEdit (редактирование)
-- `components/` — Editor.tsx (Tiptap-редактор, через `<EditorContent>` + кастомный тулбар), LectureEditor.tsx (обёртка редактора), InlineEditor.tsx, AddTile, CourseTile, LectureTile, KebabMenu, ConfirmDialog, ErrorBanner, LoadingState, Header
-- `hooks/` — useCourses, useLectures, useRecentLectures (подписки на PocketBase)
-- `services/` — courseService, lectureService (CRUD через PocketBase)
-- `lib/` — colors.ts, pocketbase.ts (клиент PB), types.ts (типы данных)
+- `App.tsx` — роутинг (react-router), маршруты вида `/s/:semesterSlug/...` (+ `/note/:lectureSlug` для заметок)
+- `pages/` — Dashboard (дашборд семестра: топ-3 курса + «Последние»), CoursesPage (все курсы семестра + секция «Без семестра»), LecturesPage, LectureView (просмотр), LectureEdit (редактирование)
+- `components/` — Editor.tsx (Tiptap-редактор, через `<EditorContent>` + кастомный тулбар), LectureEditor.tsx (обёртка редактора), InlineEditor.tsx (создание/правка курса + селект семестра), SemesterSwitcher.tsx (селект семестра в шапке), AddTile, CourseTile, LectureTile, KebabMenu, ConfirmDialog, ErrorBanner, LoadingState, Header
+- `hooks/` — useCourses(semesterId?), useLectures(courseSlug), useRecentLectures, useSemesters
+- `services/` — courseService (CRUD курсов + slug-генерация, fetchCourseBySlug), lectureService (CRUD лекций + slug, fetchLectureBySlug), semesterService (fetchSemesters, fetchSemesterBySlug)
+- `lib/` — colors.ts, pocketbase.ts (клиент PB), types.ts (типы + FIELDS + геттеры со slug-fallback на id), slugify.ts (транслит + uniqueSlug с суффиксами -1, -2), SemesterProvider.tsx (провайдер семестра, парсит /s/:slug из URL, localStorage), semesterContext.ts (контекст + useSemester + LAST_SEMESTER_KEY)
 - `public/` — PWA-ассеты: cohorta-black.svg, favicon.svg, icons.svg, manifest.json
 
 ## Данные PocketBase (коллекции, создаются вручную в админке)
-- `courses`: name (Text), color (Text, опционально)
-- `lectures`: title (Text), course (Relation → courses), notes (Text), audio (File), file (File)
+- `courses`: name (Text), color (Text, опционально), slug (Text, генерится приложением), semesters (Relation → semesters, опционально)
+- `lectures`: title (Text), field (Relation → courses, опционально), content (Text), slug (Text, генерится приложением), audio (File), file (File)
+- `semesters`: slug (Text, обязательный) — 12 записей со слагами "1".."12". Поля `number` НЕТ.
+- URL-идентификаторы — слаги: `/s/{semester.slug}/{course.slug}/{lecture.slug}`; старые записи без slug доступны по id (fallback в getter'ах и fetchBySlug)
 
 ## Грабли и НЕ трогать
 1. `resolve.dedupe` в `vite.config.ts` — защита от «Invalid hook call» (дубль React). НЕ удалять.
@@ -44,6 +46,7 @@ Cohorta — edtech PWA для студентов: конспекты лекци�
 ## Состояние проекта (обновлять в конце каждой сессии)
 - Фаза 1 завершена: курсы, лекции, просмотр, редактирование. Редактор Tiptap (StarterKit) работает.
 - GitHub-уборка выполнена (коммит 08f72d9): удалены прототипные файлы, NotionEditor, react-markdown/remark-gfm, вложенный .git, мусорные ассеты. Проект чист, 51 файл в git.
+- Slug-роутинг реализован: семестры в URL (`/s/:semesterSlug/...`), автослаги (транслит + -1/-2), переключатель семестра в шапке (localStorage помнит последний), перенос курса между семестрами через InlineEditor, секция «Без семестра» в CoursesPage для привязки старых курсов. Слаги старых записей дозаполняются лениво при первом редактировании.
 - Пакет `@tiptap/extension-bubble-menu` уже установлен, но НЕ подключён.
 - План фазы 2 (редактор): bubble menu при выделении, slash-меню `/`, маркер (highlight), чекбоксы, ссылки. Всё согласовывать с пользователем перед реализацией.
 

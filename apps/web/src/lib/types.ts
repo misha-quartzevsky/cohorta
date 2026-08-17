@@ -24,6 +24,13 @@ export interface Note {
   [key: string]: unknown;
 }
 
+export interface Semester {
+  id: string;
+  slug: string; // URL identifier, e.g. "5"
+  created: string;
+  [key: string]: unknown;
+}
+
 // Поля, используемые при работе с PocketBase.
 const COURSE_NAME_FIELD = "name";
 const COURSE_COLOR_FIELD = "color";
@@ -35,6 +42,12 @@ const NOTE_TITLE_FIELD = "title";
 const NOTE_CONTENT_FIELD = "content";
 // Поле в notes, которое ссылается на курс (id из courses)
 const NOTE_COURSE_FIELD = "courseId";
+// URL-идентификаторы (slugs)
+const COURSE_SLUG_FIELD = "slug";
+const LECTURE_SLUG_FIELD = "slug";
+const SEMESTER_SLUG_FIELD = "slug";
+// Поле в courses, которое ссылается на семестр (id из semesters)
+const COURSE_SEMESTER_FIELD = "semesters";
 
 export const FIELDS = {
   courseName: COURSE_NAME_FIELD,
@@ -45,6 +58,10 @@ export const FIELDS = {
   noteTitle: NOTE_TITLE_FIELD,
   noteContent: NOTE_CONTENT_FIELD,
   noteCourse: NOTE_COURSE_FIELD,
+  courseSlug: COURSE_SLUG_FIELD,
+  lectureSlug: LECTURE_SLUG_FIELD,
+  semesterSlug: SEMESTER_SLUG_FIELD,
+  courseSemester: COURSE_SEMESTER_FIELD,
 };
 
 // Вспомогательные геттеры, защищающие от разной схемы в БД
@@ -79,4 +96,32 @@ export function noteContent(n: Note): string {
 
 export function noteCourseId(n: Note): string {
   return String(n[NOTE_COURSE_FIELD] ?? "");
+}
+
+/**
+ * URL-friendly identifier of a course.
+ * Falls back to the record id for legacy rows without a slug.
+ */
+export function courseSlug(c: Course): string {
+  const v = c[COURSE_SLUG_FIELD] ?? c.slug ?? "";
+  return v ? String(v) : c.id;
+}
+
+/**
+ * URL-friendly identifier of a lecture.
+ * Falls back to the record id for legacy rows without a slug.
+ */
+export function lectureSlug(l: Lecture): string {
+  const v = l[LECTURE_SLUG_FIELD] ?? l.slug ?? "";
+  return v ? String(v) : l.id;
+}
+
+/** URL identifier of a semester (e.g. "5"). */
+export function semesterSlug(s: Semester): string {
+  return String(s[SEMESTER_SLUG_FIELD] ?? s.slug ?? "");
+}
+
+/** PocketBase id of the semester a course belongs to ("" = none). */
+export function courseSemesterId(c: Course): string {
+  return String(c[COURSE_SEMESTER_FIELD] ?? "");
 }

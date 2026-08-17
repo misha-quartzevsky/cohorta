@@ -64,6 +64,44 @@ body {
   color: var(--c-black);
 }
 
+/* ---------- переключатель семестра ---------- */
+.semester-switcher {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.semester-switcher-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--c-muted);
+  white-space: nowrap;
+}
+
+.semester-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d9d6e6;
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--c-black);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.semester-select:focus {
+  outline: none;
+  border-color: var(--c-lilac);
+  box-shadow: 0 0 0 3px rgba(88, 67, 246, 0.15);
+}
+
+.inline-editor .semester-select {
+  width: 100%;
+  margin-bottom: 0.8rem;
+}
+
 .back-link {
   background: none;
   border: none;

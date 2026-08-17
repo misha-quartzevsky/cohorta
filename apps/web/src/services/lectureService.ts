@@ -11,6 +11,7 @@
 import { pb } from "../lib/pocketbase";
 import type { Course, Lecture } from "../lib/types";
 import { FIELDS } from "../lib/types";
+import { slugify, uniqueSlug } from "../lib/slugify";
 
 /**
  * Fetch a single course by its PocketBase ID.
@@ -30,6 +31,25 @@ export async function fetchCourse(courseId: string): Promise<Course> {
  */
 export async function fetchLecture(lectureId: string): Promise<Lecture> {
   return pb.collection("lectures").getOne<Lecture>(lectureId);
+}
+
+/**
+ * Fetch a single lecture by its URL slug.
+ * Falls back to a lookup by PocketBase id for legacy
+ * records whose slug is still empty.
+ *
+ * @param slug — lecture slug (or legacy id)
+ * @returns Resolves to the Lecture record.
+ */
+export async function fetchLectureBySlug(slug: string): Promise<Lecture> {
+  try {
+    return await pb
+      .collection("lectures")
+      .getFirstListItem<Lecture>(`${FIELDS.lectureSlug}="${slug}"`);
+  } catch {
+    // Legacy fallback: URL contains the record id.
+    return pb.collection("lectures").getOne<Lecture>(slug);
+  }
 }
 
 /**
@@ -80,6 +100,38 @@ function safeContent(title: string, content: string): string {
   return content && content.trim() ? content : title;
 }
 
+/**
+ * All slugs currently used by lecture records.
+ * Used to guarantee global slug uniqueness on create.
+ */
+async function takenLectureSlugs(): Promise<Set<string>> {
+  const all = await pb
+    .collection("lectures")
+    .getFullList<Lecture>({ fields: FIELDS.lectureSlug });
+  return new Set(
+    all
+      .map((l) => String(l[FIELDS.lectureSlug] ?? ""))
+      .filter((s) => s.length > 0)
+  );
+}
+
+/**
+ * Generates a unique slug for a lecture title
+ * (adds -1, -2, … when the base slug is taken).
+ */
+async function uniqueLectureSlug(title: string): Promise<string> {
+  const base = slugify(title) || "lecture";
+  return uniqueSlug(base, await takenLectureSlugs());
+}
+
+/**
+ * Create a brand-new lecture inside a course.
+ *
+ * @param title    — lecture heading
+ * @param content  — lecture body (plain text)
+ * @param courseId — course this lecture belongs to
+ * @returns The created Lecture record (includes a unique `slug`).
+ */
 export async function createLecture(
   title: string,
   content: string,
@@ -89,6 +141,7 @@ export async function createLecture(
     [FIELDS.lectureTitle]: title,
     [FIELDS.lectureContent]: safeContent(title, content),
     [FIELDS.lectureCourse]: courseId,
+    [FIELDS.lectureSlug]: await uniqueLectureSlug(title),
   });
 }
 
@@ -101,7 +154,7 @@ export async function createLecture(
  *
  * @param title   — lecture heading
  * @param content — lecture body (plain text)
- * @returns The created Lecture record.
+ * @returns The created Lecture record (includes a unique `slug`).
  */
 export async function createUnassignedLecture(
   title: string,
@@ -110,11 +163,14 @@ export async function createUnassignedLecture(
   return pb.collection("lectures").create<Lecture>({
     [FIELDS.lectureTitle]: title,
     [FIELDS.lectureContent]: safeContent(title, content),
+    [FIELDS.lectureSlug]: await uniqueLectureSlug(title),
   });
 }
 
 /**
  * Update an existing lecture's title and content.
+ *
+ * A missing slug is generated lazily (legacy records).
  *
  * @param id      — PocketBase record ID of the lecture to update
  * @param title   — new heading
@@ -126,10 +182,16 @@ export async function updateLecture(
   title: string,
   content: string
 ): Promise<Lecture> {
-  return pb.collection("lectures").update<Lecture>(id, {
+  const existing = await pb.collection("lectures").getOne<Lecture>(id);
+  const payload: Record<string, unknown> = {
     [FIELDS.lectureTitle]: title,
     [FIELDS.lectureContent]: safeContent(title, content),
-  });
+  };
+  // Lazy slug backfill for legacy records.
+  if (!existing[FIELDS.lectureSlug]) {
+    payload[FIELDS.lectureSlug] = await uniqueLectureSlug(title);
+  }
+  return pb.collection("lectures").update<Lecture>(id, payload);
 }
 
 /**

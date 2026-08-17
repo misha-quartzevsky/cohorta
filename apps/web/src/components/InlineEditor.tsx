@@ -4,11 +4,17 @@
  * ============================================
  *
  * Minimal inline form that replaces the AddTile
- * when the user is creating a new course.
+ * when the user is creating/editing a course.
  *
  * Layout is VERTICAL: the input field takes full
  * width, and the Save/Cancel buttons sit below it.
+ *
+ * Optionally renders a semester dropdown used to
+ * assign/move a course between semesters.
  */
+
+import type { Semester } from "../lib/types";
+import { semesterSlug } from "../lib/types";
 
 interface Props {
   /** Current value of the input field. */
@@ -27,13 +33,19 @@ interface Props {
   onColorChange?: (color: string) => void;
   /** Palette of HEX colors to show. */
   colors?: string[];
+  /** Semester list for the dropdown (optional feature). */
+  semesters?: Semester[];
+  /** Currently selected semester id ("" = none). */
+  semesterValue?: string;
+  /** Called when the semester dropdown changes. */
+  onSemesterChange?: (semesterId: string) => void;
 }
 
 /**
- * Renders an inline form for creating a new item
- * (used for courses).  When `color`, `onColorChange`
- * and `colors` are provided, a row of color swatches
- * is shown to pick the course color.
+ * Renders an inline form for creating/editing a course.
+ * When `color`, `onColorChange` and `colors` are provided,
+ * a row of color swatches is shown.  When `semesters` is
+ * provided, a semester dropdown appears below the input.
  */
 function InlineEditor({
   value,
@@ -44,8 +56,13 @@ function InlineEditor({
   color,
   onColorChange,
   colors,
+  semesters,
+  semesterValue,
+  onSemesterChange,
 }: Props) {
   const showColors = !!color && !!onColorChange && !!colors && colors.length > 0;
+  const showSemesters =
+    !!semesters && semesters.length > 0 && !!onSemesterChange;
 
   return (
     <div className="inline-editor">
@@ -56,6 +73,21 @@ function InlineEditor({
         onChange={(e) => onChange(e.target.value)}
         autoFocus
       />
+
+      {showSemesters && (
+        <select
+          className="semester-select"
+          value={semesterValue ?? ""}
+          onChange={(e) => onSemesterChange!(e.target.value)}
+        >
+          <option value="">Без семестра</option>
+          {semesters!.map((s) => (
+            <option key={s.id} value={s.id}>
+              Семестр {semesterSlug(s)}
+            </option>
+          ))}
+        </select>
+      )}
 
       {showColors && (
         <div className="color-picker">

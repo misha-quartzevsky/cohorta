@@ -13,10 +13,10 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Course, Lecture } from "../lib/types";
 import {
-  fetchCourse,
   fetchLectures,
   deleteLecture as deleteLectureService,
 } from "../services/lectureService";
+import { fetchCourseBySlug } from "../services/courseService";
 
 export interface UseLecturesResult {
   course: Course | null;
@@ -28,38 +28,42 @@ export interface UseLecturesResult {
 }
 
 /**
- * React hook that manages the lectures data
+ * React hook that manages the lecture data
  * lifecycle for a course.
  *
- * Fetches both the parent course record and all
- * its lectures in a single pass.
+ * Looks up the parent course by its URL slug and
+ * fetches all its lectures in a single pass.
  *
- * @param courseId — PocketBase record ID of the parent course
+ * @param courseSlug — URL slug of the parent course
  * @returns {UseLecturesResult} course record, lectures array,
  *          loading/error flags, refetch, and deleteLecture.
  */
-export function useLectures(courseId: string): UseLecturesResult {
+export function useLectures(courseSlug: string): UseLecturesResult {
   const [course, setCourse] = useState<Course | null>(null);
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
+    if (!courseSlug) return;
     setLoading(true);
     setError("");
 
-    // 1. Fetch the course details (for the page title)
+    // 1. Resolve the course by slug (for the page title + lecture filter)
+    let resolved: Course | null = null;
     try {
-      const c = await fetchCourse(courseId);
-      setCourse(c);
+      resolved = await fetchCourseBySlug(courseSlug);
+      setCourse(resolved);
     } catch (e) {
       console.error("Ошибка загрузки курса:", e);
       setError("Не удалось загрузить курс.");
+      setLoading(false);
+      return;
     }
 
     // 2. Fetch the lectures for this course
     try {
-      const records = await fetchLectures(courseId);
+      const records = await fetchLectures(resolved.id);
       setLectures(records);
     } catch (e) {
       console.error("Ошибка загрузки лекций:", e);
@@ -70,7 +74,7 @@ export function useLectures(courseId: string): UseLecturesResult {
     } finally {
       setLoading(false);
     }
-  }, [courseId]);
+  }, [courseSlug]);
 
   /**
    * Delete a lecture and refresh the list.
@@ -94,8 +98,14 @@ export function useLectures(courseId: string): UseLecturesResult {
   );
 
   useEffect(() => {
+    if (!courseSlug) {
+      setCourse(null);
+      setLectures([]);
+      setLoading(false);
+      return;
+    }
     void load();
-  }, [load]);
+  }, [load, courseSlug]);
 
   return {
     course,

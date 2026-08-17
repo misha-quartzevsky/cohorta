@@ -11,41 +11,49 @@
  *   editingPlusIndex !== null → show <LectureEditor> full-page form
  */
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useLectures } from "../hooks/useLectures";
-import { courseName } from "../lib/types";
+import { useSemester } from "../lib/semesterContext";
+import {
+  courseName,
+  courseSlug,
+  courseSemesterId,
+  lectureSlug,
+  semesterSlug,
+} from "../lib/types";
 import Header from "../components/Header";
 import LectureTile from "../components/LectureTile";
 import AddTile from "../components/AddTile";
 import LectureEditor from "../components/LectureEditor";
+import ConfirmDialog from "../components/ConfirmDialog";
 import ErrorBanner from "../components/ErrorBanner";
 import LoadingState from "../components/LoadingState";
-
-interface Props {
-  /** The currently-selected course ID. */
-  courseId: string;
-  /** Navigates back to the course list. */
-  onBack: () => void;
-}
 
 /**
  * Lectures page — displays all lectures for a course
  * as bento tiles with a plus-tile to create new lectures.
- *
- * @param Props.courseId — parent course ID
- * @param Props.onBack   — returns to the course list
  */
-function LecturesPage({ courseId, onBack }: Props) {
+function LecturesPage() {
   const navigate = useNavigate();
+  const { semesterSlug: semesterSlugParam, courseSlug: courseSlugParam } =
+    useParams();
 
-  // Data layer (fetches both the course and its lectures)
-  const { course, lectures, loading, error, refetch } = useLectures(courseId);
+  const { current, semesters, loading: semLoading } = useSemester();
+
+  // Data layer (resolves the course by slug, then its lectures)
+  const { course, lectures, loading, error, refetch, deleteLecture } =
+    useLectures(courseSlugParam ?? "");
 
   // UI state for the "create lecture" flow
   const [editingPlusIndex, setEditingPlusIndex] = useState<number | null>(
     null
   );
+
+  // Confirm dialog state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmLectureId, setConfirmLectureId] = useState("");
+  const [confirmTitle, setConfirmTitle] = useState("");
 
   /**
    * Called when a lecture is saved (created or updated).
@@ -56,11 +64,39 @@ function LecturesPage({ courseId, onBack }: Props) {
     void refetch();
   };
 
+  // If the course belongs to another semester, redirect there.
+  useEffect(() => {
+    if (!course || !current || !courseSlugParam) return;
+    const semId = courseSemesterId(course);
+    if (semId && semId !== current.id) {
+      const target = semesters.find((s) => s.id === semId);
+      if (target) {
+        navigate(`/s/${semesterSlug(target)}/${courseSlug(course)}`, {
+          replace: true,
+        });
+      }
+    }
+  }, [course, current, semesters, courseSlugParam, navigate]);
+
+  if (semLoading) return <LoadingState />;
+
+  if (!current) {
+    return (
+      <div className="page">
+        <Header />
+        <ErrorBanner message={`Семестр «${semesterSlugParam}» не найден.`} />
+      </div>
+    );
+  }
+
+  const semSlug = semesterSlug(current);
+
   // --- Editor mode (full-page form) ---
   if (editingPlusIndex !== null) {
+    if (!course) return <LoadingState />;
     return (
       <LectureEditor
-        courseId={courseId}
+        courseId={course.id}
         onSaved={handleSaved}
         onCancel={() => setEditingPlusIndex(null)}
       />
@@ -69,14 +105,19 @@ function LecturesPage({ courseId, onBack }: Props) {
 
   if (loading) return <LoadingState />;
 
+  const handleDelete = async () => {
+    await deleteLecture(confirmLectureId);
+    setConfirmOpen(false);
+  };
+
   return (
     <div className="page">
-      <Header onBack={onBack} />
+      <Header onBack={() => navigate(`/s/${semSlug}`)} />
 
       <ErrorBanner message={error} />
 
       <h1 className="page-title">
-                {course ? courseName(course) : "Курс"}
+        {course ? courseName(course) : "Курс"}
       </h1>
       <p className="page-subtitle">
         Отсортировано по дате — новые выше.
@@ -88,7 +129,21 @@ function LecturesPage({ courseId, onBack }: Props) {
             key={lec.id}
             lecture={lec}
             index={i}
-            onClick={() => navigate(`/lectures/${lec.id}`)}
+            onClick={() =>
+              navigate(`/s/${semSlug}/${courseSlugParam}/${lectureSlug(lec)}`)
+            }
+            onEdit={() =>
+              navigate(
+                `/s/${semSlug}/${courseSlugParam}/${lectureSlug(lec)}/edit`
+              )
+            }
+            onDelete={() => {
+              setConfirmLectureId(lec.id);
+              setConfirmTitle(
+                String((lec as Record<string, unknown>).title ?? "Без названия")
+              );
+              setConfirmOpen(true);
+            }}
           />
         ))}
 
@@ -97,6 +152,14 @@ function LecturesPage({ courseId, onBack }: Props) {
           onClick={() => setEditingPlusIndex(lectures.length)}
         />
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Удалить запись?"
+        message={`Запись «${confirmTitle}» будет удалена.`}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

@@ -14,8 +14,12 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import type { Lecture } from "../lib/types";
-import { lectureTitle, lectureContent, lectureCourseId } from "../lib/types";
-import { fetchLecture, deleteLecture } from "../services/lectureService";
+import {
+  lectureTitle,
+  lectureContent,
+  lectureCourseId,
+} from "../lib/types";
+import { fetchLectureBySlug, deleteLecture } from "../services/lectureService";
 
 import Header from "../components/Header";
 import ErrorBanner from "../components/ErrorBanner";
@@ -23,7 +27,7 @@ import LoadingState from "../components/LoadingState";
 import ConfirmDialog from "../components/ConfirmDialog";
 
 function LectureView() {
-  const { lectureId } = useParams();
+  const { semesterSlug, courseSlug, lectureSlug } = useParams();
   const navigate = useNavigate();
 
   const [lecture, setLecture] = useState<Lecture | null>(null);
@@ -34,12 +38,12 @@ function LectureView() {
   const [content, setContent] = useState<string>("");
 
   useEffect(() => {
-    if (!lectureId) return;
+    if (!lectureSlug) return;
     let cancelled = false;
     setLoading(true);
     setError("");
     setSaving(false);
-    fetchLecture(lectureId)
+    fetchLectureBySlug(lectureSlug)
       .then((rec) => {
         if (!cancelled) {
           setLecture(rec);
@@ -61,7 +65,7 @@ function LectureView() {
     return () => {
       cancelled = true;
     };
-  }, [lectureId]);
+  }, [lectureSlug]);
 
   // Debounced saving indicator
   useEffect(() => {
@@ -83,15 +87,25 @@ function LectureView() {
 
   const title = lectureTitle(lecture);
   const unassigned = !lectureCourseId(lecture);
+  // Route context: "/note/" routes have no courseSlug segment.
+  const isCourseContext = !!courseSlug;
 
   const handleEdit = () => {
-    navigate(`/lectures/${lecture.id}/edit`);
+    if (isCourseContext) {
+      navigate(`/s/${semesterSlug}/${courseSlug}/${lectureSlug}/edit`);
+    } else {
+      navigate(`/s/${semesterSlug}/note/${lectureSlug}/edit`);
+    }
   };
 
   const handleDelete = async () => {
     await deleteLecture(lecture.id);
     setConfirmOpen(false);
-    navigate(unassigned ? "/" : `/courses/${lectureCourseId(lecture)}`);
+    navigate(
+      isCourseContext
+        ? `/s/${semesterSlug}/${courseSlug}`
+        : `/s/${semesterSlug}`
+    );
   };
 
   return (

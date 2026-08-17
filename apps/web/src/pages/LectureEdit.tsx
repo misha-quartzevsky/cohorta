@@ -13,21 +13,21 @@ import { useParams, useNavigate } from "react-router-dom";
 
 import type { Lecture } from "../lib/types";
 import { lectureCourseId } from "../lib/types";
-import { fetchLecture } from "../services/lectureService";
+import { fetchLectureBySlug } from "../services/lectureService";
 
 import LectureEditor from "../components/LectureEditor";
 import LoadingState from "../components/LoadingState";
 
 function LectureEdit() {
-  const { lectureId } = useParams();
+  const { semesterSlug, courseSlug, lectureSlug } = useParams();
   const navigate = useNavigate();
 
   const [lecture, setLecture] = useState<Lecture | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!lectureId) return;
-    fetchLecture(lectureId)
+    if (!lectureSlug) return;
+    fetchLectureBySlug(lectureSlug)
       .then(setLecture)
       .catch((e) => {
         console.error("Ошибка загрузки записи:", e);
@@ -36,7 +36,7 @@ function LectureEdit() {
             (e instanceof Error ? e.message : String(e))
         );
       });
-  }, [lectureId]);
+  }, [lectureSlug]);
 
   if (error) {
     return (
@@ -49,12 +49,20 @@ function LectureEdit() {
   if (!lecture) return <LoadingState />;
 
   const unassigned = !lectureCourseId(lecture);
-  const back = () => navigate(`/lectures/${lecture.id}`);
+  // "/note/" routes have no courseSlug segment.
+  const isCourseContext = !!courseSlug;
+  const back = () => {
+    if (isCourseContext) {
+      navigate(`/s/${semesterSlug}/${courseSlug}/${lectureSlug}`);
+    } else {
+      navigate(`/s/${semesterSlug}/note/${lectureSlug}`);
+    }
+  };
 
   return (
     <LectureEditor
       lecture={lecture}
-      isNote={unassigned}
+      isNote={unassigned || !isCourseContext}
       courseId={lectureCourseId(lecture) || undefined}
       onSaved={back}
       onCancel={back}
