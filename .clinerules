@@ -1,0 +1,57 @@
+# Cohorta — правила и контекст для Cline
+
+Этот файл — единый источник контекста о проекте. Читай его первым в каждой сессии и НЕ перечитывай весь проект с нуля.
+
+## Что за проект
+Cohorta — edtech PWA для студентов: конспекты лекций, курсы, заметки (аналог Notion для учёбы).
+Фронт: React SPA. Бэкенд: PocketBase (локальный exe, не в git).
+
+## Стек (только это, ничего больше не добавлять без согласования)
+- `apps/web`: React 19, Vite 8 (rolldown), TypeScript ~6, react-router-dom 7, Tiptap 3 (редактор), PocketBase SDK 0.27, lucide-react (иконки), vite-plugin-pwa, oxlint
+- НЕТ tailwind, НЕТ eslint, НЕТ CSS-модулей — весь CSS в одном файле `src/App.css` (~830 строк, секции помечены комментариями `/* ---- */`)
+- UI-текст на русском; имена файлов/функций и комментарии в коде — на английском
+- Цвета/шрифты только через CSS-переменные `--c-*` из `App.css`
+
+## Команды (Windows, PowerShell, из корня проекта)
+- `npm run dev` — dev-сервер (vite, порт 5173, доступен по 127.0.0.1 и ::1)
+- `npm run build` — сборка (`tsc -b && vite build` в apps/web)
+- `npm run lint` — oxlint (в apps/web)
+- `npm run pocketbase` — запуск PocketBase (exe, порт 8090, админка /_/)
+- `npm run setup:pocketbase` — скачать/настроить PocketBase
+- Проверки после правок: `npm run build` + `npm run lint` (не поднимать dev-server без надобности)
+
+## Карта кода apps/web/src
+- `App.tsx` — роутинг (react-router)
+- `pages/` — CoursesPage, LecturesPage, Dashboard, LectureView (просмотр), LectureEdit (редактирование)
+- `components/` — Editor.tsx (Tiptap-редактор, через `<EditorContent>` + кастомный тулбар), LectureEditor.tsx (обёртка редактора), InlineEditor.tsx, AddTile, CourseTile, LectureTile, KebabMenu, ConfirmDialog, ErrorBanner, LoadingState, Header
+- `hooks/` — useCourses, useLectures, useRecentLectures (подписки на PocketBase)
+- `services/` — courseService, lectureService (CRUD через PocketBase)
+- `lib/` — colors.ts, pocketbase.ts (клиент PB), types.ts (типы данных)
+- `public/` — PWA-ассеты: cohorta-black.svg, favicon.svg, icons.svg, manifest.json
+
+## Данные PocketBase (коллекции, создаются вручную в админке)
+- `courses`: name (Text), color (Text, опционально)
+- `lectures`: title (Text), course (Relation → courses), notes (Text), audio (File), file (File)
+
+## Грабли и НЕ трогать
+1. `resolve.dedupe` в `vite.config.ts` — защита от «Invalid hook call» (дубль React). НЕ удалять.
+2. Все npm-зависимости ставятся ТОЛЬКО в `apps/web` (`npm install <pkg>` из этой папки). Корневой package.json — только скрипты-обёртки.
+3. НЕ запускать `git init` внутри `apps/web` (там был вложенный .git, из-за него файлы не попадали в репозиторий).
+4. Кодировка файлов — UTF-8 без BOM (была история с mojibake из CP1251 в LectureEditor/LectureView).
+5. НЕ коммитить: `.env`, `pocketbase/pb_data`, `pocketbase.exe`, `dist`, `dev-dist`, `node_modules` — всё уже в .gitignore. `dev-dist` создаётся при dev из-за `devOptions.enabled: true` в PWA.
+6. Формат строк: LF (есть `.gitattributes`).
+
+## Состояние проекта (обновлять в конце каждой сессии)
+- Фаза 1 завершена: курсы, лекции, просмотр, редактирование. Редактор Tiptap (StarterKit) работает.
+- GitHub-уборка выполнена (коммит 08f72d9): удалены прототипные файлы, NotionEditor, react-markdown/remark-gfm, вложенный .git, мусорные ассеты. Проект чист, 51 файл в git.
+- Пакет `@tiptap/extension-bubble-menu` уже установлен, но НЕ подключён.
+- План фазы 2 (редактор): bubble menu при выделении, slash-меню `/`, маркер (highlight), чекбоксы, ссылки. Всё согласовывать с пользователем перед реализацией.
+
+## Гигиена токенов (обязательно)
+1. Этот файл — контекст. Не перечитывай проект целиком: работай по карте кода выше.
+2. Ищи точечно через поиск по коду; файлы читай по диапазонам строк (start_line/end_line), а не целиком. `App.css` — только нужные секции.
+3. Батчи независимые вызовы инструментов (read/search/run) в одном ответе.
+4. Не запускай лишних команд; листинги папок — только когда реально нужны.
+5. Не переспрашивай очевидное; если сомнение критично — один короткий вопрос, не серия.
+6. При значимых изменениях обнови раздел «Состояние проекта» этого файла в конце сессии.
+7. Финальный ответ — краткое резюме: что сделано, что проверить, что дальше.
