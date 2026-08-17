@@ -1,0 +1,82 @@
+export interface Course {
+  id: string;
+  name: string;
+  color?: string;
+  created: string;
+  [key: string]: unknown;
+}
+
+export interface Lecture {
+  id: string;
+  title: string;
+  content?: string;
+  created: string;
+  field?: string;
+  [key: string]: unknown;
+}
+
+export interface Note {
+  id: string;
+  title: string;
+  content?: string;
+  created: string;
+  courseId?: string; // relation to a Course; null = unassigned
+  [key: string]: unknown;
+}
+
+// Поля, используемые при работе с PocketBase.
+const COURSE_NAME_FIELD = "name";
+const COURSE_COLOR_FIELD = "color";
+const LECTURE_TITLE_FIELD = "title";
+const LECTURE_CONTENT_FIELD = "content";
+// Поле в lectures, которое ссылается на курс (id из courses)
+const LECTURE_COURSE_FIELD = "field";
+const NOTE_TITLE_FIELD = "title";
+const NOTE_CONTENT_FIELD = "content";
+// Поле в notes, которое ссылается на курс (id из courses)
+const NOTE_COURSE_FIELD = "courseId";
+
+export const FIELDS = {
+  courseName: COURSE_NAME_FIELD,
+  courseColor: COURSE_COLOR_FIELD,
+  lectureTitle: LECTURE_TITLE_FIELD,
+  lectureContent: LECTURE_CONTENT_FIELD,
+  lectureCourse: LECTURE_COURSE_FIELD,
+  noteTitle: NOTE_TITLE_FIELD,
+  noteContent: NOTE_CONTENT_FIELD,
+  noteCourse: NOTE_COURSE_FIELD,
+};
+
+// Вспомогательные геттеры, защищающие от разной схемы в БД
+export function courseName(c: Course): string {
+  return String(c[COURSE_NAME_FIELD] ?? c.name ?? "Без названия");
+}
+
+export function courseColor(c: Course): string {
+  const v = c[COURSE_COLOR_FIELD] ?? c.color ?? "";
+  return v ? String(v) : "";
+}
+
+export function lectureTitle(l: Lecture): string {
+  return String(l[LECTURE_TITLE_FIELD] ?? l.title ?? "Без названия");
+}
+
+export function lectureContent(l: Lecture): string {
+  return String(l[LECTURE_CONTENT_FIELD] ?? l.content ?? "");
+}
+
+export function lectureCourseId(l: Lecture): string {
+  return String(l[LECTURE_COURSE_FIELD] ?? "");
+}
+
+export function noteTitle(n: Note): string {
+  return String(n[NOTE_TITLE_FIELD] ?? n.title ?? "Без названия");
+}
+
+export function noteContent(n: Note): string {
+  return String(n[NOTE_CONTENT_FIELD] ?? n.content ?? "");
+}
+
+export function noteCourseId(n: Note): string {
+  return String(n[NOTE_COURSE_FIELD] ?? "");
+}

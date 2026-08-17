@@ -1,0 +1,13 @@
+/* Базовый сброс. Основные стили — в App.css (палитра и бенто-сетка). */
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+}
