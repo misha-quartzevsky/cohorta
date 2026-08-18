@@ -8,10 +8,10 @@
  * Files" section to show a combined timeline.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import type { Lecture } from "../lib/types";
-import { errorMessage } from "../lib/format";
 import { fetchRecentLectures as fetchRecentLecturesService } from "../services/lectureService";
+import { useAsyncData } from "./useAsyncData";
 
 /** Result type returned by the hook. */
 export interface UseRecentLecturesResult {
@@ -30,29 +30,11 @@ export interface UseRecentLecturesResult {
 export function useRecentLectures(
   limit: number = 10
 ): UseRecentLecturesResult {
-  const [lectures, setLectures] = useState<Lecture[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const fetcher = useCallback(
+    () => fetchRecentLecturesService(limit),
+    [limit]
+  );
+  const { data, loading, error, refetch } = useAsyncData<Lecture[]>(fetcher);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const records = await fetchRecentLecturesService(limit);
-      setLectures(records);
-    } catch (e) {
-      console.error("Ошибка загрузки лекций:", e);
-      setError(
-        "Не удалось загрузить лекции: " + errorMessage(e)
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [limit]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  return { lectures, loading, error, refetch: load };
+  return { lectures: data ?? [], loading, error, refetch };
 }

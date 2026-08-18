@@ -18,15 +18,16 @@ import {
   lectureCourseId,
   lectureTitle,
   tagLectureIds,
+  FIELDS,
 } from "../lib/types";
 import { errorMessage, formatDate } from "../lib/format";
 import {
-  fetchLectureBySlug,
   tokenizePbFileUrls,
   resolveFileTokens,
   updateLecture,
   uploadLectureImages,
 } from "../services/lectureService";
+import { fetchBySlug } from "../services/genericService";
 import { fetchTags } from "../services/tagService";
 import { useLectures } from "../hooks/useLectures";
 
@@ -70,7 +71,7 @@ function LectureEdit() {
   useEffect(() => {
     if (!lectureSlugParam) return;
     let cancelled = false;
-    fetchLectureBySlug(lectureSlugParam)
+    fetchBySlug<Lecture>("lectures", lectureSlugParam, FIELDS.lectureSlug)
       .then(async (rec) => {
         if (cancelled) return;
         setLecture(rec);

@@ -12,7 +12,8 @@ import { pb } from "../lib/pocketbase";
 import type { Course, Lecture } from "../lib/types";
 import { FIELDS } from "../lib/types";
 import { randomCourseColor } from "../lib/colors";
-import { slugify, uniqueSlug } from "../lib/slugify";
+import { slugify } from "../lib/slugify";
+import { uniqueSlugForCollection } from "./genericService";
 
 /**
  * Fetch every course, newest-first.
@@ -26,30 +27,6 @@ export async function fetchCourses(semesterId?: string): Promise<Course[]> {
     sort: "-updated",
     filter: semesterId ? `${FIELDS.courseSemester}="${semesterId}"` : "",
   });
-}
-
-/**
- * All slugs currently used by course records.
- * Used to guarantee slug uniqueness on create/update.
- */
-async function takenCourseSlugs(): Promise<Set<string>> {
-  const all = await pb
-    .collection("courses")
-    .getFullList<Course>({ fields: FIELDS.courseSlug });
-  return new Set(
-    all
-      .map((c) => c.slug ?? "")
-      .filter((s) => s.length > 0)
-  );
-}
-
-/**
- * Generates a unique slug for a course title
- * (adds -1, -2, … when the base slug is taken).
- */
-async function uniqueCourseSlug(name: string): Promise<string> {
-  const base = slugify(name) || "course";
-  return uniqueSlug(base, await takenCourseSlugs());
 }
 
 /**
@@ -67,7 +44,11 @@ export async function createCourse(
 ): Promise<Course> {
   const payload: Record<string, unknown> = {
     [FIELDS.courseName]: name,
-    [FIELDS.courseSlug]: await uniqueCourseSlug(name),
+    [FIELDS.courseSlug]: await uniqueSlugForCollection(
+      "courses",
+      FIELDS.courseSlug,
+      slugify(name) || "course"
+    ),
   };
   const resolvedColor = color && color.trim() ? color.trim() : randomCourseColor();
   payload[FIELDS.courseColor] = resolvedColor;
@@ -102,7 +83,11 @@ export async function updateCourse(
   };
   // Lazy slug backfill for legacy records.
   if (!existing.slug) {
-    payload[FIELDS.courseSlug] = await uniqueCourseSlug(name);
+    payload[FIELDS.courseSlug] = await uniqueSlugForCollection(
+      "courses",
+      FIELDS.courseSlug,
+      slugify(name) || "course"
+    );
   }
   if (color && color.trim()) {
     payload[FIELDS.courseColor] = color.trim();
@@ -111,25 +96,6 @@ export async function updateCourse(
     payload[FIELDS.courseSemester] = semesterId;
   }
   return pb.collection("courses").update<Course>(id, payload);
-}
-
-/**
- * Fetch a course by its URL slug.
- * Falls back to a lookup by PocketBase id for legacy
- * records whose slug is still empty.
- *
- * @param slug — course slug (or legacy id)
- * @returns Resolves to the Course record.
- */
-export async function fetchCourseBySlug(slug: string): Promise<Course> {
-  try {
-    return await pb
-      .collection("courses")
-      .getFirstListItem<Course>(`${FIELDS.courseSlug}="${slug}"`);
-  } catch {
-    // Legacy fallback: URL contains the record id.
-    return pb.collection("courses").getOne<Course>(slug);
-  }
 }
 
 /**

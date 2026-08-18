@@ -10,7 +10,7 @@
  * into the view.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import type { Course } from "../lib/types";
 import { errorMessage } from "../lib/format";
 import {
@@ -20,6 +20,7 @@ import {
   updateCourse as updateCourseService,
   deleteCourse as deleteCourseService,
 } from "../services/courseService";
+import { useAsyncData } from "./useAsyncData";
 
 export interface UseCoursesResult {
   courses: Course[];
@@ -41,6 +42,12 @@ export interface UseCoursesResult {
   deleteCourse: (id: string) => Promise<void>;
 }
 
+/** Data produced by the fetcher: the course list + last-lecture titles. */
+interface CourseBundle {
+  courses: Course[];
+  featured: Record<string, string>;
+}
+
 /**
  * React hook that manages the courses data lifecycle.
  *
@@ -53,32 +60,23 @@ export interface UseCoursesResult {
  *          flags, a refetch function, and CRUD mutators.
  */
 export function useCourses(semesterId?: string): UseCoursesResult {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [featured, setFeatured] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const load = useCallback(async () => {
-    if (!semesterId) return;
-    setLoading(true);
-    setError("");
+  const fetcher = useCallback(async (): Promise<CourseBundle> => {
     try {
       const records = await fetchCourses(semesterId);
-      setCourses(records);
-
-      if (records.length > 0) {
-        const titles = await fetchLatestLectureTitles(records);
-        setFeatured(titles);
+      if (records.length === 0) {
+        return { courses: records, featured: {} };
       }
+      const featured = await fetchLatestLectureTitles(records);
+      return { courses: records, featured };
     } catch (e) {
       console.error("Ошибка загрузки курсов:", e);
-      setError(
-        "Не удалось загрузить курсы: " + errorMessage(e)
-      );
-    } finally {
-      setLoading(false);
+      throw new Error("Не удалось загрузить курсы: " + errorMessage(e));
     }
   }, [semesterId]);
+
+  const { data, loading, error, setError, refetch } = useAsyncData<
+    CourseBundle
+  >(fetcher, !!semesterId);
 
   /**
    * Create a new course and refresh the list.
@@ -91,7 +89,7 @@ export function useCourses(semesterId?: string): UseCoursesResult {
     async (name: string, color?: string, semesterId?: string) => {
       try {
         await createCourseService(name, color, semesterId);
-        await load();
+        await refetch();
       } catch (e) {
         console.error("Ошибка создания курса:", e);
         setError(
@@ -99,7 +97,7 @@ export function useCourses(semesterId?: string): UseCoursesResult {
         );
       }
     },
-    [load]
+    [refetch, setError]
   );
 
   /**
@@ -114,7 +112,7 @@ export function useCourses(semesterId?: string): UseCoursesResult {
     async (id: string, name: string, color?: string, semesterId?: string) => {
       try {
         await updateCourseService(id, name, color, semesterId);
-        await load();
+        await refetch();
       } catch (e) {
         console.error("Ошибка обновления курса:", e);
         setError(
@@ -122,7 +120,7 @@ export function useCourses(semesterId?: string): UseCoursesResult {
         );
       }
     },
-    [load]
+    [refetch, setError]
   );
 
   /**
@@ -134,7 +132,7 @@ export function useCourses(semesterId?: string): UseCoursesResult {
     async (id: string) => {
       try {
         await deleteCourseService(id);
-        await load();
+        await refetch();
       } catch (e) {
         console.error("Ошибка удаления курса:", e);
         setError(
@@ -142,25 +140,15 @@ export function useCourses(semesterId?: string): UseCoursesResult {
         );
       }
     },
-    [load]
+    [refetch, setError]
   );
 
-  useEffect(() => {
-    if (!semesterId) {
-      setCourses([]);
-      setFeatured({});
-      setLoading(false);
-      return;
-    }
-    void load();
-  }, [load, semesterId]);
-
   return {
-    courses,
-    featured,
+    courses: data?.courses ?? [],
+    featured: data?.featured ?? {},
     loading,
     error,
-    refetch: load,
+    refetch,
     createCourse,
     updateCourse,
     deleteCourse,

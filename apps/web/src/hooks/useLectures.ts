@@ -10,14 +10,16 @@
  * service layer directly.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import type { Course, Lecture } from "../lib/types";
+import { FIELDS } from "../lib/types";
 import { errorMessage } from "../lib/format";
 import {
   fetchLectures,
   deleteLecture as deleteLectureService,
 } from "../services/lectureService";
-import { fetchCourseBySlug } from "../services/courseService";
+import { fetchBySlug } from "../services/genericService";
+import { useAsyncData } from "./useAsyncData";
 
 export interface UseLecturesResult {
   course: Course | null;
@@ -26,6 +28,12 @@ export interface UseLecturesResult {
   error: string;
   refetch: () => Promise<void>;
   deleteLecture: (id: string) => Promise<void>;
+}
+
+/** Data produced by the fetcher: the resolved course + its lectures. */
+interface LectureBundle {
+  course: Course;
+  lectures: Lecture[];
 }
 
 /**
@@ -40,41 +48,33 @@ export interface UseLecturesResult {
  *          loading/error flags, refetch, and deleteLecture.
  */
 export function useLectures(courseSlug: string): UseLecturesResult {
-  const [course, setCourse] = useState<Course | null>(null);
-  const [lectures, setLectures] = useState<Lecture[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const load = useCallback(async () => {
-    if (!courseSlug) return;
-    setLoading(true);
-    setError("");
-
+  const fetcher = useCallback(async (): Promise<LectureBundle> => {
     // 1. Resolve the course by slug (for the page title + lecture filter)
-    let resolved: Course | null = null;
+    let resolved: Course;
     try {
-      resolved = await fetchCourseBySlug(courseSlug);
-      setCourse(resolved);
+      resolved = await fetchBySlug<Course>(
+        "courses",
+        courseSlug,
+        FIELDS.courseSlug
+      );
     } catch (e) {
       console.error("Ошибка загрузки курса:", e);
-      setError("Не удалось загрузить курс.");
-      setLoading(false);
-      return;
+      throw new Error("Не удалось загрузить курс.");
     }
 
     // 2. Fetch the lectures for this course
     try {
       const records = await fetchLectures(resolved.id);
-      setLectures(records);
+      return { course: resolved, lectures: records };
     } catch (e) {
       console.error("Ошибка загрузки лекций:", e);
-      setError(
-        "Не удалось загрузить лекции: " + errorMessage(e)
-      );
-    } finally {
-      setLoading(false);
+      throw new Error("Не удалось загрузить лекции: " + errorMessage(e));
     }
   }, [courseSlug]);
+
+  const { data, loading, error, setError, refetch } = useAsyncData<
+    LectureBundle
+  >(fetcher, !!courseSlug);
 
   /**
    * Delete a lecture and refresh the list.
@@ -85,7 +85,7 @@ export function useLectures(courseSlug: string): UseLecturesResult {
     async (id: string) => {
       try {
         await deleteLectureService(id);
-        await load();
+        await refetch();
       } catch (e) {
         console.error("Ошибка удаления лекции:", e);
         setError(
@@ -93,25 +93,15 @@ export function useLectures(courseSlug: string): UseLecturesResult {
         );
       }
     },
-    [load]
+    [refetch, setError]
   );
 
-  useEffect(() => {
-    if (!courseSlug) {
-      setCourse(null);
-      setLectures([]);
-      setLoading(false);
-      return;
-    }
-    void load();
-  }, [load, courseSlug]);
-
   return {
-    course,
-    lectures,
+    course: data?.course ?? null,
+    lectures: data?.lectures ?? [],
     loading,
     error,
-    refetch: load,
+    refetch,
     deleteLecture,
   };
 }

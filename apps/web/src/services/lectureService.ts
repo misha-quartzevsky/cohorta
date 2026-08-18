@@ -10,7 +10,8 @@
 import { pb } from "../lib/pocketbase";
 import type { Lecture } from "../lib/types";
 import { FIELDS, lectureFiles, stripHtml } from "../lib/types";
-import { slugify, uniqueSlug } from "../lib/slugify";
+import { slugify } from "../lib/slugify";
+import { uniqueSlugForCollection } from "./genericService";
 import { applyLectureTags } from "./tagService";
 
 /**
@@ -21,25 +22,6 @@ import { applyLectureTags } from "./tagService";
  */
 export async function fetchLecture(lectureId: string): Promise<Lecture> {
   return pb.collection("lectures").getOne<Lecture>(lectureId);
-}
-
-/**
- * Fetch a single lecture by its URL slug.
- * Falls back to a lookup by PocketBase id for legacy
- * records whose slug is still empty.
- *
- * @param slug — lecture slug (or legacy id)
- * @returns Resolves to the Lecture record.
- */
-export async function fetchLectureBySlug(slug: string): Promise<Lecture> {
-  try {
-    return await pb
-      .collection("lectures")
-      .getFirstListItem<Lecture>(`${FIELDS.lectureSlug}="${slug}"`);
-  } catch {
-    // Legacy fallback: URL contains the record id.
-    return pb.collection("lectures").getOne<Lecture>(slug);
-  }
 }
 
 /**
@@ -98,30 +80,6 @@ function safeContent(title: string, content: string): string {
 }
 
 /**
- * All slugs currently used by lecture records.
- * Used to guarantee global slug uniqueness on create.
- */
-async function takenLectureSlugs(): Promise<Set<string>> {
-  const all = await pb
-    .collection("lectures")
-    .getFullList<Lecture>({ fields: FIELDS.lectureSlug });
-  return new Set(
-    all
-      .map((l) => l.slug ?? "")
-      .filter((s) => s.length > 0)
-  );
-}
-
-/**
- * Generates a unique slug for a lecture title
- * (adds -1, -2, … when the base slug is taken).
- */
-async function uniqueLectureSlug(title: string): Promise<string> {
-  const base = slugify(title) || "lecture";
-  return uniqueSlug(base, await takenLectureSlugs());
-}
-
-/**
  * Create a brand-new lecture inside a course.
  *
  * @param title    — lecture heading
@@ -139,7 +97,11 @@ export async function createLecture(
     [FIELDS.lectureContent]: safeContent(title, content),
     [FIELDS.lectureContentRich]: content,
     [FIELDS.lectureCourse]: courseId,
-    [FIELDS.lectureSlug]: await uniqueLectureSlug(title),
+    [FIELDS.lectureSlug]: await uniqueSlugForCollection(
+      "lectures",
+      FIELDS.lectureSlug,
+      slugify(title) || "lecture"
+    ),
   });
 }
 
@@ -162,7 +124,11 @@ export async function createUnassignedLecture(
     [FIELDS.lectureTitle]: title,
     [FIELDS.lectureContent]: safeContent(title, content),
     [FIELDS.lectureContentRich]: content,
-    [FIELDS.lectureSlug]: await uniqueLectureSlug(title),
+    [FIELDS.lectureSlug]: await uniqueSlugForCollection(
+      "lectures",
+      FIELDS.lectureSlug,
+      slugify(title) || "lecture"
+    ),
   });
 }
 
@@ -191,7 +157,11 @@ export async function updateLecture(
   };
   // Lazy slug backfill for legacy records.
   if (!existing.slug) {
-    payload[FIELDS.lectureSlug] = await uniqueLectureSlug(title);
+    payload[FIELDS.lectureSlug] = await uniqueSlugForCollection(
+      "lectures",
+      FIELDS.lectureSlug,
+      slugify(title) || "lecture"
+    );
   }
   const updated = await pb.collection("lectures").update<Lecture>(id, payload);
   if (tags !== undefined) {

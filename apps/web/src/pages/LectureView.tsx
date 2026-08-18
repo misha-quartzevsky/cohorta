@@ -17,13 +17,14 @@ import {
   lectureBody,
   lectureCourseId,
   lectureTitle,
+  FIELDS,
 } from "../lib/types";
 import { errorMessage, formatDate } from "../lib/format";
 import {
   deleteLecture,
-  fetchLectureBySlug,
   resolveFileTokens,
 } from "../services/lectureService";
+import { fetchBySlug } from "../services/genericService";
 import { useLectures } from "../hooks/useLectures";
 
 import Header, { type Crumb } from "../components/Header";
@@ -58,7 +59,7 @@ function LectureView() {
     let cancelled = false;
     setLoading(true);
     setError("");
-    fetchLectureBySlug(lectureSlugParam)
+    fetchBySlug<Lecture>("lectures", lectureSlugParam, FIELDS.lectureSlug)
       .then((rec) => {
         if (!cancelled) {
           setLecture(rec);
