@@ -8,7 +8,6 @@ dist/
 pocketbase/pocketbase.exe
 pocketbase/pocketbase
 pocketbase/pb_data/
-pocketbase/pb_migrations/
 
 # OS / editor
 .DS_Store

@@ -1,6 +1,9 @@
 # Normalize line endings: store LF in the repo, use platform-native in worktree
 * text=auto eol=lf
 
+# .bat files must stay CRLF on Windows (cmd.exe can misbehave with LF-only)
+*.bat text eol=crlf
+
 # Binary files
 *.png binary
 *.jpg binary
