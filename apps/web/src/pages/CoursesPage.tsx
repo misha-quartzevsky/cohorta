@@ -145,10 +145,12 @@ function CoursesPage() {
 
   if (!current) {
     return (
-      <div className="page">
-        <Header />
-        <ErrorBanner message={`Семестр «${semesterSlugParam}» не найден.`} />
-      </div>
+      <>
+        <Header crumbs={[{ label: "Рабочий стол" }]} />
+        <div className="page">
+          <ErrorBanner message={`Семестр «${semesterSlugParam}» не найден.`} />
+        </div>
+      </>
     );
   }
 
@@ -157,10 +159,15 @@ function CoursesPage() {
   if (loading && courses.length === 0) return <LoadingState />;
 
   return (
-    <div className="page">
-      <Header onBack={() => navigate(`/s/${semSlug}`)} />
-
-      <ErrorBanner message={error} />
+    <>
+      <Header
+        crumbs={[
+          { label: "Рабочий стол", to: `/s/${semSlug}` },
+          { label: "Курсы" },
+        ]}
+      />
+      <div className="page">
+        <ErrorBanner message={error} />
 
       <h1 className="page-title">Все курсы</h1>
       <p className="page-subtitle">
@@ -303,7 +310,8 @@ function CoursesPage() {
         onConfirm={confirmAction}
         onCancel={() => setConfirmOpen(false)}
       />
-    </div>
+      </div>
+    </>
   );
 }
 

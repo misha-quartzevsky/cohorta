@@ -145,10 +145,12 @@ function Dashboard() {
 
   if (!current) {
     return (
-      <div className="page">
-        <Header />
-        <ErrorBanner message={`Семестр «${semesterSlugParam}» не найден.`} />
-      </div>
+      <>
+        <Header crumbs={[{ label: "Рабочий стол" }]} />
+        <div className="page">
+          <ErrorBanner message={`Семестр «${semesterSlugParam}» не найден.`} />
+        </div>
+      </>
     );
   }
 
@@ -201,10 +203,10 @@ function Dashboard() {
   }
 
   return (
-    <div className="page">
-      <Header />
-
-      <ErrorBanner message={error} />
+    <>
+      <Header crumbs={[{ label: "Рабочий стол" }]} />
+      <div className="page">
+        <ErrorBanner message={error} />
 
       <h1 className="page-title">Семестр {semSlug}</h1>
       <p className="page-subtitle">
@@ -361,7 +363,8 @@ function Dashboard() {
         onConfirm={confirmAction}
         onCancel={() => setConfirmOpen(false)}
       />
-    </div>
+      </div>
+    </>
   );
 }
 

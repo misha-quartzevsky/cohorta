@@ -14,16 +14,22 @@ import { Loader2 } from "lucide-react";
 import type { Lecture } from "../lib/types";
 import {
   courseName,
-  lectureContent,
+  lectureBody,
   lectureCourseId,
   lectureTitle,
   tagLectureIds,
 } from "../lib/types";
-import { fetchLectureBySlug, updateLecture } from "../services/lectureService";
+import {
+  fetchLectureBySlug,
+  tokenizePbFileUrls,
+  resolveFileTokens,
+  updateLecture,
+  uploadLectureImages,
+} from "../services/lectureService";
 import { fetchTags } from "../services/tagService";
 import { useLectures } from "../hooks/useLectures";
 
-import Header from "../components/Header";
+import Header, { type Crumb } from "../components/Header";
 import ErrorBanner from "../components/ErrorBanner";
 import LoadingState from "../components/LoadingState";
 import Editor from "../components/Editor";
@@ -67,7 +73,8 @@ function LectureEdit() {
         if (cancelled) return;
         setLecture(rec);
         const t = lectureTitle(rec);
-        const c = lectureContent(rec);
+        // Токены `[[file:…]]` → абсолютные URL (чтобы картинки видел и TipTap).
+        const c = resolveFileTokens(lectureBody(rec), rec);
         titleRef.current = t;
         contentRef.current = c;
         setTitle(t);
@@ -109,7 +116,9 @@ function LectureEdit() {
       await updateLecture(
         lecture.id,
         titleRef.current.trim() || "Без названия",
-        contentRef.current,
+        // Абсолютные URL картинок → портативные токены [[file:…]],
+        // чтобы в БД жили имена файлов, а не «пришитые» к хосту ссылки.
+        tokenizePbFileUrls(contentRef.current, lecture),
         tagsRef.current
       );
       setSaveState("saved");
@@ -153,6 +162,17 @@ function LectureEdit() {
     setTags(ids);
   };
 
+  // Загрузка картинок в поле `file` лекции (для Editor'а).
+  const handleUploadImages = useCallback(
+    async (files: File[]) => {
+      if (!lecture) {
+        throw new Error("Лекция ещё не создана — сохраните её первым делом.");
+      }
+      return uploadLectureImages(lecture, files);
+    },
+    [lecture]
+  );
+
   // Flush pending changes, then navigate.
   const goAfterSave = async (target: string) => {
     try {
@@ -165,19 +185,32 @@ function LectureEdit() {
 
   if (error) {
     return (
-      <div className="page">
-        <Header onBack={() => navigate(-1)} />
-        <ErrorBanner message={error} />
-      </div>
+      <>
+        <Header crumbs={[{ label: "Рабочий стол" }]} />
+        <div className="page">
+          <ErrorBanner message={error} />
+        </div>
+      </>
     );
   }
 
   if (!lecture || !loaded) return <LoadingState />;
 
   const unassigned = !lectureCourseId(lecture);
-  const backTarget = isCourseContext
-    ? `/s/${semesterSlug}/${courseSlug}/${lectureSlugParam}`
-    : `/s/${semesterSlug}/note/${lectureSlugParam}`;
+  const crumbs: Crumb[] =
+    isCourseContext && course
+      ? [
+          { label: "Рабочий стол", to: `/s/${semesterSlug}` },
+          {
+            label: courseName(course),
+            to: `/s/${semesterSlug}/${courseSlug}`,
+          },
+          { label: title || "Редактирование" },
+        ]
+      : [
+          { label: "Рабочий стол", to: `/s/${semesterSlug}` },
+          { label: title || "Редактирование" },
+        ];
 
   const saveText =
     saveState === "saving"
@@ -189,8 +222,9 @@ function LectureEdit() {
           : "Сохранено";
 
   return (
-    <div className="page">
-      <Header onBack={() => void goAfterSave(backTarget)} />
+    <>
+      <Header crumbs={crumbs} />
+      <div className="page">
 
       <div className={`workspace${isCourseContext ? "" : " no-sidebar"}`}>
         {isCourseContext && (
@@ -235,6 +269,7 @@ function LectureEdit() {
                 value={content}
                 onUpdate={updateContent}
                 className="editor-inline"
+                onUploadImages={handleUploadImages}
               />
             </div>
           </div>
@@ -244,7 +279,8 @@ function LectureEdit() {
           <TableOfContents containerRef={contentAreaRef} version={content} />
         </aside>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

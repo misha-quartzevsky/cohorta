@@ -23,7 +23,9 @@ import LecturesPage from "./pages/LecturesPage";
 import LectureView from "./pages/LectureView";
 import LectureEdit from "./pages/LectureEdit";
 import Header from "./components/Header";
+import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingState from "./components/LoadingState";
+import Login from "./pages/Login";
 import { SemesterProvider } from "./lib/SemesterProvider";
 import {
   useSemester,
@@ -44,12 +46,14 @@ function HomeRedirect() {
 
   if (semesters.length === 0) {
     return (
-      <div className="page">
-        <Header />
-        <div className="empty">
-          Нет семестров. Создайте их в админке PocketBase.
+      <>
+        <Header crumbs={[{ label: "Рабочий стол" }]} />
+        <div className="page">
+          <div className="empty">
+            Нет семестров. Создайте их в админке PocketBase.
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -65,26 +69,29 @@ function App() {
     <BrowserRouter>
       <SemesterProvider>
         <Routes>
-          <Route path="/" element={<HomeRedirect />} />
-          <Route path="/s/:semesterSlug" element={<Dashboard />} />
-          <Route path="/s/:semesterSlug/courses" element={<CoursesPage />} />
-          <Route path="/s/:semesterSlug/:courseSlug" element={<LecturesPage />} />
-          <Route
-            path="/s/:semesterSlug/:courseSlug/:lectureSlug"
-            element={<LectureView />}
-          />
-          <Route
-            path="/s/:semesterSlug/:courseSlug/:lectureSlug/edit"
-            element={<LectureEdit />}
-          />
-          <Route
-            path="/s/:semesterSlug/note/:lectureSlug"
-            element={<LectureView />}
-          />
-          <Route
-            path="/s/:semesterSlug/note/:lectureSlug/edit"
-            element={<LectureEdit />}
-          />
+          <Route path="/login" element={<Login />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/" element={<HomeRedirect />} />
+            <Route path="/s/:semesterSlug" element={<Dashboard />} />
+            <Route path="/s/:semesterSlug/courses" element={<CoursesPage />} />
+            <Route path="/s/:semesterSlug/:courseSlug" element={<LecturesPage />} />
+            <Route
+              path="/s/:semesterSlug/:courseSlug/:lectureSlug"
+              element={<LectureView />}
+            />
+            <Route
+              path="/s/:semesterSlug/:courseSlug/:lectureSlug/edit"
+              element={<LectureEdit />}
+            />
+            <Route
+              path="/s/:semesterSlug/note/:lectureSlug"
+              element={<LectureView />}
+            />
+            <Route
+              path="/s/:semesterSlug/note/:lectureSlug/edit"
+              element={<LectureEdit />}
+            />
+          </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </SemesterProvider>

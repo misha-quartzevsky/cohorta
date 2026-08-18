@@ -14,7 +14,7 @@
 
 import { useEffect, useState } from "react";
 import type { Lecture } from "../lib/types";
-import { FIELDS } from "../lib/types";
+import { FIELDS, lectureBody } from "../lib/types";
 import {
   createLecture as createLectureService,
   createUnassignedLecture,
@@ -55,7 +55,7 @@ function LectureEditor({ courseId, lecture, isNote, onSaved, onCancel }: Props) 
   useEffect(() => {
     if (lecture) {
       const t: unknown = lecture[FIELDS.lectureTitle];
-      const c: unknown = lecture[FIELDS.lectureContent];
+      const c: unknown = lectureBody(lecture);
       setTitle(t ? String(t) : "");
       setContent(c ? String(c) : "");
     }

@@ -82,10 +82,12 @@ function LecturesPage() {
 
   if (!current) {
     return (
-      <div className="page">
-        <Header />
-        <ErrorBanner message={`Семестр «${semesterSlugParam}» не найден.`} />
-      </div>
+      <>
+        <Header crumbs={[{ label: "Рабочий стол" }]} />
+        <div className="page">
+          <ErrorBanner message={`Семестр «${semesterSlugParam}» не найден.`} />
+        </div>
+      </>
     );
   }
 
@@ -111,10 +113,15 @@ function LecturesPage() {
   };
 
   return (
-    <div className="page">
-      <Header onBack={() => navigate(`/s/${semSlug}`)} />
-
-      <ErrorBanner message={error} />
+    <>
+      <Header
+        crumbs={[
+          { label: "Рабочий стол", to: `/s/${semSlug}` },
+          { label: course ? courseName(course) : "Курс" },
+        ]}
+      />
+      <div className="page">
+        <ErrorBanner message={error} />
 
       <h1 className="page-title">
         {course ? courseName(course) : "Курс"}
@@ -160,7 +167,8 @@ function LecturesPage() {
         onConfirm={handleDelete}
         onCancel={() => setConfirmOpen(false)}
       />
-    </div>
+      </div>
+    </>
   );
 }
 

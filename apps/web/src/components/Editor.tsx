@@ -9,9 +9,17 @@
  *  - floating «+» button on empty blocks (opens the slash menu)
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import { createPortal } from "react-dom";
 import type { Editor as TiptapEditor } from "@tiptap/core";
+import type { EditorView } from "@tiptap/pm/view";
 import {
   EditorContent,
   useEditor,
@@ -48,6 +56,13 @@ import type { LucideIcon } from "lucide-react";
 import { createSlashMenu } from "./SlashMenu";
 
 const HIGHLIGHT_COLORS = ["#FFF3A1", "#D3F9A8", "#B9E0FF", "#FFD6E8"];
+
+/** Изображения из drag&drop / буфера обмена (только image/*). */
+function imageFilesFromData(data: DataTransfer | null): File[] {
+  return Array.from(data?.files ?? []).filter((f) =>
+    f.type.startsWith("image/")
+  );
+}
 
 /**
  * Items for the «…» text menu (reference formatting of the current selection,
@@ -144,6 +159,18 @@ interface EditorProps {
   onUpdate: (content: string) => void;
   placeholder?: string;
   className?: string;
+  /**
+   * Когда задан — картинки грузятся по-настоящему в PocketBase
+   * (drag&drop, вставка из буфера и пункт «Картинка» в slash-меню).
+   * Без него «Картинка» фолбэчит на вставку по URL.
+   */
+  onUploadImages?: (files: File[]) => Promise<UploadedImage[]>;
+}
+
+/** Результат загрузки: имя файла (для токена) и абсолютный URL. */
+export interface UploadedImage {
+  name: string;
+  url: string;
 }
 
 export default function Editor({
@@ -151,8 +178,41 @@ export default function Editor({
   onUpdate,
   placeholder,
   className,
+  onUploadImages,
 }: EditorProps) {
-  const slashMenu = useMemo(() => createSlashMenu(), []);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // Куда вставить картинку после выбора файла (позиция после удаления "/").
+  const pendingPosRef = useRef<number | null>(null);
+  const onUploadRef = useRef(onUploadImages);
+  const insertImagesRef = useRef<(urls: string[], pos?: number | null) => void>(
+    () => {}
+  );
+
+  // Всегда держим актуальный колбэк загрузки, не пересоздавая остальное.
+  useEffect(() => {
+    onUploadRef.current = onUploadImages;
+  }, [onUploadImages]);
+
+  // Пункт «Картинка» в slash-меню: файловый пикер или фолбэк на URL-промпт.
+  const chooseImage = useCallback(
+    (activeEditor: TiptapEditor, range: { from: number; to: number }) => {
+      activeEditor.chain().focus().deleteRange(range).run();
+      if (!onUploadRef.current) {
+        const url = window.prompt("Ссылка на изображение:");
+        if (url) {
+          activeEditor.chain().focus().setImage({ src: url.trim() }).run();
+        }
+        return;
+      }
+      pendingPosRef.current = activeEditor.state.selection.from;
+      fileInputRef.current?.click();
+    },
+    []
+  );
+
+  const slashMenu = useMemo(() => createSlashMenu({ chooseImage }), [
+    chooseImage,
+  ]);
 
   // Extensions must be referentially stable: useEditor compares them by
   // reference on every render (shouldRerenderOnTransaction re-renders on each
@@ -187,14 +247,62 @@ export default function Editor({
     [slashMenu, placeholder]
   );
 
+  // Картинки из drag&drop / вставки из буфера забираем только когда есть
+  // загрузчик (иначе оставляем дефолтное поведение браузера).
+  const handleDrop = useCallback(
+    (view: EditorView, event: DragEvent) => {
+      if (!onUploadRef.current) return false;
+      const files = imageFilesFromData(event.dataTransfer);
+      if (!files.length) return false;
+      event.preventDefault();
+      const coords = view.posAtCoords({
+        left: event.clientX,
+        top: event.clientY,
+      });
+      const pos = coords ? coords.pos : null;
+      void (async () => {
+        try {
+          const uploaded = await onUploadRef.current!(files);
+          insertImagesRef.current(uploaded.map((image) => image.url), pos);
+        } catch (err) {
+          console.error("Ошибка загрузки изображения:", err);
+        }
+      })();
+      return true;
+    },
+    []
+  );
+
+  const handlePaste = useCallback(
+    (view: EditorView, event: ClipboardEvent) => {
+      if (!onUploadRef.current) return false;
+      const files = imageFilesFromData(event.clipboardData);
+      if (!files.length) return false;
+      event.preventDefault();
+      const pos = view.state.selection.from;
+      void (async () => {
+        try {
+          const uploaded = await onUploadRef.current!(files);
+          insertImagesRef.current(uploaded.map((image) => image.url), pos);
+        } catch (err) {
+          console.error("Ошибка загрузки изображения:", err);
+        }
+      })();
+      return true;
+    },
+    []
+  );
+
   const editorProps = useMemo(
     () => ({
       attributes: {
         class: "prose tiptap-editor",
         spellcheck: "true",
       },
+      handleDrop,
+      handlePaste,
     }),
-    []
+    [handleDrop, handlePaste]
   );
 
   const editor = useEditor({
@@ -206,6 +314,32 @@ export default function Editor({
     },
     editorProps,
   });
+
+  // Вставка загруженных картинок в редактор. Позиция по умолчанию —
+  // текущий курсор; при drag&drop — координаты мыши.
+  const insertImages = (urls: string[], pos?: number | null) => {
+    const targetPos = pos ?? editor.state.selection.from;
+    const nodes = urls.map((src) => ({ type: "image", attrs: { src } }));
+    editor.chain().focus().insertContentAt(targetPos, nodes).run();
+  };
+  insertImagesRef.current = insertImages;
+
+  // Выбор файла в скрытом input.
+  const handleFilesChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const files = Array.from(input.files ?? []);
+    input.value = "";
+    const upload = onUploadRef.current;
+    if (!files.length || !upload) return;
+    try {
+      const uploaded = await upload(files);
+      const pos = pendingPosRef.current;
+      pendingPosRef.current = null;
+      insertImagesRef.current(uploaded.map((image) => image.url), pos);
+    } catch (err) {
+      console.error("Ошибка загрузки изображения:", err);
+    }
+  };
 
   // Focus the editor on mount.
   useEffect(() => {
@@ -334,6 +468,14 @@ export default function Editor({
 
   return (
     <div className={`tiptap-wrapper ${className || ""}`}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        hidden
+        onChange={handleFilesChange}
+      />
       <BubbleMenu
         editor={editor}
         shouldShow={shouldShowBubble}

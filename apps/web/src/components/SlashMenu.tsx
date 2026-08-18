@@ -52,6 +52,15 @@ function askImageUrl(editor: Editor, range: Range) {
   editor.chain().focus().deleteRange(range).setImage({ src: url.trim() }).run();
 }
 
+/** Опции создания slash-меню (см. createSlashMenu ниже). */
+export interface SlashMenuOptions {
+  /**
+   * Кастомная команда «Картинка» (внутренняя загрузка файла в PB).
+   * Когда задана — пункт меню открывает выбор файла; иначе фолбэк на URL-промпт.
+   */
+  chooseImage?: (editor: Editor, range: Range) => void;
+}
+
 const SLASH_ITEMS: SlashItem[] = [
   {
     title: "Заголовок 1",
@@ -223,8 +232,20 @@ SlashMenuList.displayName = "SlashMenuList";
 /**
  * Build the «/» suggestion extension. Create one per editor instance
  * (the plugin key must be unique).
+ *
+ * @param opts.chooseImage — когда задан, пункт «Картинка» вызывает его
+ *                           вместо URL-промпта (загрузка файла в PB).
  */
-export function createSlashMenu(): Extension {
+export function createSlashMenu(opts?: SlashMenuOptions): Extension {
+  const chooseImage = opts?.chooseImage;
+  const items: SlashItem[] = chooseImage
+    ? SLASH_ITEMS.map((item) =>
+        item.title === "Картинка"
+          ? { ...item, command: chooseImage }
+          : item
+      )
+    : SLASH_ITEMS;
+
   return Extension.create({
     name: "slashMenu",
     addProseMirrorPlugins() {
@@ -243,7 +264,7 @@ export function createSlashMenu(): Extension {
           },
           items: ({ query }) => {
             const q = query.toLowerCase();
-            return SLASH_ITEMS.filter(
+            return items.filter(
               (item) =>
                 item.title.toLowerCase().includes(q) ||
                 item.description.toLowerCase().includes(q)

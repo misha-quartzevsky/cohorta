@@ -14,14 +14,18 @@ import { Pencil, Trash2 } from "lucide-react";
 import type { Lecture } from "../lib/types";
 import {
   courseName,
-  lectureContent,
+  lectureBody,
   lectureCourseId,
   lectureTitle,
 } from "../lib/types";
-import { deleteLecture, fetchLectureBySlug } from "../services/lectureService";
+import {
+  deleteLecture,
+  fetchLectureBySlug,
+  resolveFileTokens,
+} from "../services/lectureService";
 import { useLectures } from "../hooks/useLectures";
 
-import Header from "../components/Header";
+import Header, { type Crumb } from "../components/Header";
 import ErrorBanner from "../components/ErrorBanner";
 import LoadingState from "../components/LoadingState";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -56,7 +60,8 @@ function LectureView() {
       .then((rec) => {
         if (!cancelled) {
           setLecture(rec);
-          setContent(lectureContent(rec) || "");
+          // Токены `[[file:…]]` → абсолютные URL файлов PB перед отрисовкой.
+          setContent(resolveFileTokens(lectureBody(rec), rec) || "");
         }
       })
       .catch((e) => {
@@ -80,16 +85,33 @@ function LectureView() {
 
   if (!lecture) {
     return (
-      <div className="page">
-        <Header onBack={() => navigate(-1)} />
-        <ErrorBanner message={error || "Запись не найдена."} />
-      </div>
+      <>
+        <Header crumbs={[{ label: "Рабочий стол" }]} />
+        <div className="page">
+          <ErrorBanner message={error || "Запись не найдена."} />
+        </div>
+      </>
     );
   }
 
   const title = lectureTitle(lecture);
   const unassigned = !lectureCourseId(lecture);
   const isHtmlContent = /<[a-z][\s\S]*>/i.test(content);
+
+  const crumbs: Crumb[] =
+    isCourseContext && course
+      ? [
+          { label: "Рабочий стол", to: `/s/${semesterSlug}` },
+          {
+            label: courseName(course),
+            to: `/s/${semesterSlug}/${courseSlug}`,
+          },
+          { label: title },
+        ]
+      : [
+          { label: "Рабочий стол", to: `/s/${semesterSlug}` },
+          { label: title },
+        ];
 
   const goToCourse = () => navigate(`/s/${semesterSlug}/${courseSlug}`);
 
@@ -112,9 +134,10 @@ function LectureView() {
   };
 
   return (
-    <div className="page">
-      <Header onBack={() => navigate(-1)} />
-      <ErrorBanner message={error} />
+    <>
+      <Header crumbs={crumbs} />
+      <div className="page">
+        <ErrorBanner message={error} />
 
       <div className={`workspace${isCourseContext ? "" : " no-sidebar"}`}>
         {isCourseContext && (
@@ -183,7 +206,8 @@ function LectureView() {
         onConfirm={handleDelete}
         onCancel={() => setConfirmOpen(false)}
       />
-    </div>
+      </div>
+    </>
   );
 }
 

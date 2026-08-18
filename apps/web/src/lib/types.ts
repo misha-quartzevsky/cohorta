@@ -41,11 +41,24 @@ export interface Tag {
   [key: string]: unknown;
 }
 
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+  avatar?: string;
+  [key: string]: unknown;
+}
+
 // Поля, используемые при работе с PocketBase.
 const COURSE_NAME_FIELD = "name";
 const COURSE_COLOR_FIELD = "color";
 const LECTURE_TITLE_FIELD = "title";
 const LECTURE_CONTENT_FIELD = "content";
+// Rich-контент (тип "editor" в PB): безлимитный, хранит тот же HTML,
+// что и `content`. Чтение идёт через lectureBody() → content_rich приоритетен.
+const LECTURE_CONTENT_RICH_FIELD = "content_rich";
+// Файлы (картинки), залитые в лекцию (тип "file" в PB).
+const LECTURE_FILE_FIELD = "file";
 // Поле в lectures, которое ссылается на курс (id из courses)
 const LECTURE_COURSE_FIELD = "field";
 const NOTE_TITLE_FIELD = "title";
@@ -69,6 +82,8 @@ export const FIELDS = {
   courseColor: COURSE_COLOR_FIELD,
   lectureTitle: LECTURE_TITLE_FIELD,
   lectureContent: LECTURE_CONTENT_FIELD,
+  lectureContentRich: LECTURE_CONTENT_RICH_FIELD,
+  lectureFile: LECTURE_FILE_FIELD,
   lectureCourse: LECTURE_COURSE_FIELD,
   noteTitle: NOTE_TITLE_FIELD,
   noteContent: NOTE_CONTENT_FIELD,
@@ -98,6 +113,27 @@ export function lectureTitle(l: Lecture): string {
 
 export function lectureContent(l: Lecture): string {
   return String(l[LECTURE_CONTENT_FIELD] ?? l.content ?? "");
+}
+
+/** Рендовый (rich) контент лекции — поле `content_rich`. */
+export function lectureContentRich(l: Lecture): string {
+  return String(l[LECTURE_CONTENT_RICH_FIELD] ?? "");
+}
+
+/**
+ * Источник контента лекции: `content_rich` приоритетен (новые лекции
+ * пишутся туда), иначе — легаси-поле `content` (старые лекции).
+ */
+export function lectureBody(l: Lecture): string {
+  return lectureContentRich(l) || lectureContent(l);
+}
+
+/** Имена файлов, прикреплённых к лекции (поле `file`). */
+export function lectureFiles(l: Lecture): string[] {
+  const v = l[LECTURE_FILE_FIELD];
+  if (Array.isArray(v)) return v.map(String);
+  if (typeof v === "string" && v) return [v];
+  return [];
 }
 
 export function lectureCourseId(l: Lecture): string {
@@ -142,6 +178,28 @@ export function semesterSlug(s: Semester): string {
 /** PocketBase id of the semester a course belongs to ("" = none). */
 export function courseSemesterId(c: Course): string {
   return String(c[COURSE_SEMESTER_FIELD] ?? "");
+}
+
+/**
+ * Превращает HTML-фрагмент лекции в plain-text сниппет:
+ * вырезает теги и токены картинок `[[file:…]]`.
+ */
+export function stripHtml(html: string): string {
+  return String(html ?? "")
+    .replace(/\[\[file:[^\]]+\]\]/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Плейн-текстовая выдержка лекции для плиток и результатов поиска.
+ * Обрезает до `maxLen` символов (по границе не рвёт — просто обрезает).
+ */
+export function lectureExcerpt(l: Lecture, maxLen = 150): string {
+  const text = stripHtml(lectureBody(l));
+  if (text.length <= maxLen) return text;
+  return text.slice(0, maxLen).trimEnd() + "…";
 }
 
 export function tagName(t: Tag): string {

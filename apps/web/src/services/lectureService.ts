@@ -10,7 +10,7 @@
 
 import { pb } from "../lib/pocketbase";
 import type { Course, Lecture } from "../lib/types";
-import { FIELDS } from "../lib/types";
+import { FIELDS, lectureFiles } from "../lib/types";
 import { slugify, uniqueSlug } from "../lib/slugify";
 import { applyLectureTags } from "./tagService";
 
@@ -141,6 +141,7 @@ export async function createLecture(
   return pb.collection("lectures").create<Lecture>({
     [FIELDS.lectureTitle]: title,
     [FIELDS.lectureContent]: safeContent(title, content),
+    [FIELDS.lectureContentRich]: content,
     [FIELDS.lectureCourse]: courseId,
     [FIELDS.lectureSlug]: await uniqueLectureSlug(title),
   });
@@ -164,6 +165,7 @@ export async function createUnassignedLecture(
   return pb.collection("lectures").create<Lecture>({
     [FIELDS.lectureTitle]: title,
     [FIELDS.lectureContent]: safeContent(title, content),
+    [FIELDS.lectureContentRich]: content,
     [FIELDS.lectureSlug]: await uniqueLectureSlug(title),
   });
 }
@@ -189,6 +191,7 @@ export async function updateLecture(
   const payload: Record<string, unknown> = {
     [FIELDS.lectureTitle]: title,
     [FIELDS.lectureContent]: safeContent(title, content),
+    [FIELDS.lectureContentRich]: content,
   };
   // Lazy slug backfill for legacy records.
   if (!existing[FIELDS.lectureSlug]) {
@@ -225,4 +228,112 @@ export async function assignLecture(
   return pb.collection("lectures").update<Lecture>(lectureId, {
     [FIELDS.lectureCourse]: courseId,
   });
+}
+
+/**
+ * Full-text search across lecture titles and bodies.
+ * Searches the raw HTML in `content` / `content_rich` — good enough
+ * for a live dropdown (worst case it matches a tag name).
+ *
+ * @param query — search substring (case-insensitive `~` contains in PB)
+ * @param limit — max records to return (default 8)
+ * @returns Resolves to the matching Lecture records, newest-first.
+ */
+export async function searchLectures(
+  query: string,
+  limit: number = 8
+): Promise<Lecture[]> {
+  const q = query.trim();
+  if (!q || q.length < 2) return [];
+  const escaped = q.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const filter = [
+    `${FIELDS.lectureTitle}~"${escaped}"`,
+    `${FIELDS.lectureContent}~"${escaped}"`,
+    `${FIELDS.lectureContentRich}~"${escaped}"`,
+  ].join(" || ");
+  const result = await pb.collection("lectures").getList<Lecture>(1, limit, {
+    sort: "-created",
+    filter,
+  });
+  return result.items;
+}
+
+/** Токен картинки внутри HTML-контента, e.g. `[[file:photo.png]]`. */
+const IMG_TOKEN_RE = /\[\[file:([^\]]+)\]\]/g;
+
+/**
+ * Резолвит токены `[[file:name]]` в абсолютные URL файлов PocketBase.
+ * Используется на границах: перед рендером (просмотр) и перед загрузкой
+ * контента в редактор.
+ */
+export function resolveFileTokens(html: string, lecture: Lecture): string {
+  return html.replace(IMG_TOKEN_RE, (_match, name: string) =>
+    pb.files.getURL(lecture, name)
+  );
+}
+
+/**
+ * Обратное преобразование: заменяет `src` картинок, указывающие на файлы
+ * PB текущей лекции, обратно на портативные токены `[[file:name]]`.
+ * Нужно при сохранении, чтобы в БД жили не абсолютные URL (ломаются при
+ * смене хоста/переезде), а имена файлов.
+ *
+ * Распознаётся путь `/api/files/<collectionId>/<lectureId>/<filename>`
+ * (collectionId из записи, либо имя коллекции «lectures» для fallback).
+ */
+export function tokenizePbFileUrls(html: string, lecture: Lecture): string {
+  const record = lecture as unknown as Record<string, unknown>;
+  const collectionId = String(record.collectionId ?? "lectures");
+  const escapedId = lecture.id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(
+    `(src=["'][^"']*/api/files/(?:${collectionId}|lectures)/${escapedId}/)([^/?"']+)([^"']*)(["'])`,
+    "g"
+  );
+  return html.replace(
+    re,
+    (_match, _prefix: string, name: string, _rest: string, quote: string) => {
+      let decoded = name;
+      try {
+        decoded = decodeURIComponent(name);
+      } catch {
+        /* оставляем как есть */
+      }
+      return `src=${quote}[[file:${decoded}]]${quote}`;
+    }
+  );
+}
+
+/** Результат загрузки картинки: стабильное имя файла + абсолютный URL. */
+export interface UploadedImage {
+  name: string;
+  url: string;
+}
+
+/**
+ * Загружает картинки в поле `file` лекции (вместо Base64 внутри текста).
+ * PocketBase хранит каждый файл отдельно и сам переименовывает при коллизии,
+ * поэтому мы берём итоговые имена из ответа (diff против старого списка).
+ *
+ * @param lecture — запись лекции (используется только id)
+ * @param files   — File-объекты картинок (drag&drop / paste / input)
+ * @returns Для каждого нового файла: `name` (для токена) и `url` (для вставки).
+ */
+export async function uploadLectureImages(
+  lecture: Lecture,
+  files: File[]
+): Promise<UploadedImage[]> {
+  if (!files.length) return [];
+  const fresh = await pb.collection("lectures").getOne<Lecture>(lecture.id);
+  const existing = lectureFiles(fresh);
+  const updated = await pb.collection("lectures").update<Lecture>(fresh.id, {
+    [FIELDS.lectureFile]: [...existing, ...files],
+  });
+  const next = lectureFiles(updated);
+  const previous = new Set(existing);
+  return next
+    .filter((name) => !previous.has(name))
+    .map((name) => ({
+      name,
+      url: pb.files.getURL(updated, name),
+    }));
 }

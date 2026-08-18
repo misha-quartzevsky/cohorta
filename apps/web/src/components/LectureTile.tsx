@@ -10,7 +10,7 @@
  */
 
 import type { Course, Lecture } from "../lib/types";
-import { lectureTitle, lectureContent, courseName } from "../lib/types";
+import { lectureTitle, lectureExcerpt, courseName } from "../lib/types";
 import KebabMenu from "./KebabMenu";
 import { Edit, Trash2, BookOpen } from "lucide-react";
 
@@ -63,7 +63,7 @@ function LectureTile({
     first === 0 ? "lilac" : first === 1 ? "ginger" : "black"
   ) as "lilac" | "ginger" | "black";
 
-  const content = lectureContent(lecture);
+  const content = lectureExcerpt(lecture);
   const hasAssign = unassigned && !!courses && courses.length > 0;
 
   const kebabActions = [
