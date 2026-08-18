@@ -33,6 +33,7 @@ import Header, { type Crumb } from "../components/Header";
 import ErrorBanner from "../components/ErrorBanner";
 import LoadingState from "../components/LoadingState";
 import Editor from "../components/Editor";
+import SpeechToText from "../components/SpeechToText";
 import LectureSidebar from "../components/LectureSidebar";
 import TableOfContents from "../components/TableOfContents";
 import TagEditor from "../components/TagEditor";
@@ -271,6 +272,8 @@ function LectureEdit() {
                 className="editor-inline"
                 onUploadImages={handleUploadImages}
               />
+              {/* Речь + аудиозапись: регистрирует лекцию в SpeechProvider. */}
+              <SpeechToText lecture={lecture} onUpload={handleUploadImages} />
             </div>
           </div>
         </main>

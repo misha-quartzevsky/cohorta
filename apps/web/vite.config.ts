@@ -15,7 +15,14 @@ export default defineConfig({
       // генерирует dev-dist только при старте).
       injectRegister: false,
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
+        // Добавлены шрифты (woff/woff2/ttf/otf/eot): MathLive и Excalidraw
+        // грузятся локально и должны попадать в PWA-прекэш для офлайна.
+        globPatterns: [
+          '**/*.{js,css,html,ico,png,svg,json,woff,woff2,ttf,otf,eot}',
+        ],
+        // Основной бандл с MathLive (формулы) больше 2 MiB — поднимаем лимит
+        // прекэша, иначе SW не добавит его и офлайн-открытие сломается.
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         cleanupOutdatedCaches: true,
       },
       manifest: {

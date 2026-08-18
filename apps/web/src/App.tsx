@@ -27,6 +27,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingState from "./components/LoadingState";
 import Login from "./pages/Login";
 import { SemesterProvider } from "./lib/SemesterProvider";
+import { SpeechProvider } from "./lib/SpeechProvider";
 import {
   useSemester,
   LAST_SEMESTER_KEY,
@@ -67,7 +68,8 @@ function HomeRedirect() {
 function App() {
   return (
     <BrowserRouter>
-      <SemesterProvider>
+      <SpeechProvider>
+        <SemesterProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route element={<ProtectedRoute />}>
@@ -94,7 +96,8 @@ function App() {
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </SemesterProvider>
+        </SemesterProvider>
+      </SpeechProvider>
     </BrowserRouter>
   );
 }

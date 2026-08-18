@@ -55,6 +55,16 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { createSlashMenu } from "./SlashMenu";
 
+import { SpeechInterimMark } from "../lib/speechMark";
+import { useSpeech } from "../lib/speechContext";
+import { AudioBlock } from "./audio/AudioBlock";
+import { MathBlock } from "./math/MathBlock";
+import { SketchBlock } from "./sketch/SketchBlock";
+import { mathBus, type MathEditRequest } from "./math/mathBus";
+import { sketchBus, setSketchUploader, type SketchRequest } from "./sketch/sketchBus";
+import MathEditorOverlay from "./math/MathEditorOverlay";
+import SketchModal from "./sketch/SketchModal";
+
 const HIGHLIGHT_COLORS = ["#FFF3A1", "#D3F9A8", "#B9E0FF", "#FFD6E8"];
 
 /** Изображения из drag&drop / буфера обмена (только image/*). */
@@ -188,6 +198,13 @@ export default function Editor({
     () => {}
   );
 
+  // Голосовой ввод: редактор становится целю вставки распознанного текста.
+  const { registerEditor, unregisterEditor } = useSpeech();
+
+  // Единственные overlay/модалка для формул и схем (см. mathBus/sketchBus).
+  const [mathReq, setMathReq] = useState<MathEditRequest | null>(null);
+  const [sketchReq, setSketchReq] = useState<SketchRequest | null>(null);
+
   // Всегда держим актуальный колбэк загрузки, не пересоздавая остальное.
   useEffect(() => {
     onUploadRef.current = onUploadImages;
@@ -210,9 +227,37 @@ export default function Editor({
     []
   );
 
-  const slashMenu = useMemo(() => createSlashMenu({ chooseImage }), [
-    chooseImage,
-  ]);
+  // Пункт «Формула»: открывает overlay MathLive (блок появится при commit).
+  const insertMath = useCallback(
+    (activeEditor: TiptapEditor, range: { from: number; to: number }) => {
+      activeEditor.chain().focus().deleteRange(range).run();
+      mathBus.open({
+        editor: activeEditor,
+        pos: activeEditor.state.selection.from,
+        latex: "",
+      });
+    },
+    []
+  );
+
+  // Пункт «Схема»: открывает модалку Excalidraw (схема появится при save).
+  const insertSketch = useCallback(
+    (activeEditor: TiptapEditor, range: { from: number; to: number }) => {
+      activeEditor.chain().focus().deleteRange(range).run();
+      sketchBus.open({
+        editor: activeEditor,
+        pos: activeEditor.state.selection.from,
+        scene: null,
+        onUploadImages: onUploadRef.current,
+      });
+    },
+    []
+  );
+
+  const slashMenu = useMemo(
+    () => createSlashMenu({ chooseImage, insertMath, insertSketch }),
+    [chooseImage, insertMath, insertSketch]
+  );
 
   // Extensions must be referentially stable: useEditor compares them by
   // reference on every render (shouldRerenderOnTransaction re-renders on each
@@ -242,6 +287,11 @@ export default function Editor({
       Highlight.configure({ multicolor: true }),
       TaskList,
       TaskItem.configure({ nested: true }),
+      // Advanced Capture Tools: речь, аудио, формулы, схемы.
+      SpeechInterimMark,
+      AudioBlock,
+      MathBlock,
+      SketchBlock,
       slashMenu,
     ],
     [slashMenu, placeholder]
@@ -345,6 +395,23 @@ export default function Editor({
   useEffect(() => {
     editor.commands.focus();
   }, [editor]);
+
+  // Регистрируем редактор как цель диктовки (SpeechProvider) — это нужно
+  // и для кнопки микрофона в шапке, и для вставки распознанного текста.
+  useEffect(() => {
+    if (!editor) return;
+    registerEditor(editor);
+    return () => unregisterEditor(editor);
+  }, [editor, registerEditor, unregisterEditor]);
+
+  // Подписки единственных overlay/модалки (формулы MathLive, схемы Excalidraw).
+  useEffect(() => mathBus.subscribe(setMathReq), []);
+  useEffect(() => sketchBus.subscribe(setSketchReq), []);
+
+  // Актуальный загрузчик файлов для ре-эдита схем из NodeView.
+  useEffect(() => {
+    setSketchUploader(onUploadImages);
+  }, [onUploadImages]);
 
   // Sync content when `value` changes from outside.
   useEffect(() => {
@@ -637,6 +704,13 @@ export default function Editor({
       </FloatingMenu>
 
       <EditorContent editor={editor} />
+
+      {mathReq && (
+        <MathEditorOverlay request={mathReq} onClose={() => mathBus.close()} />
+      )}
+      {sketchReq && (
+        <SketchModal request={sketchReq} onClose={() => sketchBus.close()} />
+      )}
     </div>
   );
 }

@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@excalidraw/excalidraw": "^0.18.1",
     "@tiptap/extension-bubble-menu": "^3.30.1",
     "@tiptap/extension-floating-menu": "^3.30.1",
     "@tiptap/extension-heading": "^3.30.1",
@@ -24,6 +25,7 @@
     "@tiptap/starter-kit": "^3.30.1",
     "@tiptap/suggestion": "^3.30.1",
     "lucide-react": "^1.31.0",
+    "mathlive": "^0.110.0",
     "pocketbase": "^0.27.3",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

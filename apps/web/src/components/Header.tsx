@@ -15,11 +15,12 @@
 
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, Search } from "lucide-react";
+import { LogOut, Mic, MicOff, Search } from "lucide-react";
 
 import SemesterSwitcher from "./SemesterSwitcher";
 import { useAuth } from "../hooks/useAuth";
 import { useLectureSearch } from "../hooks/useLectureSearch";
+import { useSpeech } from "../lib/speechContext";
 import { pb } from "../lib/pocketbase";
 import type { User } from "../lib/types";
 
@@ -60,6 +61,9 @@ function Header({ crumbs = [] }: Props) {
   const searchWrapRef = useRef<HTMLDivElement | null>(null);
 
   const { results, loading } = useLectureSearch(query, open);
+
+  // Голосовой ввод: кнопка микрофона (пульс при записи) + interim-подсказка.
+  const { supported, recording, toggle, interimText, error } = useSpeech();
 
   const avatar = user ? avatarSrc(user) : "";
 
@@ -146,6 +150,28 @@ function Header({ crumbs = [] }: Props) {
 
         {/* --- semester switcher + search (right) --- */}
         <div className="header-right">
+          {supported && (
+            <div className="header-mic-wrap">
+              <button
+                type="button"
+                className={`header-mic${recording ? " recording" : ""}`}
+                onClick={toggle}
+                title={
+                  recording
+                    ? "Остановить диктовку"
+                    : error
+                      ? `Диктовка недоступна: ${error}`
+                      : "Диктовка: голосовой ввод в текст лекции"
+                }
+              >
+                {recording ? <MicOff size={15} /> : <Mic size={15} />}
+                {recording && <span className="header-mic-pulse" />}
+              </button>
+              {recording && interimText && (
+                <span className="header-mic-interim">{interimText}</span>
+              )}
+            </div>
+          )}
           <SemesterSwitcher />
           <div
             ref={searchWrapRef}

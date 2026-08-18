@@ -33,8 +33,10 @@ import {
   ListChecks,
   ListOrdered,
   Minus,
+  PenTool,
   Pilcrow,
   Quote,
+  Sigma,
 } from "lucide-react";
 
 interface SlashItem {
@@ -59,6 +61,15 @@ export interface SlashMenuOptions {
    * Когда задана — пункт меню открывает выбор файла; иначе фолбэк на URL-промпт.
    */
   chooseImage?: (editor: Editor, range: Range) => void;
+  /**
+   * Команда «Формула»: вставляет mathBlock и открывает overlay MathLive.
+   * Когда не задана — пункт скрыт из меню.
+   */
+  insertMath?: (editor: Editor, range: Range) => void;
+  /**
+   * Команда «Схема»: открывает модалку Excalidraw. Когда не задана — скрыт.
+   */
+  insertSketch?: (editor: Editor, range: Range) => void;
 }
 
 const SLASH_ITEMS: SlashItem[] = [
@@ -238,13 +249,36 @@ SlashMenuList.displayName = "SlashMenuList";
  */
 export function createSlashMenu(opts?: SlashMenuOptions): Extension {
   const chooseImage = opts?.chooseImage;
-  const items: SlashItem[] = chooseImage
-    ? SLASH_ITEMS.map((item) =>
-        item.title === "Картинка"
-          ? { ...item, command: chooseImage }
-          : item
-      )
-    : SLASH_ITEMS;
+  const items: SlashItem[] = [];
+
+  // Базовые пункты.
+  items.push(...SLASH_ITEMS);
+
+  // Пункт «Картинка» с кастомной командой (когда есть загрузчик).
+  if (chooseImage) {
+    const index = items.findIndex((item) => item.title === "Картинка");
+    if (index >= 0) {
+      items[index] = { ...items[index], command: chooseImage };
+    }
+  }
+
+  // Лимитед-инструменты: появляются только когда редактор умеет их вставлять.
+  if (opts?.insertMath) {
+    items.push({
+      title: "Формула",
+      description: "Математическая запись",
+      icon: Sigma,
+      command: opts.insertMath,
+    });
+  }
+  if (opts?.insertSketch) {
+    items.push({
+      title: "Схема",
+      description: "Рисованная диаграмма",
+      icon: PenTool,
+      command: opts.insertSketch,
+    });
+  }
 
   return Extension.create({
     name: "slashMenu",

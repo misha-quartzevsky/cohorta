@@ -10,7 +10,7 @@
 
 import { pb } from "../lib/pocketbase";
 import type { Course, Lecture } from "../lib/types";
-import { FIELDS, lectureFiles } from "../lib/types";
+import { FIELDS, lectureFiles, stripHtml } from "../lib/types";
 import { slugify, uniqueSlug } from "../lib/slugify";
 import { applyLectureTags } from "./tagService";
 
@@ -93,12 +93,19 @@ export async function fetchRecentLectures(
  * @returns The created Lecture record.
  */
 /**
- * `content` is a REQUIRED field in PocketBase, and an empty string
- * is rejected with a 400. Fall back to the title so the field is
- * always non-empty.
+ * Значение для поля `content` при create/update.
+ *
+ * Поле `content` в PocketBase ограничено (validation_max_text_constraint,
+ * здесь ~5000 символов), а полный rich-HTML (картинки data-URL, схемы,
+ * формулы) легко превышает лимит. Полный HTML живёт в `content_rich`
+ * (безлимит); сюда пишем короткий plain-text эксцерпт без тегов и токенов
+ * `[[file:…]]` — для поиска, превью и легаси-просмотра.
+ * Пустой content заменяем на title (поле REQUIRED).
  */
 function safeContent(title: string, content: string): string {
-  return content && content.trim() ? content : title;
+  const text = stripHtml(content) || title;
+  const MAX = 4800;
+  return text.length > MAX ? text.slice(0, MAX) : text;
 }
 
 /**
@@ -336,4 +343,23 @@ export async function uploadLectureImages(
       name,
       url: pb.files.getURL(updated, name),
     }));
+}
+
+/**
+ * Удаляет файлы из поля `file` лекции (например, осиротевшие картинки/аудио
+ * после того, как пользователь вырезал соответствующий блок из текста).
+ *
+ * @param lecture — запись лекции (используется только id)
+ * @param names    — имена файлов, которые нужно удалить
+ */
+export async function deleteLectureFiles(
+  lecture: Lecture,
+  names: string[]
+): Promise<void> {
+  if (!names.length) return;
+  const fresh = await pb.collection("lectures").getOne<Lecture>(lecture.id);
+  const remaining = lectureFiles(fresh).filter((name) => !names.includes(name));
+  await pb.collection("lectures").update<Lecture>(fresh.id, {
+    [FIELDS.lectureFile]: remaining,
+  });
 }

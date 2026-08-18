@@ -32,6 +32,7 @@ import ConfirmDialog from "../components/ConfirmDialog";
 import LectureSidebar from "../components/LectureSidebar";
 import TableOfContents from "../components/TableOfContents";
 import TagBadges from "../components/TagBadges";
+import { renderLatexInto } from "../components/math/renderLatex";
 
 function LectureView() {
   const {
@@ -80,6 +81,19 @@ function LectureView() {
       cancelled = true;
     };
   }, [lectureSlugParam]);
+
+  // Отрисовываем формулы MathLive после вставки HTML (данные — в атрибуте).
+  useEffect(() => {
+    const root = contentRef.current;
+    if (!root) return;
+    const blocks = root.querySelectorAll<HTMLElement>(
+      "[data-type='math-block']"
+    );
+    blocks.forEach((el) => {
+      const latex = el.getAttribute("data-latex") ?? "";
+      void renderLatexInto(el, latex);
+    });
+  }, [content]);
 
   if (loading) return <LoadingState />;
 
