@@ -1,37 +1,27 @@
-/**
- * ============================================
- *  LectureEdit.tsx — Редактирование лекции
- * ============================================
- *
- * Workspace layout с автосохранением: заголовок, теги и
- * контент сохраняются в PocketBase с debounce (~1.2 с).
- */
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
-import type { Lecture } from "../lib/types";
 import {
   courseName,
   lectureBody,
   lectureCourseId,
   lectureTitle,
   tagLectureIds,
-  FIELDS,
 } from "../lib/types";
-import { errorMessage, formatDate } from "../lib/format";
+import { formatDate } from "../lib/format";
 import {
   tokenizePbFileUrls,
   resolveFileTokens,
   updateLecture,
   uploadLectureImages,
 } from "../services/lectureService";
-import { fetchBySlug } from "../services/genericService";
 import { fetchTags } from "../services/tagService";
 import { useLectures } from "../hooks/useLectures";
+import { useLectureBySlug } from "../hooks/useLectureBySlug";
+import { lectureCrumbs } from "../lib/lectureCrumbs";
 
-import Header, { type Crumb } from "../components/Header";
+import Header from "../components/Header";
 import ErrorBanner from "../components/ErrorBanner";
 import LoadingState from "../components/LoadingState";
 import Editor from "../components/Editor";
@@ -42,20 +32,21 @@ import TagEditor from "../components/TagEditor";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
+/**
+ * LectureEdit — редактирование лекции с автосохранением.
+ * Заголовок, теги и контент сохраняются в PocketBase с debounce (~1.2 с).
+ */
 function LectureEdit() {
-  const {
-    semesterSlug,
-    courseSlug,
-    lectureSlug: lectureSlugParam,
-  } = useParams();
+  const { semesterSlug, courseSlug, lectureSlug: lectureSlugParam } =
+    useParams();
   const navigate = useNavigate();
 
-  const [lecture, setLecture] = useState<Lecture | null>(null);
+  const { lecture, error } = useLectureBySlug(lectureSlugParam ?? "");
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [saveState, setSaveState] = useState<SaveState>("idle");
-  const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
 
   const titleRef = useRef("");
@@ -67,48 +58,39 @@ function LectureEdit() {
   const isCourseContext = !!courseSlug;
   const { course, lectures } = useLectures(courseSlug || "");
 
-  // Initial load: lecture + its tags.
+  // Initialize editor fields + tags when the lecture resolves.
   useEffect(() => {
-    if (!lectureSlugParam) return;
+    if (!lecture) return;
     let cancelled = false;
-    fetchBySlug<Lecture>("lectures", lectureSlugParam, FIELDS.lectureSlug)
-      .then(async (rec) => {
+    const t = lectureTitle(lecture);
+    // Токены `[[file:…]]` → абсолютные URL (чтобы картинки видел и TipTap).
+    const c = resolveFileTokens(lectureBody(lecture), lecture);
+    titleRef.current = t;
+    contentRef.current = c;
+    setTitle(t);
+    setContent(c);
+    fetchTags()
+      .then((all) => {
         if (cancelled) return;
-        setLecture(rec);
-        const t = lectureTitle(rec);
-        // Токены `[[file:…]]` → абсолютные URL (чтобы картинки видел и TipTap).
-        const c = resolveFileTokens(lectureBody(rec), rec);
-        titleRef.current = t;
-        contentRef.current = c;
-        setTitle(t);
-        setContent(c);
-        try {
-          const all = await fetchTags();
-          if (!cancelled) {
-            const ids = all
-              .filter((tg) => tagLectureIds(tg).includes(rec.id))
-              .map((tg) => tg.id);
-            tagsRef.current = ids;
-            setTags(ids);
-          }
-        } catch (e) {
-          console.error("Ошибка загрузки тегов:", e);
-        }
+        const ids = all
+          .filter((tg) => tagLectureIds(tg).includes(lecture.id))
+          .map((tg) => tg.id);
+        tagsRef.current = ids;
+        setTags(ids);
+      })
+      .catch((e) => {
+        console.error("Ошибка загрузки тегов:", e);
+      })
+      .finally(() => {
         if (!cancelled) {
           firstRun.current = true;
           setLoaded(true);
-        }
-      })
-      .catch((e) => {
-        console.error("Ошибка загрузки записи:", e);
-        if (!cancelled) {
-          setError("Не удалось загрузить запись: " + errorMessage(e));
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [lectureSlugParam]);
+  }, [lecture]);
 
   const doSave = useCallback(async () => {
     if (!lecture) return;
@@ -197,20 +179,13 @@ function LectureEdit() {
   if (!lecture || !loaded) return <LoadingState />;
 
   const unassigned = !lectureCourseId(lecture);
-  const crumbs: Crumb[] =
-    isCourseContext && course
-      ? [
-          { label: "Рабочий стол", to: `/s/${semesterSlug}` },
-          {
-            label: courseName(course),
-            to: `/s/${semesterSlug}/${courseSlug}`,
-          },
-          { label: title || "Редактирование" },
-        ]
-      : [
-          { label: "Рабочий стол", to: `/s/${semesterSlug}` },
-          { label: title || "Редактирование" },
-        ];
+  const crumbs = lectureCrumbs({
+    semesterSlug,
+    course: isCourseContext ? course : null,
+    courseSlug,
+    title,
+    finalFallback: "Редактирование",
+  });
 
   const saveText =
     saveState === "saving"
@@ -226,57 +201,62 @@ function LectureEdit() {
       <Header crumbs={crumbs} />
       <div className="page">
 
-      <div className={`workspace${isCourseContext ? "" : " no-sidebar"}`}>
-        {isCourseContext && (
-          <LectureSidebar
-            courseName={course ? courseName(course) : "Курс"}
-            lectures={lectures}
-            activeSlug={lectureSlugParam || ""}
-            onSelect={(slug) =>
-              void goAfterSave(`/s/${semesterSlug}/${courseSlug}/${slug}`)
-            }
-            onBack={() => void goAfterSave(`/s/${semesterSlug}/${courseSlug}`)}
-          />
-        )}
-
-        <main className="workspace-main">
-          <div className="lecture-card">
-            <div className="edit-meta-row">
-              <p className="lecture-card-meta">
-                {unassigned ? "Заметка" : "Лекция"} ·{" "}
-                {formatDate(lecture.created)}
-              </p>
-              <span className={`save-indicator ${saveState}`}>
-                {saveState === "saving" && (
-                  <Loader2 size={14} className="spin" />
-                )}
-                {saveText}
-              </span>
-            </div>
-            <input
-              className="lecture-title-input"
-              value={title}
-              placeholder="Название лекции"
-              onChange={(e) => updateTitle(e.target.value)}
+        <div className={`workspace${isCourseContext ? "" : " no-sidebar"}`}>
+          {isCourseContext && (
+            <LectureSidebar
+              courseName={course ? courseName(course) : "Курс"}
+              lectures={lectures}
+              activeSlug={lectureSlugParam || ""}
+              onSelect={(slug) =>
+                void goAfterSave(`/s/${semesterSlug}/${courseSlug}/${slug}`)
+              }
+              onBack={() =>
+                void goAfterSave(`/s/${semesterSlug}/${courseSlug}`)
+              }
             />
-            <TagEditor selectedIds={tags} onChange={updateTags} />
-            <div ref={contentAreaRef} className="lecture-card-body">
-              <Editor
-                value={content}
-                onUpdate={updateContent}
-                className="editor-inline"
-                onUploadImages={handleUploadImages}
-              />
-              {/* Речь + аудиозапись: регистрирует лекцию в SpeechProvider. */}
-              <SpeechToText lecture={lecture} onUpload={handleUploadImages} />
-            </div>
-          </div>
-        </main>
+          )}
 
-        <aside className="workspace-toc">
-          <TableOfContents containerRef={contentAreaRef} version={content} />
-        </aside>
-      </div>
+          <main className="workspace-main">
+            <div className="lecture-card">
+              <div className="edit-meta-row">
+                <p className="lecture-card-meta">
+                  {unassigned ? "Заметка" : "Лекция"} ·{" "}
+                  {formatDate(lecture.created)}
+                </p>
+                <span className={`save-indicator ${saveState}`}>
+                  {saveState === "saving" && (
+                    <Loader2 size={14} className="spin" />
+                  )}
+                  {saveText}
+                </span>
+              </div>
+              <input
+                className="lecture-title-input"
+                value={title}
+                placeholder="Название лекции"
+                onChange={(e) => updateTitle(e.target.value)}
+              />
+              <TagEditor selectedIds={tags} onChange={updateTags} />
+              <div ref={contentAreaRef} className="lecture-card-body">
+                <Editor
+                  value={content}
+                  onUpdate={updateContent}
+                  className="editor-inline"
+                  onUploadImages={handleUploadImages}
+                />
+                {/* Речь + аудиозапись: регистрирует лекцию в SpeechProvider. */}
+                <SpeechToText
+                  lecture={lecture}
+                  onUpload={handleUploadImages}
+                />
+              </div>
+            </div>
+          </main>
+
+          <aside className="workspace-toc">
+            <TableOfContents containerRef={contentAreaRef} version={content} />
+          </aside>
+        </div>
       </div>
     </>
   );

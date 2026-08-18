@@ -12,8 +12,9 @@
 import { formatDate, tileAccent } from "../lib/format";
 import type { Course, Lecture } from "../lib/types";
 import { lectureTitle, lectureExcerpt, courseName } from "../lib/types";
+import { tileActions } from "../lib/tileActions";
 import KebabMenu from "./KebabMenu";
-import { Edit, Trash2, BookOpen } from "lucide-react";
+import { BookOpen } from "lucide-react";
 
 interface Props {
   /** The lecture record from PocketBase. */
@@ -64,27 +65,10 @@ function LectureTile({
   const content = lectureExcerpt(lecture);
   const hasAssign = unassigned && !!courses && courses.length > 0;
 
-  const kebabActions = [
-    {
-      key: "edit",
-      label: "Редактировать",
-      icon: <Edit size={14} />,
-      onClick: (e: React.MouseEvent) => {
-        e.stopPropagation();
-        onEdit?.(lecture);
-      },
-    },
-    {
-      key: "delete",
-      label: "Удалить",
-      icon: <Trash2 size={14} />,
-      danger: true,
-      onClick: (e: React.MouseEvent) => {
-        e.stopPropagation();
-        onDelete?.(lecture);
-      },
-    },
-  ];
+  const kebabActions = tileActions({
+    onEdit: () => onEdit?.(lecture),
+    onDelete: () => onDelete?.(lecture),
+  });
 
   return (
     <div className={`tile ${index === 0 ? "wide" : ""}`}>

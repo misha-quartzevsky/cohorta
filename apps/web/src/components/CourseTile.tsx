@@ -12,8 +12,8 @@
 import { tileAccent } from "../lib/format";
 import type { Course } from "../lib/types";
 import { courseName, courseColor } from "../lib/types";
+import { tileActions } from "../lib/tileActions";
 import KebabMenu from "./KebabMenu";
-import { Edit, Trash2 } from "lucide-react";
 
 interface Props {
   /** The course record from PocketBase. */
@@ -58,27 +58,10 @@ function CourseTile({
     ? `Последняя лекция: ${featured}`
     : "Лекций пока нет";
 
-  const kebabActions = [
-    {
-      key: "edit",
-      label: "Редактировать",
-      icon: <Edit size={14} />,
-      onClick: (e: React.MouseEvent) => {
-        e.stopPropagation();
-        onEdit?.(course);
-      },
-    },
-    {
-      key: "delete",
-      label: "Удалить",
-      icon: <Trash2 size={14} />,
-      danger: true,
-      onClick: (e: React.MouseEvent) => {
-        e.stopPropagation();
-        onDelete?.(course);
-      },
-    },
-  ];
+  const kebabActions = tileActions({
+    onEdit: () => onEdit?.(course),
+    onDelete: () => onDelete?.(course),
+  });
 
   return (
     <div className={`tile ${wide ? "wide" : ""}`}>

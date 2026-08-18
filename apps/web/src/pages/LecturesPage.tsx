@@ -1,19 +1,7 @@
-/**
- * ============================================
- *  LecturesPage.tsx
- * ============================================
- *
- * Lecture list for a single course.  Uses the
- * `useLectures` hook and reusable UI components.
- *
- * State machine for the "create lecture" flow:
- *   editingPlusIndex === null → show <AddTile> "+" button
- *   editingPlusIndex !== null → show <LectureEditor> full-page form
- */
-
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useLectures } from "../hooks/useLectures";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useSemester } from "../lib/semesterContext";
 import {
   courseName,
@@ -30,17 +18,16 @@ import LectureEditor from "../components/LectureEditor";
 import ConfirmDialog from "../components/ConfirmDialog";
 import ErrorBanner from "../components/ErrorBanner";
 import LoadingState from "../components/LoadingState";
+import SemesterGate from "../components/SemesterGate";
 
 /**
- * Lectures page — displays all lectures for a course
- * as bento tiles with a plus-tile to create new lectures.
+ * Lectures page — все лекции курса в виде плиток + плитка «+».
  */
 function LecturesPage() {
   const navigate = useNavigate();
-  const { semesterSlug: semesterSlugParam, courseSlug: courseSlugParam } =
-    useParams();
+  const { courseSlug: courseSlugParam } = useParams();
 
-  const { current, semesters, loading: semLoading } = useSemester();
+  const { current, semesters } = useSemester();
 
   // Data layer (resolves the course by slug, then its lectures)
   const { course, lectures, loading, error, refetch, deleteLecture } =
@@ -51,10 +38,7 @@ function LecturesPage() {
     null
   );
 
-  // Confirm dialog state
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmLectureId, setConfirmLectureId] = useState("");
-  const [confirmTitle, setConfirmTitle] = useState("");
+  const confirm = useConfirmDialog();
 
   /**
    * Called when a lecture is saved (created or updated).
@@ -79,95 +63,86 @@ function LecturesPage() {
     }
   }, [course, current, semesters, courseSlugParam, navigate]);
 
-  if (semLoading) return <LoadingState />;
-
-  if (!current) {
-    return (
-      <>
-        <Header crumbs={[{ label: "Рабочий стол" }]} />
-        <div className="page">
-          <ErrorBanner message={`Семестр «${semesterSlugParam}» не найден.`} />
-        </div>
-      </>
-    );
-  }
-
-  const semSlug = semesterSlug(current);
-
-  // --- Editor mode (full-page form) ---
-  if (editingPlusIndex !== null) {
-    if (!course) return <LoadingState />;
-    return (
-      <LectureEditor
-        courseId={course.id}
-        onSaved={handleSaved}
-        onCancel={() => setEditingPlusIndex(null)}
-      />
-    );
-  }
-
-  if (loading) return <LoadingState />;
-
-  const handleDelete = async () => {
-    await deleteLecture(confirmLectureId);
-    setConfirmOpen(false);
-  };
+  const semSlug = current ? semesterSlug(current) : "";
 
   return (
-    <>
-      <Header
-        crumbs={[
-          { label: "Рабочий стол", to: `/s/${semSlug}` },
-          { label: course ? courseName(course) : "Курс" },
-        ]}
-      />
-      <div className="page">
-        <ErrorBanner message={error} />
-
-      <h1 className="page-title">
-        {course ? courseName(course) : "Курс"}
-      </h1>
-      <p className="page-subtitle">
-        Отсортировано по дате — новые выше.
-      </p>
-
-      <div className="bento">
-        {lectures.map((lec, i) => (
-          <LectureTile
-            key={lec.id}
-            lecture={lec}
-            index={i}
-            onClick={() =>
-              navigate(`/s/${semSlug}/${courseSlugParam}/${lectureSlug(lec)}`)
-            }
-            onEdit={() =>
-              navigate(
-                `/s/${semSlug}/${courseSlugParam}/${lectureSlug(lec)}/edit`
-              )
-            }
-            onDelete={() => {
-              setConfirmLectureId(lec.id);
-              setConfirmTitle(lectureTitle(lec));
-              setConfirmOpen(true);
-            }}
+    <SemesterGate>
+      {editingPlusIndex !== null ? (
+        !course ? (
+          <LoadingState />
+        ) : (
+          <LectureEditor
+            courseId={course.id}
+            onSaved={handleSaved}
+            onCancel={() => setEditingPlusIndex(null)}
           />
-        ))}
+        )
+      ) : loading ? (
+        <LoadingState />
+      ) : (
+        <>
+          <Header
+            crumbs={[
+              { label: "Рабочий стол", to: `/s/${semSlug}` },
+              { label: course ? courseName(course) : "Курс" },
+            ]}
+          />
+          <div className="page">
+            <ErrorBanner message={error} />
 
-        <AddTile
-          label="+ Добавить лекцию"
-          onClick={() => setEditingPlusIndex(lectures.length)}
-        />
-      </div>
+            <h1 className="page-title">
+              {course ? courseName(course) : "Курс"}
+            </h1>
+            <p className="page-subtitle">
+              Отсортировано по дате — новые выше.
+            </p>
 
-      <ConfirmDialog
-        open={confirmOpen}
-        title="Удалить запись?"
-        message={`Запись «${confirmTitle}» будет удалена.`}
-        onConfirm={handleDelete}
-        onCancel={() => setConfirmOpen(false)}
-      />
-      </div>
-    </>
+            <div className="bento">
+              {lectures.map((lec, i) => (
+                <LectureTile
+                  key={lec.id}
+                  lecture={lec}
+                  index={i}
+                  onClick={() =>
+                    navigate(
+                      `/s/${semSlug}/${courseSlugParam}/${lectureSlug(lec)}`
+                    )
+                  }
+                  onEdit={() =>
+                    navigate(
+                      `/s/${semSlug}/${courseSlugParam}/${lectureSlug(lec)}/edit`
+                    )
+                  }
+                  onDelete={() => {
+                    const t = lectureTitle(lec);
+                    confirm.ask(
+                      "Удалить запись?",
+                      `Запись «${t}» будет удалена.`,
+                      () => {
+                        void deleteLecture(lec.id);
+                      }
+                    );
+                  }}
+                />
+              ))}
+
+              <AddTile
+                label="+ Добавить лекцию"
+                onClick={() => setEditingPlusIndex(lectures.length)}
+              />
+            </div>
+
+            <ConfirmDialog
+              open={confirm.open}
+              title={confirm.title}
+              message={confirm.message}
+              onConfirm={confirm.confirm}
+              onCancel={confirm.cancel}
+            />
+          </div>
+        </>
+      )}
+    </SemesterGate>
   );
 }
 

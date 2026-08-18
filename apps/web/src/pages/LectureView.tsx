@@ -1,33 +1,21 @@
-/**
- * ============================================
- *  LectureView.tsx — Страница лекции / заметки
- * ============================================
- *
- * Три колонки: список лекций курса (glass), белая карточка
- * с контентом, живое оглавление справа.
- */
-
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
 
-import type { Lecture } from "../lib/types";
 import {
   courseName,
   lectureBody,
   lectureCourseId,
   lectureTitle,
-  FIELDS,
 } from "../lib/types";
-import { errorMessage, formatDate } from "../lib/format";
-import {
-  deleteLecture,
-  resolveFileTokens,
-} from "../services/lectureService";
-import { fetchBySlug } from "../services/genericService";
+import { formatDate } from "../lib/format";
+import { deleteLecture, resolveFileTokens } from "../services/lectureService";
 import { useLectures } from "../hooks/useLectures";
+import { useLectureBySlug } from "../hooks/useLectureBySlug";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
+import { lectureCrumbs } from "../lib/lectureCrumbs";
 
-import Header, { type Crumb } from "../components/Header";
+import Header from "../components/Header";
 import ErrorBanner from "../components/ErrorBanner";
 import LoadingState from "../components/LoadingState";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -36,50 +24,29 @@ import TableOfContents from "../components/TableOfContents";
 import TagBadges from "../components/TagBadges";
 import { renderLatexInto } from "../components/math/renderLatex";
 
+/**
+ * LectureView — страница лекции / заметки.
+ * Три колонки: список лекций курса (glass), белая карточка
+ * с контентом, живое оглавление справа.
+ */
 function LectureView() {
-  const {
-    semesterSlug,
-    courseSlug,
-    lectureSlug: lectureSlugParam,
-  } = useParams();
+  const { semesterSlug, courseSlug, lectureSlug: lectureSlugParam } =
+    useParams();
   const navigate = useNavigate();
 
-  const [lecture, setLecture] = useState<Lecture | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const { lecture, loading, error } = useLectureBySlug(lectureSlugParam ?? "");
+
   const [content, setContent] = useState("");
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   const isCourseContext = !!courseSlug;
   const { course, lectures } = useLectures(courseSlug || "");
 
+  // Токены `[[file:…]]` → абсолютные URL файлов PB перед отрисовкой.
   useEffect(() => {
-    if (!lectureSlugParam) return;
-    let cancelled = false;
-    setLoading(true);
-    setError("");
-    fetchBySlug<Lecture>("lectures", lectureSlugParam, FIELDS.lectureSlug)
-      .then((rec) => {
-        if (!cancelled) {
-          setLecture(rec);
-          // Токены `[[file:…]]` → абсолютные URL файлов PB перед отрисовкой.
-          setContent(resolveFileTokens(lectureBody(rec), rec) || "");
-        }
-      })
-      .catch((e) => {
-        console.error("Ошибка загрузки записи:", e);
-        if (!cancelled) {
-          setError("Не удалось загрузить запись: " + errorMessage(e));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [lectureSlugParam]);
+    if (!lecture) return;
+    setContent(resolveFileTokens(lectureBody(lecture), lecture) || "");
+  }, [lecture]);
 
   // Отрисовываем формулы MathLive после вставки HTML (данные — в атрибуте).
   useEffect(() => {
@@ -93,6 +60,8 @@ function LectureView() {
       void renderLatexInto(el, latex);
     });
   }, [content]);
+
+  const confirm = useConfirmDialog();
 
   if (loading) return <LoadingState />;
 
@@ -108,23 +77,14 @@ function LectureView() {
   }
 
   const title = lectureTitle(lecture);
-  const unassigned = !lectureCourseId(lecture);
   const isHtmlContent = /<[a-z][\s\S]*>/i.test(content);
 
-  const crumbs: Crumb[] =
-    isCourseContext && course
-      ? [
-          { label: "Рабочий стол", to: `/s/${semesterSlug}` },
-          {
-            label: courseName(course),
-            to: `/s/${semesterSlug}/${courseSlug}`,
-          },
-          { label: title },
-        ]
-      : [
-          { label: "Рабочий стол", to: `/s/${semesterSlug}` },
-          { label: title },
-        ];
+  const crumbs = lectureCrumbs({
+    semesterSlug,
+    course: isCourseContext ? course : null,
+    courseSlug,
+    title,
+  });
 
   const goToCourse = () => navigate(`/s/${semesterSlug}/${courseSlug}`);
 
@@ -136,14 +96,18 @@ function LectureView() {
     }
   };
 
-  const handleDelete = async () => {
-    await deleteLecture(lecture.id);
-    setConfirmOpen(false);
-    navigate(
-      isCourseContext
-        ? `/s/${semesterSlug}/${courseSlug}`
-        : `/s/${semesterSlug}`
-    );
+  const unassigned = !lectureCourseId(lecture);
+
+  const handleDelete = () => {
+    confirm.ask("Удалить запись?", `Запись «${title}» будет удалена.`, () => {
+      void deleteLecture(lecture.id).then(() => {
+        navigate(
+          isCourseContext
+            ? `/s/${semesterSlug}/${courseSlug}`
+            : `/s/${semesterSlug}`
+        );
+      });
+    });
   };
 
   return (
@@ -152,69 +116,69 @@ function LectureView() {
       <div className="page">
         <ErrorBanner message={error} />
 
-      <div className={`workspace${isCourseContext ? "" : " no-sidebar"}`}>
-        {isCourseContext && (
-          <LectureSidebar
-            courseName={course ? courseName(course) : "Курс"}
-            lectures={lectures}
-            activeSlug={lectureSlugParam || ""}
-            onSelect={(slug) =>
-              navigate(`/s/${semesterSlug}/${courseSlug}/${slug}`)
-            }
-            onBack={goToCourse}
-          />
-        )}
-
-        <main className="workspace-main">
-          <article className="lecture-card">
-            <header className="lecture-card-head">
-              <p className="lecture-card-meta">
-                {formatDate(lecture.created)}
-                {unassigned && " · Не привязана к курсу"}
-              </p>
-              <h1 className="lecture-card-title">{title}</h1>
-              <TagBadges lectureId={lecture.id} />
-              <div className="lecture-card-actions">
-                <button
-                  className="icon-btn"
-                  type="button"
-                  onClick={handleEdit}
-                  title="Редактировать"
-                >
-                  <Pencil size={15} />
-                </button>
-                <button
-                  className="icon-btn danger"
-                  type="button"
-                  onClick={() => setConfirmOpen(true)}
-                  title="Удалить"
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
-            </header>
-            <div
-              ref={contentRef}
-              className={`lecture-card-body lecture-view-content ${
-                isHtmlContent ? "is-html" : "is-plain"
-              }`}
-              dangerouslySetInnerHTML={{ __html: content || "" }}
+        <div className={`workspace${isCourseContext ? "" : " no-sidebar"}`}>
+          {isCourseContext && (
+            <LectureSidebar
+              courseName={course ? courseName(course) : "Курс"}
+              lectures={lectures}
+              activeSlug={lectureSlugParam || ""}
+              onSelect={(slug) =>
+                navigate(`/s/${semesterSlug}/${courseSlug}/${slug}`)
+              }
+              onBack={goToCourse}
             />
-          </article>
-        </main>
+          )}
 
-        <aside className="workspace-toc">
-          <TableOfContents containerRef={contentRef} version={content} />
-        </aside>
-      </div>
+          <main className="workspace-main">
+            <article className="lecture-card">
+              <header className="lecture-card-head">
+                <p className="lecture-card-meta">
+                  {formatDate(lecture.created)}
+                  {unassigned && " · Не привязана к курсу"}
+                </p>
+                <h1 className="lecture-card-title">{title}</h1>
+                <TagBadges lectureId={lecture.id} />
+                <div className="lecture-card-actions">
+                  <button
+                    className="icon-btn"
+                    type="button"
+                    onClick={handleEdit}
+                    title="Редактировать"
+                  >
+                    <Pencil size={15} />
+                  </button>
+                  <button
+                    className="icon-btn danger"
+                    type="button"
+                    onClick={handleDelete}
+                    title="Удалить"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </header>
+              <div
+                ref={contentRef}
+                className={`lecture-card-body lecture-view-content ${
+                  isHtmlContent ? "is-html" : "is-plain"
+                }`}
+                dangerouslySetInnerHTML={{ __html: content || "" }}
+              />
+            </article>
+          </main>
 
-      <ConfirmDialog
-        open={confirmOpen}
-        title="Удалить запись?"
-        message={`Запись «${title}» будет удалена.`}
-        onConfirm={handleDelete}
-        onCancel={() => setConfirmOpen(false)}
-      />
+          <aside className="workspace-toc">
+            <TableOfContents containerRef={contentRef} version={content} />
+          </aside>
+        </div>
+
+        <ConfirmDialog
+          open={confirm.open}
+          title={confirm.title}
+          message={confirm.message}
+          onConfirm={confirm.confirm}
+          onCancel={confirm.cancel}
+        />
       </div>
     </>
   );
