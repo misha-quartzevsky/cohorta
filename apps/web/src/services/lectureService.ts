@@ -4,25 +4,14 @@
  * ============================================
  *
  * Centralizes all PocketBase calls for the
- * `lectures` collection plus a convenience
- * function for fetching a single course.
+ * `lectures` collection.
  */
 
 import { pb } from "../lib/pocketbase";
-import type { Course, Lecture } from "../lib/types";
+import type { Lecture } from "../lib/types";
 import { FIELDS, lectureFiles, stripHtml } from "../lib/types";
 import { slugify, uniqueSlug } from "../lib/slugify";
 import { applyLectureTags } from "./tagService";
-
-/**
- * Fetch a single course by its PocketBase ID.
- *
- * @param courseId — PocketBase record ID
- * @returns Resolves to the Course record.
- */
-export async function fetchCourse(courseId: string): Promise<Course> {
-  return pb.collection("courses").getOne<Course>(courseId);
-}
 
 /**
  * Fetch a single lecture by its PocketBase ID.
@@ -118,7 +107,7 @@ async function takenLectureSlugs(): Promise<Set<string>> {
     .getFullList<Lecture>({ fields: FIELDS.lectureSlug });
   return new Set(
     all
-      .map((l) => String(l[FIELDS.lectureSlug] ?? ""))
+      .map((l) => l.slug ?? "")
       .filter((s) => s.length > 0)
   );
 }
@@ -201,7 +190,7 @@ export async function updateLecture(
     [FIELDS.lectureContentRich]: content,
   };
   // Lazy slug backfill for legacy records.
-  if (!existing[FIELDS.lectureSlug]) {
+  if (!existing.slug) {
     payload[FIELDS.lectureSlug] = await uniqueLectureSlug(title);
   }
   const updated = await pb.collection("lectures").update<Lecture>(id, payload);
@@ -289,8 +278,7 @@ export function resolveFileTokens(html: string, lecture: Lecture): string {
  * (collectionId из записи, либо имя коллекции «lectures» для fallback).
  */
 export function tokenizePbFileUrls(html: string, lecture: Lecture): string {
-  const record = lecture as unknown as Record<string, unknown>;
-  const collectionId = String(record.collectionId ?? "lectures");
+  const collectionId = String(lecture.collectionId ?? "lectures");
   const escapedId = lecture.id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const re = new RegExp(
     `(src=["'][^"']*/api/files/(?:${collectionId}|lectures)/${escapedId}/)([^/?"']+)([^"']*)(["'])`,

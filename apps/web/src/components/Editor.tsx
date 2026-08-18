@@ -33,6 +33,7 @@ import ImageExtension from "@tiptap/extension-image";
 import Highlight from "@tiptap/extension-highlight";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
+import type { UploadedImage } from "../services/lectureService";
 import {
   Bold,
   Code,
@@ -175,12 +176,6 @@ interface EditorProps {
    * Без него «Картинка» фолбэчит на вставку по URL.
    */
   onUploadImages?: (files: File[]) => Promise<UploadedImage[]>;
-}
-
-/** Результат загрузки: имя файла (для токена) и абсолютный URL. */
-export interface UploadedImage {
-  name: string;
-  url: string;
 }
 
 export default function Editor({

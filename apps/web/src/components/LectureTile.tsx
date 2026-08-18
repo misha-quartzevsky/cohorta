@@ -9,6 +9,7 @@
  * for edit/delete actions.
  */
 
+import { formatDate, tileAccent } from "../lib/format";
 import type { Course, Lecture } from "../lib/types";
 import { lectureTitle, lectureExcerpt, courseName } from "../lib/types";
 import KebabMenu from "./KebabMenu";
@@ -58,10 +59,7 @@ function LectureTile({
   courseTag,
   courseColorTag,
 }: Props) {
-  const first = index % 3;
-  const accent = (
-    first === 0 ? "lilac" : first === 1 ? "ginger" : "black"
-  ) as "lilac" | "ginger" | "black";
+  const accent = tileAccent(index);
 
   const content = lectureExcerpt(lecture);
   const hasAssign = unassigned && !!courses && courses.length > 0;
@@ -97,13 +95,7 @@ function LectureTile({
         <div className="tile-body">
           <div className="tile-title">{lectureTitle(lecture)}</div>
           {content && <div className="tile-excerpt">{content}</div>}
-          <div className="tile-meta">
-            {new Date(lecture.created).toLocaleDateString("ru-RU", {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
-          </div>
+          <div className="tile-meta">{formatDate(lecture.created)}</div>
           {unassigned && (
             <div className="tile-meta tile-unassigned">
               <BookOpen size={12} /> Не привязана к курсу

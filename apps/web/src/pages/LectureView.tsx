@@ -18,6 +18,7 @@ import {
   lectureCourseId,
   lectureTitle,
 } from "../lib/types";
+import { errorMessage, formatDate } from "../lib/format";
 import {
   deleteLecture,
   fetchLectureBySlug,
@@ -68,10 +69,7 @@ function LectureView() {
       .catch((e) => {
         console.error("Ошибка загрузки записи:", e);
         if (!cancelled) {
-          setError(
-            "Не удалось загрузить запись: " +
-              (e instanceof Error ? e.message : String(e))
-          );
+          setError("Не удалось загрузить запись: " + errorMessage(e));
         }
       })
       .finally(() => {
@@ -170,11 +168,7 @@ function LectureView() {
           <article className="lecture-card">
             <header className="lecture-card-head">
               <p className="lecture-card-meta">
-                {new Date(lecture.created).toLocaleDateString("ru-RU", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
+                {formatDate(lecture.created)}
                 {unassigned && " · Не привязана к курсу"}
               </p>
               <h1 className="lecture-card-title">{title}</h1>

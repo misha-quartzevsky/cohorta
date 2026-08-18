@@ -12,6 +12,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Course, Lecture } from "../lib/types";
+import { errorMessage } from "../lib/format";
 import {
   fetchLectures,
   deleteLecture as deleteLectureService,
@@ -68,8 +69,7 @@ export function useLectures(courseSlug: string): UseLecturesResult {
     } catch (e) {
       console.error("Ошибка загрузки лекций:", e);
       setError(
-        "Не удалось загрузить лекции: " +
-          (e instanceof Error ? e.message : String(e))
+        "Не удалось загрузить лекции: " + errorMessage(e)
       );
     } finally {
       setLoading(false);
@@ -89,8 +89,7 @@ export function useLectures(courseSlug: string): UseLecturesResult {
       } catch (e) {
         console.error("Ошибка удаления лекции:", e);
         setError(
-          "Не удалось удалить лекцию: " +
-            (e instanceof Error ? e.message : String(e))
+          "Не удалось удалить лекцию: " + errorMessage(e)
         );
       }
     },

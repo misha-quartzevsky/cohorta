@@ -10,6 +10,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Semester } from "../lib/types";
+import { errorMessage } from "../lib/format";
 import { fetchSemesters as fetchSemestersService } from "../services/semesterService";
 
 /** Result type returned by the hook. */
@@ -39,8 +40,7 @@ export function useSemesters(): UseSemestersResult {
     } catch (e) {
       console.error("Ошибка загрузки семестров:", e);
       setError(
-        "Не удалось загрузить семестры: " +
-          (e instanceof Error ? e.message : String(e))
+        "Не удалось загрузить семестры: " + errorMessage(e)
       );
     } finally {
       setLoading(false);

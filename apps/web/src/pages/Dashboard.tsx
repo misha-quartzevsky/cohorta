@@ -22,6 +22,7 @@ import {
   courseColor,
   courseSlug,
   lectureSlug,
+  lectureTitle,
   lectureCourseId,
   courseSemesterId,
   semesterSlug,
@@ -125,9 +126,7 @@ function Dashboard() {
   };
 
   const handleDeleteLecture = (lecture: Lecture) => {
-    const t = String(
-      (lecture as Record<string, unknown>).title ?? "Без названия"
-    );
+    const t = lectureTitle(lecture);
     askConfirm("Удалить запись?", `Запись «${t}» будет удалена.`, async () => {
       await deleteLecture(lecture.id);
       setConfirmOpen(false);

@@ -12,6 +12,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Course } from "../lib/types";
+import { errorMessage } from "../lib/format";
 import {
   fetchCourses,
   fetchLatestLectureTitles,
@@ -72,8 +73,7 @@ export function useCourses(semesterId?: string): UseCoursesResult {
     } catch (e) {
       console.error("Ошибка загрузки курсов:", e);
       setError(
-        "Не удалось загрузить курсы: " +
-          (e instanceof Error ? e.message : String(e))
+        "Не удалось загрузить курсы: " + errorMessage(e)
       );
     } finally {
       setLoading(false);
@@ -95,8 +95,7 @@ export function useCourses(semesterId?: string): UseCoursesResult {
       } catch (e) {
         console.error("Ошибка создания курса:", e);
         setError(
-          "Не удалось создать курс: " +
-            (e instanceof Error ? e.message : String(e))
+          "Не удалось создать курс: " + errorMessage(e)
         );
       }
     },
@@ -119,8 +118,7 @@ export function useCourses(semesterId?: string): UseCoursesResult {
       } catch (e) {
         console.error("Ошибка обновления курса:", e);
         setError(
-          "Не удалось обновить курс: " +
-            (e instanceof Error ? e.message : String(e))
+          "Не удалось обновить курс: " + errorMessage(e)
         );
       }
     },
@@ -140,8 +138,7 @@ export function useCourses(semesterId?: string): UseCoursesResult {
       } catch (e) {
         console.error("Ошибка удаления курса:", e);
         setError(
-          "Не удалось удалить курс: " +
-            (e instanceof Error ? e.message : String(e))
+          "Не удалось удалить курс: " + errorMessage(e)
         );
       }
     },

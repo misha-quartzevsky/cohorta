@@ -33,12 +33,12 @@ export interface UseAuthResult {
  */
 export function useAuth(): UseAuthResult {
   const [user, setUser] = useState<User | null>(
-    () => (pb.authStore.model as unknown as User | null) ?? null
+    () => (pb.authStore.model as User | null) ?? null
   );
 
   useEffect(() => {
     const unsubscribe = pb.authStore.onChange((_token, model) => {
-      setUser(model ? (model as unknown as User) : null);
+      setUser(model ? (model as User) : null);
     });
     return unsubscribe;
   }, []);

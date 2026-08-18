@@ -14,7 +14,8 @@
 
 import { useEffect, useState } from "react";
 import type { Lecture } from "../lib/types";
-import { FIELDS, lectureBody } from "../lib/types";
+import { lectureBody, lectureTitle } from "../lib/types";
+import { errorMessage } from "../lib/format";
 import {
   createLecture as createLectureService,
   createUnassignedLecture,
@@ -54,10 +55,8 @@ function LectureEditor({ courseId, lecture, isNote, onSaved, onCancel }: Props) 
   // When editing, pre-fill the form with the lecture's data.
   useEffect(() => {
     if (lecture) {
-      const t: unknown = lecture[FIELDS.lectureTitle];
-      const c: unknown = lectureBody(lecture);
-      setTitle(t ? String(t) : "");
-      setContent(c ? String(c) : "");
+      setTitle(lectureTitle(lecture));
+      setContent(lectureBody(lecture));
     }
   }, [lecture]);
 
@@ -89,8 +88,7 @@ function LectureEditor({ courseId, lecture, isNote, onSaved, onCancel }: Props) 
     } catch (e) {
       console.error("Ошибка сохранения:", e);
       setError(
-        "Не удалось сохранить лекцию: " +
-          (e instanceof Error ? e.message : String(e))
+        "Не удалось сохранить лекцию: " + errorMessage(e)
       );
     } finally {
       setSaving(false);

@@ -32,25 +32,3 @@ export async function fetchSemesters(): Promise<Semester[]> {
     return semesterSlug(a).localeCompare(semesterSlug(b));
   });
 }
-
-/**
- * Fetch a single semester by its slug (URL identifier).
- *
- * @param slug — semester slug (e.g. "5")
- * @returns Resolves to the Semester record.
- */
-export async function fetchSemesterBySlug(slug: string): Promise<Semester> {
-  return pb
-    .collection("semesters")
-    .getFirstListItem<Semester>(`${FIELDS.semesterSlug}="${slug}"`);
-}
-
-/**
- * Fetch a single semester by its PocketBase ID.
- *
- * @param id — PocketBase record ID
- * @returns Resolves to the Semester record.
- */
-export async function fetchSemester(id: string): Promise<Semester> {
-  return pb.collection("semesters").getOne<Semester>(id);
-}

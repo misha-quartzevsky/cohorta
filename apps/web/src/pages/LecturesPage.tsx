@@ -20,6 +20,7 @@ import {
   courseSlug,
   courseSemesterId,
   lectureSlug,
+  lectureTitle,
   semesterSlug,
 } from "../lib/types";
 import Header from "../components/Header";
@@ -146,9 +147,7 @@ function LecturesPage() {
             }
             onDelete={() => {
               setConfirmLectureId(lec.id);
-              setConfirmTitle(
-                String((lec as Record<string, unknown>).title ?? "Без названия")
-              );
+              setConfirmTitle(lectureTitle(lec));
               setConfirmOpen(true);
             }}
           />

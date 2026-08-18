@@ -10,18 +10,9 @@
  */
 
 import { Node, mergeAttributes } from "@tiptap/core";
-import { ReactNodeViewRenderer, type NodeViewProps } from "@tiptap/react";
+import { ReactNodeViewRenderer } from "@tiptap/react";
 
-function AudioBlockView(props: NodeViewProps) {
-  return (
-    <audio
-      controls
-      preload="metadata"
-      className="lecture-audio"
-      src={props.node.attrs.src}
-    />
-  );
-}
+import AudioBlockView from "./AudioBlockView";
 
 export const AudioBlock = Node.create({
   name: "audioBlock",

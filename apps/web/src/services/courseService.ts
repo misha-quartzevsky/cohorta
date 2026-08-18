@@ -38,7 +38,7 @@ async function takenCourseSlugs(): Promise<Set<string>> {
     .getFullList<Course>({ fields: FIELDS.courseSlug });
   return new Set(
     all
-      .map((c) => String(c[FIELDS.courseSlug] ?? ""))
+      .map((c) => c.slug ?? "")
       .filter((s) => s.length > 0)
   );
 }
@@ -101,7 +101,7 @@ export async function updateCourse(
     [FIELDS.courseName]: name,
   };
   // Lazy slug backfill for legacy records.
-  if (!existing[FIELDS.courseSlug]) {
+  if (!existing.slug) {
     payload[FIELDS.courseSlug] = await uniqueCourseSlug(name);
   }
   if (color && color.trim()) {
@@ -162,8 +162,7 @@ export async function fetchLatestLectureTitles(
         sort: "-created",
       });
       if (last.items[0]) {
-        const title: unknown = last.items[0][FIELDS.lectureTitle];
-        prev[c.id] = title ? String(title) : "";
+        prev[c.id] = last.items[0].title;
       }
     } catch {
       // No lectures for this course — leave entry empty.

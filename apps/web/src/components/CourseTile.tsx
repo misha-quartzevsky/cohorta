@@ -9,6 +9,7 @@
  * an optional kebab menu for edit/delete.
  */
 
+import { tileAccent } from "../lib/format";
 import type { Course } from "../lib/types";
 import { courseName, courseColor } from "../lib/types";
 import KebabMenu from "./KebabMenu";
@@ -51,10 +52,7 @@ function CourseTile({
   onEdit,
   onDelete,
 }: Props) {
-  const first = index % 3;
-  const accent = (
-    first === 0 ? "lilac" : first === 1 ? "ginger" : "black"
-  ) as "lilac" | "ginger" | "black";
+  const accent = tileAccent(index);
 
   const metaText = featured
     ? `Последняя лекция: ${featured}`

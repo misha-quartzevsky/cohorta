@@ -10,6 +10,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Lecture } from "../lib/types";
+import { errorMessage } from "../lib/format";
 import { fetchRecentLectures as fetchRecentLecturesService } from "../services/lectureService";
 
 /** Result type returned by the hook. */
@@ -42,8 +43,7 @@ export function useRecentLectures(
     } catch (e) {
       console.error("Ошибка загрузки лекций:", e);
       setError(
-        "Не удалось загрузить лекции: " +
-          (e instanceof Error ? e.message : String(e))
+        "Не удалось загрузить лекции: " + errorMessage(e)
       );
     } finally {
       setLoading(false);

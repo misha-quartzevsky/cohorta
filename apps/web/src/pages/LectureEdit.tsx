@@ -19,6 +19,7 @@ import {
   lectureTitle,
   tagLectureIds,
 } from "../lib/types";
+import { errorMessage, formatDate } from "../lib/format";
 import {
   fetchLectureBySlug,
   tokenizePbFileUrls,
@@ -100,10 +101,7 @@ function LectureEdit() {
       .catch((e) => {
         console.error("Ошибка загрузки записи:", e);
         if (!cancelled) {
-          setError(
-            "Не удалось загрузить запись: " +
-              (e instanceof Error ? e.message : String(e))
-          );
+          setError("Не удалось загрузить запись: " + errorMessage(e));
         }
       });
     return () => {
@@ -245,11 +243,7 @@ function LectureEdit() {
             <div className="edit-meta-row">
               <p className="lecture-card-meta">
                 {unassigned ? "Заметка" : "Лекция"} ·{" "}
-                {new Date(lecture.created).toLocaleDateString("ru-RU", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
+                {formatDate(lecture.created)}
               </p>
               <span className={`save-indicator ${saveState}`}>
                 {saveState === "saving" && (
