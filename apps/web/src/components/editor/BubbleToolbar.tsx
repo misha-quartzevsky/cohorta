@@ -11,7 +11,7 @@
 import type { Editor as TiptapEditor } from "@tiptap/core";
 import { BubbleMenu } from "@tiptap/react/menus";
 import type { BubbleMenuPluginProps } from "@tiptap/extension-bubble-menu";
-import { Bold, Eraser, Italic, Link2, MoreHorizontal } from "lucide-react";
+import { Bold, Eraser, Italic, Link2, Mic, MicOff, MoreHorizontal } from "lucide-react";
 import { HIGHLIGHT_COLORS, handleLink, toggleHighlight } from "./textCommands";
 
 interface Props {
@@ -20,6 +20,9 @@ interface Props {
   /** Active state of the «…» popover (for the button highlight). */
   textMenuOpen: boolean;
   onOpenTextMenu: () => void;
+  /** Диктовка/запись (для пульса иконки микрофона). */
+  recording: boolean;
+  onToggleMic: () => void;
 }
 
 export function BubbleToolbar({
@@ -27,9 +30,25 @@ export function BubbleToolbar({
   shouldShow,
   textMenuOpen,
   onOpenTextMenu,
+  recording,
+  onToggleMic,
 }: Props) {
   return (
     <BubbleMenu editor={editor} shouldShow={shouldShow} className="bubble-menu">
+      <button
+        type="button"
+        className={`bubble-btn${recording ? " recording" : ""}`}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={onToggleMic}
+        title={recording ? "Остановить запись" : "Диктовка / диктофон"}
+      >
+        {recording ? (
+          <MicOff size={15} />
+        ) : (
+          <Mic size={15} />
+        )}
+      </button>
+      <span className="bubble-sep" />
       <button
         type="button"
         className={`bubble-btn${editor.isActive("bold") ? " active" : ""}`}

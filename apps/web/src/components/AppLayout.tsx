@@ -22,6 +22,7 @@ import {
   LectureFrameContext,
   type LectureFrameApi,
 } from "../lib/lectureFrame";
+import { UIShellContext, type UIShellApi } from "../lib/uiShellContext";
 
 export default function AppLayout() {
   // Lecture frame state (shared with GlobalSidebar + LectureLayout pages).
@@ -29,6 +30,12 @@ export default function AppLayout() {
   const flushRef = useRef<(() => Promise<void>) | null>(null);
   const tocContainerRef = useRef<HTMLElement | null>(null);
   const [tocVersion, setTocVersion] = useState(0);
+
+  // Mobile drawer state: the header burger toggles it, the sidebar + backdrop
+  // render from it. On desktop (>=1024px) the sidebar is always visible.
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
+  const toggleSidebar = useCallback(() => setSidebarOpen((open) => !open), []);
 
   const registerFlush = useCallback(
     (fn: (() => Promise<void>) | null) => {
@@ -51,15 +58,27 @@ export default function AppLayout() {
     [registerFlush, setTitleCb, title, tocVersion, bumpToc]
   );
 
+  const uiShell = useMemo<UIShellApi>(
+    () => ({
+      sidebarOpen,
+      setSidebarOpen,
+      toggleSidebar,
+      closeSidebar,
+    }),
+    [sidebarOpen, toggleSidebar, closeSidebar]
+  );
+
   return (
     <LectureFrameContext.Provider value={api}>
-      <div className="app-shell">
-        <GlobalSidebar />
-        <main className="app-main">
-          <Outlet />
-        </main>
-        <DocumentScrollbar />
-      </div>
+      <UIShellContext.Provider value={uiShell}>
+        <div className="app-shell">
+          <GlobalSidebar open={sidebarOpen} onClose={closeSidebar} />
+          <main className="app-main">
+            <Outlet />
+          </main>
+          <DocumentScrollbar />
+        </div>
+      </UIShellContext.Provider>
     </LectureFrameContext.Provider>
   );
 }

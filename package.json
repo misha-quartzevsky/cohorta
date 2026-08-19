@@ -4,6 +4,7 @@
   "description": "Cohorta — edtech PWA for lecture capture and study",
   "scripts": {
     "dev": "npm run dev --prefix apps/web",
+    "dev:https": "npm run dev:https --prefix apps/web",
     "build": "npm run build --prefix apps/web",
     "preview": "npm run preview --prefix apps/web",
     "seed": "npm run seed --prefix apps/web",

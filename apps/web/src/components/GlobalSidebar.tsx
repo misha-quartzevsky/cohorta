@@ -14,10 +14,10 @@
  *  - Table of Contents of current lecture
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { LogOut, ChevronDown } from "lucide-react";
+import { LogOut, ChevronDown, X } from "lucide-react";
 
 import { useAuth } from "../hooks/useAuth";
 import { useSemester } from "../lib/semesterContext";
@@ -70,7 +70,16 @@ function isLectureRoute(pathname: string): {
   return { isLecture: false };
 }
 
-export default function GlobalSidebar() {
+interface Props {
+  /** Mobile drawer open flag (ignored on desktop — the sidebar is always
+   *  visible there and the CSS `.open` class has no effect). */
+  open?: boolean;
+  /** Called when the drawer should close (backdrop click / close button /
+   *  navigation). */
+  onClose?: () => void;
+}
+
+export default function GlobalSidebar({ open = false, onClose }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
@@ -80,6 +89,25 @@ export default function GlobalSidebar() {
   const semesterBtnRef = useRef<HTMLButtonElement | null>(null);
   const sidebarRef = useRef<HTMLElement | null>(null);
   const semesterPopupRef = useRef<HTMLDivElement | null>(null);
+  const prevPathRef = useRef(location.pathname);
+
+  // Close the mobile drawer whenever the route changes (user tapped a nav
+  // link). Tracked via prev/current path so simply OPENING the drawer (no
+  // navigation) never triggers a close.
+  useEffect(() => {
+    if (prevPathRef.current !== location.pathname) {
+      prevPathRef.current = location.pathname;
+      onClose?.();
+    }
+  }, [location.pathname, onClose]);
+
+  // Lock the background scroll while the drawer is open.
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   const { lectures: recentLectures } = useRecentLectures(3);
 
@@ -121,8 +149,30 @@ export default function GlobalSidebar() {
   const { tocContainerRef, tocVersion } = useLectureFrame();
 
   return (
-    <aside ref={sidebarRef} className="global-sidebar">
-      {/* User Profile */}
+    <>
+      {open && (
+        <div
+          className="sidebar-backdrop"
+          onClick={onClose}
+          aria-hidden="true"
+          role="presentation"
+        />
+      )}
+      <aside
+        ref={sidebarRef}
+        className={`global-sidebar${open ? " open" : ""}`}
+      >
+        {/* Close button — only shown on mobile (drawer mode). */}
+        <button
+          type="button"
+          className="sidebar-close"
+          onClick={onClose}
+          aria-label="Закрыть меню"
+        >
+          <X size={18} />
+        </button>
+
+        {/* User Profile */}
       {user && (
         <div className="sidebar-profile">
           <div className="profile-avatar">
@@ -301,6 +351,7 @@ export default function GlobalSidebar() {
         </>
       )}
       <ScrollBar scrollRef={sidebarRef} />
-    </aside>
+      </aside>
+    </>
   );
 }

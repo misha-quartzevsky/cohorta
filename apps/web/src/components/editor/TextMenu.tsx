@@ -11,7 +11,7 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { Editor as TiptapEditor } from "@tiptap/core";
-import { Eraser, Link2, RemoveFormatting } from "lucide-react";
+import { Eraser, Link2, Mic, MicOff, RemoveFormatting } from "lucide-react";
 import {
   HIGHLIGHT_COLORS,
   TEXT_BLOCK_ITEMS,
@@ -26,9 +26,14 @@ interface Props {
   pos: { top: number; left: number };
   /** Close the popover (fires before/after commands run). */
   onClose: () => void;
+  /** Есть ли чем писать (Web Speech API или MediaRecorder). */
+  canCapture: boolean;
+  /** Идёт ли запись/диктовка. */
+  recording: boolean;
+  onToggleMic: () => void;
 }
 
-export function TextMenu({ editor, pos, onClose }: Props) {
+export function TextMenu({ editor, pos, onClose, canCapture, recording, onToggleMic }: Props) {
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   // Закрытие по клику вне меню / Escape.
@@ -81,6 +86,26 @@ export function TextMenu({ editor, pos, onClose }: Props) {
     >
       <div className="text-menu-label">Форматирование</div>
       {TEXT_MARK_ITEMS.map(renderTextMenuItem)}
+      {canCapture && (
+        <>
+          <span className="text-menu-sep" />
+          <button
+            type="button"
+            className={`text-menu-item${recording ? " active" : ""}`}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() =>
+              runTextCommand(() => onToggleMic())
+            }
+          >
+            <span className="slash-icon">
+              {recording ? <MicOff size={15} /> : <Mic size={15} />}
+            </span>
+            {recording
+              ? "Остановить запись"
+              : "Диктовка / диктофон"}
+          </button>
+        </>
+      )}
       <div className="text-menu-label">Ссылка</div>
       <button
         type="button"

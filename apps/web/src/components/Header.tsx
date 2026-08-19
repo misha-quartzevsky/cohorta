@@ -13,10 +13,11 @@
 
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mic, MicOff, Search } from "lucide-react";
+import { AudioLines, Menu, Mic, MicOff, Search, X } from "lucide-react";
 
 import { useLectureSearch } from "../hooks/useLectureSearch";
 import { useSpeech } from "../lib/speechContext";
+import { useUiShell } from "../lib/uiShellContext";
 import ScrollBar from "./scrollbar/ScrollBar";
 
 export interface Crumb {
@@ -44,10 +45,17 @@ function Header({ crumbs = [], crumbsLoading = false }: Props) {
   const searchWrapRef = useRef<HTMLDivElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
+  // Mobile drawer toggle (the burger button is hidden on desktop by CSS).
+  const { sidebarOpen, toggleSidebar } = useUiShell();
+
   const { results, loading } = useLectureSearch(query, open);
 
   // Голосовой ввод: кнопка микрофона (пульс при записи) + interim-подсказка.
-  const { supported, recording, toggle, interimText, error } = useSpeech();
+  // В браузерах без Web Speech API (Firefox) всё равно показываем кнопку —
+  // в режиме «диктофона» (audioOnly): запись в аудиофайл без транскрибации.
+  const { supported, audioOnly, recording, toggle, interimText, notice, error } =
+    useSpeech();
+  const canCapture = supported || audioOnly;
 
   /** Прыжок к найденной лекции + закрытие дропдауна. */
   const go = (to: string) => {
@@ -67,6 +75,17 @@ function Header({ crumbs = [], crumbsLoading = false }: Props) {
   return (
     <header className={`app-header${isSearchFocused ? " search-focused" : ""}`}>
       <div className="app-header-inner">
+        {/* --- burger (mobile drawer toggle, hidden on desktop) --- */}
+        <button
+          type="button"
+          className="header-menu-btn"
+          onClick={toggleSidebar}
+          aria-label={sidebarOpen ? "Закрыть меню" : "Открыть меню"}
+          aria-expanded={sidebarOpen}
+        >
+          {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+
         {/* --- breadcrumbs (center), только когда есть куда «вернуться» --- */}
         {crumbs.length > 1 && (
           <nav
@@ -105,7 +124,7 @@ function Header({ crumbs = [], crumbsLoading = false }: Props) {
 
         {/* --- microphone + search (right) --- */}
         <div className="header-right">
-          {supported && (
+          {canCapture && (
             <div className="header-mic-wrap">
               <button
                 type="button"
@@ -113,16 +132,31 @@ function Header({ crumbs = [], crumbsLoading = false }: Props) {
                 onClick={toggle}
                 title={
                   recording
-                    ? "Остановить диктовку"
+                    ? "Остановить запись"
                     : error
-                      ? `Диктовка недоступна: ${error}`
-                      : "Диктовка: голосовой ввод в текст лекции"
+                      ? `Запись недоступна: ${error}`
+                      : audioOnly
+                        ? "Диктофон: аудиозапись (транскрибация не поддерживается)"
+                        : "Диктовка: голосовой ввод в текст лекции"
                 }
               >
-                {recording ? <MicOff size={18} /> : <Mic size={18} />}
+                {recording ? (
+                  <MicOff size={18} />
+                ) : supported ? (
+                  <Mic size={18} />
+                ) : (
+                  <>
+                    <AudioLines size={18} />
+                    <span className="header-mic-dictate">Диктофон</span>
+                  </>
+                )}
               </button>
+              {recording && <span className="header-rec">● REC</span>}
               {recording && interimText && (
                 <span className="header-mic-interim">{interimText}</span>
+              )}
+              {notice && !recording && (
+                <span className="header-mic-interim">{notice}</span>
               )}
             </div>
           )}

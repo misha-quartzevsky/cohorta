@@ -24,7 +24,7 @@ import ImageExtension from "@tiptap/extension-image";
 import Highlight from "@tiptap/extension-highlight";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
-import { Plus } from "lucide-react";
+import { AudioLines, Mic, MicOff, Plus } from "lucide-react";
 import type { UploadedImage } from "../services/lectureService";
 
 import { createSlashMenu } from "./SlashMenu";
@@ -73,8 +73,11 @@ export default function Editor({
     handleFilesChange,
   } = useImageUpload(onUploadImages);
 
-  // Голосовой ввод: редактор становится целью вставки распознанного текста.
-  const { registerEditor, unregisterEditor } = useSpeech();
+  // Голосовой ввод: редактор становится целью вставки распознанного текста
+  // (The Bridge) + чтение состояния записи для индикаторов на «листе».
+  const { registerEditor, unregisterEditor, supported, audioOnly, recording, toggle } =
+    useSpeech();
+  const canCapture = supported || audioOnly;
 
   // Единственные overlay/модалки для формул и схем (см. mathBus/sketchBus).
   const [mathReq, setMathReq] = useState<MathEditRequest | null>(null);
@@ -254,7 +257,7 @@ export default function Editor({
   };
 
   return (
-    <div className={`tiptap-wrapper ${className || ""}`}>
+    <div className={`tiptap-wrapper ${className || ""}${recording ? " is-recording" : ""}`}>
       <input
         ref={fileInputRef}
         type="file"
@@ -264,11 +267,39 @@ export default function Editor({
         onChange={handleFilesChange}
       />
 
+      {/* Постоянная кнопка записи в углу «листа»: быстрый старт
+          диктовки (или «диктофона» в браузерах без Web Speech API). */}
+      {canCapture && (
+        <button
+          type="button"
+          className={`editor-mic${recording ? " active" : ""}`}
+          onClick={toggle}
+          title={
+            recording
+              ? "Остановить запись"
+              : audioOnly
+                ? "Диктофон: аудиозапись (транскрибация не поддерживается)"
+                : "Диктовка: голосовой ввод в текст лекции"
+          }
+        >
+          {recording ? (
+            <MicOff size={18} />
+          ) : supported ? (
+            <Mic size={18} />
+          ) : (
+            <AudioLines size={18} />
+          )}
+          {recording && <span className="editor-rec">● REC</span>}
+        </button>
+      )}
+
       <BubbleToolbar
         editor={editor}
         shouldShow={shouldShowBubble}
         textMenuOpen={textMenuOpen}
         onOpenTextMenu={openTextMenu}
+        recording={recording}
+        onToggleMic={toggle}
       />
 
       {textMenuOpen && textMenuPos && (
@@ -276,6 +307,9 @@ export default function Editor({
           editor={editor}
           pos={textMenuPos}
           onClose={() => setTextMenuOpen(false)}
+          canCapture={canCapture}
+          recording={recording}
+          onToggleMic={toggle}
         />
       )}
 

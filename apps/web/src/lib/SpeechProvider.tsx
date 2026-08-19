@@ -71,8 +71,10 @@ function getMediaRecorder(): typeof MediaRecorder | null {
 
 export function SpeechProvider({ children }: { children: ReactNode }) {
   const [supported, setSupported] = useState(false);
+  const [audioOnly, setAudioOnly] = useState(false);
   const [recording, setRecording] = useState(false);
   const [interimText, setInterimText] = useState("");
+  const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [hasEditor, setHasEditor] = useState(false);
 
@@ -93,7 +95,10 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
   const pendingAudioRef = useRef<File | null>(null);
 
   useEffect(() => {
-    setSupported(getSpeechRecognition() !== null);
+    const hasSR = getSpeechRecognition() !== null;
+    setSupported(hasSR);
+    // Режим «диктофона»: Firefox и прочие без Web Speech API, но с MediaRecorder.
+    setAudioOnly(!hasSR && getMediaRecorder() !== null);
   }, []);
 
   const registerEditor = useCallback((editor: TiptapEditor) => {
@@ -242,69 +247,88 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
     if (recordingRef.current) return;
     const editor = activeEditorRef.current;
     if (!editor) return;
-    const SR = getSpeechRecognition();
-    if (!SR) return;
-
     editor.commands.focus();
+
+    // Общая сброска зоны диктовки для обоих режимов (live и «диктофон»).
     const base = editor.state.selection.from;
     finalEndRef.current = base;
     cursorPosRef.current = base;
     transcriptDoneRef.current = false;
     pendingAudioRef.current = null;
+    setError("");
+    setNotice("");
 
-    const recognition = new SR();
-    recognition.lang = "ru-RU";
-    recognition.continuous = true;
-    recognition.interimResults = true;
+    const SR = getSpeechRecognition();
+    if (SR) {
+      const recognition = new SR();
+      recognition.lang = "ru-RU";
+      recognition.continuous = true;
+      recognition.interimResults = true;
 
-    recognition.onresult = (event) => {
-      let interim = "";
-      let final = "";
-      const results = event.results;
-      const start = event.resultIndex ?? 0;
-      for (let i = start; i < results.length; i++) {
-        const transcript = results[i]?.[0]?.transcript ?? "";
-        if (results[i].isFinal) final += transcript;
-        else interim += transcript;
+      recognition.onresult = (event) => {
+        let interim = "";
+        let final = "";
+        const results = event.results;
+        const start = event.resultIndex ?? 0;
+        for (let i = start; i < results.length; i++) {
+          const transcript = results[i]?.[0]?.transcript ?? "";
+          if (results[i].isFinal) final += transcript;
+          else interim += transcript;
+        }
+        if (final) insertTextAtAnchor(final, false);
+        if (interim) insertTextAtAnchor(interim, true);
+        if (interim || final) setInterimText(interim || final);
+      };
+
+      recognition.onerror = (event) => {
+        const code = event?.error;
+        if (code === "not-allowed" || code === "service-not-allowed") {
+          setError(
+            "Нет доступа к микрофону. Разрешите в браузере и попробуйте снова."
+          );
+        }
+      };
+
+      recognition.onend = () => {
+        recognitionRef.current = null;
+        transcriptDoneRef.current = true;
+        recordingRef.current = false;
+        setRecording(false);
+        setInterimText("");
+        insertAudioIfReady();
+      };
+
+      try {
+        recognition.start();
+      } catch {
+        // Повторный старт может выбросить исключение — игнорируем.
       }
-      if (final) insertTextAtAnchor(final, false);
-      if (interim) insertTextAtAnchor(interim, true);
-      if (interim || final) setInterimText(interim || final);
-    };
-
-    recognition.onerror = (event) => {
-      const code = event?.error;
-      if (code === "not-allowed" || code === "service-not-allowed") {
-        setError(
-          "Нет доступа к микрофону. Разрешите в браузере и попробуйте снова."
-        );
-      }
-    };
-
-    recognition.onend = () => {
-      recognitionRef.current = null;
-      transcriptDoneRef.current = true;
-      recordingRef.current = false;
-      setRecording(false);
-      setInterimText("");
-      insertAudioIfReady();
-    };
-
-    try {
-      recognition.start();
-    } catch {
-      // Повторный старт может выбросить исключение — игнорируем.
+      recognitionRef.current = recognition;
+      recordingRef.current = true;
+      setRecording(true);
+      void startAudioRecording();
+      return;
     }
-    recognitionRef.current = recognition;
+
+    // --- Режим «диктофона»: нет Web Speech API, но есть MediaRecorder ---
+    // (например, Firefox). Распознавания нет — только качественная аудиозапись
+    // в PocketBase. Пульс/индикатор записи включается так же, как при живой
+    // диктовке, чтобы у юзера был визуальный фидбек.
+    const MediaRecorderCtor = getMediaRecorder();
+    if (!MediaRecorderCtor) return;
+
     recordingRef.current = true;
     setRecording(true);
-    setError("");
+    setNotice(
+      "Транскрибация не поддерживается вашим браузером, но мы сохраним аудио."
+    );
     void startAudioRecording();
   }, [insertTextAtAnchor, insertAudioIfReady, startAudioRecording]);
 
   const end = useCallback(() => {
     if (!recordingRef.current) return;
     recordingRef.current = false;
+    setNotice("");
 
     const recognition = recognitionRef.current;
     if (recognition) {
@@ -314,8 +338,13 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
         /* уже остановлено */
       }
     } else {
-      // Распознавание завершилось само — финализируем аудио вручную.
+      // Распознавания нет (режим «диктофона» либо само-завершение) —
+      // «recording.onend» не сработает, поэтому финализируем аудио и снимаем
+      // индикатор записи вручную.
       transcriptDoneRef.current = true;
+      recordingRef.current = false;
+      setRecording(false);
+      setInterimText("");
       insertAudioIfReady();
     }
 
@@ -356,8 +385,10 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
   const value = useMemo<SpeechApi>(
     () => ({
       supported,
+      audioOnly,
       recording,
       interimText,
+      notice,
       error,
       hasEditor,
       registerEditor,
@@ -369,8 +400,10 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
     }),
     [
       supported,
+      audioOnly,
       recording,
       interimText,
+      notice,
       error,
       hasEditor,
       registerEditor,
