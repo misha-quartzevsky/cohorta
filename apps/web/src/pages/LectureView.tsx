@@ -36,8 +36,19 @@ function LectureView() {
   const [content, setContent] = useState("");
   const contentRef = useRef<HTMLDivElement | null>(null);
 
+  // `ready` needed by effects below — compute it here (not only near the JSX).
+  const ready = !!lecture && !loading;
+
   const confirm = useConfirmDialog();
-  const { setTitle } = useLectureFrame();
+  const frame = useLectureFrame();
+  const { setTitle, tocContainerRef } = frame;
+
+  // Assign contentRef to the shared TOC container in the layout context.
+  // Depends on `ready`: the container div only mounts after the lecture loads,
+  // so re-assign the ref when it appears (was once-only → sidebar TOC saw null).
+  useLayoutEffect(() => {
+    tocContainerRef.current = contentRef.current;
+  }, [tocContainerRef, ready]);
 
   // Токены `[[file:…]]` → абсолютные URL файлов PB перед отрисовкой.
   useLayoutEffect(() => {
@@ -121,7 +132,6 @@ function LectureView() {
   };
 
   const isHtmlContent = !!(lecture && /<[a-z][\s\S]*>/i.test(content));
-  const ready = !!lecture && !loading;
 
   return (
     <>

@@ -163,40 +163,42 @@ function Dashboard() {
         <>
           <Header crumbs={[{ label: "Рабочий стол" }]} />
           <div className="page">
-            <ErrorBanner message={error} />
+            <div className="content-canvas">
+              <ErrorBanner message={error} />
 
-            <h1 className="page-title">Семестр {semSlug}</h1>
-            <p className="page-subtitle">
-              Недавно изменённые курсы и последние записи.
-            </p>
+              <h1 className="page-title">Семестр {semSlug}</h1>
+              <p className="page-subtitle">
+                Недавно изменённые курсы и последние записи.
+              </p>
 
-            <CoursesSection
-              courses={visibleCourses}
-              featured={featured}
-              form={form}
-              semesters={semesters}
-              onOpenAll={handleOpenAllCourses}
-              onOpenCourse={handleOpenCourse}
-              onDeleteCourse={handleDeleteCourse}
-            />
+              <CoursesSection
+                courses={visibleCourses}
+                featured={featured}
+                form={form}
+                semesters={semesters}
+                onOpenAll={handleOpenAllCourses}
+                onOpenCourse={handleOpenCourse}
+                onDeleteCourse={handleDeleteCourse}
+              />
 
-            <RecentSection
-              lectures={visibleLectures}
-              courses={courses}
-              onCreateNote={() => setCreatingNote(true)}
-              onOpenLecture={handleOpenLecture}
-              onEditLecture={handleEditLecture}
-              onDeleteLecture={handleDeleteLecture}
-              onAssignCourse={handleAssignCourse}
-            />
+              <RecentSection
+                lectures={visibleLectures}
+                courses={courses}
+                onCreateNote={() => setCreatingNote(true)}
+                onOpenLecture={handleOpenLecture}
+                onEditLecture={handleEditLecture}
+                onDeleteLecture={handleDeleteLecture}
+                onAssignCourse={handleAssignCourse}
+              />
 
-            <ConfirmDialog
-              open={confirm.open}
-              title={confirm.title}
-              message={confirm.message}
-              onConfirm={confirm.confirm}
-              onCancel={confirm.cancel}
-            />
+              <ConfirmDialog
+                open={confirm.open}
+                title={confirm.title}
+                message={confirm.message}
+                onConfirm={confirm.confirm}
+                onCancel={confirm.cancel}
+              />
+            </div>
           </div>
         </>
       )}

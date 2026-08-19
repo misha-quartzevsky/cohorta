@@ -88,57 +88,59 @@ function LecturesPage() {
             ]}
           />
           <div className="page">
-            <ErrorBanner message={error} />
+            <div className="content-canvas">
+              <ErrorBanner message={error} />
 
-            <h1 className="page-title">
-              {course ? courseName(course) : "Курс"}
-            </h1>
-            <p className="page-subtitle">
-              Отсортировано по дате — новые выше.
-            </p>
+              <h1 className="page-title">
+                {course ? courseName(course) : "Курс"}
+              </h1>
+              <p className="page-subtitle">
+                Отсортировано по дате — новые выше.
+              </p>
 
-            <div className="bento">
-              {lectures.map((lec, i) => (
-                <LectureTile
-                  key={lec.id}
-                  lecture={lec}
-                  index={i}
-                  onClick={() =>
-                    navigate(
-                      `/s/${semSlug}/${courseSlugParam}/${lectureSlug(lec)}`
-                    )
-                  }
-                  onEdit={() =>
-                    navigate(
-                      `/s/${semSlug}/${courseSlugParam}/${lectureSlug(lec)}/edit`
-                    )
-                  }
-                  onDelete={() => {
-                    const t = lectureTitle(lec);
-                    confirm.ask(
-                      "Удалить запись?",
-                      `Запись «${t}» будет удалена.`,
-                      () => {
-                        void deleteLecture(lec.id);
-                      }
-                    );
-                  }}
+              <div className="bento">
+                {lectures.map((lec, i) => (
+                  <LectureTile
+                    key={lec.id}
+                    lecture={lec}
+                    index={i}
+                    onClick={() =>
+                      navigate(
+                        `/s/${semSlug}/${courseSlugParam}/${lectureSlug(lec)}`
+                      )
+                    }
+                    onEdit={() =>
+                      navigate(
+                        `/s/${semSlug}/${courseSlugParam}/${lectureSlug(lec)}/edit`
+                      )
+                    }
+                    onDelete={() => {
+                      const t = lectureTitle(lec);
+                      confirm.ask(
+                        "Удалить запись?",
+                        `Запись «${t}» будет удалена.`,
+                        () => {
+                          void deleteLecture(lec.id);
+                        }
+                      );
+                    }}
+                  />
+                ))}
+
+                <AddTile
+                  label="+ Добавить лекцию"
+                  onClick={() => setEditingPlusIndex(lectures.length)}
                 />
-              ))}
+              </div>
 
-              <AddTile
-                label="+ Добавить лекцию"
-                onClick={() => setEditingPlusIndex(lectures.length)}
+              <ConfirmDialog
+                open={confirm.open}
+                title={confirm.title}
+                message={confirm.message}
+                onConfirm={confirm.confirm}
+                onCancel={confirm.cancel}
               />
             </div>
-
-            <ConfirmDialog
-              open={confirm.open}
-              title={confirm.title}
-              message={confirm.message}
-              onConfirm={confirm.confirm}
-              onCancel={confirm.cancel}
-            />
           </div>
         </>
       )}

@@ -44,14 +44,15 @@ export async function fetchLectures(courseId: string): Promise<Lecture[]> {
  * "Recent Files" section.
  *
  * @param limit — max number of records (default 10)
- * @returns Resolves to an array of Lecture records.
+ * @returns Resolves to an array of Lecture records (with expanded field).
  */
 export async function fetchRecentLectures(
   limit: number = 10
 ): Promise<Lecture[]> {
   return pb.collection("lectures").getFullList<Lecture>({
-    sort: "-created",
+    sort: "-updated",
     filter: "",
+    expand: "field",
   }).then((items) => items.slice(0, limit));
 }
 

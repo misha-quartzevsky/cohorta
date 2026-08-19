@@ -3,8 +3,9 @@
  *  seed.ts — demo data seeder for Cohorta
  * ============================================
  *
- * Creates a test user, the "demo" semester, 2 courses and 3 lectures
- * (one containing an inline MathLive formula: x^2 + y^2 = z^2).
+ * Creates (or updates) the test user, the "demo" semester, 2 courses and
+ * 4 lectures. Lecture HTML contains H1–H3 headings (feeds the TOC E2E tests)
+ * and an inline MathLive formula: x^2 + y^2 = z^2.
  *
  * Run from `apps/web`:
  *   npm run seed
@@ -17,7 +18,8 @@
  *    `users` is created by PocketBase itself on first launch).
  *  - Node.js >= 22.6 (native TypeScript support).
  *
- * Idempotent: aborts if a semester with slug "demo" already exists.
+ * Idempotent: re-runs upsert demo courses/lectures by slug (update-or-create);
+ * extra rows already present in the demo semester are left untouched.
  * Works without auth — PocketBase list/view rules are "" (open).
  */
 
@@ -36,6 +38,17 @@ function math(latex: string): string {
 
 function para(text: string): string {
   return `<p>${text}</p>`;
+}
+
+/** Heading builder — used by E2E tests to assert the TOC is populated. */
+function h1(text: string): string {
+  return `<h1>${text}</h1>`;
+}
+function h2(text: string): string {
+  return `<h2>${text}</h2>`;
+}
+function h3(text: string): string {
+  return `<h3>${text}</h3>`;
 }
 
 
@@ -64,14 +77,26 @@ export const COURSES: SeedCourse[] = [
 export const LECTURES: SeedLecture[] = [
   // Лекция с inline-формулой MathLive — именно её проверяют E2E-тесты
   // на «видимость» формулы при SPA-навигации (без ручного reload).
+  // Заголовки H1–H3 здесь же питают TOC-тесты (sidebar + aside).
   {
     title: "Предел последовательности",
     slug: "limit-of-sequence",
     courseIndex: 0,
     html:
+      h1("Предел последовательности") +
       para("Последовательность {xₙ} сходится к a, если для любого ε > 0 существует номер N, начиная с которого |xₙ − a| < ε.") +
-      math("x^2 + y^2 = z^2") +
-      para("Теорема Пифагора — классический пример верного равенства для прямоугольного треугольника."),
+      h2("Определение") +
+      para("Последовательность называется сходящейся, если существует конечный предел. Число a называют пределом последовательности и пишут xₙ → a при n → ∞.") +
+      h3("Пример: 1/n") +
+      math("\\lim_{n\\to\\infty}\\frac{1}{n}=0") +
+      para("Действительно, для любого ε > 0 достаточно взять N > 1/ε, и тогда при всех n > N будет выполняться |1/n − 0| < ε.") +
+      h2("Свойства пределов") +
+      para("Предел суммы последовательностей равен сумме пределов: lim (aₙ + bₙ) = lim aₙ + lim bₙ.") +
+      math("\\lim_{n\\to\\infty}(a_n+b_n)=\\lim a_n + \\lim b_n") +
+      para("Аналогичные свойства справедливы для произведения и частного (при ненулевом пределе знаменателя).") +
+      h2("Единственность предела") +
+      para("Сходящаяся последовательность имеет ровно один предел: если xₙ → a и xₙ → b, то a = b. Это следует из того, что расстояние |a − b| можно сделать меньше произвольного ε, взяв достаточно большой номер.") +
+      para("Теорема Пифагора — классический пример верного равенства: x² + y² = z²."),
   },
   // Вторая лекция курса «Математический анализ» — для переключения в сайдбаре.
   {
@@ -79,8 +104,26 @@ export const LECTURES: SeedLecture[] = [
     slug: "derivative-geometry",
     courseIndex: 0,
     html:
+      h1("Производная функции") +
       para("Производная функции равна пределу отношения приращения функции к приращению аргумента.") +
-      para("Геометрически она равна тангенсу угла наклона касательной к графику функции."),
+      h2("Геометрический смысл") +
+      para("Геометрически она равна тангенсу угла наклона касательной к графику функции.") +
+      h3("Формула") +
+      math("f'(x)=\\lim_{h\\to 0}\\frac{f(x+h)-f(x)}{h}") +
+      para("Эта формула позволяет вычислять производную любой дифференцируемой функции."),
+  },
+  // Третья лекция курса — третья карточка в сайдбаре и третий H1→H3-набор.
+  {
+    title: "Ряд Тейлора",
+    slug: "taylor-series",
+    courseIndex: 0,
+    html:
+      h1("Ряд Тейлора") +
+      para("Ряд Тейлора позволяет представить функцию в виде бесконечного многочлена.") +
+      h2("Общая формула") +
+      math("f(x)=f(a)+f'(a)(x-a)+\\frac{f''(a)}{2!}(x-a)^2+\\dots") +
+      h3("Применение") +
+      para("Используется для приближённого вычисления функций и решения дифференциальных уравнений."),
   },
   // Единственная лекция курса «Физика».
   {
@@ -88,8 +131,12 @@ export const LECTURES: SeedLecture[] = [
     slug: "newton-laws",
     courseIndex: 1,
     html:
+      h1("Законы Ньютона") +
       para("Первый закон: инерциальные системы отсчёта. Второй закон связывает силу и ускорение.") +
-      para("Третий закон: силы действия и противодействия равны по модулю и противоположны по направлению."),
+      h2("Третий закон") +
+      para("Силы действия и противодействия равны по модулю и противоположны по направлению.") +
+      h3("Пример") +
+      para("Если вы толкаете стену, стена толкает вас с той же силой."),
   },
 ];
 
@@ -99,26 +146,6 @@ export const LECTURES: SeedLecture[] = [
 
 function log(msg: string): void {
   console.log(`[seed] ${msg}`);
-}
-
-async function uniqueSlug(
-  pb: PocketBase,
-  collection: string,
-  base: string,
-): Promise<string> {
-  try {
-    const items = await pb
-      .collection(collection)
-      .getFullList<{ slug?: string }>({ fields: "slug" });
-    const taken = new Set(items.map((r) => r.slug ?? ""));
-    if (!taken.has(base)) return base;
-    let n = 1;
-    while (taken.has(`${base}-${n}`)) n += 1;
-    return `${base}-${n}`;
-  } catch {
-    // Collection may not exist yet — the caller handles the real error.
-    return base;
-  }
 }
 
 /** Тест-пользователь — та же запись, что кладёт сид-миграция 1787043973. */
@@ -164,52 +191,71 @@ export async function seed(pb: PocketBase): Promise<void> {
 
   await ensureDemoUser(pb);
 
-  // Idempotency guard.
-  const existingDemo = await pb.collection("semesters").getFullList<{ id: string }>({
-    filter: 'slug = "demo"',
-    perPage: 1,
-  });
-  if (existingDemo.length > 0) {
-    throw new Error(
-      'Semester "demo" already exists — nothing to do.\n' +
-        "Re-runs are intentionally skipped to keep paths unique.",
-    );
+  // 1. Semester — find or create (idempotent: re-runs update, don't throw).
+  let semester = (
+    await pb.collection("semesters").getFullList<{ id: string }>({
+      filter: 'slug = "demo"',
+      perPage: 1,
+    })
+  )[0];
+  if (semester) {
+    log(`Semester "demo" already exists (${semester.id}) — upserting data.`);
+  } else {
+    semester = await pb.collection("semesters").create<{ id: string }>({
+      slug: "demo",
+    });
+    log(`Semester "demo" created (${semester.id}).`);
   }
 
-  // 1. Semester.
-  const semester = await pb
-    .collection("semesters")
-    .create<{ id: string }>({ slug: "demo" });
-  log(`Semester "demo" created (${semester.id}).`);
-
-  // 2. Courses.
-  const courseSlugs = await Promise.all(
-    COURSES.map(async (c) => uniqueSlug(pb, "courses", c.slug)),
-  );
+  // 2. Courses — find by slug → update, otherwise create.
   const courses: Array<{ id: string }> = [];
-  for (let i = 0; i < COURSES.length; i += 1) {
-    courses.push(
-      await pb.collection("courses").create<{ id: string }>({
-        name: COURSES[i].name,
-        color: COURSES[i].color,
-        slug: courseSlugs[i],
-        semesters: semester.id,
-      }),
-    );
-    log(`Course "${COURSES[i].name}" created (/${courseSlugs[i]}).`);
+  for (const c of COURSES) {
+    const existing = (
+      await pb.collection("courses").getFullList<{ id: string }>({
+        filter: `slug = "${c.slug}"`,
+        perPage: 1,
+        fields: "id",
+      })
+    )[0];
+    const payload = {
+      name: c.name,
+      color: c.color,
+      slug: c.slug,
+      semesters: semester.id,
+    };
+    if (existing) {
+      await pb.collection("courses").update(existing.id, payload);
+      courses.push(existing);
+      log(`Course "${c.name}" updated (/${c.slug}).`);
+    } else {
+      const rec = await pb.collection("courses").create<{ id: string }>(payload);
+      courses.push(rec);
+      log(`Course "${c.name}" created (/${c.slug}).`);
+    }
   }
 
-  // 3. Lectures.
+  // 3. Lectures — find by slug → update (fresh content incl. H1–H3), else create.
   for (const lecture of LECTURES) {
-    const slug = await uniqueSlug(pb, "lectures", lecture.slug);
-    const payload: Record<string, unknown> = {
+    const existing = (
+      await pb.collection("lectures").getFullList<{ id: string }>({
+        filter: `slug = "${lecture.slug}"`,
+        perPage: 1,
+        fields: "id",
+      })
+    )[0];
+    const payload = {
       title: lecture.title,
-      slug,
+      slug: lecture.slug,
       field: courses[lecture.courseIndex].id,
       content: lecture.html,
     };
-    await pb.collection("lectures").create(payload);
-    log(`Lecture "${lecture.title}" created (/${slug}).`);
+    if (existing) {
+      await pb.collection("lectures").update(existing.id, payload);
+      log(`Lecture "${lecture.title}" updated (/${lecture.slug}).`);
+    } else {
+      await pb.collection("lectures").create(payload);
+      log(`Lecture "${lecture.title}" created (/${lecture.slug}).`);
+    }
   }
 
   log(

@@ -12,7 +12,7 @@
  *   /s/:semesterSlug/:courseSlug               → lectures of a course
  *   /s/:semesterSlug/:courseSlug/:lectureSlug  → lecture view
  *   /s/:semesterSlug/:courseSlug/:lectureSlug/edit → lecture edit
- *   /s/:semesterSlug/note/:lectureSlug(+/edit) → unassigned notes
+ *   /note/:lectureSlug(+/edit)                 → unassigned notes (no semester)
  */
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -22,11 +22,13 @@ import CoursesPage from "./pages/CoursesPage";
 import LecturesPage from "./pages/LecturesPage";
 import LectureView from "./pages/LectureView";
 import LectureEdit from "./pages/LectureEdit";
+import NotesPage from "./pages/NotesPage";
 import Header from "./components/Header";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingState from "./components/LoadingState";
 import Login from "./pages/Login";
 import LectureLayout from "./components/LectureLayout";
+import AppLayout from "./components/AppLayout";
 import { SemesterProvider } from "./lib/SemesterProvider";
 import { SpeechProvider } from "./lib/SpeechProvider";
 import {
@@ -74,30 +76,34 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<HomeRedirect />} />
-            <Route path="/s/:semesterSlug" element={<Dashboard />} />
-            <Route path="/s/:semesterSlug/courses" element={<CoursesPage />} />
-            <Route path="/s/:semesterSlug/:courseSlug" element={<LecturesPage />} />
-            {/* Lecture view/edit share one persistent frame: the header and
-                course sidebar live in LectureLayout and stay mounted while the
-                user switches between lectures (no full-screen flicker). */}
-            <Route element={<LectureLayout />}>
-              <Route
-                path="/s/:semesterSlug/:courseSlug/:lectureSlug"
-                element={<LectureView />}
-              />
-              <Route
-                path="/s/:semesterSlug/:courseSlug/:lectureSlug/edit"
-                element={<LectureEdit />}
-              />
-              <Route
-                path="/s/:semesterSlug/note/:lectureSlug"
-                element={<LectureView />}
-              />
-              <Route
-                path="/s/:semesterSlug/note/:lectureSlug/edit"
-                element={<LectureEdit />}
-              />
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<HomeRedirect />} />
+              <Route path="/s/:semesterSlug" element={<Dashboard />} />
+              <Route path="/s/:semesterSlug/courses" element={<CoursesPage />} />
+              <Route path="/s/:semesterSlug/:courseSlug" element={<LecturesPage />} />
+              <Route path="/notes" element={<NotesPage />} />
+              {/* Lecture view/edit share one persistent frame: the header and
+                  course sidebar live in LectureLayout and stay mounted while the
+                  user switches between lectures (no full-screen flicker). */}
+              <Route element={<LectureLayout />}>
+                <Route
+                  path="/s/:semesterSlug/:courseSlug/:lectureSlug"
+                  element={<LectureView />}
+                />
+                <Route
+                  path="/s/:semesterSlug/:courseSlug/:lectureSlug/edit"
+                  element={<LectureEdit />}
+                />
+                {/* Unassigned notes (no semester in URL) */}
+                <Route
+                  path="/note/:lectureSlug"
+                  element={<LectureView />}
+                />
+                <Route
+                  path="/note/:lectureSlug/edit"
+                  element={<LectureEdit />}
+                />
+              </Route>
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

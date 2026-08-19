@@ -19,9 +19,16 @@ interface Props {
   containerRef: { current: HTMLElement | null };
   /** Any change (e.g. editor content) triggers a re-scan. */
   version: unknown;
+  /** Hide the built-in "Оглавление" title (e.g. when embedded in a
+   *  section of GlobalSidebar that already renders its own heading). */
+  hideTitle?: boolean;
 }
 
-export default function TableOfContents({ containerRef, version }: Props) {
+export default function TableOfContents({
+  containerRef,
+  version,
+  hideTitle = false,
+}: Props) {
   const [items, setItems] = useState<TocItem[]>([]);
   const [activeIndex, setActiveIndex] = useState(-1);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -29,11 +36,11 @@ export default function TableOfContents({ containerRef, version }: Props) {
   // Re-scan headings (slightly debounced — `version` changes on every
   // keystroke while editing).
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-    const timer = setTimeout(() => {
+    let disposed = false;
+
+    const scan = () => {
+      const container = containerRef.current;
+      if (!container || disposed) return;
       const headings = Array.from(
         container.querySelectorAll<HTMLElement>("h1, h2, h3")
       );
@@ -44,8 +51,41 @@ export default function TableOfContents({ containerRef, version }: Props) {
           el,
         }))
       );
+    };
+
+    let timer = 0;
+    let observer: MutationObserver | null = null;
+
+    const schedule = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(scan, 150);
+    };
+
+    const attach = () => {
+      const container = containerRef.current;
+      if (!container || disposed || observer) return;
+      schedule();
+      observer = new MutationObserver(schedule);
+      observer.observe(container, { childList: true, subtree: true });
+    };
+
+    // The content container may not be mounted yet when this component first
+    // renders (the lecture body div appears only after the record loads).
+    // Poll the ref until a container shows up, then attach the observer.
+    attach();
+    const poll = window.setInterval(() => {
+      if (containerRef.current && !observer && !disposed) {
+        window.clearInterval(poll);
+        attach();
+      }
     }, 150);
-    return () => clearTimeout(timer);
+
+    return () => {
+      disposed = true;
+      window.clearTimeout(timer);
+      window.clearInterval(poll);
+      observer?.disconnect();
+    };
   }, [containerRef, version]);
 
   // Scroll-spy: highlight the heading currently in view.
@@ -82,7 +122,7 @@ export default function TableOfContents({ containerRef, version }: Props) {
 
   return (
     <nav className="toc">
-      <p className="toc-title">Оглавление</p>
+      {!hideTitle && <p className="toc-title">Оглавление</p>}
       {items.length === 0 ? (
         <p className="toc-empty">Заголовков пока нет</p>
       ) : (

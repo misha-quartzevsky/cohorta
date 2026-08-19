@@ -3,85 +3,45 @@
  *  LectureLayout.tsx — persistent lecture frame
  * ============================================
  *
- * Layout route that mounts the Header, the course lecture sidebar and the
- * three-column workspace grid ONCE, then keeps them mounted while the user
+ * Layout route that mounts the Header ONCE, then keeps it mounted while the user
  * switches between lecture view / edit — only the white card (the <Outlet/>)
  * is swapped. This removes the full-screen loading-state flicker that used to
  * happen when the sidebar/header unmounted on every lecture change.
  *
  * The pages rendered by <Outlet/> communicate with the frame through the
- * LectureFrame context (breadcrumb title + pending-save flush).
+ * LectureFrame context (breadcrumb title + TOC data + pending-save flush).
+ *
+ * Note: Old LectureSidebar removed — GlobalSidebar handles lecture navigation.
+ * The frame context itself is owned by <AppLayout/> (so GlobalSidebar can read
+ * the TOC data too); this layout is a consumer.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { Outlet, useLocation, useParams } from "react-router-dom";
 
 import Header from "./Header";
-import LectureSidebar from "./LectureSidebar";
 import { useLectures } from "../hooks/useLectures";
-import { courseName } from "../lib/types";
 import { lectureCrumbs } from "../lib/lectureCrumbs";
-import { LectureFrameContext } from "../lib/lectureFrame";
+import { useLectureFrame } from "../lib/lectureFrame";
 
 export default function LectureLayout() {
   const { semesterSlug, courseSlug, lectureSlug } = useParams();
-  const navigate = useNavigate();
   const location = useLocation();
 
-  const isCourseContext = !!courseSlug;
   const isEdit = location.pathname.endsWith("/edit");
 
-  // Course + its lectures power the persistent sidebar.
-  const { course, lectures } = useLectures(courseSlug || "");
+  // Course for breadcrumbs
+  const { course } = useLectures(courseSlug || "");
 
-  // Breadcrumb title — kept here so the Header can stay in the layout.
-  const [title, setTitle] = useState("");
-  // Flush registered by the edit page (pending autosave before navigation).
-  const flushRef = useRef<(() => Promise<void>) | null>(null);
+  // Frame state lives in <AppLayout/>; here we only read it.
+  const { title, setTitle, bumpToc } = useLectureFrame();
 
-  const registerFlush = useCallback(
-    (fn: (() => Promise<void>) | null) => {
-      flushRef.current = fn;
-    },
-    []
-  );
-  const setTitleCb = useCallback((t: string) => setTitle(t), []);
-
-  const api = useMemo(
-    () => ({ registerFlush, setTitle: setTitleCb }),
-    [registerFlush, setTitleCb]
-  );
-
-  /** Flush any pending save (edit page), then navigate. */
-  const go = useCallback(
-    (target: string) => {
-      const flush = flushRef.current;
-      if (!flush) {
-        navigate(target);
-        return;
-      }
-      void flush().then(() => navigate(target));
-    },
-    [navigate]
-  );
-
-  const onSelect = useCallback(
-    (slug: string) => {
-      const base = `/s/${semesterSlug}/${courseSlug}/${slug}`;
-      go(isEdit ? `${base}/edit` : base);
-    },
-    [semesterSlug, courseSlug, isEdit, go]
-  );
-
-  const onBack = useCallback(() => {
-    go(`/s/${semesterSlug}/${courseSlug}`);
-  }, [semesterSlug, courseSlug, go]);
-
-  // When the target lecture changes, drop the stale breadcrumb title.
-  // The page re-sets it (via context) once the new record loads.
+  // When the target lecture changes, drop the stale breadcrumb title and bump
+  // TOC version so the sidebar TOC re-scans the (new) content container.
   useEffect(() => {
     setTitle("");
-  }, [lectureSlug, setTitleCb]);
+    bumpToc();
+  }, [lectureSlug, setTitle, bumpToc]);
 
   const crumbs = lectureCrumbs({
     semesterSlug,
@@ -92,22 +52,13 @@ export default function LectureLayout() {
   });
 
   return (
-    <LectureFrameContext.Provider value={api}>
+    <>
       <Header crumbs={crumbs} crumbsLoading={title === ""} />
       <div className="page">
-        <div className={`workspace${isCourseContext ? "" : " no-sidebar"}`}>
-          {isCourseContext && (
-            <LectureSidebar
-              courseName={course ? courseName(course) : "Курс"}
-              lectures={lectures}
-              activeSlug={lectureSlug || ""}
-              onSelect={onSelect}
-              onBack={onBack}
-            />
-          )}
+        <div className="workspace-simple">
           <Outlet />
         </div>
       </div>
-    </LectureFrameContext.Provider>
+    </>
   );
 }

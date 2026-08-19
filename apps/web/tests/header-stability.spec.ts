@@ -45,12 +45,14 @@ test("шапка не «дёргается» при переключении л�
   await expect(page.locator(".lecture-card-title")).toHaveText(
     "Предел последовательности"
   );
-  await expect(page.locator(".workspace-sidebar")).toBeVisible();
+  await expect(page.locator(".workspace-toc")).toBeVisible();
 
   const before = await measureHeader(page);
 
   // Быстрый переход на другую лекцию из сайдбара (любую, кроме активной).
-  const other = page.locator(".lecture-side-item:not(.active)").first();
+  const other = page
+    .locator(".global-sidebar .sidebar-nav-item:not(.active)")
+    .first();
   await expect(other).toBeVisible();
   await other.click();
 

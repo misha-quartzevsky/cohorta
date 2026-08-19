@@ -73,12 +73,16 @@ test("переключение туда-обратно рендерит форм
     "Предел последовательности"
   );
   // Переключаемся на другую лекцию из сайдбара и возвращаемся.
-  const other = page.locator(".lecture-side-item:not(.active)").first();
+  const other = page
+    .locator(".global-sidebar .sidebar-nav-item:not(.active)")
+    .first();
   await expect(other).toBeVisible();
   await other.click();
   await page.waitForURL((url) => !url.pathname.endsWith("limit-of-sequence"));
   await page
-    .locator(".lecture-side-item", { hasText: "Предел последовательности" })
+    .locator(".global-sidebar .sidebar-nav-item", {
+      hasText: "Предел последовательности",
+    })
     .click();
   await page.waitForURL("**/limit-of-sequence");
   await expect(page.locator(".lecture-card-title")).toHaveText(

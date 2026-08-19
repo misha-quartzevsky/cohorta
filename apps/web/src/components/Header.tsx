@@ -4,25 +4,19 @@
  * ============================================
  *
  * Shared top bar used on every protected page.
- * Three sections:
- *  - left   — current user (avatar, name, email) + logout
+ * Ghosted transparent design with:
  *  - center — clickable breadcrumbs
- *  - right  — semester switcher + «Найти заметку» search
+ *  - right  — microphone + search
  *
- * Focusing the search input (`isSearchFocused`) expands it
- * slightly and fades the breadcrumbs for a soft focus shift.
+ * Profile and semester switcher moved to GlobalSidebar.
  */
 
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, Mic, MicOff, Search } from "lucide-react";
+import { Mic, MicOff, Search } from "lucide-react";
 
-import SemesterSwitcher from "./SemesterSwitcher";
-import { useAuth } from "../hooks/useAuth";
 import { useLectureSearch } from "../hooks/useLectureSearch";
 import { useSpeech } from "../lib/speechContext";
-import { pb } from "../lib/pocketbase";
-import type { User } from "../lib/types";
 
 export interface Crumb {
   label: string;
@@ -41,26 +35,8 @@ interface Props {
   crumbsLoading?: boolean;
 }
 
-/** Display name of the user (falls back to the email). */
-function userName(user: User): string {
-  const name = user.name ? String(user.name).trim() : "";
-  return name || user.email || "Пользователь";
-}
-
-/** First letter of the name used as the avatar fallback. */
-function userInitial(user: User): string {
-  return userName(user).charAt(0).toUpperCase();
-}
-
-/** Avatar photo URL ("" when the user has no avatar file). */
-function avatarSrc(user: User): string {
-  if (!user.avatar) return "";
-  return pb.files.getURL(user, user.avatar);
-}
-
 function Header({ crumbs = [], crumbsLoading = false }: Props) {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -70,13 +46,6 @@ function Header({ crumbs = [], crumbsLoading = false }: Props) {
 
   // Голосовой ввод: кнопка микрофона (пульс при записи) + interim-подсказка.
   const { supported, recording, toggle, interimText, error } = useSpeech();
-
-  const avatar = user ? avatarSrc(user) : "";
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
 
   /** Прыжок к найденной лекции + закрытие дропдауна. */
   const go = (to: string) => {
@@ -96,38 +65,6 @@ function Header({ crumbs = [], crumbsLoading = false }: Props) {
   return (
     <header className={`app-header${isSearchFocused ? " search-focused" : ""}`}>
       <div className="app-header-inner">
-        {/* --- user profile (left) --- */}
-        <div className="header-profile">
-          <div className="avatar">
-            {avatar ? (
-              <img className="avatar-img" src={avatar} alt="" />
-            ) : (
-              <span className="avatar-fallback">
-                {user ? userInitial(user) : "C"}
-              </span>
-            )}
-          </div>
-
-          {user && (
-            <div className="profile-text">
-              <span className="profile-name">{userName(user)}</span>
-              {user.email && (
-                <span className="profile-email">{user.email}</span>
-              )}
-            </div>
-          )}
-
-          <button
-            className="logout-btn"
-            type="button"
-            onClick={handleLogout}
-            title="Выйти"
-            aria-label="Выйти"
-          >
-            <LogOut size={16} />
-          </button>
-        </div>
-
         {/* --- breadcrumbs (center), только когда есть куда «вернуться» --- */}
         {crumbs.length > 1 && (
           <nav
@@ -164,13 +101,13 @@ function Header({ crumbs = [], crumbsLoading = false }: Props) {
           </nav>
         )}
 
-        {/* --- semester switcher + search (right) --- */}
+        {/* --- microphone + search (right) --- */}
         <div className="header-right">
           {supported && (
             <div className="header-mic-wrap">
               <button
                 type="button"
-                className={`header-mic${recording ? " recording" : ""}`}
+                className={`header-mic${recording ? " active" : ""}`}
                 onClick={toggle}
                 title={
                   recording
@@ -180,15 +117,13 @@ function Header({ crumbs = [], crumbsLoading = false }: Props) {
                       : "Диктовка: голосовой ввод в текст лекции"
                 }
               >
-                {recording ? <MicOff size={15} /> : <Mic size={15} />}
-                {recording && <span className="header-mic-pulse" />}
+                {recording ? <MicOff size={18} /> : <Mic size={18} />}
               </button>
               {recording && interimText && (
                 <span className="header-mic-interim">{interimText}</span>
               )}
             </div>
           )}
-          <SemesterSwitcher />
           <div
             ref={searchWrapRef}
             className="search-wrap"

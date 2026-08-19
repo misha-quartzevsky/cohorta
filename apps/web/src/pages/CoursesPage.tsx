@@ -94,84 +94,86 @@ function CoursesPage() {
             ]}
           />
           <div className="page">
-            <ErrorBanner message={error} />
+            <div className="content-canvas">
+              <ErrorBanner message={error} />
 
-            <h1 className="page-title">Все курсы</h1>
-            <p className="page-subtitle">
-              Семестр {semSlug} — все предметы и конспекты.
-            </p>
+              <h1 className="page-title">Все курсы</h1>
+              <p className="page-subtitle">
+                Семестр {semSlug} — все предметы и конспекты.
+              </p>
 
-            {courses.length === 0 ? (
-              <div className="empty">
-                Пока нет курсов в этом семестре — добавьте первый!
-              </div>
-            ) : null}
-
-            <div className="bento">
-              {courses.map((course, i) => (
-                <CourseEditSlot
-                  key={`edit-${course.id}`}
-                  course={course}
-                  form={form}
-                  semesters={semesters}
-                  fallback={
-                    <CourseTile
-                      course={course}
-                      index={i}
-                      featured={featured[course.id]}
-                      wide={i === 0}
-                      onClick={() =>
-                        navigate(`/s/${semSlug}/${courseSlug(course)}`)
-                      }
-                      onEdit={form.startEdit}
-                      onDelete={handleDeleteCourse}
-                    />
-                  }
-                />
-              ))}
-
-              <CourseCreateSlot form={form} semesters={semesters} />
-            </div>
-
-            {orphans.length > 0 && (
-              <section className="dashboard-section">
-                <h2 className="section-title">Без семестра</h2>
-                <p className="page-subtitle">
-                  Эти курсы ещё не привязаны ни к одному семестру. Нажмите
-                  «Редактировать» и выберите семестр.
-                </p>
-                <div className="bento">
-                  {orphans.map((course, i) => (
-                    <CourseEditSlot
-                      key={`edit-orphan-${course.id}`}
-                      course={course}
-                      form={form}
-                      semesters={semesters}
-                      fallback={
-                        <CourseTile
-                          course={course}
-                          index={i}
-                          featured={featured[course.id]}
-                          onClick={() =>
-                            navigate(`/s/${semSlug}/${courseSlug(course)}`)
-                          }
-                          onEdit={form.startEdit}
-                          onDelete={handleDeleteCourse}
-                        />
-                      }
-                    />
-                  ))}
+              {courses.length === 0 ? (
+                <div className="empty">
+                  Пока нет курсов в этом семестре — добавьте первый!
                 </div>
-              </section>
-            )}
+              ) : null}
 
-            <ConfirmDialog
-              open={confirm.open}
-              title={confirm.title}
-              message={confirm.message}
-              onConfirm={confirm.confirm}
-              onCancel={confirm.cancel}
-            />
+              <div className="bento">
+                {courses.map((course, i) => (
+                  <CourseEditSlot
+                    key={`edit-${course.id}`}
+                    course={course}
+                    form={form}
+                    semesters={semesters}
+                    fallback={
+                      <CourseTile
+                        course={course}
+                        index={i}
+                        featured={featured[course.id]}
+                        wide={i === 0}
+                        onClick={() =>
+                          navigate(`/s/${semSlug}/${courseSlug(course)}`)
+                        }
+                        onEdit={form.startEdit}
+                        onDelete={handleDeleteCourse}
+                      />
+                    }
+                  />
+                ))}
+
+                <CourseCreateSlot form={form} semesters={semesters} />
+              </div>
+
+              {orphans.length > 0 && (
+                <section className="dashboard-section">
+                  <h2 className="section-title">Без семестра</h2>
+                  <p className="page-subtitle">
+                    Эти курсы ещё не привязаны ни к одному семестру. Нажмите
+                    «Редактировать» и выберите семестр.
+                  </p>
+                  <div className="bento">
+                    {orphans.map((course, i) => (
+                      <CourseEditSlot
+                        key={`edit-orphan-${course.id}`}
+                        course={course}
+                        form={form}
+                        semesters={semesters}
+                        fallback={
+                          <CourseTile
+                            course={course}
+                            index={i}
+                            featured={featured[course.id]}
+                            onClick={() =>
+                              navigate(`/s/${semSlug}/${courseSlug(course)}`)
+                            }
+                            onEdit={form.startEdit}
+                            onDelete={handleDeleteCourse}
+                          />
+                        }
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              <ConfirmDialog
+                open={confirm.open}
+                title={confirm.title}
+                message={confirm.message}
+                onConfirm={confirm.confirm}
+                onCancel={confirm.cancel}
+              />
+            </div>
           </div>
         </>
       )}

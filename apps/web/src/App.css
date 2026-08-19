@@ -927,6 +927,14 @@ textarea.field {
   grid-template-columns: minmax(0, 1fr) 230px;
 }
 
+/* Simplified workspace for lecture pages (no old sidebar, TOC in GlobalSidebar) */
+.workspace-simple {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 230px;
+  gap: 1.1rem;
+  align-items: start;
+}
+
 .workspace-sidebar,
 .workspace-toc {
   position: sticky;
@@ -1944,6 +1952,372 @@ textarea.field {
   font-size: 1.05rem;
   font-weight: 600;
   color: #fff;
+}
+
+/* ============================================
+   GLOBAL APP SHELL (Phase 1)
+   ============================================ */
+
+/* App shell: fixed sidebar + flexible main area */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-main {
+  flex: 1;
+  margin-left: 240px; /* width of GlobalSidebar */
+  position: relative;
+}
+
+/* ---------- Global Sidebar ---------- */
+.global-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 240px; /* reduced from 280px */
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border-right: 1px solid rgba(234, 232, 242, 0.6);
+  padding: 2rem 0 2rem 30px; /* 30px left as per design */
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Profile section in sidebar */
+.sidebar-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-right: 1.5rem;
+}
+
+.profile-avatar {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--c-ginger);
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 600;
+  user-select: none;
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-avatar-initial {
+  display: block;
+}
+
+.sidebar-profile .profile-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+  min-width: 0;
+  flex: 1;
+}
+
+.sidebar-profile .profile-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--c-black);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-profile .profile-email {
+  font-size: 0.78rem;
+  color: var(--c-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-logout {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--c-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.profile-logout:hover {
+  background: rgba(255, 106, 42, 0.12);
+  color: var(--c-ginger);
+}
+
+.profile-logout:active {
+  transform: scale(0.92);
+}
+
+/* Semester switcher in sidebar */
+.sidebar-semester {
+  position: relative;
+  padding-right: 1.5rem;
+}
+
+.sidebar-semester-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--c-black);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.sidebar-semester-btn:hover svg {
+  color: var(--c-lilac);
+}
+
+.sidebar-semester-current {
+  flex: 1;
+  text-align: left;
+}
+
+.sidebar-semester-btn svg {
+  flex: none;
+  transition: transform 0.2s ease, color 0.2s ease;
+  color: var(--c-muted);
+}
+
+.sidebar-semester-btn svg.rotate {
+  transform: rotate(180deg);
+}
+
+/* Popup backdrop */
+.sidebar-semester-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+}
+
+/* Semester selection popup (overlay over content) */
+.sidebar-semester-popup {
+  position: fixed;
+  left: 240px; /* 240px sidebar width */
+  width: 260px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #eae8f2;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(54, 54, 54, 0.14);
+  padding: 0.35rem;
+  z-index: 120;
+}
+
+.sidebar-semester-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--c-black);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.sidebar-semester-item:hover {
+  background: rgba(88, 67, 246, 0.08);
+}
+
+.sidebar-semester-item.active {
+  background: rgba(88, 67, 246, 0.12);
+  font-weight: 600;
+  color: var(--c-lilac);
+}
+
+/* Sidebar navigation sections */
+.sidebar-section {
+  padding-right: 1.5rem;
+}
+
+.sidebar-section-title {
+  margin: 0 0 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--c-muted);
+}
+
+.sidebar-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: none;
+  background: transparent;
+  color: var(--c-muted);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0.3rem 0.55rem;
+  margin: 0 0 0.5rem -0.55rem;
+  border-radius: 8px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-back-btn:hover {
+  color: var(--c-lilac);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.sidebar-nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sidebar-nav-scrollable {
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.sidebar-nav-item {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--c-black);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-nav-item:hover {
+  background: rgba(88, 67, 246, 0.08);
+  color: var(--c-lilac);
+}
+
+.sidebar-nav-item.active {
+  background: rgba(88, 67, 246, 0.12);
+  color: var(--c-lilac);
+  font-weight: 600;
+}
+
+/* Content canvas: floating white card on pages */
+.content-canvas {
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(27, 27, 27, 0.08);
+  padding: 3rem;
+  margin: 1.5rem 2rem 2rem;
+  min-height: calc(100vh - 140px);
+}
+
+/* Ghosted header (transparent, no profile) */
+.app-header {
+  background: transparent;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: none;
+  box-shadow: none;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding: 1.5rem 2rem;
+  height: auto;
+}
+
+.app-header .app-header-inner {
+  justify-content: space-between; /* breadcrumbs left, mic+search right */
+  padding: 0;
+}
+
+/* Hide header profile (moved to sidebar) */
+.app-header .header-profile {
+  display: none;
+}
+
+/* Breadcrumbs: 40px offset from sidebar */
+.app-header .breadcrumbs {
+  margin-left: 40px;
+  margin-right: 0;
+  justify-content: flex-start;
+}
+
+/* Header right section: microphone + search only */
+.app-header .header-right {
+  position: absolute;
+  right: 2rem;
+  gap: 1rem;
+}
+
+/* Hide semester switcher in header (moved to sidebar) */
+.app-header .semester-switcher {
+  display: none;
+}
+
+/* Microphone button styling */
+.header-mic {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(88, 67, 246, 0.1);
+  color: var(--c-lilac);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.header-mic:hover {
+  background: rgba(88, 67, 246, 0.18);
+  transform: scale(1.05);
+}
+
+.header-mic.active {
+  background: var(--c-lilac);
+  color: #fff;
+  animation: mic-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes mic-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(88, 67, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(88, 67, 246, 0);
+  }
 }
 
 /* ---------- страница входа ---------- */

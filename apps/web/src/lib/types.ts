@@ -29,6 +29,10 @@ export interface Lecture extends PbRecord {
   /** PocketBase relation → courses. */
   field?: string;
   slug?: string;
+  /** Expanded course data (when using expand:"field"). */
+  expand?: {
+    field?: Course;
+  };
 }
 
 export interface Semester extends PbRecord {

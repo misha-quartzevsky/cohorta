@@ -44,10 +44,11 @@ interface LectureBundle {
  * fetches all its lectures in a single pass.
  *
  * @param courseSlug — URL slug of the parent course
+ * @param enabled — whether to fetch data (default true)
  * @returns {UseLecturesResult} course record, lectures array,
  *          loading/error flags, refetch, and deleteLecture.
  */
-export function useLectures(courseSlug: string): UseLecturesResult {
+export function useLectures(courseSlug: string, enabled: boolean = true): UseLecturesResult {
   const fetcher = useCallback(async (): Promise<LectureBundle> => {
     // 1. Resolve the course by slug (for the page title + lecture filter)
     let resolved: Course;
@@ -74,7 +75,7 @@ export function useLectures(courseSlug: string): UseLecturesResult {
 
   const { data, loading, error, setError, refetch } = useAsyncData<
     LectureBundle
-  >(fetcher, !!courseSlug);
+  >(fetcher, enabled && !!courseSlug);
 
   /**
    * Delete a lecture and refresh the list.

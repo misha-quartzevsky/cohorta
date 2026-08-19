@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
@@ -51,7 +51,17 @@ function LectureEdit() {
   const firstRun = useRef(true);
   const contentAreaRef = useRef<HTMLDivElement | null>(null);
 
-  const { setTitle: setCrumbTitle, registerFlush } = useLectureFrame();
+  const frame = useLectureFrame();
+  const { setTitle: setCrumbTitle, registerFlush, tocContainerRef } = frame;
+
+  // `ready` needed by effects below — compute it here (not only near the JSX).
+  const ready = !!lecture && loaded;
+
+  // Assign contentAreaRef to the shared TOC container in the layout context.
+  // Depends on `ready`: the container div mounts only after the lecture loads.
+  useLayoutEffect(() => {
+    tocContainerRef.current = contentAreaRef.current;
+  }, [tocContainerRef, ready]);
 
   // Initialize editor fields + tags when the lecture resolves.
   useEffect(() => {
@@ -173,7 +183,6 @@ function LectureEdit() {
   }, [doSave, registerFlush]);
 
   const unassigned = lecture ? !lectureCourseId(lecture) : false;
-  const ready = !!lecture && loaded;
 
   const saveText =
     saveState === "saving"
