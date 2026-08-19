@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
 import {
-  courseName,
   lectureBody,
   lectureCourseId,
   lectureTitle,
@@ -17,16 +16,13 @@ import {
   uploadLectureImages,
 } from "../services/lectureService";
 import { fetchTags } from "../services/tagService";
-import { useLectures } from "../hooks/useLectures";
 import { useLectureBySlug } from "../hooks/useLectureBySlug";
-import { lectureCrumbs } from "../lib/lectureCrumbs";
+import { useLectureFrame } from "../lib/lectureFrame";
 
-import Header from "../components/Header";
 import ErrorBanner from "../components/ErrorBanner";
-import LoadingState from "../components/LoadingState";
+import CardSkeleton from "../components/CardSkeleton";
 import Editor from "../components/Editor";
 import SpeechToText from "../components/SpeechToText";
-import LectureSidebar from "../components/LectureSidebar";
 import TableOfContents from "../components/TableOfContents";
 import TagEditor from "../components/TagEditor";
 
@@ -35,11 +31,11 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 /**
  * LectureEdit — редактирование лекции с автосохранением.
  * Заголовок, теги и контент сохраняются в PocketBase с debounce (~1.2 с).
+ * Рендерится внутри <LectureLayout/> (карточка в <Outlet/>); шапка и сайдбар
+ * живут в лейауте и не перемонтируются при смене лекции.
  */
 function LectureEdit() {
-  const { semesterSlug, courseSlug, lectureSlug: lectureSlugParam } =
-    useParams();
-  const navigate = useNavigate();
+  const { lectureSlug: lectureSlugParam } = useParams();
 
   const { lecture, error } = useLectureBySlug(lectureSlugParam ?? "");
 
@@ -55,8 +51,7 @@ function LectureEdit() {
   const firstRun = useRef(true);
   const contentAreaRef = useRef<HTMLDivElement | null>(null);
 
-  const isCourseContext = !!courseSlug;
-  const { course, lectures } = useLectures(courseSlug || "");
+  const { setTitle: setCrumbTitle, registerFlush } = useLectureFrame();
 
   // Initialize editor fields + tags when the lecture resolves.
   useEffect(() => {
@@ -91,6 +86,16 @@ function LectureEdit() {
       cancelled = true;
     };
   }, [lecture]);
+
+  // Когда цель меняется — сбрасываем локальный «загружено» и крошку шапки,
+  // чтобы между лекциями показывался скелетон, а не содержимое прошлой.
+  useEffect(() => {
+    setLoaded(false);
+    setCrumbTitle("");
+  }, [lectureSlugParam, setCrumbTitle]);
+  useEffect(() => {
+    if (lecture) setCrumbTitle(lectureTitle(lecture));
+  }, [lecture, setCrumbTitle]);
 
   const doSave = useCallback(async () => {
     if (!lecture) return;
@@ -155,37 +160,20 @@ function LectureEdit() {
     [lecture]
   );
 
-  // Flush pending changes, then navigate.
-  const goAfterSave = async (target: string) => {
-    try {
-      await doSave();
-    } catch {
-      /* keep going */
-    }
-    navigate(target);
-  };
+  // Sidebar navigation in the layout flushes pending changes first.
+  useEffect(() => {
+    registerFlush(async () => {
+      try {
+        await doSave();
+      } catch {
+        /* keep going */
+      }
+    });
+    return () => registerFlush(null);
+  }, [doSave, registerFlush]);
 
-  if (error) {
-    return (
-      <>
-        <Header crumbs={[{ label: "Рабочий стол" }]} />
-        <div className="page">
-          <ErrorBanner message={error} />
-        </div>
-      </>
-    );
-  }
-
-  if (!lecture || !loaded) return <LoadingState />;
-
-  const unassigned = !lectureCourseId(lecture);
-  const crumbs = lectureCrumbs({
-    semesterSlug,
-    course: isCourseContext ? course : null,
-    courseSlug,
-    title,
-    finalFallback: "Редактирование",
-  });
+  const unassigned = lecture ? !lectureCourseId(lecture) : false;
+  const ready = !!lecture && loaded;
 
   const saveText =
     saveState === "saving"
@@ -198,66 +186,58 @@ function LectureEdit() {
 
   return (
     <>
-      <Header crumbs={crumbs} />
-      <div className="page">
+      <main
+        className="workspace-main"
+        key={lectureSlugParam || "edit"}
+      >
+        {error && !lecture && <ErrorBanner message={error} />}
+        {!lecture && !error && <CardSkeleton />}
 
-        <div className={`workspace${isCourseContext ? "" : " no-sidebar"}`}>
-          {isCourseContext && (
-            <LectureSidebar
-              courseName={course ? courseName(course) : "Курс"}
-              lectures={lectures}
-              activeSlug={lectureSlugParam || ""}
-              onSelect={(slug) =>
-                void goAfterSave(`/s/${semesterSlug}/${courseSlug}/${slug}`)
-              }
-              onBack={() =>
-                void goAfterSave(`/s/${semesterSlug}/${courseSlug}`)
-              }
-            />
-          )}
-
-          <main className="workspace-main">
+        {ready && (
             <div className="lecture-card">
-              <div className="edit-meta-row">
-                <p className="lecture-card-meta">
-                  {unassigned ? "Заметка" : "Лекция"} ·{" "}
-                  {formatDate(lecture.created)}
-                </p>
-                <span className={`save-indicator ${saveState}`}>
-                  {saveState === "saving" && (
-                    <Loader2 size={14} className="spin" />
-                  )}
-                  {saveText}
-                </span>
-              </div>
-              <input
-                className="lecture-title-input"
-                value={title}
-                placeholder="Название лекции"
-                onChange={(e) => updateTitle(e.target.value)}
-              />
-              <TagEditor selectedIds={tags} onChange={updateTags} />
-              <div ref={contentAreaRef} className="lecture-card-body">
-                <Editor
-                  value={content}
-                  onUpdate={updateContent}
-                  className="editor-inline"
-                  onUploadImages={handleUploadImages}
-                />
-                {/* Речь + аудиозапись: регистрирует лекцию в SpeechProvider. */}
-                <SpeechToText
-                  lecture={lecture}
-                  onUpload={handleUploadImages}
-                />
-              </div>
+            <div className="edit-meta-row">
+              <p className="lecture-card-meta">
+                {unassigned ? "Заметка" : "Лекция"} ·{" "}
+                {formatDate(lecture.created)}
+              </p>
+              <span className={`save-indicator ${saveState}`}>
+                {saveState === "saving" && (
+                  <Loader2 size={14} className="spin" />
+                )}
+                {saveText}
+              </span>
             </div>
-          </main>
+            <input
+              className="lecture-title-input"
+              value={title}
+              placeholder="Название лекции"
+              onChange={(e) => updateTitle(e.target.value)}
+            />
+            <TagEditor selectedIds={tags} onChange={updateTags} />
+            <div ref={contentAreaRef} className="lecture-card-body">
+              <Editor
+                value={content}
+                onUpdate={updateContent}
+                className="editor-inline"
+                onUploadImages={handleUploadImages}
+              />
+              {/* Речь + аудиозапись: регистрирует лекцию в SpeechProvider. */}
+              <SpeechToText
+                lecture={lecture}
+                onUpload={handleUploadImages}
+              />
+            </div>
+          </div>
+        )}
+      </main>
 
-          <aside className="workspace-toc">
-            <TableOfContents containerRef={contentAreaRef} version={content} />
-          </aside>
-        </div>
-      </div>
+      <aside className="workspace-toc">
+        {ready ? (
+          <TableOfContents containerRef={contentAreaRef} version={content} />
+        ) : (
+          <div className="workspace-toc-spacer" />
+        )}
+      </aside>
     </>
   );
 }

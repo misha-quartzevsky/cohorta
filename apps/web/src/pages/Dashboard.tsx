@@ -8,24 +8,18 @@ import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useSemester } from "../lib/semesterContext";
 
 import Header from "../components/Header";
-import CourseTile from "../components/CourseTile";
-import LectureTile from "../components/LectureTile";
 import LectureEditor from "../components/LectureEditor";
-import AddTile from "../components/AddTile";
 import ConfirmDialog from "../components/ConfirmDialog";
 import ErrorBanner from "../components/ErrorBanner";
 import LoadingState from "../components/LoadingState";
 import SemesterGate from "../components/SemesterGate";
-import {
-  CourseCreateSlot,
-  CourseEditSlot,
-} from "../components/CourseFormTile";
+import CoursesSection from "./dashboard/CoursesSection";
+import RecentSection from "./dashboard/RecentSection";
 
 import {
   type Course,
   type Lecture,
   courseName,
-  courseColor,
   courseSlug,
   lectureSlug,
   lectureTitle,
@@ -95,6 +89,38 @@ function Dashboard() {
 
   const semSlug = current ? semesterSlug(current) : "";
 
+  // Navigation handlers for the extracted section components.
+  const handleOpenAllCourses = () => navigate(`/s/${semSlug}/courses`);
+
+  const handleOpenCourse = (course: Course) =>
+    navigate(`/s/${semSlug}/${courseSlug(course)}`);
+
+  const handleOpenLecture = (lec: Lecture) => {
+    const unassigned = !lectureCourseId(lec);
+    const lecCourse = unassigned
+      ? undefined
+      : courses.find((c) => c.id === lectureCourseId(lec));
+    if (unassigned || !lecCourse) {
+      navigate(`/s/${semSlug}/note/${lectureSlug(lec)}`);
+    } else {
+      navigate(`/s/${semSlug}/${courseSlug(lecCourse)}/${lectureSlug(lec)}`);
+    }
+  };
+
+  const handleEditLecture = (lec: Lecture) => {
+    const unassigned = !lectureCourseId(lec);
+    const lecCourse = unassigned
+      ? undefined
+      : courses.find((c) => c.id === lectureCourseId(lec));
+    if (unassigned || !lecCourse) {
+      setEditingNote(lec);
+    } else {
+      navigate(
+        `/s/${semSlug}/${courseSlug(lecCourse)}/${lectureSlug(lec)}/edit`
+      );
+    }
+  };
+
   // Courses of the semester, top-3 by `updated`.
   const visibleCourses = courses.slice(0, 3);
 
@@ -144,103 +170,25 @@ function Dashboard() {
               Недавно изменённые курсы и последние записи.
             </p>
 
-            <section className="dashboard-section">
-              <div className="section-head">
-                <h2 className="section-title">Курсы</h2>
-                <button
-                  className="btn btn-ghost"
-                  type="button"
-                  onClick={() => navigate(`/s/${semSlug}/courses`)}
-                >
-                  Все курсы →
-                </button>
-              </div>
+            <CoursesSection
+              courses={visibleCourses}
+              featured={featured}
+              form={form}
+              semesters={semesters}
+              onOpenAll={handleOpenAllCourses}
+              onOpenCourse={handleOpenCourse}
+              onDeleteCourse={handleDeleteCourse}
+            />
 
-              {courses.length === 0 && (
-                <div className="empty">
-                  Пока нет курсов в этом семестре — добавьте первый!
-                </div>
-              )}
-
-              <div className="bento">
-                {visibleCourses.map((course, i) => (
-                  <CourseEditSlot
-                    key={`edit-${course.id}`}
-                    course={course}
-                    form={form}
-                    semesters={semesters}
-                    fallback={
-                      <CourseTile
-                        course={course}
-                        index={i}
-                        featured={featured[course.id]}
-                        wide={i === 0}
-                        onClick={() =>
-                          navigate(`/s/${semSlug}/${courseSlug(course)}`)
-                        }
-                        onEdit={form.startEdit}
-                        onDelete={handleDeleteCourse}
-                      />
-                    }
-                  />
-                ))}
-
-                <CourseCreateSlot form={form} semesters={semesters} />
-              </div>
-            </section>
-
-            <section className="dashboard-section">
-              <h2 className="section-title">Последние</h2>
-
-              <div className="bento">
-                <AddTile
-                  label="+ Новая заметка"
-                  onClick={() => setCreatingNote(true)}
-                />
-
-                {visibleLectures.map((lec, i) => {
-                  const idx = i + 1;
-                  const unassigned = !lectureCourseId(lec);
-                  const lecCourse = unassigned
-                    ? undefined
-                    : courses.find((c) => c.id === lectureCourseId(lec));
-
-                  return (
-                    <LectureTile
-                      key={`lec-${lec.id}`}
-                      lecture={lec}
-                      index={idx}
-                      unassigned={unassigned}
-                      courses={unassigned ? courses : undefined}
-                      onAssignCourse={handleAssignCourse}
-                      courseTag={lecCourse ? courseName(lecCourse) : undefined}
-                      courseColorTag={
-                        lecCourse ? courseColor(lecCourse) : undefined
-                      }
-                      onClick={() => {
-                        if (unassigned || !lecCourse) {
-                          navigate(`/s/${semSlug}/note/${lectureSlug(lec)}`);
-                        } else {
-                          navigate(
-                            `/s/${semSlug}/${courseSlug(lecCourse)}/${lectureSlug(lec)}`
-                          );
-                        }
-                      }}
-                      onEdit={(lec) => {
-                        if (unassigned || !lecCourse) {
-                          setEditingNote(lec);
-                        } else {
-                          navigate(
-                            `/s/${semSlug}/${courseSlug(lecCourse)}/${lectureSlug(lec)}/edit`
-                          );
-                        }
-                      }}
-                      onDelete={handleDeleteLecture}
-                    />
-                  );
-                })}
-              </div>
-            </section>
+            <RecentSection
+              lectures={visibleLectures}
+              courses={courses}
+              onCreateNote={() => setCreatingNote(true)}
+              onOpenLecture={handleOpenLecture}
+              onEditLecture={handleEditLecture}
+              onDeleteLecture={handleDeleteLecture}
+              onAssignCourse={handleAssignCourse}
+            />
 
             <ConfirmDialog
               open={confirm.open}

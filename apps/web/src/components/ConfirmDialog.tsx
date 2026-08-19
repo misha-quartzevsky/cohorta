@@ -7,6 +7,7 @@
  * confirm a destructive action (delete).
  */
 
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 interface Props {
@@ -40,7 +41,7 @@ function ConfirmDialog({
 }: Props) {
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="confirm-backdrop" onClick={onCancel}>
       <div className="confirm-content" onClick={(e) => e.stopPropagation()}>
         <button
@@ -72,7 +73,8 @@ function ConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

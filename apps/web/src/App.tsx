@@ -26,6 +26,7 @@ import Header from "./components/Header";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingState from "./components/LoadingState";
 import Login from "./pages/Login";
+import LectureLayout from "./components/LectureLayout";
 import { SemesterProvider } from "./lib/SemesterProvider";
 import { SpeechProvider } from "./lib/SpeechProvider";
 import {
@@ -77,22 +78,27 @@ function App() {
             <Route path="/s/:semesterSlug" element={<Dashboard />} />
             <Route path="/s/:semesterSlug/courses" element={<CoursesPage />} />
             <Route path="/s/:semesterSlug/:courseSlug" element={<LecturesPage />} />
-            <Route
-              path="/s/:semesterSlug/:courseSlug/:lectureSlug"
-              element={<LectureView />}
-            />
-            <Route
-              path="/s/:semesterSlug/:courseSlug/:lectureSlug/edit"
-              element={<LectureEdit />}
-            />
-            <Route
-              path="/s/:semesterSlug/note/:lectureSlug"
-              element={<LectureView />}
-            />
-            <Route
-              path="/s/:semesterSlug/note/:lectureSlug/edit"
-              element={<LectureEdit />}
-            />
+            {/* Lecture view/edit share one persistent frame: the header and
+                course sidebar live in LectureLayout and stay mounted while the
+                user switches between lectures (no full-screen flicker). */}
+            <Route element={<LectureLayout />}>
+              <Route
+                path="/s/:semesterSlug/:courseSlug/:lectureSlug"
+                element={<LectureView />}
+              />
+              <Route
+                path="/s/:semesterSlug/:courseSlug/:lectureSlug/edit"
+                element={<LectureEdit />}
+              />
+              <Route
+                path="/s/:semesterSlug/note/:lectureSlug"
+                element={<LectureView />}
+              />
+              <Route
+                path="/s/:semesterSlug/note/:lectureSlug/edit"
+                element={<LectureEdit />}
+              />
+            </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

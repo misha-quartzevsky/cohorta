@@ -3,31 +3,27 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
 
 import {
-  courseName,
   lectureBody,
   lectureCourseId,
   lectureTitle,
 } from "../lib/types";
 import { formatDate } from "../lib/format";
 import { deleteLecture, resolveFileTokens } from "../services/lectureService";
-import { useLectures } from "../hooks/useLectures";
 import { useLectureBySlug } from "../hooks/useLectureBySlug";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
-import { lectureCrumbs } from "../lib/lectureCrumbs";
+import { useLectureFrame } from "../lib/lectureFrame";
 
-import Header from "../components/Header";
 import ErrorBanner from "../components/ErrorBanner";
-import LoadingState from "../components/LoadingState";
 import ConfirmDialog from "../components/ConfirmDialog";
-import LectureSidebar from "../components/LectureSidebar";
+import CardSkeleton from "../components/CardSkeleton";
 import TableOfContents from "../components/TableOfContents";
 import TagBadges from "../components/TagBadges";
 import { renderLatexInto } from "../components/math/renderLatex";
 
 /**
  * LectureView — страница лекции / заметки.
- * Три колонки: список лекций курса (glass), белая карточка
- * с контентом, живое оглавление справа.
+ * Рендерится внутри <LectureLayout/> (карточка + оглавление в <Outlet/>);
+ * шапка и сайдбар живут в лейауте и не перемонтируются при смене лекции.
  */
 function LectureView() {
   const { semesterSlug, courseSlug, lectureSlug: lectureSlugParam } =
@@ -35,12 +31,13 @@ function LectureView() {
   const navigate = useNavigate();
 
   const { lecture, loading, error } = useLectureBySlug(lectureSlugParam ?? "");
+  const isCourseContext = !!courseSlug;
 
   const [content, setContent] = useState("");
   const contentRef = useRef<HTMLDivElement | null>(null);
 
-  const isCourseContext = !!courseSlug;
-  const { course, lectures } = useLectures(courseSlug || "");
+  const confirm = useConfirmDialog();
+  const { setTitle } = useLectureFrame();
 
   // Токены `[[file:…]]` → абсолютные URL файлов PB перед отрисовкой.
   useEffect(() => {
@@ -61,32 +58,13 @@ function LectureView() {
     });
   }, [content]);
 
-  const confirm = useConfirmDialog();
-
-  if (loading) return <LoadingState />;
-
-  if (!lecture) {
-    return (
-      <>
-        <Header crumbs={[{ label: "Рабочий стол" }]} />
-        <div className="page">
-          <ErrorBanner message={error || "Запись не найдена."} />
-        </div>
-      </>
-    );
-  }
-
-  const title = lectureTitle(lecture);
-  const isHtmlContent = /<[a-z][\s\S]*>/i.test(content);
-
-  const crumbs = lectureCrumbs({
-    semesterSlug,
-    course: isCourseContext ? course : null,
-    courseSlug,
-    title,
-  });
-
-  const goToCourse = () => navigate(`/s/${semesterSlug}/${courseSlug}`);
+  // Синхронизируем последнюю крошку шапки (живёт в LectureLayout).
+  useEffect(() => {
+    setTitle("");
+  }, [lectureSlugParam, setTitle]);
+  useEffect(() => {
+    if (lecture) setTitle(lectureTitle(lecture));
+  }, [lecture, setTitle]);
 
   const handleEdit = () => {
     if (isCourseContext) {
@@ -96,9 +74,11 @@ function LectureView() {
     }
   };
 
-  const unassigned = !lectureCourseId(lecture);
+  const title = lecture ? lectureTitle(lecture) : "";
+  const unassigned = lecture ? !lectureCourseId(lecture) : false;
 
   const handleDelete = () => {
+    if (!lecture) return;
     confirm.ask("Удалить запись?", `Запись «${title}» будет удалена.`, () => {
       void deleteLecture(lecture.id).then(() => {
         navigate(
@@ -110,76 +90,77 @@ function LectureView() {
     });
   };
 
+  const isHtmlContent = !!(lecture && /<[a-z][\s\S]*>/i.test(content));
+  const ready = !!lecture && !loading;
+
   return (
     <>
-      <Header crumbs={crumbs} />
-      <div className="page">
-        <ErrorBanner message={error} />
+      <main
+        className="workspace-main"
+        key={lectureSlugParam || "view"}
+      >
+        {error && !lecture && (
+          <ErrorBanner message={error || "Запись не найдена."} />
+        )}
+        {!lecture && !loading && !error && (
+          <div className="empty">Запись не найдена.</div>
+        )}
+        {!lecture && loading && <CardSkeleton />}
 
-        <div className={`workspace${isCourseContext ? "" : " no-sidebar"}`}>
-          {isCourseContext && (
-            <LectureSidebar
-              courseName={course ? courseName(course) : "Курс"}
-              lectures={lectures}
-              activeSlug={lectureSlugParam || ""}
-              onSelect={(slug) =>
-                navigate(`/s/${semesterSlug}/${courseSlug}/${slug}`)
-              }
-              onBack={goToCourse}
+        {ready && (
+          <article className="lecture-card">
+            <header className="lecture-card-head">
+              <p className="lecture-card-meta">
+                {formatDate(lecture.created)}
+                {unassigned && " · Не привязана к курсу"}
+              </p>
+              <h1 className="lecture-card-title">{title}</h1>
+              <TagBadges lectureId={lecture.id} />
+              <div className="lecture-card-actions">
+                <button
+                  className="icon-btn"
+                  type="button"
+                  onClick={handleEdit}
+                  title="Редактировать"
+                >
+                  <Pencil size={15} />
+                </button>
+                <button
+                  className="icon-btn danger"
+                  type="button"
+                  onClick={handleDelete}
+                  title="Удалить"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            </header>
+            <div
+              ref={contentRef}
+              className={`lecture-card-body lecture-view-content ${
+                isHtmlContent ? "is-html" : "is-plain"
+              }`}
+              dangerouslySetInnerHTML={{ __html: content || "" }}
             />
-          )}
+          </article>
+        )}
+      </main>
 
-          <main className="workspace-main">
-            <article className="lecture-card">
-              <header className="lecture-card-head">
-                <p className="lecture-card-meta">
-                  {formatDate(lecture.created)}
-                  {unassigned && " · Не привязана к курсу"}
-                </p>
-                <h1 className="lecture-card-title">{title}</h1>
-                <TagBadges lectureId={lecture.id} />
-                <div className="lecture-card-actions">
-                  <button
-                    className="icon-btn"
-                    type="button"
-                    onClick={handleEdit}
-                    title="Редактировать"
-                  >
-                    <Pencil size={15} />
-                  </button>
-                  <button
-                    className="icon-btn danger"
-                    type="button"
-                    onClick={handleDelete}
-                    title="Удалить"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              </header>
-              <div
-                ref={contentRef}
-                className={`lecture-card-body lecture-view-content ${
-                  isHtmlContent ? "is-html" : "is-plain"
-                }`}
-                dangerouslySetInnerHTML={{ __html: content || "" }}
-              />
-            </article>
-          </main>
+      <aside className="workspace-toc">
+        {ready ? (
+          <TableOfContents containerRef={contentRef} version={content} />
+        ) : (
+          <div className="workspace-toc-spacer" />
+        )}
+      </aside>
 
-          <aside className="workspace-toc">
-            <TableOfContents containerRef={contentRef} version={content} />
-          </aside>
-        </div>
-
-        <ConfirmDialog
-          open={confirm.open}
-          title={confirm.title}
-          message={confirm.message}
-          onConfirm={confirm.confirm}
-          onCancel={confirm.cancel}
-        />
-      </div>
+      <ConfirmDialog
+        open={confirm.open}
+        title={confirm.title}
+        message={confirm.message}
+        onConfirm={confirm.confirm}
+        onCancel={confirm.cancel}
+      />
     </>
   );
 }

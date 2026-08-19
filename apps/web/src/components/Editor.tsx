@@ -3,28 +3,19 @@
  *  Editor.tsx — Tiptap editor for the lecture card
  * ============================================
  *
- * Tooling:
- *  - slash menu «/» (block commands + image insert)
- *  - bubble menu on text selection (bold / italic / link / highlight)
- *  - floating «+» button on empty blocks (opens the slash menu)
+ * Composition-only entry point: assembles the Tiptap editor, its extensions
+ * and the surrounding UX. The formatting menus and the upload logic live in
+ * dedicated modules:
+ *   - editor/BubbleToolbar.tsx  — quick selection bubble (bold/link/etc.)
+ *   - editor/TextMenu.tsx       — extended «…» popover
+ *   - editor/useImageUpload.ts  — image upload plumbing (drop/paste/picker)
+ *   - editor/textCommands.ts    — shared formatting commands/items
  */
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-} from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Editor as TiptapEditor } from "@tiptap/core";
-import type { EditorView } from "@tiptap/pm/view";
-import {
-  EditorContent,
-  useEditor,
-} from "@tiptap/react";
-import { BubbleMenu, FloatingMenu } from "@tiptap/react/menus";
+import { EditorContent, useEditor } from "@tiptap/react";
+import { FloatingMenu } from "@tiptap/react/menus";
 import type { BubbleMenuPluginProps } from "@tiptap/extension-bubble-menu";
 import type { FloatingMenuPluginProps } from "@tiptap/extension-floating-menu";
 import StarterKit from "@tiptap/starter-kit";
@@ -33,29 +24,10 @@ import ImageExtension from "@tiptap/extension-image";
 import Highlight from "@tiptap/extension-highlight";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
+import { Plus } from "lucide-react";
 import type { UploadedImage } from "../services/lectureService";
-import {
-  Bold,
-  Code,
-  Eraser,
-  Heading1,
-  Heading2,
-  Heading3,
-  Italic,
-  Link2,
-  List,
-  ListChecks,
-  ListOrdered,
-  MoreHorizontal,
-  Pilcrow,
-  Plus,
-  Quote,
-  RemoveFormatting,
-  Strikethrough,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { createSlashMenu } from "./SlashMenu";
 
+import { createSlashMenu } from "./SlashMenu";
 import { SpeechInterimMark } from "../lib/speechMark";
 import { useSpeech } from "../lib/speechContext";
 import { AudioBlock } from "./audio/AudioBlock";
@@ -66,104 +38,9 @@ import { sketchBus, setSketchUploader, type SketchRequest } from "./sketch/sketc
 import MathEditorOverlay from "./math/MathEditorOverlay";
 import SketchModal from "./sketch/SketchModal";
 
-const HIGHLIGHT_COLORS = ["#FFF3A1", "#D3F9A8", "#B9E0FF", "#FFD6E8"];
-
-/** Изображения из drag&drop / буфера обмена (только image/*). */
-function imageFilesFromData(data: DataTransfer | null): File[] {
-  return Array.from(data?.files ?? []).filter((f) =>
-    f.type.startsWith("image/")
-  );
-}
-
-/**
- * Items for the «…» text menu (reference formatting of the current selection,
- * like Notion does for inline text). Commands apply to the whole selection
- * thanks to ProseMirror's per-node target-rules.
- */
-interface TextMenuItem {
-  title: string;
-  icon: LucideIcon;
-  run: (editor: TiptapEditor) => void;
-  isActive?: (editor: TiptapEditor) => boolean;
-}
-
-const TEXT_MARK_ITEMS: TextMenuItem[] = [
-  {
-    title: "Жирный",
-    icon: Bold,
-    run: (e) => void e.chain().focus().toggleBold().run(),
-    isActive: (e) => e.isActive("bold"),
-  },
-  {
-    title: "Курсив",
-    icon: Italic,
-    run: (e) => void e.chain().focus().toggleItalic().run(),
-    isActive: (e) => e.isActive("italic"),
-  },
-  {
-    title: "Зачёркнутый",
-    icon: Strikethrough,
-    run: (e) => void e.chain().focus().toggleStrike().run(),
-    isActive: (e) => e.isActive("strike"),
-  },
-  {
-    title: "Код",
-    icon: Code,
-    run: (e) => void e.chain().focus().toggleCode().run(),
-    isActive: (e) => e.isActive("code"),
-  },
-];
-
-const TEXT_BLOCK_ITEMS: TextMenuItem[] = [
-  {
-    title: "Заголовок 1",
-    icon: Heading1,
-    run: (e) => void e.chain().focus().toggleHeading({ level: 1 }).run(),
-    isActive: (e) => e.isActive("heading", { level: 1 }),
-  },
-  {
-    title: "Заголовок 2",
-    icon: Heading2,
-    run: (e) => void e.chain().focus().toggleHeading({ level: 2 }).run(),
-    isActive: (e) => e.isActive("heading", { level: 2 }),
-  },
-  {
-    title: "Заголовок 3",
-    icon: Heading3,
-    run: (e) => void e.chain().focus().toggleHeading({ level: 3 }).run(),
-    isActive: (e) => e.isActive("heading", { level: 3 }),
-  },
-  {
-    title: "Обычный текст",
-    icon: Pilcrow,
-    run: (e) => void e.chain().focus().setParagraph().run(),
-    isActive: (e) => e.isActive("paragraph"),
-  },
-  {
-    title: "Маркированный список",
-    icon: List,
-    run: (e) => void e.chain().focus().toggleBulletList().run(),
-    isActive: (e) => e.isActive("bulletList"),
-  },
-  {
-    title: "Нумерованный список",
-    icon: ListOrdered,
-    run: (e) => void e.chain().focus().toggleOrderedList().run(),
-    isActive: (e) => e.isActive("orderedList"),
-  },
-  {
-    title: "Чек-лист",
-    icon: ListChecks,
-    run: (e) => void e.chain().focus().toggleTaskList().run(),
-    isActive: (e) => e.isActive("taskList"),
-  },
-  {
-    title: "Цитата",
-    icon: Quote,
-    run: (e) => void e.chain().focus().toggleBlockquote().run(),
-    isActive: (e) => e.isActive("blockquote"),
-  },
-];
+import { useImageUpload } from "./editor/useImageUpload";
+import { BubbleToolbar } from "./editor/BubbleToolbar";
+import { TextMenu } from "./editor/TextMenu";
 
 interface EditorProps {
   value: string;
@@ -185,42 +62,23 @@ export default function Editor({
   className,
   onUploadImages,
 }: EditorProps) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  // Куда вставить картинку после выбора файла (позиция после удаления "/").
-  const pendingPosRef = useRef<number | null>(null);
-  const onUploadRef = useRef(onUploadImages);
-  const insertImagesRef = useRef<(urls: string[], pos?: number | null) => void>(
-    () => {}
-  );
+  // Upload plumbing: refs, drop/paste, file picker (see editor/useImageUpload).
+  const {
+    fileInputRef,
+    onUploadRef,
+    insertImagesRef,
+    chooseImage,
+    handleDrop,
+    handlePaste,
+    handleFilesChange,
+  } = useImageUpload(onUploadImages);
 
-  // Голосовой ввод: редактор становится целю вставки распознанного текста.
+  // Голосовой ввод: редактор становится целью вставки распознанного текста.
   const { registerEditor, unregisterEditor } = useSpeech();
 
-  // Единственные overlay/модалка для формул и схем (см. mathBus/sketchBus).
+  // Единственные overlay/модалки для формул и схем (см. mathBus/sketchBus).
   const [mathReq, setMathReq] = useState<MathEditRequest | null>(null);
   const [sketchReq, setSketchReq] = useState<SketchRequest | null>(null);
-
-  // Всегда держим актуальный колбэк загрузки, не пересоздавая остальное.
-  useEffect(() => {
-    onUploadRef.current = onUploadImages;
-  }, [onUploadImages]);
-
-  // Пункт «Картинка» в slash-меню: файловый пикер или фолбэк на URL-промпт.
-  const chooseImage = useCallback(
-    (activeEditor: TiptapEditor, range: { from: number; to: number }) => {
-      activeEditor.chain().focus().deleteRange(range).run();
-      if (!onUploadRef.current) {
-        const url = window.prompt("Ссылка на изображение:");
-        if (url) {
-          activeEditor.chain().focus().setImage({ src: url.trim() }).run();
-        }
-        return;
-      }
-      pendingPosRef.current = activeEditor.state.selection.from;
-      fileInputRef.current?.click();
-    },
-    []
-  );
 
   // Пункт «Формула»: открывает overlay MathLive (блок появится при commit).
   const insertMath = useCallback(
@@ -246,7 +104,7 @@ export default function Editor({
         onUploadImages: onUploadRef.current,
       });
     },
-    []
+    [onUploadRef]
   );
 
   const slashMenu = useMemo(
@@ -292,52 +150,6 @@ export default function Editor({
     [slashMenu, placeholder]
   );
 
-  // Картинки из drag&drop / вставки из буфера забираем только когда есть
-  // загрузчик (иначе оставляем дефолтное поведение браузера).
-  const handleDrop = useCallback(
-    (view: EditorView, event: DragEvent) => {
-      if (!onUploadRef.current) return false;
-      const files = imageFilesFromData(event.dataTransfer);
-      if (!files.length) return false;
-      event.preventDefault();
-      const coords = view.posAtCoords({
-        left: event.clientX,
-        top: event.clientY,
-      });
-      const pos = coords ? coords.pos : null;
-      void (async () => {
-        try {
-          const uploaded = await onUploadRef.current!(files);
-          insertImagesRef.current(uploaded.map((image) => image.url), pos);
-        } catch (err) {
-          console.error("Ошибка загрузки изображения:", err);
-        }
-      })();
-      return true;
-    },
-    []
-  );
-
-  const handlePaste = useCallback(
-    (view: EditorView, event: ClipboardEvent) => {
-      if (!onUploadRef.current) return false;
-      const files = imageFilesFromData(event.clipboardData);
-      if (!files.length) return false;
-      event.preventDefault();
-      const pos = view.state.selection.from;
-      void (async () => {
-        try {
-          const uploaded = await onUploadRef.current!(files);
-          insertImagesRef.current(uploaded.map((image) => image.url), pos);
-        } catch (err) {
-          console.error("Ошибка загрузки изображения:", err);
-        }
-      })();
-      return true;
-    },
-    []
-  );
-
   const editorProps = useMemo(
     () => ({
       attributes: {
@@ -349,7 +161,6 @@ export default function Editor({
     }),
     [handleDrop, handlePaste]
   );
-
   const editor = useEditor({
     extensions,
     content: value || "<p><br></p>",
@@ -369,23 +180,6 @@ export default function Editor({
   };
   insertImagesRef.current = insertImages;
 
-  // Выбор файла в скрытом input.
-  const handleFilesChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const input = e.currentTarget;
-    const files = Array.from(input.files ?? []);
-    input.value = "";
-    const upload = onUploadRef.current;
-    if (!files.length || !upload) return;
-    try {
-      const uploaded = await upload(files);
-      const pos = pendingPosRef.current;
-      pendingPosRef.current = null;
-      insertImagesRef.current(uploaded.map((image) => image.url), pos);
-    } catch (err) {
-      console.error("Ошибка загрузки изображения:", err);
-    }
-  };
-
   // Focus the editor on mount.
   useEffect(() => {
     editor.commands.focus();
@@ -399,7 +193,7 @@ export default function Editor({
     return () => unregisterEditor(editor);
   }, [editor, registerEditor, unregisterEditor]);
 
-  // Подписки единственных overlay/модалки (формулы MathLive, схемы Excalidraw).
+  // Подписки единственных overlay/модалок (формулы MathLive, схемы Excalidraw).
   useEffect(() => mathBus.subscribe(setMathReq), []);
   useEffect(() => sketchBus.subscribe(setSketchReq), []);
 
@@ -417,91 +211,22 @@ export default function Editor({
 
   // The «…» text menu (Notion-style formatting of the selection).
   const [textMenuOpen, setTextMenuOpen] = useState(false);
-  const [textMenuPos, setTextMenuPos] = useState<{ top: number; left: number } | null>(
-    null
-  );
-  const textMenuRef = useRef<HTMLDivElement | null>(null);
-
-  // Close the menu on outside click / Escape.
-  useEffect(() => {
-    if (!textMenuOpen) return;
-    const onDown = (e: MouseEvent) => {
-      if (
-        textMenuRef.current &&
-        !textMenuRef.current.contains(e.target as Node)
-      ) {
-        setTextMenuOpen(false);
-      }
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setTextMenuOpen(false);
-    };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [textMenuOpen]);
+  const [textMenuPos, setTextMenuPos] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
 
   const openTextMenu = () => {
     const coords = editor.view.coordsAtPos(editor.state.selection.from);
     const menuHeight = Math.min(380, Math.round(window.innerHeight * 0.6));
     const fitsBelow = coords.bottom + 6 + menuHeight <= window.innerHeight;
     setTextMenuPos({
-      top: fitsBelow ? coords.bottom + 6 : Math.max(8, coords.top - menuHeight - 6),
+      top: fitsBelow
+        ? coords.bottom + 6
+        : Math.max(8, coords.top - menuHeight - 6),
       left: Math.min(coords.left, window.innerWidth - 250),
     });
     setTextMenuOpen(true);
-  };
-
-  const runTextCommand = (action: () => void) => {
-    setTextMenuOpen(false);
-    action();
-  };
-
-  const renderTextMenuItem = (item: TextMenuItem) => {
-    const Icon = item.icon;
-    return (
-      <button
-        key={item.title}
-        type="button"
-        className={`text-menu-item${item.isActive?.(editor) ? " active" : ""}`}
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={() => runTextCommand(() => item.run(editor))}
-      >
-        <span className="slash-icon">
-          <Icon size={15} />
-        </span>
-        {item.title}
-      </button>
-    );
-  };
-
-  const toggleHighlight = (color: string) => {
-    if (editor.isActive("highlight", { color })) {
-      editor.chain().focus().unsetHighlight().run();
-    } else {
-      editor.chain().focus().setHighlight({ color }).run();
-    }
-  };
-
-  const handleLink = () => {
-    const previous = String(editor.getAttributes("link").href ?? "");
-    const url = window.prompt("Ссылка:", previous || "https://");
-    if (url === null) {
-      return;
-    }
-    if (url.trim() === "") {
-      editor.chain().focus().extendMarkRange("link").unsetLink().run();
-      return;
-    }
-    editor
-      .chain()
-      .focus()
-      .extendMarkRange("link")
-      .setLink({ href: url.trim() })
-      .run();
   };
 
   // shouldShow must be referentially stable: @tiptap/react menus dispatch an
@@ -538,155 +263,23 @@ export default function Editor({
         hidden
         onChange={handleFilesChange}
       />
-      <BubbleMenu
+
+      <BubbleToolbar
         editor={editor}
         shouldShow={shouldShowBubble}
-        className="bubble-menu"
-      >
-        <button
-          type="button"
-          className={`bubble-btn${editor.isActive("bold") ? " active" : ""}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          title="Жирный"
-        >
-          <Bold size={15} />
-        </button>
-        <button
-          type="button"
-          className={`bubble-btn${editor.isActive("italic") ? " active" : ""}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          title="Курсив"
-        >
-          <Italic size={15} />
-        </button>
-        <button
-          type="button"
-          className={`bubble-btn${editor.isActive("link") ? " active" : ""}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={handleLink}
-          title="Ссылка"
-        >
-          <Link2 size={15} />
-        </button>
-        <span className="bubble-sep" />
-        {HIGHLIGHT_COLORS.map((color) => (
-          <button
-            key={color}
-            type="button"
-            className={`bubble-swatch${
-              editor.isActive("highlight", { color }) ? " active" : ""
-            }`}
-            style={{ background: color }}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => toggleHighlight(color)}
-            title={`Выделить ${color}`}
-          />
-        ))}
-        {editor.isActive("highlight") && (
-          <>
-            <span className="bubble-sep" />
-            <button
-              type="button"
-              className="bubble-btn"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().unsetHighlight().run()}
-              title="Снять выделение"
-            >
-              <Eraser size={15} />
-            </button>
-          </>
-        )}
-        <span className="bubble-sep" />
-        <button
-          type="button"
-          className={`bubble-btn${textMenuOpen ? " active" : ""}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={openTextMenu}
-          title="Ещё"
-        >
-          <MoreHorizontal size={15} />
-        </button>
-      </BubbleMenu>
+        textMenuOpen={textMenuOpen}
+        onOpenTextMenu={openTextMenu}
+      />
 
-      {textMenuOpen &&
-        textMenuPos &&
-        createPortal(
-          <div
-            ref={textMenuRef}
-            className="text-menu"
-            style={{ top: textMenuPos.top, left: textMenuPos.left }}
-          >
-            <div className="text-menu-label">Форматирование</div>
-            {TEXT_MARK_ITEMS.map(renderTextMenuItem)}
-            <div className="text-menu-label">Ссылка</div>
-            <button
-              type="button"
-              className={`text-menu-item${editor.isActive("link") ? " active" : ""}`}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => runTextCommand(handleLink)}
-            >
-              <span className="slash-icon">
-                <Link2 size={15} />
-              </span>
-              Ссылка
-            </button>
-            <div className="text-menu-label">Выделение</div>
-            <div className="text-menu-swatch-row">
-              {HIGHLIGHT_COLORS.map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  className={`bubble-swatch${
-                    editor.isActive("highlight", { color }) ? " active" : ""
-                  }`}
-                  style={{ background: color }}
-                  title={`Выделить ${color}`}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => runTextCommand(() => toggleHighlight(color))}
-                />
-              ))}
-              <button
-                type="button"
-                className="text-menu-eraser"
-                title="Снять выделение"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() =>
-                  runTextCommand(() =>
-                    editor.chain().focus().unsetHighlight().run()
-                  )
-                }
-              >
-                <Eraser size={13} />
-              </button>
-            </div>
-            <div className="text-menu-label">Блоки</div>
-            {TEXT_BLOCK_ITEMS.map(renderTextMenuItem)}
-            <span className="text-menu-sep" />
-            <button
-              type="button"
-              className="text-menu-item"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() =>
-                runTextCommand(() =>
-                  editor.chain().focus().unsetAllMarks().run()
-                )
-              }
-            >
-              <span className="slash-icon">
-                <RemoveFormatting size={15} />
-              </span>
-              Очистить форматирование
-            </button>
-          </div>,
-          document.body
-        )}
+      {textMenuOpen && textMenuPos && (
+        <TextMenu
+          editor={editor}
+          pos={textMenuPos}
+          onClose={() => setTextMenuOpen(false)}
+        />
+      )}
 
-      <FloatingMenu
-        editor={editor}
-        shouldShow={shouldShowFloating}
-      >
+      <FloatingMenu editor={editor} shouldShow={shouldShowFloating}>
         <button
           type="button"
           className="floating-plus"
