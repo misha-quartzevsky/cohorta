@@ -33,6 +33,12 @@ export interface Crumb {
 interface Props {
   /** Navigation chain, e.g. «Рабочий стол» → course → lecture. */
   crumbs?: Crumb[];
+  /**
+   * When `true`, the breadcrumb labels are replaced with a thin gray
+   * skeleton (the lecture title is still loading). The crumb area has
+   * a fixed min-width/min-height in CSS so the header never "breathes".
+   */
+  crumbsLoading?: boolean;
 }
 
 /** Display name of the user (falls back to the email). */
@@ -52,7 +58,7 @@ function avatarSrc(user: User): string {
   return pb.files.getURL(user, user.avatar);
 }
 
-function Header({ crumbs = [] }: Props) {
+function Header({ crumbs = [], crumbsLoading = false }: Props) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -124,27 +130,37 @@ function Header({ crumbs = [] }: Props) {
 
         {/* --- breadcrumbs (center), только когда есть куда «вернуться» --- */}
         {crumbs.length > 1 && (
-          <nav className={`breadcrumbs${isSearchFocused ? " faded" : ""}`}>
-            {crumbs.map((crumb, i) => {
-              const isLast = i === crumbs.length - 1;
-              const content =
-                isLast || !crumb.to ? (
-                  <span className="crumb-label">{crumb.label}</span>
-                ) : (
-                  <Link className="crumb-link" to={crumb.to}>
-                    {crumb.label}
-                  </Link>
+          <nav
+            className={`breadcrumbs${isSearchFocused ? " faded" : ""}`}
+            aria-label="Хлебные крошки"
+          >
+            {crumbsLoading ? (
+              <span
+                className="skeleton-line crumb-skeleton"
+                aria-hidden="true"
+              />
+            ) : (
+              crumbs.map((crumb, i) => {
+                const isLast = i === crumbs.length - 1;
+                const content =
+                  isLast || !crumb.to ? (
+                    <span className="crumb-label">{crumb.label}</span>
+                  ) : (
+                    <Link className="crumb-link" to={crumb.to}>
+                      {crumb.label}
+                    </Link>
+                  );
+                return (
+                  <span
+                    key={`${crumb.label}-${i}`}
+                    className={`crumb${isLast ? " crumb-current" : ""}`}
+                  >
+                    {i > 0 && <span className="crumb-sep">/</span>}
+                    {content}
+                  </span>
                 );
-              return (
-                <span
-                  key={`${crumb.label}-${i}`}
-                  className={`crumb${isLast ? " crumb-current" : ""}`}
-                >
-                  {i > 0 && <span className="crumb-sep">/</span>}
-                  {content}
-                </span>
-              );
-            })}
+              })
+            )}
           </nav>
         )}
 

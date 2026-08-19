@@ -64,6 +64,8 @@ body {
   max-width: 1240px;
   margin: 0 auto;
   padding: 1.5rem 1.25rem 3rem;
+  /* Анимация убрана — применялась ко всем страницам, вызывала двойное моргание.
+     Целевая анимация только у .workspace-main (внутри LectureLayout). */
 }
 
 /* ---------- состояния загрузки и пустых списков ---------- */
@@ -928,7 +930,9 @@ textarea.field {
 .workspace-sidebar,
 .workspace-toc {
   position: sticky;
-  top: 1rem;
+  /* Отступ 30px под sticky-шапкой — жёстко зафиксирован и проверяется
+     E2E-тестом tests/header-stability.spec.ts (getComputedStyle). */
+  top: 30px;
   background: rgba(255, 255, 255, 0.55);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
@@ -1714,22 +1718,33 @@ textarea.field {
 
 /* --- хлебные крошки (центр) --- */
 .breadcrumbs {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  /* Flex-элемент между профилем и правой секцией (семестр + поиск):
+     занимает всё свободное место по центру и НИКОГДА не залезает под
+     переключатель семестра — правая секция защищена flex-shrink: 0,
+     а сам блок сжимается (ellipsis) вместо того, чтобы вылезти из шапки. */
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
   font-size: 0.95rem;
-  max-width: 45%;
+  /* Провисания высоты нет: пока грузится заголовок лекции, шапка не
+     «дышит» — вместо текста рендерится скелетон той же высоты. */
+  min-height: 28px;
   white-space: nowrap;
   overflow: hidden;
-  transition: opacity 0.25s ease;
+  margin-right: 20px; /* гарантированный зазор до переключателя семестра */
+  transition: opacity 0.2s ease;
+  z-index: 0;
 }
 
-/* Мягкое затухание крошек при фокусе на поиске. */
+/* При фокусе на поиске крошки полностью скрываются (opacity 0, клики
+   отключены), чтобы расширенный поиск не наезжал на них. Сам поиск и
+   переключатель семестра защищены от сжатия через flex-shrink: 0. */
 .breadcrumbs.faded {
-  opacity: 0.45;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .crumb {
@@ -1750,6 +1765,10 @@ textarea.field {
   color: var(--c-muted);
   text-decoration: none;
   font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   transition: color 0.15s ease, background 0.15s ease;
 }
 
@@ -1769,17 +1788,29 @@ textarea.field {
   font-weight: 600;
 }
 
+/* Тонкий серый скелетон заголовка лекции (поверх класса .skeleton-line
+   из Phase C — он даёт градиент-шимер и анимацию). */
+.crumb-skeleton {
+  width: 150px;
+  height: 12px;
+  flex: none;
+}
+
 /* --- правая секция: переключатель семестра + поиск --- */
 .header-right {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   min-width: 0;
+  /* Не даём правой секции сжиматься при расширении поиска. */
+  flex-shrink: 0;
   z-index: 1;
 }
 
 .app-header .semester-switcher {
   gap: 0.4rem;
+  /* Переключатель семестра не сжимается и не «наезжает» на крошки. */
+  flex-shrink: 0;
 }
 
 .app-header .semester-switcher-label {
@@ -1841,6 +1872,9 @@ textarea.field {
 /* --- обёртка поиска + live-дропдаун результатов --- */
 .search-wrap {
   position: relative;
+  /* Не сжимается при фокусе и лежит над крошками. */
+  flex-shrink: 0;
+  z-index: 2;
 }
 
 .search-dropdown {
@@ -2544,4 +2578,15 @@ textarea.field {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+}
+
+/* ---------- доступность: меньше движения ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line,
+  .crumb-skeleton,
+  .header-mic-pulse,
+  .workspace-main,
+  .page {
+    animation: none !important;
+  }
 }

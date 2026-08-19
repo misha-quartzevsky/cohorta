@@ -19,9 +19,9 @@ export function MathBlockView({ node, editor, getPos }: NodeViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (containerRef.current) {
-      void renderLatexInto(containerRef.current, node.attrs.latex || "");
-    }
+    const container = containerRef.current;
+    if (!container) return;
+    void renderLatexInto(container, node.attrs.latex || "");
   }, [node.attrs.latex]);
 
   const onEdit = useCallback(() => {

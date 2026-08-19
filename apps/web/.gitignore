@@ -25,3 +25,8 @@ dist-ssr
 
 # PWA dev artifact (vite-plugin-pwa)
 dev-dist
+
+# Playwright
+test-results
+playwright-report
+blob-report

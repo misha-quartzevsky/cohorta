@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
 
@@ -40,29 +40,59 @@ function LectureView() {
   const { setTitle } = useLectureFrame();
 
   // Токены `[[file:…]]` → абсолютные URL файлов PB перед отрисовкой.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!lecture) return;
     setContent(resolveFileTokens(lectureBody(lecture), lecture) || "");
   }, [lecture]);
 
-  // Отрисовываем формулы MathLive после вставки HTML (данные — в атрибуте).
-  useEffect(() => {
+    // Отрисовываем формулы MathLive после вставки HTML (данные — в атрибуте).
+  // useLayoutEffect срабатывает после commit-фазы, когда dangerouslySetInnerHTML
+  // уже применил HTML к DOM. Зависимость от id лекции: при SPA-переходе на
+  // лекцию с идентичным `content` эффект перезапускается.
+  //
+  // Рендер формулы вынесен в «самовосстанавливающийся» слой: помимо синхронного
+  // вызова — retry-таймеры и MutationObserver на контейнере. Это защищает от
+  // гонки, при которой React re-render (или wipe dangerouslySetInnerHTML после
+  // очередного апдейта `content`) стирает только-что вставленный <math-div>,
+  // а зависимые useLayoutEffect deps `[content]` могут не измениться.
+  useLayoutEffect(() => {
     const root = contentRef.current;
     if (!root) return;
-    const blocks = root.querySelectorAll<HTMLElement>(
-      "[data-type='math-block']"
-    );
-    blocks.forEach((el) => {
-      const latex = el.getAttribute("data-latex") ?? "";
-      void renderLatexInto(el, latex);
-    });
-  }, [content]);
+
+    const renderBlocks = () => {
+      root
+        .querySelectorAll<HTMLElement>("[data-type='math-block']")
+        .forEach((block) => {
+          void renderLatexInto(block, block.dataset.latex || "");
+        });
+    };
+
+    // Синхронный рендер сразу после коммита (HTML уже в DOM).
+    renderBlocks();
+
+    // «Повторные выстрелы» — на случай missed первого рендера.
+    const t1 = window.setTimeout(renderBlocks, 120);
+    const t2 = window.setTimeout(renderBlocks, 600);
+    const t3 = window.setTimeout(renderBlocks, 1500);
+
+    // Самовосстановление: пере-рендерим формулы каждый раз, когда React или
+    // dangerouslySetInnerHTML вставит/снимет math-block внутри контейнера.
+    const observer = new MutationObserver(() => renderBlocks());
+    observer.observe(root, { childList: true, subtree: true });
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      observer.disconnect();
+    };
+  }, [content, lecture?.id]);
 
   // Синхронизируем последнюю крошку шапки (живёт в LectureLayout).
-  useEffect(() => {
+  useLayoutEffect(() => {
     setTitle("");
   }, [lectureSlugParam, setTitle]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (lecture) setTitle(lectureTitle(lecture));
   }, [lecture, setTitle]);
 

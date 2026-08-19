@@ -216,6 +216,12 @@ function LectureEdit() {
             <TagEditor selectedIds={tags} onChange={updateTags} />
             <div ref={contentAreaRef} className="lecture-card-body">
               <Editor
+                // key=id лекции: при переходе между лекциями внутри layout-а
+                // редактор пересоздаётся целиком. Без этого при идентичном
+                // `content` эффект value-синка «схлопывался» и в редакторе
+                // оставался контент предыдущей лекции, а блоки формул не
+                // перемонтировались (см. фикс MathLive в LectureView).
+                key={lecture.id}
                 value={content}
                 onUpdate={updateContent}
                 className="editor-inline"

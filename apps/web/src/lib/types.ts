@@ -22,9 +22,8 @@ export interface Course extends PbRecord {
 
 export interface Lecture extends PbRecord {
   title: string;
+  /** Rich-контент (тип "editor" в PB): безлимитный, хранит HTML лекции. */
   content?: string;
-  /** Rich-контент (тип "editor" в PB): безлимитный, хранит тот же HTML. */
-  content_rich?: string;
   /** Файлы, залитые в лекцию (поле "file" в PB). */
   file?: string | string[];
   /** PocketBase relation → courses. */
@@ -56,9 +55,6 @@ export const FIELDS = {
   courseColor: "color",
   lectureTitle: "title",
   lectureContent: "content",
-  // Rich-контент (тип "editor" в PB): безлимитный, хранит тот же HTML,
-  // что и `content`. Чтение идёт через lectureBody() → content_rich приоритетен.
-  lectureContentRich: "content_rich",
   // Файлы (картинки), залитые в лекцию (тип "file" в PB).
   lectureFile: "file",
   // Поле в lectures, которое ссылается на курс (id из courses)
@@ -93,17 +89,12 @@ export function lectureContent(l: Lecture): string {
   return String(l.content ?? "");
 }
 
-/** Рендовый (rich) контент лекции — поле `content_rich`. */
-export function lectureContentRich(l: Lecture): string {
-  return String(l.content_rich ?? "");
-}
-
 /**
- * Источник контента лекции: `content_rich` приоритетен (новые лекции
- * пишутся туда), иначе — легаси-поле `content` (старые лекции).
+ * Контент лекции — единое richtext-поле `content` (тип "editor" в PB),
+ * хранит HTML лекции (безлимитный).
  */
 export function lectureBody(l: Lecture): string {
-  return lectureContentRich(l) || lectureContent(l);
+  return lectureContent(l);
 }
 
 /** Имена файлов, прикреплённых к лекции (поле `file`). */

@@ -9,7 +9,7 @@
 
 import { pb } from "../lib/pocketbase";
 import type { Lecture } from "../lib/types";
-import { FIELDS, lectureFiles, stripHtml } from "../lib/types";
+import { FIELDS, lectureFiles } from "../lib/types";
 import { slugify } from "../lib/slugify";
 import { uniqueSlugForCollection } from "./genericService";
 import { applyLectureTags } from "./tagService";
@@ -59,31 +59,7 @@ export async function fetchRecentLectures(
  * Create a brand-new lecture inside a course.
  *
  * @param title    — lecture heading
- * @param content  — lecture body (plain text)
- * @param courseId — course this lecture belongs to
- * @returns The created Lecture record.
- */
-/**
- * Значение для поля `content` при create/update.
- *
- * Поле `content` в PocketBase ограничено (validation_max_text_constraint,
- * здесь ~5000 символов), а полный rich-HTML (картинки data-URL, схемы,
- * формулы) легко превышает лимит. Полный HTML живёт в `content_rich`
- * (безлимит); сюда пишем короткий plain-text эксцерпт без тегов и токенов
- * `[[file:…]]` — для поиска, превью и легаси-просмотра.
- * Пустой content заменяем на title (поле REQUIRED).
- */
-function safeContent(title: string, content: string): string {
-  const text = stripHtml(content) || title;
-  const MAX = 4800;
-  return text.length > MAX ? text.slice(0, MAX) : text;
-}
-
-/**
- * Create a brand-new lecture inside a course.
- *
- * @param title    — lecture heading
- * @param content  — lecture body (plain text)
+ * @param content  — lecture body (rich HTML; хранится в richtext-поле `content`)
  * @param courseId — course this lecture belongs to
  * @returns The created Lecture record (includes a unique `slug`).
  */
@@ -94,8 +70,7 @@ export async function createLecture(
 ): Promise<Lecture> {
   return pb.collection("lectures").create<Lecture>({
     [FIELDS.lectureTitle]: title,
-    [FIELDS.lectureContent]: safeContent(title, content),
-    [FIELDS.lectureContentRich]: content,
+    [FIELDS.lectureContent]: content,
     [FIELDS.lectureCourse]: courseId,
     [FIELDS.lectureSlug]: await uniqueSlugForCollection(
       "lectures",
@@ -122,8 +97,7 @@ export async function createUnassignedLecture(
 ): Promise<Lecture> {
   return pb.collection("lectures").create<Lecture>({
     [FIELDS.lectureTitle]: title,
-    [FIELDS.lectureContent]: safeContent(title, content),
-    [FIELDS.lectureContentRich]: content,
+    [FIELDS.lectureContent]: content,
     [FIELDS.lectureSlug]: await uniqueSlugForCollection(
       "lectures",
       FIELDS.lectureSlug,
@@ -152,8 +126,7 @@ export async function updateLecture(
   const existing = await pb.collection("lectures").getOne<Lecture>(id);
   const payload: Record<string, unknown> = {
     [FIELDS.lectureTitle]: title,
-    [FIELDS.lectureContent]: safeContent(title, content),
-    [FIELDS.lectureContentRich]: content,
+    [FIELDS.lectureContent]: content,
   };
   // Lazy slug backfill for legacy records.
   if (!existing.slug) {
@@ -198,7 +171,7 @@ export async function assignLecture(
 
 /**
  * Full-text search across lecture titles and bodies.
- * Searches the raw HTML in `content` / `content_rich` — good enough
+ * Searches the raw HTML in `content` — good enough
  * for a live dropdown (worst case it matches a tag name).
  *
  * @param query — search substring (case-insensitive `~` contains in PB)
@@ -215,7 +188,6 @@ export async function searchLectures(
   const filter = [
     `${FIELDS.lectureTitle}~"${escaped}"`,
     `${FIELDS.lectureContent}~"${escaped}"`,
-    `${FIELDS.lectureContentRich}~"${escaped}"`,
   ].join(" || ");
   const result = await pb.collection("lectures").getList<Lecture>(1, limit, {
     sort: "-created",

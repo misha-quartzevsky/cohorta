@@ -93,7 +93,7 @@ export default function LectureLayout() {
 
   return (
     <LectureFrameContext.Provider value={api}>
-      <Header crumbs={crumbs} />
+      <Header crumbs={crumbs} crumbsLoading={title === ""} />
       <div className="page">
         <div className={`workspace${isCourseContext ? "" : " no-sidebar"}`}>
           {isCourseContext && (

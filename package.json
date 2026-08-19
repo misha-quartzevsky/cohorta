@@ -6,6 +6,8 @@
     "dev": "npm run dev --prefix apps/web",
     "build": "npm run build --prefix apps/web",
     "preview": "npm run preview --prefix apps/web",
+    "seed": "npm run seed --prefix apps/web",
+    "test": "npm run test --prefix apps/web",
     "setup:pocketbase": "powershell -ExecutionPolicy Bypass -File scripts/setup-pocketbase.ps1",
     "pocketbase": "powershell -ExecutionPolicy Bypass -File scripts/start-pocketbase.ps1"
   }

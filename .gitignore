@@ -8,6 +8,9 @@ dist/
 pocketbase/pocketbase.exe
 pocketbase/pocketbase
 pocketbase/pb_data/
+# Local DB snapshots/backups (regenerable from pb_migrations; binaries — не в git)
+pocketbase/pb_backups/
+pocketbase/*.backup*
 
 # OS / editor
 .DS_Store

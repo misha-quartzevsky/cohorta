@@ -26,16 +26,33 @@ createRoot(document.getElementById("root")!).render(
   </StrictMode>,
 );
 
-// Register service worker for PWA support
+// Register service worker for PWA support (production only).
+// В dev проект использует `vite-plugin-pwa` с `devOptions.enabled: true`,
+// из‑за чего `/sw.js` держит «старый снапшот» и ломает reload / SPA‑refocus
+// (.clinerules, «белый экран при обновлении»). Поэтому в dev SW не
+// регистрируем, а при переходе в dev принудительно сбрасываем любые
+// ранее‑зарегистрированные SW — чтобы они больше не контролировали вкладку.
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then((registration) => {
-        console.log("SW registered: ", registration);
-      })
-      .catch((registrationError) => {
-        console.log("SW registration failed: ", registrationError);
+  if (import.meta.env.PROD) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((registration) => {
+          console.log("SW registered: ", registration);
+        })
+        .catch((registrationError) => {
+          console.log("SW registration failed: ", registrationError);
+        });
+    });
+  } else {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      void Promise.all(
+        registrations.map((registration) => registration.unregister())
+      ).then((ok) => {
+        if (ok.some(Boolean)) {
+          console.log("SW unregistered in dev");
+        }
       });
-  });
+    });
+  }
 }
