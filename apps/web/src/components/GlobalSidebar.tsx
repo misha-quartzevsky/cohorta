@@ -33,6 +33,7 @@ import {
   lectureCourseId,
 } from "../lib/types";
 import TableOfContents from "./TableOfContents";
+import ScrollBar from "./scrollbar/ScrollBar";
 
 /** Display name of the user (falls back to the email). */
 function userName(user: User): string {
@@ -77,6 +78,8 @@ export default function GlobalSidebar() {
   const [semesterPopupOpen, setSemesterPopupOpen] = useState(false);
   const [popupTop, setPopupTop] = useState(0);
   const semesterBtnRef = useRef<HTMLButtonElement | null>(null);
+  const sidebarRef = useRef<HTMLElement | null>(null);
+  const semesterPopupRef = useRef<HTMLDivElement | null>(null);
 
   const { lectures: recentLectures } = useRecentLectures(3);
 
@@ -118,7 +121,7 @@ export default function GlobalSidebar() {
   const { tocContainerRef, tocVersion } = useLectureFrame();
 
   return (
-    <aside className="global-sidebar">
+    <aside ref={sidebarRef} className="global-sidebar">
       {/* User Profile */}
       {user && (
         <div className="sidebar-profile">
@@ -173,7 +176,11 @@ export default function GlobalSidebar() {
               className="sidebar-semester-backdrop"
               onClick={() => setSemesterPopupOpen(false)}
             />
-            <div className="sidebar-semester-popup" style={{ top: popupTop }}>
+            <div
+              ref={semesterPopupRef}
+              className="sidebar-semester-popup"
+              style={{ top: popupTop }}
+            >
               {semesters.map((sem) => (
                 <button
                   key={sem.id}
@@ -186,6 +193,7 @@ export default function GlobalSidebar() {
                   {semesterSlug(sem)} семестр
                 </button>
               ))}
+              <ScrollBar scrollRef={semesterPopupRef} />
             </div>
           </>,
           document.body
@@ -292,6 +300,7 @@ export default function GlobalSidebar() {
           </nav>
         </>
       )}
+      <ScrollBar scrollRef={sidebarRef} />
     </aside>
   );
 }

@@ -17,6 +17,7 @@ import { Mic, MicOff, Search } from "lucide-react";
 
 import { useLectureSearch } from "../hooks/useLectureSearch";
 import { useSpeech } from "../lib/speechContext";
+import ScrollBar from "./scrollbar/ScrollBar";
 
 export interface Crumb {
   label: string;
@@ -41,6 +42,7 @@ function Header({ crumbs = [], crumbsLoading = false }: Props) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const searchWrapRef = useRef<HTMLDivElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const { results, loading } = useLectureSearch(query, open);
 
@@ -162,7 +164,7 @@ function Header({ crumbs = [], crumbsLoading = false }: Props) {
             </label>
 
             {showDropdown && (
-              <div className="search-dropdown">
+              <div ref={dropdownRef} className="search-dropdown">
                 {loading && <div className="search-status">Ищем…</div>}
                 {!loading && results.length === 0 && (
                   <div className="search-status">Ничего не найдено</div>
@@ -188,6 +190,7 @@ function Header({ crumbs = [], crumbsLoading = false }: Props) {
                     )}
                   </button>
                 ))}
+                <ScrollBar scrollRef={dropdownRef} />
               </div>
             )}
           </div>

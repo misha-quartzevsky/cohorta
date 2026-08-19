@@ -19,6 +19,7 @@ import CardSkeleton from "../components/CardSkeleton";
 import TableOfContents from "../components/TableOfContents";
 import TagBadges from "../components/TagBadges";
 import { renderLatexInto } from "../components/math/renderLatex";
+import ScrollBar from "../components/scrollbar/ScrollBar";
 
 /**
  * LectureView — страница лекции / заметки.
@@ -35,6 +36,7 @@ function LectureView() {
 
   const [content, setContent] = useState("");
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const tocRef = useRef<HTMLElement | null>(null);
 
   // `ready` needed by effects below — compute it here (not only near the JSX).
   const ready = !!lecture && !loading;
@@ -186,12 +188,13 @@ function LectureView() {
         )}
       </main>
 
-      <aside className="workspace-toc">
+      <aside ref={tocRef} className="workspace-toc">
         {ready ? (
           <TableOfContents containerRef={contentRef} version={content} />
         ) : (
           <div className="workspace-toc-spacer" />
         )}
+        <ScrollBar scrollRef={tocRef} />
       </aside>
 
       <ConfirmDialog

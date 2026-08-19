@@ -17,6 +17,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
 import GlobalSidebar from "./GlobalSidebar";
+import DocumentScrollbar from "./scrollbar/DocumentScrollbar";
 import {
   LectureFrameContext,
   type LectureFrameApi,
@@ -57,6 +58,7 @@ export default function AppLayout() {
         <main className="app-main">
           <Outlet />
         </main>
+        <DocumentScrollbar />
       </div>
     </LectureFrameContext.Provider>
   );

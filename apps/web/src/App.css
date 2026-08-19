@@ -59,6 +59,82 @@ body {
   background-attachment: fixed;
 }
 
+/* ---------- Custom scrollbars: native hidden, JS-drawn (macOS/Notion/DeepSeek) ----
+   Every scroll container still works with the wheel/keyboard, but its native
+   thumb is hidden and replaced by a slim, rounded, semi-transparent pill drawn
+   in JS (components/scrollbar/*). This makes the look IDENTICAL in Chrome,
+   Edge, Safari and Firefox (native FF scrollbars can't be rounded via CSS). */
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* --- Main document scrollbar (fixed overlay bound to window scroll) --- */
+.doc-scroll-track {
+  position: fixed;
+  top: 8px;
+  right: 3px;
+  bottom: 8px;
+  width: 5px;
+  z-index: 2000;
+  pointer-events: none;
+}
+.doc-scroll-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  border-radius: 10px;
+  background: rgba(27, 27, 27, 0.16);
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+.doc-scroll-track.active .doc-scroll-thumb {
+  background: rgba(27, 27, 27, 0.16);
+}
+
+/* --- ScrollBar for inner scroll containers (rendered as a positioned sibling) --- */
+.scroll-bar {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  bottom: 2px;
+  width: 5px;
+  z-index: 5;
+  pointer-events: none;
+}
+.scroll-bar-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  border-radius: 10px;
+  background: rgba(27, 27, 27, 0.16);
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+/* Darken slightly on container hover (no full-opacity — stays translucent). */
+.scroll-bar:hover .scroll-bar-thumb,
+.scroll-area:hover .scroll-bar-thumb {
+  background: rgba(27, 27, 27, 0.28);
+}
+
+
+
 /* ---------- обёртка и шапка ---------- */
 .page {
   max-width: 1240px;
@@ -1838,7 +1914,7 @@ textarea.field {
   align-items: center;
   gap: 0.5rem;
   height: 40px;
-  padding: 0 0.95rem;
+  padding: 0 1.1rem; /* comfortable, consistent inset for icon + text */
   width: 220px;
   border-radius: 20px;
   background: #f5f5f5;

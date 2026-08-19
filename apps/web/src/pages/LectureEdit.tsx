@@ -25,6 +25,7 @@ import Editor from "../components/Editor";
 import SpeechToText from "../components/SpeechToText";
 import TableOfContents from "../components/TableOfContents";
 import TagEditor from "../components/TagEditor";
+import ScrollBar from "../components/scrollbar/ScrollBar";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -50,6 +51,7 @@ function LectureEdit() {
   const tagsRef = useRef<string[]>([]);
   const firstRun = useRef(true);
   const contentAreaRef = useRef<HTMLDivElement | null>(null);
+  const tocRef = useRef<HTMLElement | null>(null);
 
   const frame = useLectureFrame();
   const { setTitle: setCrumbTitle, registerFlush, tocContainerRef } = frame;
@@ -246,12 +248,13 @@ function LectureEdit() {
         )}
       </main>
 
-      <aside className="workspace-toc">
+      <aside ref={tocRef} className="workspace-toc">
         {ready ? (
           <TableOfContents containerRef={contentAreaRef} version={content} />
         ) : (
           <div className="workspace-toc-spacer" />
         )}
+        <ScrollBar scrollRef={tocRef} />
       </aside>
     </>
   );
