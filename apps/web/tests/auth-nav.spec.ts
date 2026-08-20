@@ -21,14 +21,13 @@ test("демо-логин: редирект на /s/demo и TOC-асид с от
   await login(page, "demo");
 
   await page.waitForURL("**/s/demo");
-  await expect(page.locator(".page-title")).toContainText("Семестр demo");
+  await expect(page.locator(".hero-greeting")).toBeVisible();
   await expect(page.locator(".global-sidebar")).toBeVisible();
 
-  // Дашборд → курс (секция «Курсы» — первый .dashboard-section).
-  const courseTile = page
-    .locator(".dashboard-section")
-    .first()
-    .locator(".tile-click", { hasText: "Математический анализ" });
+  // Дашборд → курс (виджет «Курсы семестра»).
+  const courseTile = page.locator(".course-mini-card", {
+    hasText: "Математический анализ",
+  });
   await waitForStable(page, courseTile);
   await courseTile.click();
   await page.waitForURL("**/s/demo/math-analysis");

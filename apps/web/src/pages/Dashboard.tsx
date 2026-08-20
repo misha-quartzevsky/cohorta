@@ -1,43 +1,39 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useCourses } from "../hooks/useCourses";
 import { useRecentLectures } from "../hooks/useRecentLectures";
 import { useCourseForm } from "../hooks/useCourseForm";
-import { useConfirmDialog } from "../hooks/useConfirmDialog";
+import { useAuth } from "../hooks/useAuth";
+import { useLastVisited } from "../hooks/useLastVisited";
+import { useActivityTimeline } from "../hooks/useActivityTimeline";
 import { useSemester } from "../lib/semesterContext";
+import { semesterSlug } from "../lib/types";
 
 import Header from "../components/Header";
-import LectureEditor from "../components/LectureEditor";
-import ConfirmDialog from "../components/ConfirmDialog";
 import ErrorBanner from "../components/ErrorBanner";
 import LoadingState from "../components/LoadingState";
 import SemesterGate from "../components/SemesterGate";
-import CoursesSection from "./dashboard/CoursesSection";
-import RecentSection from "./dashboard/RecentSection";
+import { CourseCreateSlot } from "../components/CourseFormTile";
 
-import {
-  type Course,
-  type Lecture,
-  courseName,
-  courseSlug,
-  lectureSlug,
-  lectureTitle,
-  lectureCourseId,
-  semesterSlug,
-} from "../lib/types";
-
-import { deleteLecture, assignLecture } from "../services/lectureService";
+import HeroSection from "./dashboard/HeroSection";
+import QuickActionsBar from "./dashboard/QuickActionsBar";
+import ResumeBlock from "./dashboard/ResumeBlock";
+import CoursesWidget from "./dashboard/CoursesWidget";
+import ActivityTimeline from "./dashboard/ActivityTimeline";
 
 /**
- * Dashboard — дашборд текущего семестра.
- * Топ-3 курса (по `updated`) + «Последние» записи.
+ * Dashboard 2.0 — приветственный экран семестра:
+ * Hero + быстрые действия + «Продолжить» + курсы семестра + лента активности.
+ *
+ * Редактирование/удаление курсов и записей с дашборда намеренно убраны
+ * (чистота интерфейса) — эти действия живут на специализированных страницах.
  */
 function Dashboard() {
   const navigate = useNavigate();
-
+  const { user } = useAuth();
   const { current, semesters, error: semError } = useSemester();
   const semesterId = current?.id ?? "";
+  const semSlug = current ? semesterSlug(current) : "";
 
   const {
     courses,
@@ -46,90 +42,24 @@ function Dashboard() {
     error: coursesError,
     createCourse,
     updateCourse,
-    deleteCourse,
   } = useCourses(semesterId);
 
   const {
     lectures,
     loading: lecturesLoading,
     error: lecturesError,
-    refetch: refetchLectures,
   } = useRecentLectures(30);
 
-  const [creatingNote, setCreatingNote] = useState(false);
-  const [editingNote, setEditingNote] = useState<Lecture | null>(null);
+  const lastVisited = useLastVisited();
+  const timeline = useActivityTimeline(10);
 
-  // Form state for create/edit course (shared with CoursesPage via
-  // useCourseForm + CourseFormTile render slots).
+  // Форма создания курса (быстрые действия → CourseCreateSlot).
   const form = useCourseForm(createCourse, updateCourse, semesterId);
-  const confirm = useConfirmDialog();
 
-  const handleDeleteCourse = (course: Course) => {
-    confirm.ask(
-      "Удалить курс?",
-      `Курс «${courseName(course)}» будет удалён. Связанные лекции погибнут.`,
-      () => {
-        void deleteCourse(course.id);
-      }
-    );
-  };
-
-  const handleDeleteLecture = (lecture: Lecture) => {
-    const t = lectureTitle(lecture);
-    confirm.ask("Удалить запись?", `Запись «${t}» будет удалена.`, () => {
-      void deleteLecture(lecture.id);
-      void refetchLectures();
-    });
-  };
-
-  const handleAssignCourse = async (lecture: Lecture, courseId: string) => {
-    await assignLecture(lecture.id, courseId);
-    void refetchLectures();
-  };
-
-  const semSlug = current ? semesterSlug(current) : "";
-
-  // Navigation handlers for the extracted section components.
-  const handleOpenAllCourses = () => navigate(`/s/${semSlug}/courses`);
-
-  const handleOpenCourse = (course: Course) =>
-    navigate(`/s/${semSlug}/${courseSlug(course)}`);
-
-  const handleOpenLecture = (lec: Lecture) => {
-    const unassigned = !lectureCourseId(lec);
-    const lecCourse = unassigned
-      ? undefined
-      : courses.find((c) => c.id === lectureCourseId(lec));
-    if (unassigned || !lecCourse) {
-      navigate(`/s/${semSlug}/note/${lectureSlug(lec)}`);
-    } else {
-      navigate(`/s/${semSlug}/${courseSlug(lecCourse)}/${lectureSlug(lec)}`);
-    }
-  };
-
-  const handleEditLecture = (lec: Lecture) => {
-    const unassigned = !lectureCourseId(lec);
-    const lecCourse = unassigned
-      ? undefined
-      : courses.find((c) => c.id === lectureCourseId(lec));
-    if (unassigned || !lecCourse) {
-      setEditingNote(lec);
-    } else {
-      navigate(
-        `/s/${semSlug}/${courseSlug(lecCourse)}/${lectureSlug(lec)}/edit`
-      );
-    }
-  };
-
-  // Courses of the semester, top-3 by `updated`.
-  const visibleCourses = courses.slice(0, 3);
-
-  // Recent items: unassigned notes + lectures of this semester's courses.
-  const semCourseIds = new Set(courses.map((c) => c.id));
-  const visibleLectures = lectures.filter((lec) => {
-    const cid = lectureCourseId(lec);
-    return !cid || semCourseIds.has(cid);
-  });
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const lecturesThisWeek = lectures.filter(
+    (l) => new Date(l.updated).getTime() >= weekAgo
+  ).length;
 
   const loading =
     (coursesLoading && courses.length === 0) ||
@@ -140,64 +70,36 @@ function Dashboard() {
     <SemesterGate>
       {loading ? (
         <LoadingState />
-      ) : creatingNote ? (
-        <LectureEditor
-          isNote
-          onSaved={() => {
-            setCreatingNote(false);
-            void refetchLectures();
-          }}
-          onCancel={() => setCreatingNote(false)}
-        />
-      ) : editingNote ? (
-        <LectureEditor
-          isNote
-          lecture={editingNote}
-          onSaved={() => {
-            setEditingNote(null);
-            void refetchLectures();
-          }}
-          onCancel={() => setEditingNote(null)}
-        />
       ) : (
         <>
           <Header crumbs={[{ label: "Рабочий стол" }]} />
           <div className="page">
-            <div className="content-canvas">
+            <div className="content-canvas dashboard-canvas">
               <ErrorBanner message={error} />
 
-              <h1 className="page-title">Семестр {semSlug}</h1>
-              <p className="page-subtitle">
-                Недавно изменённые курсы и последние записи.
-              </p>
+              <HeroSection user={user} stats={{ lecturesThisWeek }} />
 
-              <CoursesSection
-                courses={visibleCourses}
-                featured={featured}
-                form={form}
-                semesters={semesters}
-                onOpenAll={handleOpenAllCourses}
-                onOpenCourse={handleOpenCourse}
-                onDeleteCourse={handleDeleteCourse}
+              <QuickActionsBar
+                onNewNote={() => navigate("/note/new")}
+                onNewCourse={form.startCreate}
               />
 
-              <RecentSection
-                lectures={visibleLectures}
-                courses={courses}
-                onCreateNote={() => setCreatingNote(true)}
-                onOpenLecture={handleOpenLecture}
-                onEditLecture={handleEditLecture}
-                onDeleteLecture={handleDeleteLecture}
-                onAssignCourse={handleAssignCourse}
-              />
+              {form.creating && (
+                <div className="dashboard-create-slot">
+                  <CourseCreateSlot form={form} semesters={semesters} />
+                </div>
+              )}
 
-              <ConfirmDialog
-                open={confirm.open}
-                title={confirm.title}
-                message={confirm.message}
-                onConfirm={confirm.confirm}
-                onCancel={confirm.cancel}
-              />
+              <ResumeBlock lastVisited={lastVisited} />
+
+              <div className="dashboard-bento">
+                <CoursesWidget
+                  courses={courses.slice(0, 4)}
+                  featured={featured}
+                  semesterSlug={semSlug}
+                />
+                <ActivityTimeline items={timeline} />
+              </div>
             </div>
           </div>
         </>

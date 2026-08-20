@@ -70,6 +70,13 @@ function isLectureRoute(pathname: string): {
   return { isLecture: false };
 }
 
+/** Check if current route is an unassigned note page (/note/:slug or /edit).
+ *  The create page `/note/new` is intentionally NOT a note context (no card
+ *  content to build a TOC from yet). */
+function isNoteRoute(pathname: string): { isNote: boolean } {
+  return { isNote: /^\/note\/[^/]+(\/edit)?$/.test(pathname) };
+}
+
 interface Props {
   /** Mobile drawer open flag (ignored on desktop — the sidebar is always
    *  visible there and the CSS `.open` class has no effect). */
@@ -109,7 +116,9 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
     };
   }, [open]);
 
-  const { lectures: recentLectures } = useRecentLectures(3);
+  // Fetch a larger window so the "ВСЕ ЗАМЕТКИ" context can list every unassigned
+  // note; the default НЕДАВНИЕ section slices it down to 3.
+  const { lectures: recentLectures } = useRecentLectures(100);
 
   const handleLogout = () => {
     logout();
@@ -137,6 +146,12 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
 
   // Determine if we're on a lecture page
   const { isLecture, courseSlug: currentCourseSlug, semesterSlug: currentSemSlug } = isLectureRoute(location.pathname);
+
+  // Determine if we're on an unassigned-note page
+  const { isNote } = isNoteRoute(location.pathname);
+
+  // All unassigned notes (for the "ВСЕ ЗАМЕТКИ" context section).
+  const unassignedNotes = recentLectures.filter((lec) => !lectureCourseId(lec));
 
   // Fetch lectures of current course if on lecture page
   const { lectures: courseLectures, course } = useLectures(
@@ -198,7 +213,7 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
       )}
 
       {/* Semester Switcher */}
-      {current && !isLecture && (
+      {current && !isLecture && !isNote && (
         <div className="sidebar-semester">
           <button
             ref={semesterBtnRef}
@@ -250,7 +265,54 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
         )}
 
       {/* Context-aware content */}
-      {isLecture ? (
+      {isNote ? (
+        <>
+          {/* All unassigned notes section */}
+          <nav className="sidebar-section">
+            <button
+              type="button"
+              className="sidebar-back-btn"
+              onClick={() => navigate("/notes")}
+            >
+              {"\u2190"} Все заметки
+            </button>
+            <h3 className="sidebar-section-title">ВСЕ ЗАМЕТКИ</h3>
+            <ul className="sidebar-nav sidebar-nav-scrollable">
+              {unassignedNotes.map((lec) => {
+                const slug = lectureSlug(lec);
+                const to = `/note/${slug}`;
+                const isActive =
+                  location.pathname === to ||
+                  location.pathname === `${to}/edit`;
+                return (
+                  <li key={lec.id}>
+                    <Link
+                      to={to}
+                      className={`sidebar-nav-item${isActive ? " active" : ""}`}
+                    >
+                      {lectureTitle(lec)}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+
+          {/* Table of Contents */}
+          <nav className="sidebar-section">
+            <h3 className="sidebar-section-title">ОГЛАВЛЕНИЕ</h3>
+            {tocContainerRef && tocVersion !== undefined ? (
+              <TableOfContents containerRef={tocContainerRef} version={tocVersion} hideTitle />
+            ) : (
+              <div className="sidebar-toc-placeholder">
+                <p style={{ fontSize: '0.85rem', color: 'var(--c-muted)', padding: '0.5rem 0.75rem' }}>
+                  Загрузка...
+                </p>
+              </div>
+            )}
+          </nav>
+        </>
+      ) : isLecture ? (
         <>
           {/* Course lectures section */}
           {course && (
@@ -303,7 +365,7 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
           <nav className="sidebar-section">
             <h3 className="sidebar-section-title">НЕДАВНИЕ</h3>
             <ul className="sidebar-nav">
-              {recentLectures.map((lec) => {
+              {recentLectures.slice(0, 3).map((lec) => {
                 const unassigned = !lectureCourseId(lec);
                 const slug = lectureSlug(lec);
                 let to: string;

@@ -19,10 +19,10 @@ test("переключение семестра в сайдбаре меняет
 }) => {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
-  await expect(page.locator(".page-title")).toContainText("Семестр demo");
+  await expect(page.locator(".hero-greeting")).toBeVisible();
 
-  const courses = page.locator(".dashboard-section").first();
-  const demoCourse = courses.locator(".tile-click", {
+  const courses = page.locator(".courses-widget");
+  const demoCourse = courses.locator(".course-mini-card", {
     hasText: "Математический анализ",
   });
   await waitForStable(page, demoCourse);
@@ -41,19 +41,18 @@ test("переключение семестра в сайдбаре меняет
   // список курсов ДРУГОЙ — «Математический анализ» из demo в секции «Курсы»
   // отсутствует. Проверяем именно смену списка, а не пустоту семестра.
   await switchSemester("1");
-  await expect(page.locator(".page-title")).toContainText("Семестр 1");
+  await expect(page.locator(".hero-greeting")).toBeVisible();
   await expect(
     page
-      .locator(".dashboard-section")
-      .first()
-      .locator(".tile-click", { hasText: "Математический анализ" })
+      .locator(".courses-widget")
+      .locator(".course-mini-card", { hasText: "Математический анализ" })
   ).toHaveCount(0);
 
   // Обратно на demo: курсы снова на месте.
   await switchSemester("demo");
-  await expect(page.locator(".page-title")).toContainText("Семестр demo");
+  await expect(page.locator(".hero-greeting")).toBeVisible();
   await expect(
-    page.locator(".dashboard-section").first().locator(".tile-click", {
+    page.locator(".courses-widget .course-mini-card", {
       hasText: "Математический анализ",
     })
   ).toBeVisible();

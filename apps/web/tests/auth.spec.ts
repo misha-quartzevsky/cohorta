@@ -24,6 +24,6 @@ test("неверные данные: ошибка на странице /login",
 test("демо-доступы: редирект на /s/demo и email в шапке", async ({ page }) => {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
-  await expect(page.locator(".page-title")).toContainText("Семестр demo");
+  await expect(page.locator(".hero-greeting")).toBeVisible();
   await expect(page.locator(".profile-email")).toHaveText(DEMO_EMAIL);
 });

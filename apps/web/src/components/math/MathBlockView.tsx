@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useRef } from "react";
-import type { NodeViewProps } from "@tiptap/react";
+import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { Pencil, Trash2 } from "lucide-react";
 
 import { mathBus } from "./mathBus";
@@ -46,38 +46,39 @@ export function MathBlockView({ node, editor, getPos }: NodeViewProps) {
   }, [editor, getPos, node.nodeSize]);
 
   return (
-    <div
+    <NodeViewWrapper
       className={`math-block${editor.isEditable ? " editable" : ""}`}
-      contentEditable={false}
       onClick={() => {
         // Клик по блоку открывает визуальный редактор MathLive.
         onEdit();
       }}
     >
-      <div ref={containerRef} className="math-block-render" />
-      {editor.isEditable && (
-        <div
-          className="math-block-toolbar"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <button
-            type="button"
-            className="math-block-btn"
-            onClick={onEdit}
-            title="Редактировать формулу"
+      <div className="math-block-inner">
+        <div ref={containerRef} className="math-block-render" />
+        {editor.isEditable && (
+          <div
+            className="math-block-toolbar"
+            onClick={(event) => event.stopPropagation()}
           >
-            <Pencil size={13} />
-          </button>
-          <button
-            type="button"
-            className="math-block-btn danger"
-            onClick={onDelete}
-            title="Удалить"
-          >
-            <Trash2 size={13} />
-          </button>
-        </div>
-      )}
-    </div>
+            <button
+              type="button"
+              className="math-block-btn"
+              onClick={onEdit}
+              title="Редактировать формулу"
+            >
+              <Pencil size={13} />
+            </button>
+            <button
+              type="button"
+              className="math-block-btn danger"
+              onClick={onDelete}
+              title="Удалить"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
+        )}
+      </div>
+    </NodeViewWrapper>
   );
 }

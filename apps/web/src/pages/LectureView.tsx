@@ -1,13 +1,17 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
 
 import {
+  courseName,
   lectureBody,
   lectureCourseId,
+  lectureExcerpt,
+  lectureSlug,
   lectureTitle,
 } from "../lib/types";
 import { formatDate } from "../lib/format";
+import { writeLastVisited } from "../lib/lastVisited";
 import { deleteLecture, resolveFileTokens } from "../services/lectureService";
 import { useLectureBySlug } from "../hooks/useLectureBySlug";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
@@ -109,11 +113,28 @@ function LectureView() {
     if (lecture) setTitle(lectureTitle(lecture));
   }, [lecture, setTitle]);
 
+  // «Продолжить» (Dashboard): пишем последнюю посещённую лекцию в localStorage.
+  useEffect(() => {
+    if (!lecture) return;
+    const course = lecture.expand?.field;
+    const target =
+      isCourseContext && courseSlug
+        ? `/s/${semesterSlug}/${courseSlug}/${lectureSlug(lecture)}`
+        : `/note/${lectureSlug(lecture)}`;
+    writeLastVisited({
+      to: target,
+      title: lectureTitle(lecture),
+      courseName: course ? courseName(course) : undefined,
+      excerpt: lectureExcerpt(lecture, 140),
+      savedAt: lecture.updated,
+    });
+  }, [lecture, isCourseContext, semesterSlug, courseSlug]);
+
   const handleEdit = () => {
     if (isCourseContext) {
       navigate(`/s/${semesterSlug}/${courseSlug}/${lectureSlugParam}/edit`);
     } else {
-      navigate(`/s/${semesterSlug}/note/${lectureSlugParam}/edit`);
+      navigate(`/note/${lectureSlugParam}/edit`);
     }
   };
 

@@ -8,16 +8,18 @@
  * содержать React-компоненты.
  */
 
-import type { NodeViewProps } from "@tiptap/react";
+import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 
 /** Аудио-плеер атомарного блока (источник — атрибут узла `src`). */
 export default function AudioBlockView(props: NodeViewProps) {
   return (
-    <audio
-      controls
-      preload="metadata"
-      className="lecture-audio"
-      src={props.node.attrs.src}
-    />
+    <NodeViewWrapper className="audio-block">
+      <audio
+        controls
+        preload="metadata"
+        className="lecture-audio"
+        src={props.node.attrs.src}
+      />
+    </NodeViewWrapper>
   );
 }

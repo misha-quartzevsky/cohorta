@@ -141,8 +141,8 @@ function buildHit(
     const semSlug = sem ? semesterSlug(sem) : fallbackSemesterSlug;
     to = `/s/${semSlug}/${courseSlug(course)}/${lectureSlug(lec)}`;
   } else {
-    // Независимая заметка — открывается под текущим семестром.
-    to = `/s/${fallbackSemesterSlug || "1"}/note/${lectureSlug(lec)}`;
+    // Независимая заметка — открывается по своему маршруту (без семестра).
+    to = `/note/${lectureSlug(lec)}`;
   }
 
   return {

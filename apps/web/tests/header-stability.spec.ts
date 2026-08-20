@@ -28,13 +28,12 @@ test("шапка не «дёргается» при переключении л�
 }) => {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
-  await expect(page.locator(".page-title")).toContainText("Семестр demo");
+  await expect(page.locator(".hero-greeting")).toBeVisible();
 
   // Дашборд → курс «Математический анализ» → лекция «Предел последовательности».
-  const courseTile = page
-    .locator(".dashboard-section")
-    .first()
-    .locator(".tile-click", { hasText: "Математический анализ" });
+  const courseTile = page.locator(".course-mini-card", {
+    hasText: "Математический анализ",
+  });
   await waitForStable(page, courseTile);
   await courseTile.click();
   await page.waitForURL("**/s/demo/math-analysis");

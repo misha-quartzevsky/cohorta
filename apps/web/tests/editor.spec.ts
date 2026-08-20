@@ -25,10 +25,9 @@ test("формула видна сразу при SPA-навигации; авт
   await page.waitForURL("**/s/demo");
 
   // SPA-переход на лекцию с формулой (клики по плиткам, без reload).
-  const courseTile = page
-    .locator(".dashboard-section")
-    .first()
-    .locator(".tile-click", { hasText: "Математический анализ" });
+  const courseTile = page.locator(".course-mini-card", {
+    hasText: "Математический анализ",
+  });
   await waitForStable(page, courseTile);
   await courseTile.click();
   await page.waitForURL("**/s/demo/math-analysis");

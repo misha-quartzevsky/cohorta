@@ -23,6 +23,7 @@ import Header from "./Header";
 import { useLectures } from "../hooks/useLectures";
 import { lectureCrumbs } from "../lib/lectureCrumbs";
 import { useLectureFrame } from "../lib/lectureFrame";
+import { lastSemesterSlug } from "../lib/lastSemester";
 
 export default function LectureLayout() {
   const { semesterSlug, courseSlug, lectureSlug } = useParams();
@@ -43,8 +44,13 @@ export default function LectureLayout() {
     bumpToc();
   }, [lectureSlug, setTitle, bumpToc]);
 
+  // «Рабочий стол» breadcrumb: lecture routes carry the semester in the URL,
+  // but note routes (`/note/...`) don't — there we fall back to the last
+  // semester the user worked in, so the dashboard reopens that semester.
+  const crumbSemSlug = semesterSlug || lastSemesterSlug();
+
   const crumbs = lectureCrumbs({
-    semesterSlug,
+    semesterSlug: crumbSemSlug,
     course,
     courseSlug,
     title,

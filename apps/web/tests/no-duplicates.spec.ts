@@ -24,9 +24,7 @@ test("ровно один .global-sidebar и ни одного .workspace-sideba
 
   // Курс.
   await page
-    .locator(".dashboard-section")
-    .first()
-    .locator(".tile-click", { hasText: "Математический анализ" })
+    .locator(".course-mini-card", { hasText: "Математический анализ" })
     .click();
   await page.waitForURL("**/s/demo/math-analysis");
   await expect(page.locator(".global-sidebar")).toHaveCount(1);

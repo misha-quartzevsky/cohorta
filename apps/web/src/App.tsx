@@ -23,6 +23,7 @@ import LecturesPage from "./pages/LecturesPage";
 import LectureView from "./pages/LectureView";
 import LectureEdit from "./pages/LectureEdit";
 import NotesPage from "./pages/NotesPage";
+import NoteCreate from "./pages/NoteCreate";
 import Header from "./components/Header";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingState from "./components/LoadingState";
@@ -82,6 +83,7 @@ function App() {
               <Route path="/s/:semesterSlug/courses" element={<CoursesPage />} />
               <Route path="/s/:semesterSlug/:courseSlug" element={<LecturesPage />} />
               <Route path="/notes" element={<NotesPage />} />
+              <Route path="/note/new" element={<NoteCreate />} />
               {/* Lecture view/edit share one persistent frame: the header and
                   course sidebar live in LectureLayout and stay mounted while the
                   user switches between lectures (no full-screen flicker). */}

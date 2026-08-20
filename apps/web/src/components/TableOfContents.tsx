@@ -35,8 +35,19 @@ export default function TableOfContents({
 
   // Re-scan headings (slightly debounced — `version` changes on every
   // keystroke while editing).
+  //
+  // The shared `containerRef.current` is a MUTABLE ref that is reassigned to a
+  // NEW node on view↔edit switches and SPA lecture navigation — usually WITHOUT
+  // a matching `version` bump (the sidebar TOC passes an almost-constant
+  // `tocVersion`). A MutationObserver attached to the OLD node would therefore
+  // stay silent and the outline would freeze. So we keep a lightweight poll
+  // that re-attaches the observer whenever the ref's node *identity* changes.
   useEffect(() => {
     let disposed = false;
+    let attachedEl: HTMLElement | null = null;
+    let observer: MutationObserver | null = null;
+    let timer = 0;
+    let poll = 0;
 
     const scan = () => {
       const container = containerRef.current;
@@ -53,31 +64,32 @@ export default function TableOfContents({
       );
     };
 
-    let timer = 0;
-    let observer: MutationObserver | null = null;
-
     const schedule = () => {
       window.clearTimeout(timer);
       timer = window.setTimeout(scan, 150);
     };
 
-    const attach = () => {
+    // Watch whatever node the ref currently points to. When the container isn't
+    // mounted yet (content loads async) this is a no-op; when the ref later
+    // points at a DIFFERENT node we detach from the old one and re-attach.
+    const ensureAttached = () => {
       const container = containerRef.current;
-      if (!container || disposed || observer) return;
-      schedule();
+      if (!container || disposed) return;
+      if (attachedEl === container) return; // already watching this node
+      observer?.disconnect();
       observer = new MutationObserver(schedule);
       observer.observe(container, { childList: true, subtree: true });
+      attachedEl = container;
+      schedule();
     };
 
-    // The content container may not be mounted yet when this component first
-    // renders (the lecture body div appears only after the record loads).
-    // Poll the ref until a container shows up, then attach the observer.
-    attach();
-    const poll = window.setInterval(() => {
-      if (containerRef.current && !observer && !disposed) {
-        window.clearInterval(poll);
-        attach();
-      }
+    ensureAttached();
+
+    // Poll the ref: covers both "container mounts late" and "container replaced"
+    // (no version change) without depending on a `version` bump.
+    poll = window.setInterval(() => {
+      if (disposed) return;
+      ensureAttached();
     }, 150);
 
     return () => {

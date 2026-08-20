@@ -7,24 +7,21 @@
  * This is a quick capture space for thoughts that don't belong to any course yet.
  */
 
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useRecentLectures } from "../hooks/useRecentLectures";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
-import { useSemester } from "../lib/semesterContext";
 import {
   type Lecture,
   lectureSlug,
   lectureTitle,
   lectureCourseId,
-  semesterSlug,
 } from "../lib/types";
+import { lastSemesterSlug } from "../lib/lastSemester";
 
 import Header from "../components/Header";
 import LectureTile from "../components/LectureTile";
 import AddTile from "../components/AddTile";
-import LectureEditor from "../components/LectureEditor";
 import ConfirmDialog from "../components/ConfirmDialog";
 import ErrorBanner from "../components/ErrorBanner";
 import LoadingState from "../components/LoadingState";
@@ -33,8 +30,7 @@ import { deleteLecture } from "../services/lectureService";
 
 function NotesPage() {
   const navigate = useNavigate();
-  const { current } = useSemester();
-  const semSlug = current ? semesterSlug(current) : "";
+  const semSlug = lastSemesterSlug();
 
   const {
     lectures,
@@ -43,8 +39,6 @@ function NotesPage() {
     refetch,
   } = useRecentLectures(100);
 
-  const [creatingNote, setCreatingNote] = useState(false);
-  const [editingNote, setEditingNote] = useState<Lecture | null>(null);
   const confirm = useConfirmDialog();
 
   // Filter only unassigned notes
@@ -55,7 +49,7 @@ function NotesPage() {
   };
 
   const handleEditNote = (lec: Lecture) => {
-    setEditingNote(lec);
+    navigate(`/note/${lectureSlug(lec)}/edit`);
   };
 
   const handleDeleteNote = (lec: Lecture) => {
@@ -68,33 +62,6 @@ function NotesPage() {
 
   if (loading && unassignedNotes.length === 0) {
     return <LoadingState />;
-  }
-
-  if (creatingNote) {
-    return (
-      <LectureEditor
-        isNote
-        onSaved={() => {
-          setCreatingNote(false);
-          void refetch();
-        }}
-        onCancel={() => setCreatingNote(false)}
-      />
-    );
-  }
-
-  if (editingNote) {
-    return (
-      <LectureEditor
-        isNote
-        lecture={editingNote}
-        onSaved={() => {
-          setEditingNote(null);
-          void refetch();
-        }}
-        onCancel={() => setEditingNote(null)}
-      />
-    );
   }
 
   return (
@@ -123,7 +90,7 @@ function NotesPage() {
           <div className="bento">
             <AddTile
               label="+ Новая заметка"
-              onClick={() => setCreatingNote(true)}
+              onClick={() => navigate("/note/new")}
             />
 
             {unassignedNotes.map((lec, i) => (

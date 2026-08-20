@@ -103,7 +103,7 @@ test("смена семестра через сайдбар = SPA (URL и кон
 
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
-  await expect(page.locator(".page-title")).toContainText("Семестр demo");
+  await expect(page.locator(".hero-greeting")).toBeVisible();
 
   // Метка на window. Если при смене семестра произойдёт полный reload,
   // window пересоздастся и метка пропадёт → waitForFunction не дождётся.
@@ -119,7 +119,8 @@ test("смена семестра через сайдбар = SPA (URL и кон
     .click();
 
   await page.waitForURL("**/s/1");
-  await expect(page.locator(".page-title")).toContainText("Семестр 1");
+  await expect(page.locator(".hero-greeting")).toBeVisible();
+  await expect(page.locator(".sidebar-semester-btn")).toContainText("1 семестр");
 
   // SPA: тот же window, что и до клика (никакого hard reload).
   await page.waitForFunction(
