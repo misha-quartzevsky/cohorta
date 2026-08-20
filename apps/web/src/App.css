@@ -628,6 +628,107 @@ textarea.field {
   height: 0;
   pointer-events: none;
 }
+/* ---------- Tables (editor + reading + toolbar) ---------- */
+.tiptap-wrapper .tiptap-editor .tableWrapper,
+.lecture-view-content .tableWrapper {
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+
+.tiptap-wrapper .tiptap-editor table,
+.lecture-view-content table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin: 0;
+}
+
+.tiptap-wrapper .tiptap-editor th,
+.tiptap-wrapper .tiptap-editor td,
+.lecture-view-content th,
+.lecture-view-content td {
+  border: 1px solid #dcd8e8;
+  padding: 0.5rem 0.6rem;
+  vertical-align: top;
+  text-align: left;
+}
+
+.tiptap-wrapper .tiptap-editor th,
+.lecture-view-content th {
+  background: rgba(88, 67, 246, 0.06);
+  font-weight: 600;
+}
+
+/* ProseMirror wraps every cell's content in a <p> — drop its bottom margin. */
+.tiptap-wrapper .tiptap-editor td p,
+.tiptap-wrapper .tiptap-editor th p {
+  margin: 0;
+}
+
+/* Selected table cell highlight (used by the cursor when editing a table). */
+.tiptap-wrapper .tiptap-editor .selectedCell {
+  background: rgba(88, 67, 246, 0.12);
+}
+
+/* Column resize handles (Table.configure({ resizable: true })). */
+.tiptap-wrapper .tiptap-editor .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background: rgba(88, 67, 246, 0.5);
+  cursor: col-resize;
+}
+
+/* Reading view: cells must not inherit the lecture `white-space: pre-wrap`. */
+.lecture-view-content th,
+.lecture-view-content td {
+  white-space: normal;
+}
+
+/* Quick table toolbar (see editor/TableMenu.tsx). */
+.table-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  background: rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(27, 27, 27, 0.08);
+  border-radius: 12px;
+  padding: 0.3rem;
+  box-shadow: 0 10px 30px rgba(27, 27, 27, 0.16);
+}
+.table-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  color: var(--c-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.table-menu-btn:hover {
+  background: rgba(88, 67, 246, 0.1);
+  color: var(--c-lilac);
+}
+.table-menu-btn.danger:hover {
+  background: rgba(230, 60, 60, 0.1);
+  color: #e23c3c;
+}
+.table-menu-sep {
+  width: 1px;
+  height: 18px;
+  background: rgba(27, 27, 27, 0.12);
+  margin: 0 0.2rem;
+}
+
+
 
 /* ---------- страница просмотра записи ---------- */
 .lecture-view {

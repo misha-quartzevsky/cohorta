@@ -12,18 +12,25 @@
  *   - editor/textCommands.ts    — shared formatting commands/items
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Editor as TiptapEditor } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { FloatingMenu } from "@tiptap/react/menus";
 import type { BubbleMenuPluginProps } from "@tiptap/extension-bubble-menu";
 import type { FloatingMenuPluginProps } from "@tiptap/extension-floating-menu";
+import type { EditorView } from "@tiptap/pm/view";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import ImageExtension from "@tiptap/extension-image";
 import Highlight from "@tiptap/extension-highlight";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
+import {
+  Table as TableExtension,
+  TableRow as TableRowExt,
+  TableCell as TableCellExt,
+  TableHeader as TableHeaderExt,
+} from "@tiptap/extension-table";
 import { AudioLines, Mic, MicOff, Plus } from "lucide-react";
 import type { UploadedImage } from "../services/lectureService";
 
@@ -37,10 +44,12 @@ import { mathBus, type MathEditRequest } from "./math/mathBus";
 import { sketchBus, setSketchUploader, type SketchRequest } from "./sketch/sketchBus";
 import MathEditorOverlay from "./math/MathEditorOverlay";
 import SketchModal from "./sketch/SketchModal";
+import { pastedMarkdownHtml } from "../lib/markdownTable";
 
 import { useImageUpload } from "./editor/useImageUpload";
 import { BubbleToolbar } from "./editor/BubbleToolbar";
 import { TextMenu } from "./editor/TextMenu";
+import { TableMenu } from "./editor/TableMenu";
 
 interface EditorProps {
   value: string;
@@ -143,6 +152,11 @@ export default function Editor({
       Highlight.configure({ multicolor: true }),
       TaskList,
       TaskItem.configure({ nested: true }),
+      // Tables (editor + Obsidian paste). resizable adds column drag handles.
+      TableExtension.configure({ resizable: true }),
+      TableRowExt,
+      TableHeaderExt,
+      TableCellExt,
       // Advanced Capture Tools: речь, аудио, формулы, схемы.
       SpeechInterimMark,
       AudioBlock,
@@ -153,6 +167,23 @@ export default function Editor({
     [slashMenu, placeholder]
   );
 
+  // Markdown-table paste from Obsidian: it copies tables as text/plain (GFM
+  // markdown), not as <table>. The handler is assigned below, once the editor
+  // exists (insertContent needs it).
+  const markdownPasteRef = useRef<
+    ((view: EditorView, event: ClipboardEvent) => boolean) | null
+  >(null);
+
+  // Images from the clipboard take priority over text; a markdown table is
+  // converted only when no files are present.
+  const handlePasteCombined = useCallback(
+    (view: EditorView, event: ClipboardEvent) => {
+      if (handlePaste(view, event)) return true;
+      return markdownPasteRef.current?.(view, event) ?? false;
+    },
+    [handlePaste]
+  );
+
   const editorProps = useMemo(
     () => ({
       attributes: {
@@ -160,9 +191,9 @@ export default function Editor({
         spellcheck: "true",
       },
       handleDrop,
-      handlePaste,
+      handlePaste: handlePasteCombined,
     }),
-    [handleDrop, handlePaste]
+    [handleDrop, handlePasteCombined]
   );
   const editor = useEditor({
     extensions,
@@ -182,6 +213,19 @@ export default function Editor({
     editor.chain().focus().insertContentAt(targetPos, nodes).run();
   };
   insertImagesRef.current = insertImages;
+
+  // GFM table from text/plain becomes a real <table> (Obsidian). We only
+  // intercept when a markdown block is detected — otherwise return false so
+  // ProseMirror keeps its default plain-text paste behaviour.
+  markdownPasteRef.current = (_view, event) => {
+    const text = event.clipboardData?.getData("text/plain");
+    if (!text) return false;
+    const html = pastedMarkdownHtml(text);
+    if (!html) return false;
+    event.preventDefault();
+    editor.chain().focus().insertContent(html).run();
+    return true;
+  };
 
   // Focus the editor on mount.
   useEffect(() => {
@@ -324,6 +368,9 @@ export default function Editor({
           <Plus size={15} />
         </button>
       </FloatingMenu>
+
+      {/* Table quick toolbar (appears when the cursor is inside a table). */}
+      <TableMenu editor={editor} />
 
       <EditorContent editor={editor} />
 

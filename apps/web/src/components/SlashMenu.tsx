@@ -37,6 +37,7 @@ import {
   Pilcrow,
   Quote,
   Sigma,
+  Table as TableIcon,
 } from "lucide-react";
 
 interface SlashItem {
@@ -119,6 +120,18 @@ const SLASH_ITEMS: SlashItem[] = [
     description: "Список задач",
     icon: ListChecks,
     command: (e, r) => e.chain().focus().deleteRange(r).toggleTaskList().run(),
+  },
+  {
+    title: "Таблица",
+    description: "Сетка строк и столбцов",
+    icon: TableIcon,
+    command: (e, r) =>
+      e
+        .chain()
+        .focus()
+        .deleteRange(r)
+        .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+        .run(),
   },
   {
     title: "Цитата",
