@@ -82,6 +82,7 @@ function Dashboard() {
               <QuickActionsBar
                 onNewNote={() => navigate("/note/new")}
                 onNewCourse={form.startCreate}
+                onNewDeck={() => navigate("/decks/new")}
               />
 
               {form.creating && (

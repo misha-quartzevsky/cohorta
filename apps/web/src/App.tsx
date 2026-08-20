@@ -24,6 +24,9 @@ import LectureView from "./pages/LectureView";
 import LectureEdit from "./pages/LectureEdit";
 import NotesPage from "./pages/NotesPage";
 import NoteCreate from "./pages/NoteCreate";
+import CardLibraryPage from "./pages/CardLibraryPage";
+import CardStudyPage from "./pages/CardStudyPage";
+import DeckEditorPage from "./pages/DeckEditorPage";
 import Header from "./components/Header";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingState from "./components/LoadingState";
@@ -106,6 +109,11 @@ function App() {
                   element={<LectureEdit />}
                 />
               </Route>
+              {/* Flashcards: cards module (not semester-scoped) */}
+              <Route path="/decks" element={<CardLibraryPage />} />
+              <Route path="/decks/new" element={<DeckEditorPage />} />
+              <Route path="/decks/:slug" element={<CardStudyPage />} />
+              <Route path="/decks/:slug/edit" element={<DeckEditorPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

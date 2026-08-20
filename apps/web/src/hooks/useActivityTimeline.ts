@@ -8,6 +8,7 @@
  */
 
 import { useRecentLectures } from "./useRecentLectures";
+import { useDecks } from "./useDecks";
 import { useSemester } from "../lib/semesterContext";
 import {
   courseName,
@@ -16,13 +17,16 @@ import {
   lectureSlug,
   lectureTitle,
   semesterSlug,
+  deckTitle,
+  deckSlug,
   type Lecture,
+  type Deck,
 } from "../lib/types";
 import { timeAgo } from "../lib/format";
 
 export interface TimelineItem {
   id: string;
-  type: "lecture" | "note";
+  type: "lecture" | "note" | "deck";
   title: string;
   /** Название курса (только для лекций, привязанных к курсу). */
   course?: string;
@@ -50,13 +54,39 @@ function toItem(lec: Lecture, semSlug: string): TimelineItem {
   };
 }
 
+/** Превращает колоду в элемент ленты. */
+function toDeckItem(deck: Deck): TimelineItem {
+  return {
+    id: deck.id,
+    type: "deck",
+    title: deckTitle(deck),
+    time: timeAgo(deck.updated),
+    to: `/decks/${deckSlug(deck)}`,
+  };
+}
+
 /**
  * @param limit — сколько последних событий вернуть (default 10)
  */
 export function useActivityTimeline(limit: number = 10): TimelineItem[] {
   const { current } = useSemester();
   const semSlug = current ? semesterSlug(current) : "1";
-  const { lectures } = useRecentLectures(limit);
+  const { lectures } = useRecentLectures(limit * 2);
+  const { decks } = useDecks(limit * 2);
 
-  return lectures.map((lec) => toItem(lec, semSlug));
+  // Сортируем по реальному времени обновления (ISO-строки сравниваются
+  // лексикографически), а не по русской относительной подписи.
+  const raw: Array<{ updated: string; make: () => TimelineItem }> = [
+    ...lectures.map((lec) => ({
+      updated: lec.updated,
+      make: () => toItem(lec, semSlug),
+    })),
+    ...decks.map((deck) => ({
+      updated: deck.updated,
+      make: () => toDeckItem(deck),
+    })),
+  ];
+
+  raw.sort((a, b) => b.updated.localeCompare(a.updated));
+  return raw.slice(0, limit).map((x) => x.make());
 }

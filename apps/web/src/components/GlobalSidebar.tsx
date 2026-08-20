@@ -23,14 +23,17 @@ import { useAuth } from "../hooks/useAuth";
 import { useSemester } from "../lib/semesterContext";
 import { useRecentLectures } from "../hooks/useRecentLectures";
 import { useLectures } from "../hooks/useLectures";
+import { useDecks } from "../hooks/useDecks";
 import { useLectureFrame } from "../lib/lectureFrame";
 import { pb } from "../lib/pocketbase";
-import type { User, Semester } from "../lib/types";
+import type { User, Semester, Deck } from "../lib/types";
 import {
   semesterSlug,
   lectureSlug,
   lectureTitle,
   lectureCourseId,
+  deckTitle,
+  deckSlug,
 } from "../lib/types";
 import TableOfContents from "./TableOfContents";
 import ScrollBar from "./scrollbar/ScrollBar";
@@ -119,6 +122,7 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
   // Fetch a larger window so the "ВСЕ ЗАМЕТКИ" context can list every unassigned
   // note; the default НЕДАВНИЕ section slices it down to 3.
   const { lectures: recentLectures } = useRecentLectures(100);
+  const { decks: recentDecks } = useDecks(3);
 
   const handleLogout = () => {
     logout();
@@ -406,6 +410,25 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
               <li>
                 <Link to="/notes" className="sidebar-nav-item">
                   Все заметки
+                </Link>
+              </li>
+            </ul>
+          </nav>
+
+          {/* Section: КАРТОЧКИ (last decks + library link) */}
+          <nav className="sidebar-section">
+            <h3 className="sidebar-section-title">КАРТОЧКИ</h3>
+            <ul className="sidebar-nav">
+              {recentDecks.slice(0, 3).map((deck: Deck) => (
+                <li key={deck.id}>
+                  <Link to={`/decks/${deckSlug(deck)}`} className="sidebar-nav-item">
+                    {deckTitle(deck)}
+                  </Link>
+                </li>
+              ))}
+              <li>
+                <Link to="/decks" className="sidebar-nav-item">
+                  Все колоды
                 </Link>
               </li>
             </ul>

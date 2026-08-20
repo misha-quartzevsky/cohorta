@@ -140,6 +140,122 @@ export const LECTURES: SeedLecture[] = [
   },
 ];
 
+// --- Demo deck (flashcards) ---
+export const SEED_DECK = {
+  title: "Сетчатка глаза",
+  slug: "retina-vision",
+  description: "Анатомия сетчатки для зачёта по офтальмологии.",
+  color: "#9C8FE2",
+  cards: [
+    {
+      front: "Как называется светочувствительный слой глазного яблока?",
+      back: "Сетчатка (лат. retina).",
+    },
+    {
+      front:
+        "Какие фоторецепторы отвечают за сумеречное (чёрно-белое) зрение?",
+      back: "Палочки.",
+    },
+    {
+      front: "В какой области сетчатки больше всего колбочек?",
+      back: "В центральной ямке (fovea) жёлтого пятна.",
+    },
+    {
+      front: "Чему равна энергия фотона?",
+      back:
+        math("E=h\\\\nu") +
+        para("где h — постоянная Планка, ν — частота света."),
+    },
+    {
+      front: "Что такое слепое пятно?",
+      back:
+        para("Место выхода зрительного нерва — здесь нет фоторецепторов.") +
+        para("Рисунок:") +
+        para("[[file:retina.svg]]"),
+    },
+  ],
+};
+
+/** SVG-картинка-вложение (встраивается в `attachments` карточки). */
+function retinaSvg(): File {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200">` +
+    `<rect width="100%" height="100%" fill="#5843f6"/>` +
+    `<circle cx="160" cy="100" r="46" fill="#fff" opacity="0.9"/>` +
+    `<text x="160" y="112" font-size="22" fill="#5843f6" text-anchor="middle" font-family="sans-serif">Сетчатка</text>` +
+    `</svg>`;
+  // File (а не голый Blob) несёт имя — PocketBase сохранит имя «retina.svg»,
+  // и токен [[file:retina.svg]] в карточке совпадёт с фактическим файлом.
+  return new File([svg], "retina.svg", { type: "image/svg+xml" });
+}
+
+/** Идемпотентный upsert демо-колоды (по slug) с детерминированным набором карточек. */
+async function upsertDeck(pb: PocketBase): Promise<void> {
+  let deck = (
+    await pb.collection("decks").getFullList<{ id: string }>({
+      filter: `slug = "${SEED_DECK.slug}"`,
+      perPage: 1,
+      fields: "id",
+    })
+  )[0];
+  if (deck) {
+    await pb.collection("decks").update(deck.id, {
+      title: SEED_DECK.title,
+      description: SEED_DECK.description,
+      color: SEED_DECK.color,
+    });
+    log(`Deck "${SEED_DECK.title}" updated (/${SEED_DECK.slug}).`);
+  } else {
+    deck = await pb.collection("decks").create<{ id: string }>({
+      title: SEED_DECK.title,
+      description: SEED_DECK.description,
+      color: SEED_DECK.color,
+      slug: SEED_DECK.slug,
+      is_public: false,
+    });
+    log(`Deck "${SEED_DECK.title}" created (/${SEED_DECK.slug}).`);
+  }
+
+  // Детерминированный набор: сбрасываем карточки колоды и пересоздаём.
+  const existing = await pb.collection("deck_cards").getFullList<{ id: string }>({
+    filter: `deck = "${deck.id}"`,
+    perPage: 100,
+    fields: "id",
+  });
+  for (const c of existing) {
+    await pb.collection("deck_cards").delete(c.id);
+  }
+  for (let i = 0; i < SEED_DECK.cards.length; i++) {
+    const card = SEED_DECK.cards[i];
+    const payload: Record<string, unknown> = {
+      deck: deck.id,
+      front: card.front,
+      back: card.back,
+    };
+    if (i === SEED_DECK.cards.length - 1) {
+      payload.attachments = [retinaSvg()];
+    }
+    const created = await pb.collection("deck_cards").create<{
+      id: string;
+      back: string;
+      attachments?: string[];
+    }>(payload);
+    // PocketBase может переименовать файл (добавляет случайный суффикс),
+    // поэтому берём фактическое имя из ответа и подставляем в токен карточки.
+    if (i === SEED_DECK.cards.length - 1 && created.attachments?.[0]) {
+      const actual = created.attachments[0];
+      const back = String(created.back).replaceAll(
+        "[[file:retina.svg]]",
+        `[[file:${actual}]]`
+      );
+      if (back !== created.back) {
+        await pb.collection("deck_cards").update(created.id, { back });
+      }
+    }
+  }
+  log(`Deck cards seeded: ${SEED_DECK.cards.length}.`);
+}
+
 // ---------------------------------------------------------------------------
 // Seeding
 // ---------------------------------------------------------------------------
@@ -258,11 +374,14 @@ export async function seed(pb: PocketBase): Promise<void> {
     }
   }
 
+  // 4. Demo deck (flashcards) — upsert by slug.
+  await upsertDeck(pb);
+
   log(
     "Done. Open http://127.0.0.1:5173, switch the semester to «demo» and check the dashboard.",
   );
   log(
-    `Seeded: 1 semester, ${COURSES.length} courses, ${LECTURES.length} lectures (test user: ${DEMO_EMAIL}).`,
+    `Seeded: 1 semester, ${COURSES.length} courses, ${LECTURES.length} lectures, 1 deck (test user: ${DEMO_EMAIL}).`,
   );
 }
 

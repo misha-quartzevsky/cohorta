@@ -46,6 +46,25 @@ export interface Tag extends PbRecord {
   lectures?: string[];
 }
 
+export interface Deck extends PbRecord {
+  title: string;
+  color?: string;
+  slug?: string;
+  description?: string;
+  is_public?: boolean;
+}
+
+export interface DeckCard extends PbRecord {
+  /** Rich-контент лицевой стороны (тип "editor" в PB). */
+  front: string;
+  /** Rich-контент оборотной стороны (тип "editor" в PB). */
+  back: string;
+  /** PocketBase relation → decks. */
+  deck?: string;
+  /** Файлы-вложения (картинки) карточки (поле "file" в PB). */
+  attachments?: string | string[];
+}
+
 export interface User extends PbRecord {
   email: string;
   name?: string;
@@ -74,6 +93,19 @@ export const FIELDS = {
   tagColor: "color",
   // Поле в tags, которое ссылается на лекции (multiple-relation)
   tagLectures: "lectures",
+  // Поля коллекции decks
+  deckTitle: "title",
+  deckColor: "color",
+  deckSlug: "slug",
+  deckDescription: "description",
+  deckIsPublic: "is_public",
+  // Поля коллекции deck_cards
+  deckCardFront: "front",
+  deckCardBack: "back",
+  // Поле в deck_cards, которое ссылается на deck (id из decks)
+  deckCardDeck: "deck",
+  // Файлы-вложения карточки (тип "file" в PB)
+  deckCardAttachments: "attachments",
 } as const;
 
 // Вспомогательные геттеры, защищающие от разной схемы в БД
@@ -173,4 +205,42 @@ export function tagColor(t: Tag): string {
 export function tagLectureIds(t: Tag): string[] {
   const v = t.lectures;
   return Array.isArray(v) ? v.map(String) : [];
+}
+
+export function deckTitle(d: Deck): string {
+  return String(d.title ?? "Без названия");
+}
+
+export function deckColor(d: Deck): string {
+  return String(d.color ?? "");
+}
+
+export function deckDescription(d: Deck): string {
+  return String(d.description ?? "");
+}
+
+/** URL-friendly identifier of a deck (falls back to id for legacy rows). */
+export function deckSlug(d: Deck): string {
+  return d.slug ? String(d.slug) : d.id;
+}
+
+/** PocketBase id of the deck a card belongs to ("" = none). */
+export function deckCardDeckId(c: DeckCard): string {
+  return String(c.deck ?? "");
+}
+
+export function deckCardFront(c: DeckCard): string {
+  return String(c.front ?? "");
+}
+
+export function deckCardBack(c: DeckCard): string {
+  return String(c.back ?? "");
+}
+
+/** Имена файлов-вложений карточки (поле `attachments`). */
+export function deckCardAttachmentNames(c: DeckCard): string[] {
+  const v = c.attachments;
+  if (Array.isArray(v)) return v.map(String);
+  if (typeof v === "string" && v) return [v];
+  return [];
 }
