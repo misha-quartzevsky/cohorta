@@ -72,9 +72,12 @@ test("переключение туда-обратно рендерит форм
   await expect(page.locator(".lecture-card-title")).toHaveText(
     "Предел последовательности"
   );
-  // Переключаемся на другую лекцию из сайдбара и возвращаемся.
+  // Переключаемся на другую лекцию из сайдбара и возвращаемся. Целимся явно
+  // в лекцию курса (не в «Рабочий стол» из группы ОСНОВНОЕ, который теперь
+  // первый `.sidebar-nav-item` в сайдбаре на лекции).
   const other = page
     .locator(".global-sidebar .sidebar-nav-item:not(.active)")
+    .filter({ hasText: "Производная функции" })
     .first();
   await expect(other).toBeVisible();
   await other.click();

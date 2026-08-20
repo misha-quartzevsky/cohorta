@@ -1,7 +1,9 @@
 /**
  * ============================================
- *  HeroSection.tsx — приветствие + ключевая статистика
+ *  HeroSection.tsx — приветствие + статистика
  * ============================================
+ *  Статистика (заметки за неделю) встроена в левую колонку приветствия
+ *  напрямую (блок .hero-stats-inline) — отдельный выносной блок убран.
  */
 
 import type { User } from "../../lib/types";
@@ -18,16 +20,25 @@ export default function HeroSection({ user, stats }: Props) {
   const week = stats?.lecturesThisWeek ?? 0;
   return (
     <section className="hero-section">
-      <div>
+      <div className="hero-main">
         <p className="hero-eyebrow">Рабочий стол</p>
         <h1 className="hero-greeting">Привет, {userName(user ?? ({} as User))} 👋</h1>
         <p className="hero-sub">Твои конспекты и заметки — всё в одном месте.</p>
-      </div>
-      <div className="hero-stat">
-        <span className="hero-stat-value">{week}</span>
-        <span className="hero-stat-label">
-          {week === 1 ? "заметка за неделю" : week >= 2 && week < 5 ? "заметки за неделю" : "заметок за неделю"}
-        </span>
+
+        {/* Статистика внутри приветствия — больше не отдельный блок справа. */}
+        <div className="hero-stats-inline">
+          <div className="hero-stat-item">
+            <span className="hero-stat-value">{week}</span>
+            <span className="hero-stat-label">
+              {week === 1
+                ? "заметка"
+                : week >= 2 && week < 5
+                  ? "заметки"
+                  : "заметок"}{" "}
+              за неделю
+            </span>
+          </div>
+        </div>
       </div>
     </section>
   );

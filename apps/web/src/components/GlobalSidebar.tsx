@@ -5,19 +5,27 @@
  *
  * Persistent glass sidebar visible on all protected pages:
  *  - User profile (avatar, name, email, logout)
- *  - Semester switcher (current semester + popup)
- *  - НЕДАВНИЕ section (last 3 lectures/notes)
- *  - ЗАМЕТКИ section (unassigned notes link)
- *
- * Context-aware: when on a lecture page, shows:
- *  - Last 3 lectures of the course
- *  - Table of Contents of current lecture
+ *  - Semester switcher (current semester card + badge + popup)
+ *  - Group ОСНОВНОЕ (Рабочий стол / Все курсы / Все заметки)
+ *  - Group УЧЁБА (context-aware: НЕДАВНИЕ or ЛЕКЦИИ КУРСА + ОГЛАВЛЕНИЕ or
+ *    ВСЕ ЗАМЕТКИ + ОГЛАВЛЕНИЕ)
+ *  - Group БИБЛИОТЕКА (КАРТОЧКИ — последние колоды + библиотека)
  */
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { LogOut, ChevronDown, X } from "lucide-react";
+import {
+  LogOut,
+  ChevronDown,
+  ChevronRight,
+  X,
+  Home,
+  BookOpen,
+  FileText,
+  Layers,
+  Clock,
+} from "lucide-react";
 
 import { useAuth } from "../hooks/useAuth";
 import { useSemester } from "../lib/semesterContext";
@@ -26,6 +34,7 @@ import { useLectures } from "../hooks/useLectures";
 import { useDecks } from "../hooks/useDecks";
 import { useLectureFrame } from "../lib/lectureFrame";
 import { pb } from "../lib/pocketbase";
+import { lastSemesterSlug } from "../lib/lastSemester";
 import type { User, Semester, Deck } from "../lib/types";
 import {
   semesterSlug,
@@ -148,6 +157,16 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
 
   const avatar = user ? avatarSrc(user) : "";
 
+  // Semester slug for the ОСНОВНОЕ links. On non-semester routes (/notes,
+  // /note/…, /decks) `current` is null — fall back to the last visited
+  // semester (SemesterProvider writes it on every /s/… visit).
+  const homeSemSlug = current ? semesterSlug(current) : lastSemesterSlug() || "1";
+
+  // Active state for the ОСНОВНОЕ group links.
+  const isDashboardRoute = /^\/s\/[^/]+$/.test(location.pathname);
+  const isCoursesRoute = /^\/s\/[^/]+\/courses$/.test(location.pathname);
+  const isNotesRoute = location.pathname === "/notes";
+
   // Determine if we're on a lecture page
   const { isLecture, courseSlug: currentCourseSlug, semesterSlug: currentSemSlug } = isLectureRoute(location.pathname);
 
@@ -202,8 +221,12 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
             )}
           </div>
           <div className="profile-info">
-            <span className="profile-name">{userName(user)}</span>
-            <span className="profile-email">{user.email}</span>
+            <span className="profile-name" title={userName(user)}>
+              {userName(user)}
+            </span>
+            <span className="profile-email" title={user.email}>
+              {user.email}
+            </span>
           </div>
           <button
             type="button"
@@ -226,6 +249,7 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
             onClick={toggleSemesterPopup}
           >
             <span className="sidebar-semester-current">
+              <span className="semester-badge">{semesterSlug(current)}</span>
               {semesterSlug(current)} семестр
             </span>
             <ChevronDown size={16} className={semesterPopupOpen ? "rotate" : ""} />
@@ -268,6 +292,46 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
           document.body
         )}
 
+      {/* ===== ГРУППА 1: ОСНОВНОЕ (всегда видна) ===== */}
+      <nav className="sidebar-section">
+        <h3 className="sidebar-section-title">
+          <span className="section-icon">
+            <Home size={14} />
+          </span>
+          ОСНОВНОЕ
+        </h3>
+        <ul className="sidebar-nav">
+          <li>
+            <Link
+              to={`/s/${homeSemSlug}`}
+              className={`sidebar-nav-item${isDashboardRoute ? " active" : ""}`}
+            >
+              <Home size={16} />
+              <span>Рабочий стол</span>
+            </Link>
+          </li>
+          <li>
+            <Link
+              to={`/s/${homeSemSlug}/courses`}
+              className={`sidebar-nav-item${isCoursesRoute ? " active" : ""}`}
+            >
+              <BookOpen size={16} />
+              <span>Все курсы</span>
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/notes"
+              className={`sidebar-nav-item${isNotesRoute ? " active" : ""}`}
+            >
+              <FileText size={16} />
+              <span>Все заметки</span>
+            </Link>
+          </li>
+        </ul>
+      </nav>
+
+      {/* ===== ГРУППА 2: УЧЁБА (контекстная) ===== */}
       {/* Context-aware content */}
       {isNote ? (
         <>
@@ -367,7 +431,15 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
         <>
           {/* Section: НЕДАВНИЕ (last 3 lectures) */}
           <nav className="sidebar-section">
-            <h3 className="sidebar-section-title">НЕДАВНИЕ</h3>
+            <h3 className="sidebar-section-title">
+              <Link className="sidebar-section-link" to={`/s/${homeSemSlug}/courses`}>
+                <span className="section-icon">
+                  <Clock size={14} />
+                </span>
+                НЕДАВНИЕ
+                <ChevronRight size={12} className="title-arrow" />
+              </Link>
+            </h3>
             <ul className="sidebar-nav">
               {recentLectures.slice(0, 3).map((lec) => {
                 const unassigned = !lectureCourseId(lec);
@@ -405,36 +477,37 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
 
           {/* Section: ЗАМЕТКИ */}
           <nav className="sidebar-section">
-            <h3 className="sidebar-section-title">ЗАМЕТКИ</h3>
-            <ul className="sidebar-nav">
-              <li>
-                <Link to="/notes" className="sidebar-nav-item">
-                  Все заметки
-                </Link>
-              </li>
-            </ul>
-          </nav>
-
-          {/* Section: КАРТОЧКИ (last decks + library link) */}
-          <nav className="sidebar-section">
-            <h3 className="sidebar-section-title">КАРТОЧКИ</h3>
-            <ul className="sidebar-nav">
-              {recentDecks.slice(0, 3).map((deck: Deck) => (
-                <li key={deck.id}>
-                  <Link to={`/decks/${deckSlug(deck)}`} className="sidebar-nav-item">
-                    {deckTitle(deck)}
-                  </Link>
-                </li>
-              ))}
-              <li>
-                <Link to="/decks" className="sidebar-nav-item">
-                  Все колоды
-                </Link>
-              </li>
-            </ul>
+            <h3 className="sidebar-section-title">
+              <Link className="sidebar-section-link" to="/notes">
+                ЗАМЕТКИ
+                <ChevronRight size={12} className="title-arrow" />
+              </Link>
+            </h3>
           </nav>
         </>
       )}
+
+      {/* ===== ГРУППА 3: БИБЛИОТЕКА — КАРТОЧКИ (всегда видна) ===== */}
+      <nav className="sidebar-section">
+        <h3 className="sidebar-section-title">
+          <Link className="sidebar-section-link" to="/decks">
+            <span className="section-icon">
+              <Layers size={14} />
+            </span>
+            КАРТОЧКИ
+            <ChevronRight size={12} className="title-arrow" />
+          </Link>
+        </h3>
+        <ul className="sidebar-nav">
+          {recentDecks.slice(0, 3).map((deck: Deck) => (
+            <li key={deck.id}>
+              <Link to={`/decks/${deckSlug(deck)}`} className="sidebar-nav-item">
+                {deckTitle(deck)}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
       <ScrollBar scrollRef={sidebarRef} />
       </aside>
     </>

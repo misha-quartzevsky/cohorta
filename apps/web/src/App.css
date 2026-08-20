@@ -41,6 +41,14 @@
   --c-surface: #ffffff;
   --c-muted: #a5a8ad;
   --radius: 10px;
+
+  /* Система отступов (8px-сетка): «дыхание» интерфейса */
+  --space-xs: 0.5rem;   /* 8px  — мелкие зазоры (gap между иконкой и текстом) */
+  --space-sm: 0.75rem;  /* 12px — отступы внутри кнопок, карточек */
+  --space-md: 1rem;     /* 16px — стандартные отступы (padding карточек) */
+  --space-lg: 1.5rem;   /* 24px — разделители секций (gap в dashboard-bento) */
+  --space-xl: 2rem;     /* 32px — крупные отступы (padding canvas) */
+  --space-2xl: 2.5rem;  /* 40px — максимальные отступы */
 }
 
 * {
@@ -2179,12 +2187,12 @@ textarea.field {
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
   border-right: 1px solid rgba(234, 232, 242, 0.6);
-  padding: 2rem 0 2rem 30px; /* 30px left as per design */
-  overflow-y: auto;
+  padding: var(--space-xl) 0 var(--space-xl) 30px; /* 30px left as per design */
+  overflow: hidden; /* static frame — internal lists scroll, not the sidebar */
   z-index: 100;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-lg);
 }
 
 /* Profile section in sidebar */
@@ -2192,13 +2200,13 @@ textarea.field {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding-right: 1.5rem;
+  padding-right: 1rem; /* было 1.5rem — больше места под имя/почту */
 }
 
 .profile-avatar {
   flex: none;
-  width: 48px;
-  height: 48px;
+  width: 44px; /* было 48px — компактнее */
+  height: 44px;
   border-radius: 50%;
   overflow: hidden;
   display: grid;
@@ -2225,25 +2233,28 @@ textarea.field {
   display: flex;
   flex-direction: column;
   line-height: 1.3;
-  min-width: 0;
+  min-width: 0; /* критично для ellipsis! */
   flex: 1;
+  overflow: hidden; /* предотвращает выход за границы */
 }
 
 .sidebar-profile .profile-name {
-  font-size: 0.95rem;
+  font-size: 0.93rem; /* было 0.95rem — чуть меньше */
   font-weight: 600;
   color: var(--c-black);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%; /* явный лимит */
 }
 
 .sidebar-profile .profile-email {
-  font-size: 0.78rem;
+  font-size: 0.76rem; /* было 0.78rem */
   color: var(--c-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%; /* явный лимит */
 }
 
 .profile-logout {
@@ -2272,7 +2283,7 @@ textarea.field {
 /* Semester switcher in sidebar */
 .sidebar-semester {
   position: relative;
-  padding-right: 1.5rem;
+  padding-right: 1rem; /* было 1.5rem */
 }
 
 .sidebar-semester-btn {
@@ -2280,16 +2291,23 @@ textarea.field {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0;
-  border: none;
-  background: transparent;
+  padding: 0.75rem 1rem; /* было 0.5rem 0 */
+  border: 1px solid rgba(88, 67, 246, 0.2); /* рамка-акцент */
+  border-radius: 12px;
+  background: rgba(88, 67, 246, 0.06); /* лёгкий lilac-фон */
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 0.93rem; /* было 0.95rem */
   font-weight: 600;
-  color: var(--c-black);
+  color: var(--c-lilac);
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: left;
+}
+
+.sidebar-semester-btn:hover {
+  background: rgba(88, 67, 246, 0.1);
+  border-color: rgba(88, 67, 246, 0.35);
+  box-shadow: 0 4px 12px rgba(88, 67, 246, 0.15);
 }
 
 .sidebar-semester-btn:hover svg {
@@ -2301,10 +2319,26 @@ textarea.field {
   text-align: left;
 }
 
+/* Бейдж с номером семестра внутри кнопки */
+.semester-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--c-lilac);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+
 .sidebar-semester-btn svg {
   flex: none;
   transition: transform 0.2s ease, color 0.2s ease;
-  color: var(--c-muted);
+  color: var(--c-lilac);
 }
 
 .sidebar-semester-btn svg.rotate {
@@ -2361,16 +2395,54 @@ textarea.field {
 
 /* Sidebar navigation sections */
 .sidebar-section {
-  padding-right: 1.5rem;
+  padding-right: var(--space-md); /* было 1.5rem — меньше */
 }
 
 .sidebar-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   margin: 0 0 0.65rem;
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--c-muted);
+}
+
+.sidebar-section-title .section-icon {
+  display: inline-flex;
+  color: var(--c-lilac);
+  opacity: 0.7;
+}
+
+/* Section title as a link (КАРТОЧКИ / ЗАМЕТКИ / НЕДАВНИЕ). Stays muted &
+   strict by default; on hover turns lilac and reveals a chevron hint. */
+.sidebar-section-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: inherit; /* keep .sidebar-section-title muted gray by default */
+  text-decoration: none;
+  border-radius: 6px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.sidebar-section-link:hover {
+  color: var(--c-lilac);
+  background: rgba(88, 67, 246, 0.06);
+}
+
+.sidebar-section-link .title-arrow {
+  flex: none;
+  opacity: 0;
+  transform: translateX(-3px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.sidebar-section-link:hover .title-arrow {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .sidebar-back-btn {
@@ -2400,7 +2472,7 @@ textarea.field {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.15rem; /* чуть компактнее — чтобы всё умещалось без скролла */
 }
 
 .sidebar-nav-scrollable {
@@ -2432,14 +2504,26 @@ textarea.field {
 }
 
 .sidebar-nav-item {
-  display: block;
-  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs); /* расстояние между иконкой и текстом */
+  padding: 0.4rem 0.65rem; /* было 0.5rem 0.75rem — компактнее */
   border-radius: 10px;
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--c-black);
   text-decoration: none;
   transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-nav-item svg {
+  flex: none;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.sidebar-nav-item:hover svg {
+  opacity: 1;
 }
 
 .sidebar-nav-item:hover {
@@ -2451,6 +2535,11 @@ textarea.field {
   background: rgba(88, 67, 246, 0.12);
   color: var(--c-lilac);
   font-weight: 600;
+}
+
+.sidebar-nav-item.active svg {
+  opacity: 1;
+  color: var(--c-lilac);
 }
 
 /* Content canvas: floating white card on pages */
@@ -3507,20 +3596,22 @@ textarea.field {
    ============================================ */
 
 .dashboard-canvas {
-  padding: 2rem 2.25rem 2.75rem;
+  padding: var(--space-xl) var(--space-xl) var(--space-2xl); /* было 2rem 2.25rem 2.75rem */
 }
 
 /* --- Hero --- */
 .hero-section {
+  padding: 0.25rem 0 1.75rem; /* было 1.5rem — больше отступ снизу */
+  border-bottom: 1px solid rgba(27, 27, 27, 0.06); /* разделитель под секцией */
+}
+.hero-main {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1.5rem;
-  padding: 0.25rem 0 1.5rem;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 .hero-eyebrow {
   margin: 0 0 0.35rem;
-  font-size: 0.8rem;
+  font-size: 0.78rem; /* было 0.8rem */
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -3528,44 +3619,46 @@ textarea.field {
 }
 .hero-greeting {
   margin: 0;
-  font-size: 2.1rem;
+  font-size: 2.3rem; /* было 2.1rem — крупнее */
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--c-black);
+  line-height: 1.1;
 }
 .hero-sub {
-  margin: 0.35rem 0 0;
+  margin: 0;
   color: var(--c-muted);
+  font-size: 1rem;
 }
-.hero-stat {
+.hero-stats-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  margin-top: 1rem;
+}
+.hero-stat-item {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  padding: 0.9rem 1.15rem;
-  border-radius: 16px;
-  background: rgba(88, 67, 246, 0.07);
-  border: 1px solid rgba(88, 67, 246, 0.14);
-  white-space: nowrap;
+  gap: 0.2rem;
 }
 .hero-stat-value {
   font-family: "Golos UI", "Inter", sans-serif;
-  font-size: 1.7rem;
+  font-size: 2rem; /* было 1.7rem */
   font-weight: 700;
   color: var(--c-lilac);
   line-height: 1;
 }
 .hero-stat-label {
-  margin-top: 0.25rem;
-  font-size: 0.8rem;
+  font-size: 0.82rem; /* было 0.8rem */
   color: var(--c-muted);
 }
 
 /* --- Quick actions --- */
 .quick-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--space-sm); /* было 0.75rem */
   flex-wrap: wrap;
-  padding: 0 0 1.25rem;
+  padding: 0 0 var(--space-lg); /* было 1.25rem */
 }
 .quick-action {
   display: inline-flex;
@@ -3597,9 +3690,9 @@ textarea.field {
 .resume-block {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin: 0 0 1.5rem;
-  padding: 1rem 1.25rem;
+  gap: var(--space-md); /* было 1rem */
+  margin: 0 0 var(--space-lg); /* было 1.5rem */
+  padding: var(--space-md) var(--space-md); /* было 1rem 1.25rem */
   border-radius: 18px;
   background: linear-gradient(135deg, rgba(88, 67, 246, 0.08), rgba(255, 106, 42, 0.05));
   border: 1px solid rgba(88, 67, 246, 0.14);
@@ -3672,15 +3765,15 @@ textarea.field {
 /* --- Bento: widgets row --- */
 .dashboard-bento {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); /* РАВНЫЕ колонки вместо 1.4fr 1fr */
+  gap: var(--space-lg); /* было 1.25rem — больше воздуха */
   align-items: start;
 }
 .widget {
   background: #ffffff;
   border: 1px solid rgba(27, 27, 27, 0.06);
   border-radius: 20px;
-  padding: 1.4rem 1.5rem 1.5rem;
+  padding: var(--space-lg); /* было 1.4rem 1.5rem 1.5rem */
   box-shadow: 0 14px 40px rgba(27, 27, 27, 0.07);
 }
 .widget-title {
@@ -3704,36 +3797,46 @@ textarea.field {
 .course-mini-card {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  padding: 1rem 1.1rem;
-  border-radius: 16px;
-  background: rgba(242, 241, 247, 0.6);
-  border: 1px solid rgba(27, 27, 27, 0.05);
+  gap: 0.5rem; /* было 0.4rem */
+  padding: 1.25rem; /* было 1rem 1.1rem — больше воздуха */
+  border-radius: 18px; /* было 16px */
+  background: #ffffff; /* было rgba(242, 241, 247, 0.6) */
+  border: 1px solid rgba(27, 27, 27, 0.06); /* было 0.05 */
+  box-shadow: 0 8px 20px rgba(27, 27, 27, 0.06); /* добавлено */
   text-decoration: none;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.18s cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 0.18s cubic-bezier(0.32, 0.72, 0, 1),
+    border-color 0.18s ease;
 }
 .course-mini-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(27, 27, 27, 0.1);
-  border-color: rgba(88, 67, 246, 0.3);
+  transform: translateY(-3px); /* было -2px */
+  box-shadow: 0 16px 40px rgba(88, 67, 246, 0.18); /* лиловое свечение */
+  border-color: rgba(88, 67, 246, 0.25); /* было 0.3 */
 }
 .course-mini-color {
-  width: 30px;
-  height: 6px;
-  border-radius: 3px;
+  width: 36px; /* было 30px */
+  height: 7px; /* было 6px */
+  border-radius: 4px; /* было 3px */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* добавлено */
+}
+.course-mini-card:hover .course-mini-color {
+  box-shadow: 0 0 12px currentColor, 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: box-shadow 0.3s ease;
 }
 .course-mini-name {
-  font: 600 1rem/1.25 "Golos UI", "Inter", sans-serif;
+  font: 600 1.05rem/1.25 "Golos UI", "Inter", sans-serif; /* было 1rem */
   color: var(--c-black);
   overflow-wrap: anywhere;
+  margin-top: 0.15rem; /* отступ от цветного индикатора */
 }
 .course-mini-count {
-  font-size: 0.8rem;
+  font-size: 0.82rem; /* было 0.8rem */
   color: var(--c-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  line-height: 1.4; /* добавлено */
 }
 
 /* --- Activity timeline --- */
@@ -3805,9 +3908,6 @@ textarea.field {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
-  }
-  .hero-stat {
-    align-items: flex-start;
   }
   .widget-courses-grid {
     grid-template-columns: 1fr;

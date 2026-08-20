@@ -48,9 +48,12 @@ test("шапка не «дёргается» при переключении л�
 
   const before = await measureHeader(page);
 
-  // Быстрый переход на другую лекцию из сайдбара (любую, кроме активной).
+  // Быстрый переход на другую лекцию из сайдбара. Целимся ЯВНО в лекцию курса:
+  // с появлением группы ОСНОВНОЕ первый `.sidebar-nav-item` в сайдбаре — это
+  // «Рабочий стол», а не соседняя лекция.
   const other = page
     .locator(".global-sidebar .sidebar-nav-item:not(.active)")
+    .filter({ hasText: "Производная функции" })
     .first();
   await expect(other).toBeVisible();
   await other.click();
