@@ -19,7 +19,9 @@ test("таблица вставляется из slash-меню, есть тул
   await page.waitForURL("**/s/demo");
   await page.goto("/s/demo/math-analysis/limit-of-sequence");
 
-  await page.locator('button[title="Редактировать"]').click();
+  // dispatchEvent: та же болезнь headed-Firefox с «element not stable»,
+  // что и у плиток/сайдбара — кнопка живёт в анимированной шапке карточки.
+  await page.locator('button[title="Редактировать"]').dispatchEvent("click");
   await page.waitForURL("**/limit-of-sequence/edit");
 
   const editable = page.locator(".tiptap-editor");
@@ -85,7 +87,9 @@ test("вставка markdown-таблицы из Obsidian собирает на
   await page.waitForURL("**/s/demo");
   await page.goto("/s/demo/math-analysis/limit-of-sequence");
 
-  await page.locator('button[title="Редактировать"]').click();
+  // dispatchEvent: та же болезнь headed-Firefox с «element not stable»,
+  // что и у плиток/сайдбара — кнопка живёт в анимированной шапке карточки.
+  await page.locator('button[title="Редактировать"]').dispatchEvent("click");
   await page.waitForURL("**/limit-of-sequence/edit");
 
   const editable = page.locator(".tiptap-editor");

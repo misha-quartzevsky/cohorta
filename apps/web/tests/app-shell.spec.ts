@@ -87,7 +87,7 @@ test("роут /notes рендерится без краша сайдбара (c
   // Сайдбар жив (без error boundary при не-загруженных семестрах).
   await expect(page.locator(".global-sidebar")).toBeVisible();
   await expect(
-    page.locator(".sidebar-section-title", { hasText: "НЕДАВНИЕ" })
+    page.locator(".sidebar-nav-item", { hasText: "Карточки" })
   ).toBeVisible();
 
   // Ни одна ссылка НЕДАВНИЕ не должна остаться без href (сборка пути не падает).

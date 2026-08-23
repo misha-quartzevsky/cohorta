@@ -76,17 +76,17 @@ test("переключение туда-обратно рендерит форм
   // в лекцию курса (не в «Рабочий стол» из группы ОСНОВНОЕ, который теперь
   // первый `.sidebar-nav-item` в сайдбаре на лекции).
   const other = page
-    .locator(".global-sidebar .sidebar-nav-item:not(.active)")
+    .locator(".global-sidebar .sidebar-note-row:not(.active)")
     .filter({ hasText: "Производная функции" })
     .first();
   await expect(other).toBeVisible();
-  await other.click();
+  await other.dispatchEvent("click");
   await page.waitForURL((url) => !url.pathname.endsWith("limit-of-sequence"));
   await page
-    .locator(".global-sidebar .sidebar-nav-item", {
+    .locator(".global-sidebar .sidebar-note-row", {
       hasText: "Предел последовательности",
     })
-    .click();
+    .dispatchEvent("click");
   await page.waitForURL("**/limit-of-sequence");
   await expect(page.locator(".lecture-card-title")).toHaveText(
     "Предел последовательности"

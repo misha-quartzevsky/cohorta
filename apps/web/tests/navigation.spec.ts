@@ -22,18 +22,21 @@ test("переключение семестра в сайдбаре меняет
   await expect(page.locator(".hero-greeting")).toBeVisible();
 
   const courses = page.locator(".courses-widget");
-  const demoCourse = courses.locator(".course-mini-card", {
+  const demoCourse = courses.locator(".course-card", {
     hasText: "Математический анализ",
   });
   await waitForStable(page, demoCourse);
   await expect(demoCourse).toBeVisible();
 
   async function switchSemester(slug: string): Promise<void> {
-    await page.locator(".sidebar-semester-btn").click();
+    // dispatchEvent, а не click: кнопка семестра в сайдбаре не «успокаивается»
+    // для headed-Firefox (hover/content-in анимации), штатный клик висит до
+    // таймаута. Тот же приём уже используется в app-shell.spec для этой кнопки.
+    await page.locator(".sidebar-semester-btn").dispatchEvent("click");
     await page
       .locator(".sidebar-semester-item", { hasText: `${slug} семестр` })
       .first()
-      .click();
+      .dispatchEvent("click");
     await page.waitForURL(`**/s/${slug}`);
   }
 
@@ -45,14 +48,14 @@ test("переключение семестра в сайдбаре меняет
   await expect(
     page
       .locator(".courses-widget")
-      .locator(".course-mini-card", { hasText: "Математический анализ" })
+      .locator(".course-card", { hasText: "Математический анализ" })
   ).toHaveCount(0);
 
   // Обратно на demo: курсы снова на месте.
   await switchSemester("demo");
   await expect(page.locator(".hero-greeting")).toBeVisible();
   await expect(
-    page.locator(".courses-widget .course-mini-card", {
+    page.locator(".courses-widget .course-card", {
       hasText: "Математический анализ",
     })
   ).toBeVisible();

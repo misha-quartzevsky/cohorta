@@ -1,54 +1,73 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
-/* ---------- Golos UI (variable + static weights) ---------- */
-@font-face {
-  font-family: "Golos UI";
-  src: url("/fonts/Golos-UI_Regular.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Golos UI";
-  src: url("/fonts/Golos-UI_Medium.ttf") format("truetype");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Golos UI";
-  src: url("/fonts/Golos-UI_Bold.ttf") format("truetype");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Golos UI";
-  src: url("/fonts/Golos-UI_VF.ttf") format("truetype-variations");
-  font-weight: 400 700;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
-  --c-black: #1b1b1b;
-  --c-lilac: #5843f6;
-  --c-ginger: #ff6a2a;
-  --c-bg: #f2f1f7;
-  --c-surface: #ffffff;
-  --c-muted: #a5a8ad;
-  --radius: 10px;
+  /* ---- Бренд: единственный акцентный градиент (DESIGN.md §1.1) ---- */
+  --brand-1: #5843F6;
+  --brand-1-hover: #4A37E0;
+  --brand-2: #B5CBFA;
+  --brand-gradient: linear-gradient(120deg, var(--brand-1), var(--brand-2));
+  --brand-wash: rgba(88, 67, 246, 0.08);
+  --brand-ring: rgba(88, 67, 246, 0.12);
 
-  /* Система отступов (8px-сетка): «дыхание» интерфейса */
-  --space-xs: 0.5rem;   /* 8px  — мелкие зазоры (gap между иконкой и текстом) */
-  --space-sm: 0.75rem;  /* 12px — отступы внутри кнопок, карточек */
-  --space-md: 1rem;     /* 16px — стандартные отступы (padding карточек) */
-  --space-lg: 1.5rem;   /* 24px — разделители секций (gap в dashboard-bento) */
-  --space-xl: 2rem;     /* 32px — крупные отступы (padding canvas) */
-  --space-2xl: 2.5rem;  /* 40px — максимальные отступы */
+  /* ---- Нейтральные: UI-хром, текст, фон (DESIGN.md §1.3) ---- */
+  --ink: #1C1C22;
+  --ink-2: #5B5B66;
+  --ink-3: #9494A0;
+  --bg: #F7F7F9;
+  --surface: #FFFFFF;
+  --border: #EAEAEF;
+  --border-strong: #DFDFE6;
+
+  /* ---- Семантика: единственное место для «обычного» цвета (DESIGN.md §1.4) ---- */
+  --success: #0F9D77;
+  --success-ink: #0B6B51;
+  --success-soft: rgba(15, 157, 119, 0.1);
+  --danger: #E24B4A;
+  --danger-ink: #B23A2A;
+  --danger-soft: rgba(226, 75, 74, 0.1);
+  --danger-border: rgba(226, 75, 74, 0.28);
+  --warning: #F5A623;
+  --highlight: rgba(245, 166, 35, 0.25);
+
+  /* ---- Тёмный блок кода (единственная тёмная поверхность) ---- */
+  --code-bg: #2B2B33;
+  --code-ink: #F3F1FA;
+
+  /* ---- Радиусы: только три ступени (DESIGN.md §3) ---- */
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-md: var(--radius); /* имя из DESIGN.md §3; --radius — legacy-псевдоним */
+  --radius-lg: 16px;
+
+  /* ---- Тени: четыре ступени вместо произвольных ---- */
+  --shadow-sm: 0 1px 2px rgba(28, 28, 34, 0.05);
+  --shadow-md: 0 4px 14px rgba(28, 28, 34, 0.07);
+  --shadow-lg: 0 16px 40px rgba(28, 28, 34, 0.1);
+  --shadow-brand: 0 10px 28px rgba(88, 67, 246, 0.22);
+
+  /* ---- Отступы: шкала 8px (DESIGN.md §3) ---- */
+  --space-xs: 0.5rem;   /* 8px  */
+  --space-sm: 0.75rem;  /* 12px */
+  --space-md: 1rem;     /* 16px */
+  --space-lg: 1.5rem;   /* 24px */
+  --space-xl: 2rem;     /* 32px */
+  --space-2xl: 2.5rem;  /* 40px */
+
+  /* ---- Курируемая палитра курсов: 6 градиентов (DESIGN.md §1.2) ---- */
+  --course-violet: linear-gradient(135deg, #5843F6, #B5CBFA);
+  --course-coral: linear-gradient(135deg, #FF6B4A, #FFB199);
+  --course-blue: linear-gradient(135deg, #2F80ED, #A5D8FF);
+  --course-magenta: linear-gradient(135deg, #C239B3, #F4A6E0);
+  --course-green: linear-gradient(135deg, #0F9D77, #A8E6C9);
+  --course-amber: linear-gradient(135deg, #F5A623, #FFE1A8);
+
+  /* ---- Legacy-алиасы: старые --c-* ведут на канон, чтобы 187 обращений
+         в файле не переписывать поштучно и не рассинхронить палитру ---- */
+  --c-black: var(--ink);
+  --c-lilac: var(--brand-1);
+  --c-bg: var(--bg);
+  --c-surface: var(--surface);
+  --c-muted: var(--ink-3);
 }
 
 * {
@@ -58,19 +77,15 @@
 body {
   margin: 0;
   min-height: 100vh;
-  /* Light Craft: текст — Inter, заголовки/UI-хром — Golos UI (см. ниже). */
-  font-family: "Inter", "Golos UI", "Segoe UI", system-ui, sans-serif;
+  /* Light Craft: весь текст и UI-хром — Inter. */
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 14px;
   line-height: 1.5;
   color: var(--c-black);
-  background:
-    radial-gradient(42rem 28rem at 6% -4%, rgba(88, 67, 246, 0.1), transparent 70%),
-    radial-gradient(36rem 26rem at 98% 8%, rgba(255, 106, 42, 0.08), transparent 70%),
-    radial-gradient(48rem 34rem at 50% 110%, rgba(88, 67, 246, 0.07), transparent 70%),
-    var(--c-bg);
-  background-attachment: fixed;
+  background: var(--bg);
 }
 
-/* Заголовки и фирменный UI-хром остаются на Golos UI, текст — Inter. */
+/* Headings and UI chrome use Inter (the app's only font). */
 h1,
 h2,
 h3,
@@ -79,10 +94,9 @@ h4,
 .page-subtitle,
 .lecture-card-title,
 .hero-greeting,
-.hero-eyebrow,
 .widget-title,
 .sidebar-section-title {
-  font-family: "Golos UI", "Inter", "Segoe UI", system-ui, sans-serif;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
 }
 
 /* ---------- Custom scrollbars: native hidden, JS-drawn (macOS/Notion/DeepSeek) ----
@@ -115,7 +129,7 @@ html::-webkit-scrollbar {
   top: 8px;
   right: 3px;
   bottom: 8px;
-  width: 5px;
+  width: 4px;
   z-index: 2000;
   pointer-events: none;
 }
@@ -123,7 +137,7 @@ html::-webkit-scrollbar {
   position: absolute;
   top: 0;
   left: 0;
-  width: 5px;
+  width: 4px;
   border-radius: 10px;
   background: rgba(27, 27, 27, 0.16);
   opacity: 0;
@@ -139,7 +153,7 @@ html::-webkit-scrollbar {
   top: 2px;
   right: 2px;
   bottom: 2px;
-  width: 5px;
+  width: 4px;
   z-index: 5;
   pointer-events: none;
 }
@@ -147,7 +161,7 @@ html::-webkit-scrollbar {
   position: absolute;
   top: 0;
   left: 0;
-  width: 5px;
+  width: 4px;
   border-radius: 10px;
   background: rgba(27, 27, 27, 0.16);
   opacity: 0;
@@ -199,12 +213,6 @@ html::-webkit-scrollbar {
   object-fit: contain;
 }
 
-.brand-name {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--c-black);
-}
 
 /* ---------- переключатель семестра ---------- */
 .semester-switcher {
@@ -222,9 +230,9 @@ html::-webkit-scrollbar {
 
 .semester-select {
   padding: 0.5rem 0.75rem;
-  border: 1px solid #d9d6e6;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: #fff;
+  background: var(--surface);
   color: var(--c-black);
   font-family: inherit;
   font-size: 0.95rem;
@@ -252,7 +260,7 @@ html::-webkit-scrollbar {
   font-weight: 600;
   cursor: pointer;
   padding: 0.5rem 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   transition: background 0.15s ease;
 }
 
@@ -262,13 +270,16 @@ html::-webkit-scrollbar {
 
 .page-title {
   margin: 0 0 0.25rem;
-  font-size: 2.1rem;
-  color: var(--c-black);
+  font-size: 1.5rem; /* h1 по шкале DESIGN.md §2 */
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
 }
 
 .page-subtitle {
-  margin: 0 0 1.75rem;
-  color: var(--c-muted);
+  margin: 0 0 var(--space-lg);
+  font-size: 0.875rem;
+  color: var(--ink-2);
 }
 
 /* ---------- бенто-сетка ---------- */
@@ -281,10 +292,10 @@ html::-webkit-scrollbar {
 
 .tile {
   position: relative;
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--c-surface);
-  border: 1px solid #eae8f2;
+  border: 1px solid var(--border);
   box-shadow: 0 6px 18px rgba(54, 54, 54, 0.06);
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
@@ -305,35 +316,6 @@ html::-webkit-scrollbar {
   grid-row: span 2;
 }
 
-.tile-feature {
-  height: 150px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 1.4rem;
-  color: #fff;
-}
-
-/* градиенты превью (для курсов и лекций без картинок) */
-.tile-feature.lilac {
-  background: linear-gradient(135deg, #5843f6, #8f7cf8);
-}
-
-.tile-feature.ginger {
-  background: linear-gradient(135deg, #ff6a2a, #ffc86b);
-}
-
-.tile-feature.black {
-  background: linear-gradient(135deg, #363636, #7a7a8c);
-}
-
-.tile-feature img {
-  width: 60%;
-  max-height: 130px;
-  object-fit: contain;
-  filter: brightness(0) invert(1);
-}
 
 .tile-body {
   padding: 0.9rem 1rem 1.1rem;
@@ -354,7 +336,7 @@ html::-webkit-scrollbar {
 .tile-excerpt {
   margin: 0.4rem 0 0;
   font-size: 0.92rem;
-  color: #5a5a66;
+  color: var(--ink-2);
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -397,17 +379,27 @@ html::-webkit-scrollbar {
   width: 100%;
   font-size: 0.85rem;
   padding: 0.45rem 0.6rem;
-  border-radius: 10px;
-  border: 1px solid #e0dcf0;
-  background: #faf9fd;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg);
   color: var(--c-black);
 }
 
 /* ---------- kebab-меню ---------- */
 .kebab-wrapper {
-  padding: 0.35rem 0.9rem 0.9rem;
   display: flex;
   justify-content: flex-end;
+}
+
+/* В плитках кебаб — оверлей в углу: иначе карточка резервирует под него
+   отдельную строку и внизу зияет пустота. */
+.tile > .kebab-wrapper,
+.course-card-slot > .kebab-wrapper {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 0;
+  z-index: 2;
 }
 
 .kebab-btn {
@@ -418,13 +410,13 @@ html::-webkit-scrollbar {
   height: 30px;
   border: none;
   background: transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  color: #8b88a6;
+  color: var(--ink-3);
 }
 
 .kebab-btn:hover {
-  background: #f0eef6;
+  background: var(--bg);
   color: var(--c-black);
 }
 
@@ -434,9 +426,9 @@ html::-webkit-scrollbar {
   bottom: 3.1rem;
   z-index: 20;
   min-width: 150px;
-  background: #fff;
-  border: 1px solid #eae8f2;
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   box-shadow: 0 10px 24px rgba(54, 54, 54, 0.12);
   padding: 0.3rem;
 }
@@ -449,18 +441,18 @@ html::-webkit-scrollbar {
   padding: 0.5rem 0.6rem;
   border: none;
   background: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.88rem;
   color: var(--c-black);
 }
 
 .kebab-item:hover {
-  background: #f4f1fd;
+  background: var(--bg);
 }
 
 .kebab-item.danger {
-  color: #c5422d;
+  color: var(--danger-ink);
 }
 
 /* ---------- состояния ---------- */
@@ -472,10 +464,10 @@ html::-webkit-scrollbar {
 }
 
 .error-banner {
-  background: #fff3ee;
-  border: 1px solid #ffc6ab;
-  color: #b0441a;
-  border-radius: 12px;
+  background: var(--danger-soft);
+  border: 1px solid var(--danger-border);
+  color: var(--danger-ink);
+  border-radius: var(--radius);
   padding: 0.9rem 1rem;
   margin-bottom: 1.25rem;
   font-size: 0.95rem;
@@ -485,8 +477,8 @@ html::-webkit-scrollbar {
 .create-form {
   margin-top: 2.5rem;
   background: var(--c-surface);
-  border: 1px solid #eae8f2;
-  border-radius: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   padding: 1.25rem 1.5rem;
 }
 
@@ -500,18 +492,18 @@ html::-webkit-scrollbar {
   display: block;
   width: 100%;
   padding: 0.65rem 0.9rem;
-  border: 1px solid #d9d6e6;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: 1rem;
   margin-bottom: 0.8rem;
-  background: #fff;
+  background: var(--surface);
   color: var(--c-black);
   font-family: inherit;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .field::placeholder {
-  color: #a6a3b4;
+  color: var(--ink-3);
 }
 
 .field:focus {
@@ -540,7 +532,7 @@ textarea.field {
 
 .btn-primary {
   background: var(--c-lilac);
-  color: #fff;
+  color: var(--surface);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -553,18 +545,18 @@ textarea.field {
 }
 
 .btn-primary:disabled {
-  background: #c9c5d6;
+  background: var(--border-strong);
   cursor: not-allowed;
 }
 
 .btn-outline {
-  background: #fff;
+  background: var(--surface);
   color: var(--c-black);
-  border-color: #d9d6e6;
+  border-color: var(--border);
 }
 
 .btn-outline:hover:not(:disabled) {
-  background: #f4f3f9;
+  background: var(--bg);
 }
 
 .btn-ghost {
@@ -576,28 +568,24 @@ textarea.field {
   background: rgba(88, 67, 246, 0.08);
 }
 
-.btn-sm {
-  padding: 0.35rem 0.7rem;
-  font-size: 0.85rem;
-}
 
 .btn-danger {
-  background: #fff;
-  color: #c5422d;
-  border-color: #ecc5bc;
+  background: var(--surface);
+  color: var(--danger-ink);
+  border-color: var(--danger-border);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: #fdeae5;
+  background: var(--danger-soft);
 }
 
 /* ---------- tiptap редактор ---------- */
 .tiptap-wrapper {
   position: relative;
   margin-bottom: 0.8rem;
-  border: 1px solid #d9d6e6;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: #fff;
+  background: var(--surface);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -627,7 +615,7 @@ textarea.field {
   border-left: 3px solid var(--c-lilac);
   padding-left: 0.75rem;
   margin: 0.4rem 0;
-  color: #6f6b80;
+  color: var(--ink-2);
 }
 .tiptap-wrapper .tiptap-editor code {
   background: rgba(54, 54, 54, 0.06);
@@ -636,9 +624,9 @@ textarea.field {
   font-size: 0.9em;
 }
 .tiptap-wrapper .tiptap-editor pre {
-  background: #f8f7fb;
+  background: var(--bg);
   padding: 0.75rem 1rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   overflow-x: auto;
 }
 .tiptap-wrapper .tiptap-editor pre code { background: none; padding: 0; }
@@ -649,7 +637,7 @@ textarea.field {
 }
 .tiptap-wrapper .tiptap-editor p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
-  color: #a6a3b4;
+  color: var(--ink-3);
   float: left;
   height: 0;
   pointer-events: none;
@@ -673,7 +661,7 @@ textarea.field {
 .tiptap-wrapper .tiptap-editor td,
 .lecture-view-content th,
 .lecture-view-content td {
-  border: 1px solid #dcd8e8;
+  border: 1px solid var(--border);
   padding: 0.5rem 0.6rem;
   vertical-align: top;
   text-align: left;
@@ -717,12 +705,10 @@ textarea.field {
 .table-menu {
   display: flex;
   align-items: center;
-  gap: 0.15rem;
-  background: rgba(255, 255, 255, 0.92);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  gap: 0.1rem;
+  background: var(--surface);
   border: 1px solid rgba(27, 27, 27, 0.08);
-  border-radius: 12px;
+  border-radius: var(--radius);
   padding: 0.3rem;
   box-shadow: 0 10px 30px rgba(27, 27, 27, 0.16);
 }
@@ -734,7 +720,7 @@ textarea.field {
   height: 30px;
   border: none;
   background: transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: var(--c-muted);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
@@ -745,7 +731,7 @@ textarea.field {
 }
 .table-menu-btn.danger:hover {
   background: rgba(230, 60, 60, 0.1);
-  color: #e23c3c;
+  color: var(--danger);
 }
 .table-menu-sep {
   width: 1px;
@@ -778,7 +764,7 @@ textarea.field {
 .lecture-view-content {
   font-size: 1.02rem;
   line-height: 1.7;
-  color: #2b2b33;
+  color: var(--code-bg);
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -787,9 +773,6 @@ textarea.field {
   margin: 0 0 1rem;
 }
 
-.lecture-view-empty {
-  color: var(--c-muted);
-}
 
 .lecture-view .actions-row {
   margin-top: 2rem;
@@ -812,25 +795,33 @@ textarea.field {
 }
 
 .color-swatch.selected {
-  border-color: #363636;
-  box-shadow: 0 0 0 2px #fff inset;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 2px var(--surface) inset;
 }
 
 /* ---------- тег курса на плитке лекции ---------- */
 .lecture-course-tag {
-  position: absolute;
-  left: 0.9rem;
-  bottom: 0.85rem;
-  padding: 0.28rem 0.6rem;
-  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.5rem;
+  padding: 0.22rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
   font-size: 0.72rem;
-  font-weight: 700;
-  color: #fff;
-  max-width: 60%;
+  font-weight: 500;
+  color: var(--ink-2);
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  z-index: 5;
+}
+
+.lecture-course-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
 }
 
 /* ---------- markdown-контент ---------- */
@@ -865,17 +856,17 @@ textarea.field {
 }
 
 .lecture-view-content code {
-  background: #f1eefb;
-  color: #5b3fd6;
-  border-radius: 6px;
+  background: var(--bg);
+  color: var(--brand-1);
+  border-radius: var(--radius-sm);
   padding: 0.15rem 0.35rem;
   font-size: 0.92em;
 }
 
 .lecture-view-content pre {
-  background: #2b2b33;
-  color: #f3f1fa;
-  border-radius: 12px;
+  background: var(--code-bg);
+  color: var(--code-ink);
+  border-radius: var(--radius);
   padding: 1rem;
   overflow-x: auto;
   margin: 0.8rem 0;
@@ -891,9 +882,9 @@ textarea.field {
   border-left: 4px solid var(--c-lilac);
   margin: 0.8rem 0;
   padding: 0.3rem 1rem;
-  color: #5a5a66;
-  background: #f7f5fd;
-  border-radius: 6px;
+  color: var(--ink-2);
+  background: var(--bg);
+  border-radius: var(--radius-sm);
 }
 
 .lecture-view-content a {
@@ -909,18 +900,18 @@ textarea.field {
 
 .lecture-view-content th,
 .lecture-view-content td {
-  border: 1px solid #e3e0ee;
+  border: 1px solid var(--border);
   padding: 0.4rem 0.7rem;
   text-align: left;
 }
 
 .lecture-view-content th {
-  background: #f4f2fa;
+  background: var(--bg);
 }
 
 .lecture-view-content hr {
   border: none;
-  border-top: 1px solid #e3e0ee;
+  border-top: 1px solid var(--border);
   margin: 1rem 0;
 }
 
@@ -928,13 +919,6 @@ textarea.field {
   margin-bottom: 2.25rem;
 }
 
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
 
 .section-title {
   font-size: 1.15rem;
@@ -950,12 +934,12 @@ textarea.field {
   justify-content: center;
   flex-direction: column;
   gap: 0.4rem;
-  border: 1.5px dashed #c9c5d8;
-  border-radius: 18px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-lg);
   background: transparent;
   color: var(--c-muted);
   cursor: pointer;
-  min-height: 150px;
+  min-height: 108px;
   transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
   text-align: center;
   padding: 1rem;
@@ -968,15 +952,15 @@ textarea.field {
 }
 
 .add-tile span {
-  font-size: 0.9rem;
+  font-size: 13px;
   font-weight: 500;
 }
 
 .add-tile .plus-icon {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 999px;
-  background: #efeef7;
+  background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -985,7 +969,7 @@ textarea.field {
 
 .add-tile:hover .plus-icon {
   background: var(--c-lilac);
-  color: #fff;
+  color: var(--surface);
 }
 
 /* ---------- inline-редактор курса ---------- */
@@ -994,9 +978,9 @@ textarea.field {
   flex-direction: column;
   gap: 0.6rem;
   padding: 1rem;
-  background: #fff;
-  border-radius: 18px;
-  border: 1px solid #d9d6e6;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
   min-height: 150px;
 }
 
@@ -1036,11 +1020,6 @@ textarea.field {
   margin-bottom: 1.5rem;
 }
 
-.lecture-date-top {
-  color: var(--c-muted);
-  font-size: 0.9rem;
-  margin-bottom: 0.3rem;
-}
 
 .lecture-view-title {
   font-size: 2rem;
@@ -1052,8 +1031,8 @@ textarea.field {
 
 .lecture-view-body {
   background: var(--c-surface);
-  border: 1px solid #eae8f2;
-  border-radius: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   padding: 1.5rem 1.75rem;
   font-size: 1.05rem;
   line-height: 1.7;
@@ -1061,9 +1040,6 @@ textarea.field {
   white-space: pre-wrap;
 }
 
-.lecture-view-empty {
-  color: var(--c-muted);
-}
 .lecture-view-actions {
   display: inline-flex;
   gap: 0.5rem;
@@ -1089,11 +1065,6 @@ textarea.field {
   background: rgba(88, 67, 246, 0.08);
 }
 
-.create-form-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
-}
 
 /* ---------- rendered markdown styles (lecture view) ---------- */
 .lecture-view-content { max-width: 760px; }
@@ -1108,12 +1079,12 @@ textarea.field {
 .lecture-view-content del { text-decoration: line-through; opacity: 0.7; }
 .lecture-view-content hr { border: none; height: 1px; background: rgba(54, 54, 54, 0.1); margin: 0.75rem 0; }
 .lecture-view-content code { font-family: "JetBrains Mono", "SF Mono", "Fira Code", monospace; background: rgba(54, 54, 54, 0.06); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
-.lecture-view-content pre { background: #f8f7fb; padding: 0.75rem 1rem; border-radius: 8px; overflow-x: auto; margin: 0.5rem 0; }
+.lecture-view-content pre { background: var(--bg); padding: 0.75rem 1rem; border-radius: var(--radius-sm); overflow-x: auto; margin: 0.5rem 0; }
 .lecture-view-content pre code { background: none; padding: 0; font-size: 0.85rem; }
 .lecture-view-content p { margin: 0.4rem 0; }
 .lecture-view-content a { color: var(--c-lilac); text-decoration: none; }
 .lecture-view-content a:hover { text-decoration: underline; }
-.lecture-view-content img { max-width: 100%; border-radius: 8px; margin: 0.5rem 0; }
+.lecture-view-content img { max-width: 100%; border-radius: var(--radius-sm); margin: 0.5rem 0; }
 
 /* ================================================================
    Phase 2 — workspace (sidebar / card / toc / tags / menus)
@@ -1133,29 +1104,16 @@ textarea.field {
 
 /* Simplified workspace for lecture pages (no old sidebar, TOC in GlobalSidebar) */
 .workspace-simple {
+  /* Одна колонка: оглавление живёт только в сайдбаре (DESIGN.md §7.1 —
+     один источник правды на список). Правый слот освобождён под будущую
+     панель редактирования (в планах, стиль Kraft/Figma). */
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 230px;
-  /* «Парящий лист»: зазор 24px от холста вокруг карточки лекции. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
   align-items: start;
 }
 
 .workspace-sidebar,
-.workspace-toc {
-  position: sticky;
-  /* Отступ 30px под sticky-шапкой — жёстко зафиксирован и проверяется
-     E2E-тестом tests/header-stability.spec.ts (getComputedStyle). */
-  top: 30px;
-  background: rgba(255, 255, 255, 0.55);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 18px;
-  box-shadow: 0 10px 30px rgba(27, 27, 27, 0.07);
-  padding: 1rem 0.9rem;
-  max-height: calc(100vh - 8.5rem);
-  overflow-y: auto;
-}
 
 /* ---------- lecture sidebar ---------- */
 .sidebar-back {
@@ -1167,7 +1125,7 @@ textarea.field {
   cursor: pointer;
   padding: 0.3rem 0.55rem;
   margin: -0.3rem 0 0.35rem -0.55rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
@@ -1175,15 +1133,13 @@ textarea.field {
 
 .sidebar-back:hover {
   color: var(--c-lilac);
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--surface);
 }
 
 .workspace-sidebar-title {
   margin: 0 0 0.5rem;
   font-size: 0.78rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   color: var(--c-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1205,7 +1161,7 @@ textarea.field {
   text-align: left;
   border: none;
   background: transparent;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   padding: 0.5rem 0.7rem;
   font-size: 0.92rem;
   font-family: inherit;
@@ -1218,7 +1174,7 @@ textarea.field {
 }
 
 .lecture-side-item:hover {
-  background: rgba(255, 255, 255, 0.75);
+  background: var(--surface);
 }
 
 .lecture-side-item.active {
@@ -1230,7 +1186,7 @@ textarea.field {
 /* ---------- lecture card (white center column) ---------- */
 .lecture-card {
   background: var(--c-surface);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   border: 1px solid rgba(27, 27, 27, 0.05);
   /* Light Craft: мягкая, глубоко «парящая» тень листа. */
   box-shadow: 0 20px 50px rgba(27, 27, 27, 0.1), 0 2px 8px rgba(27, 27, 27, 0.04);
@@ -1265,7 +1221,7 @@ textarea.field {
 }
 
 .icon-btn.danger {
-  color: #c5422d;
+  color: var(--danger-ink);
 }
 
 .icon-btn.danger:hover {
@@ -1297,7 +1253,7 @@ textarea.field {
 }
 
 .lecture-title-input::placeholder {
-  color: #c9ccd1;
+  color: var(--ink-3);
 }
 
 .edit-meta-row {
@@ -1316,8 +1272,8 @@ textarea.field {
   white-space: nowrap;
 }
 
-.save-indicator.saved { color: #3aa655; }
-.save-indicator.error { color: #d64533; }
+.save-indicator.saved { color: var(--success); }
+.save-indicator.error { color: var(--danger); }
 
 .save-indicator .spin {
   animation: spin 1s linear infinite;
@@ -1340,7 +1296,7 @@ textarea.field {
   align-items: center;
   gap: 0.35rem;
   padding: 0.22rem 0.6rem;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   font-size: 0.8rem;
   font-weight: 500;
   color: var(--c-black);
@@ -1368,7 +1324,7 @@ textarea.field {
   gap: 0.35rem;
   border: 1px solid rgba(27, 27, 27, 0.12);
   background: var(--c-surface);
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   padding: 0.3rem 0.65rem;
   font-size: 0.83rem;
   font-family: inherit;
@@ -1395,13 +1351,13 @@ textarea.field {
 
 .tag-input {
   border: 1px solid rgba(27, 27, 27, 0.12);
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   padding: 0.35rem 0.8rem;
   font-size: 0.85rem;
   font-family: inherit;
   outline: none;
   width: 8.5rem;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--surface);
   color: var(--c-black);
 }
 
@@ -1414,8 +1370,6 @@ textarea.field {
   margin: 0 0 0.6rem;
   font-size: 0.78rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   color: var(--c-muted);
 }
 
@@ -1440,7 +1394,7 @@ textarea.field {
   text-align: left;
   border: none;
   background: transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 0.3rem 0.55rem;
   font-size: 0.88rem;
   font-family: inherit;
@@ -1454,7 +1408,7 @@ textarea.field {
 
 .toc-item:hover {
   color: var(--c-black);
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--surface);
 }
 
 .toc-item.lvl-1 {
@@ -1474,12 +1428,10 @@ textarea.field {
 .bubble-menu {
   display: flex;
   align-items: center;
-  gap: 0.15rem;
-  background: rgba(255, 255, 255, 0.88);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  gap: 0.1rem;
+  background: var(--surface);
   border: 1px solid rgba(27, 27, 27, 0.08);
-  border-radius: 12px;
+  border-radius: var(--radius);
   padding: 0.3rem;
   box-shadow: 0 10px 30px rgba(27, 27, 27, 0.16);
 }
@@ -1491,9 +1443,9 @@ textarea.field {
   width: 30px;
   height: 30px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: transparent;
-  color: #4a4d52;
+  color: var(--ink-2);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -1529,17 +1481,17 @@ textarea.field {
 }
 
 .bubble-swatch.active {
-  box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--c-lilac);
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--c-lilac);
 }
 
 /* ---------- floating «+» menu (empty blocks) ---------- */
 .floating-plus {
   width: 26px;
   height: 26px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(27, 27, 27, 0.1);
-  background: #fff;
-  color: #4a4d52;
+  background: var(--surface);
+  color: var(--ink-2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1557,11 +1509,9 @@ textarea.field {
 /* ---------- slash menu («/») ---------- */
 .slash-menu {
   min-width: 240px;
-  background: rgba(255, 255, 255, 0.93);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  background: var(--surface);
   border: 1px solid rgba(27, 27, 27, 0.08);
-  border-radius: 12px;
+  border-radius: var(--radius);
   box-shadow: 0 12px 34px rgba(27, 27, 27, 0.16);
   padding: 0.35rem;
 }
@@ -1575,7 +1525,7 @@ textarea.field {
   background: transparent;
   text-align: left;
   cursor: pointer;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   padding: 0.45rem 0.6rem;
   font-family: inherit;
   font-size: 0.92rem;
@@ -1589,8 +1539,8 @@ textarea.field {
 .slash-icon {
   width: 30px;
   height: 30px;
-  border-radius: 8px;
-  background: #f1effa;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1626,11 +1576,9 @@ textarea.field {
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
-  background: rgba(255, 255, 255, 0.95);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  background: var(--surface);
   border: 1px solid rgba(27, 27, 27, 0.08);
-  border-radius: 12px;
+  border-radius: var(--radius);
   box-shadow: 0 12px 34px rgba(27, 27, 27, 0.18);
   padding: 0.35rem;
 }
@@ -1640,7 +1588,6 @@ textarea.field {
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--c-muted);
   user-select: none;
 }
@@ -1654,7 +1601,7 @@ textarea.field {
   background: transparent;
   text-align: left;
   cursor: pointer;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   padding: 0.45rem 0.6rem;
   font-family: inherit;
   font-size: 0.92rem;
@@ -1682,11 +1629,11 @@ textarea.field {
   height: 22px;
   border: none;
   background: transparent;
-  color: #4a4d52;
+  color: var(--ink-2);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -1764,7 +1711,7 @@ textarea.field {
 
 .tiptap-editor mark,
 .lecture-view-content mark {
-  background: #fff3a1;
+  background: var(--highlight);
   border-radius: 3px;
   padding: 0 0.12em;
   color: inherit;
@@ -1793,7 +1740,7 @@ textarea.field {
 .tiptap-editor img,
 .lecture-view-content img {
   max-width: 100%;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   margin: 0.5rem 0;
 }
 
@@ -1813,8 +1760,7 @@ textarea.field {
     grid-template-columns: 1fr;
   }
 
-  .workspace-sidebar,
-  .workspace-toc {
+  .workspace-sidebar {
     display: none;
   }
 }
@@ -1827,17 +1773,6 @@ textarea.field {
 }
 
 /* ---------- шапка: новый дизайн (профиль / крошки / поиск) ---------- */
-.app-header {
-  position: sticky;
-  top: 0;
-  z-index: 60;
-  height: 70px;
-  background: rgba(255, 255, 255, 0.72);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid #efedf4;
-}
-
 .app-header-inner {
   position: relative;
   display: flex;
@@ -1868,8 +1803,8 @@ textarea.field {
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: var(--c-ginger);
-  color: #fff;
+  background: var(--brand-gradient);
+  color: var(--surface);
   font-size: 1.05rem;
   font-weight: 600;
   user-select: none;
@@ -1882,12 +1817,6 @@ textarea.field {
   display: block;
 }
 
-.profile-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.25;
-  min-width: 0;
-}
 
 .profile-name {
   font-size: 0.95rem;
@@ -1914,7 +1843,7 @@ textarea.field {
   display: grid;
   place-items: center;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--c-muted);
   cursor: pointer;
@@ -1922,8 +1851,8 @@ textarea.field {
 }
 
 .logout-btn:hover {
-  background: rgba(255, 106, 42, 0.12);
-  color: var(--c-ginger);
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .logout-btn:active {
@@ -1956,11 +1885,6 @@ textarea.field {
 /* При фокусе на поиске крошки полностью скрываются (opacity 0, клики
    отключены), чтобы расширенный поиск не наезжал на них. Сам поиск и
    переключатель семестра защищены от сжатия через flex-shrink: 0. */
-.breadcrumbs.faded {
-  opacity: 0;
-  pointer-events: none;
-}
-
 .crumb {
   display: flex;
   align-items: center;
@@ -1969,13 +1893,13 @@ textarea.field {
 }
 
 .crumb-sep {
-  color: #d8d5e0;
+  color: var(--border-strong);
   font-size: 0.85rem;
 }
 
 .crumb-link {
   padding: 0.2rem 0.4rem;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--c-muted);
   text-decoration: none;
   font-weight: 500;
@@ -2021,145 +1945,6 @@ textarea.field {
   z-index: 1;
 }
 
-.app-header .semester-switcher {
-  gap: 0.4rem;
-  /* Переключатель семестра не сжимается и не «наезжает» на крошки. */
-  flex-shrink: 0;
-}
-
-.app-header .semester-switcher-label {
-  font-size: 0.8rem;
-}
-
-.app-header .semester-select {
-  padding: 0.36rem 0.65rem;
-  border: none;
-  border-radius: 10px;
-  background: #f5f5f5;
-  font-size: 0.85rem;
-}
-
-.search-box {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  height: 40px;
-  padding: 0 1.1rem; /* comfortable, consistent inset for icon + text */
-  width: 220px;
-  border-radius: 20px;
-  background: #f5f5f5;
-  transition: width 0.28s ease, background 0.28s ease, box-shadow 0.28s ease;
-}
-
-/* Немного расширяется при фокусе. */
-.search-box.focused {
-  width: 320px;
-  background: #fff;
-  box-shadow: 0 0 0 2px rgba(88, 67, 246, 0.2);
-}
-
-.search-icon {
-  flex: none;
-  color: var(--c-muted);
-  transition: color 0.28s ease;
-}
-
-.search-box.focused .search-icon {
-  color: var(--c-lilac);
-}
-
-.search-input {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-family: "Golos UI", "Segoe UI", system-ui, sans-serif;
-  font-size: 0.9rem;
-  color: var(--c-black);
-}
-
-.search-input::placeholder {
-  color: #b3afba;
-}
-
-/* --- обёртка поиска + live-дропдаун результатов --- */
-.search-wrap {
-  position: relative;
-  /* Не сжимается при фокусе и лежит над крошками. */
-  flex-shrink: 0;
-  z-index: 2;
-}
-
-.search-dropdown {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  min-width: 340px;
-  max-width: 420px;
-  max-height: 380px;
-  overflow-y: auto;
-  padding: 0.35rem;
-  background: #fff;
-  border: 1px solid #efedf4;
-  border-radius: 14px;
-  box-shadow: 0 18px 50px rgba(54, 54, 54, 0.14);
-  z-index: 80;
-}
-
-.search-status {
-  padding: 0.7rem 0.85rem;
-  font-size: 0.85rem;
-  color: var(--c-muted);
-}
-
-.search-dropdown-item {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 0.55rem 0.7rem;
-  border: none;
-  background: transparent;
-  border-radius: 9px;
-  cursor: pointer;
-  font-family: "Golos UI", "Segoe UI", system-ui, sans-serif;
-}
-
-.search-dropdown-item:hover {
-  background: rgba(88, 67, 246, 0.06);
-}
-
-.search-item-title {
-  display: block;
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--c-black);
-}
-
-.search-item-snippet {
-  display: block;
-  margin-top: 0.15rem;
-  font-size: 0.8rem;
-  color: var(--c-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.search-item-course {
-  display: inline-block;
-  margin-top: 0.3rem;
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: var(--c-lilac);
-}
-
-.avatar-fallback {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #fff;
-}
-
 /* ============================================
    GLOBAL APP SHELL (Phase 1)
    ============================================ */
@@ -2183,16 +1968,14 @@ textarea.field {
   top: 0;
   width: 240px; /* reduced from 280px */
   height: 100vh;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
-  border-right: 1px solid rgba(234, 232, 242, 0.6);
-  padding: var(--space-xl) 0 var(--space-xl) 30px; /* 30px left as per design */
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: var(--space-lg) 20px var(--space-md);
   overflow: hidden; /* static frame — internal lists scroll, not the sidebar */
   z-index: 100;
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
+  gap: 14px;
 }
 
 /* Profile section in sidebar */
@@ -2200,20 +1983,21 @@ textarea.field {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding-right: 1rem; /* было 1.5rem — больше места под имя/почту */
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border);
 }
 
 .profile-avatar {
   flex: none;
-  width: 44px; /* было 48px — компактнее */
-  height: 44px;
+  width: 32px; /* было 48px — компактнее */
+  height: 32px;
   border-radius: 50%;
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: var(--c-ginger);
-  color: #fff;
-  font-size: 1.2rem;
+  background: var(--brand-gradient);
+  color: var(--surface);
+  font-size: 0.9rem;
   font-weight: 600;
   user-select: none;
 }
@@ -2239,8 +2023,8 @@ textarea.field {
 }
 
 .sidebar-profile .profile-name {
-  font-size: 0.93rem; /* было 0.95rem — чуть меньше */
-  font-weight: 600;
+  font-size: 13px; /* было 0.95rem — чуть меньше */
+  font-weight: 700;
   color: var(--c-black);
   white-space: nowrap;
   overflow: hidden;
@@ -2249,7 +2033,7 @@ textarea.field {
 }
 
 .sidebar-profile .profile-email {
-  font-size: 0.76rem; /* было 0.78rem */
+  font-size: 11px; /* было 0.78rem */
   color: var(--c-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -2264,7 +2048,7 @@ textarea.field {
   display: grid;
   place-items: center;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--c-muted);
   cursor: pointer;
@@ -2272,8 +2056,8 @@ textarea.field {
 }
 
 .profile-logout:hover {
-  background: rgba(255, 106, 42, 0.12);
-  color: var(--c-ginger);
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .profile-logout:active {
@@ -2283,62 +2067,49 @@ textarea.field {
 /* Semester switcher in sidebar */
 .sidebar-semester {
   position: relative;
-  padding-right: 1rem; /* было 1.5rem */
 }
 
 .sidebar-semester-btn {
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem; /* было 0.5rem 0 */
-  border: 1px solid rgba(88, 67, 246, 0.2); /* рамка-акцент */
-  border-radius: 12px;
-  background: rgba(88, 67, 246, 0.06); /* лёгкий lilac-фон */
+  gap: 0.6rem;
+  padding: 0.35rem 0.6rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
   font-family: inherit;
-  font-size: 0.93rem; /* было 0.95rem */
-  font-weight: 600;
-  color: var(--c-lilac);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-black);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.15s ease, color 0.15s ease;
   text-align: left;
 }
 
 .sidebar-semester-btn:hover {
-  background: rgba(88, 67, 246, 0.1);
-  border-color: rgba(88, 67, 246, 0.35);
-  box-shadow: 0 4px 12px rgba(88, 67, 246, 0.15);
+  background: rgba(88, 67, 246, 0.08);
+  color: var(--c-lilac);
 }
 
 .sidebar-semester-btn:hover svg {
+  opacity: 1;
   color: var(--c-lilac);
 }
 
 .sidebar-semester-current {
   flex: 1;
   text-align: left;
-}
-
-/* Бейдж с номером семестра внутри кнопки */
-.semester-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: var(--c-lilac);
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 700;
-  margin-right: 0.4rem;
-  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar-semester-btn svg {
   flex: none;
-  transition: transform 0.2s ease, color 0.2s ease;
+  opacity: 0.6;
   color: var(--c-lilac);
+  transition: transform 0.2s ease, color 0.2s ease, opacity 0.15s ease;
 }
 
 .sidebar-semester-btn svg.rotate {
@@ -2359,9 +2130,9 @@ textarea.field {
   width: 260px;
   max-height: 400px;
   overflow-y: auto;
-  background: #fff;
-  border: 1px solid #eae8f2;
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   box-shadow: 0 12px 32px rgba(54, 54, 54, 0.14);
   padding: 0.35rem;
   z-index: 120;
@@ -2374,9 +2145,9 @@ textarea.field {
   padding: 0.65rem 0.85rem;
   border: none;
   background: transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 13px;
   font-weight: 500;
   color: var(--c-black);
   cursor: pointer;
@@ -2395,75 +2166,34 @@ textarea.field {
 
 /* Sidebar navigation sections */
 .sidebar-section {
-  padding-right: var(--space-md); /* было 1.5rem — меньше */
-}
-
-.sidebar-section-title {
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin: 0 0 0.65rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--c-muted);
+  flex-direction: column;
 }
 
-.sidebar-section-title .section-icon {
-  display: inline-flex;
-  color: var(--c-lilac);
-  opacity: 0.7;
+/* Микро-лейбл секции — sentence case (DESIGN.md §2: никаких ВСЕ КАПС) */
+.sidebar-section-title {
+  margin: 0 0 0.35rem;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
 }
 
-/* Section title as a link (КАРТОЧКИ / ЗАМЕТКИ / НЕДАВНИЕ). Stays muted &
-   strict by default; on hover turns lilac and reveals a chevron hint. */
-.sidebar-section-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: inherit; /* keep .sidebar-section-title muted gray by default */
-  text-decoration: none;
-  border-radius: 6px;
-  transition: color 0.15s ease, background 0.15s ease;
-}
-
-.sidebar-section-link:hover {
-  color: var(--c-lilac);
-  background: rgba(88, 67, 246, 0.06);
-}
-
-.sidebar-section-link .title-arrow {
-  flex: none;
-  opacity: 0;
-  transform: translateX(-3px);
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.sidebar-section-link:hover .title-arrow {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.sidebar-back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  border: none;
-  background: transparent;
-  color: var(--c-muted);
-  font-size: 0.85rem;
-  font-family: inherit;
-  cursor: pointer;
-  padding: 0.3rem 0.55rem;
-  margin: 0 0 0.5rem -0.55rem;
-  border-radius: 8px;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.sidebar-back-btn:hover {
-  color: var(--c-lilac);
-  background: rgba(255, 255, 255, 0.6);
+/* Единственная скроллируемая область сайдбара: навигация + дерево + оглавление.
+   Логотип, семестр, поиск сверху и профиль снизу остаются на месте — профиль
+   больше не выдавливается за экран при большом числе курсов. */
+.sidebar-scroll {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  /* Жёлоб под нарисованный ползунок: контент остаётся на общей сетке. */
+  margin-right: -14px;
+  padding-right: 14px;
 }
 
 .sidebar-nav {
@@ -2472,91 +2202,53 @@ textarea.field {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem; /* чуть компактнее — чтобы всё умещалось без скролла */
-}
-
-.sidebar-nav-scrollable {
-  max-height: 300px;
-  overflow-y: auto;
-  padding: 0.4rem 0.5rem 0.4rem 0.35rem;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(88, 67, 246, 0.14);
-  border-radius: 12px;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(88, 67, 246, 0.45) transparent;
-  transition: box-shadow 0.15s ease;
-}
-
-/* Кастомный (тонкий lilac) скроллбар для WebKit/Blink (Chrome, Edge). */
-.sidebar-nav-scrollable::-webkit-scrollbar {
-  width: 6px;
-}
-.sidebar-nav-scrollable::-webkit-scrollbar-thumb {
-  background: rgba(88, 67, 246, 0.4);
-  border-radius: 999px;
-}
-.sidebar-nav-scrollable::-webkit-scrollbar-thumb:hover {
-  background: rgba(88, 67, 246, 0.6);
-}
-.sidebar-nav-scrollable::-webkit-scrollbar-track {
-  background: transparent;
+  gap: 2px;
 }
 
 .sidebar-nav-item {
   display: flex;
   align-items: center;
-  gap: var(--space-xs); /* расстояние между иконкой и текстом */
-  padding: 0.4rem 0.65rem; /* было 0.5rem 0.75rem — компактнее */
-  border-radius: 10px;
-  font-size: 0.9rem;
+  gap: var(--space-xs);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
   font-weight: 500;
-  color: var(--c-black);
+  color: var(--ink-2);
   text-decoration: none;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
 .sidebar-nav-item svg {
   flex: none;
-  opacity: 0.6;
-  transition: opacity 0.15s ease;
-}
-
-.sidebar-nav-item:hover svg {
-  opacity: 1;
+  color: var(--ink-3);
+  transition: color 0.15s ease;
 }
 
 .sidebar-nav-item:hover {
-  background: rgba(88, 67, 246, 0.08);
-  color: var(--c-lilac);
+  background: var(--bg);
+  color: var(--ink);
 }
 
-.sidebar-nav-item.active {
-  background: rgba(88, 67, 246, 0.12);
-  color: var(--c-lilac);
-  font-weight: 600;
+.sidebar-nav-item:hover svg {
+  color: var(--ink-2);
 }
 
 .sidebar-nav-item.active svg {
-  opacity: 1;
-  color: var(--c-lilac);
+  color: var(--brand-1);
 }
 
 /* Content canvas: floating white card on pages */
+/* Безрамочный холст: поверхности задают карточки внутри, а не обёртка
+   вокруг всей страницы (иначе дашборд и остальные экраны — два разных языка). */
 .content-canvas {
-  background: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 20px 60px rgba(27, 27, 27, 0.08);
-  padding: 3rem;
-  margin: 1.5rem 2rem 2rem;
-  min-height: calc(100vh - 140px);
+  background: transparent;
+  padding: 0;
+  margin: 0 40px 48px;
 }
 
-/* Ghosted header (transparent, no profile) */
+/* Шапка без хрома: непрозрачный тон страницы, содержимое уходит под неё */
 .app-header {
-  background: transparent;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: var(--bg);
   border: none;
   box-shadow: none;
   position: sticky;
@@ -2597,8 +2289,8 @@ textarea.field {
 
 /* Microphone button styling */
 .header-mic {
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   border: none;
@@ -2616,7 +2308,7 @@ textarea.field {
 
 .header-mic.active {
   background: var(--c-lilac);
-  color: #fff;
+  color: var(--surface);
   animation: mic-pulse 1.5s ease-in-out infinite;
 }
 
@@ -2641,11 +2333,9 @@ textarea.field {
   width: 100%;
   max-width: 400px;
   padding: 2.5rem 2rem;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  background: rgba(255, 255, 255, 0.6);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
   box-shadow: 0 18px 50px rgba(54, 54, 54, 0.12);
   text-align: center;
 }
@@ -2688,11 +2378,11 @@ textarea.field {
 }
 
 .login-input {
-  height: 44px;
+  height: 32px;
   padding: 0 0.9rem;
-  border: 1px solid #e6e3ee;
-  border-radius: 12px;
-  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
   font-family: inherit;
   font-size: 0.95rem;
   color: var(--c-black);
@@ -2708,9 +2398,9 @@ textarea.field {
 .login-error {
   margin: 0;
   padding: 0.6rem 0.8rem;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: rgba(255, 106, 42, 0.1);
-  color: #e0522a;
+  color: var(--danger-ink);
   font-size: 0.85rem;
 }
 
@@ -2721,9 +2411,9 @@ textarea.field {
   gap: 0.5rem;
   height: 46px;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--c-lilac);
-  color: #fff;
+  color: var(--surface);
   font-family: inherit;
   font-size: 1rem;
   font-weight: 600;
@@ -2732,7 +2422,7 @@ textarea.field {
 }
 
 .login-submit:hover {
-  background: #4b36e4;
+  background: var(--brand-1-hover);
 }
 
 .login-submit:active {
@@ -2754,18 +2444,6 @@ textarea.field {
 @media (max-width: 700px) {
   .profile-email {
     display: none;
-  }
-
-  .app-header .semester-switcher {
-    display: none;
-  }
-
-  .search-box {
-    width: 180px;
-  }
-
-  .search-box.focused {
-    width: 230px;
   }
 }
 /* ---------- Advanced Capture Tools: речь, аудио, формулы, схемы ---------- */
@@ -2793,10 +2471,10 @@ textarea.field {
   justify-content: center;
   width: 34px;
   height: 34px;
-  border: 1px solid #d9d6e6;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.7);
-  color: #55505f;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-2);
   cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
 }
@@ -2808,7 +2486,7 @@ textarea.field {
 }
 
 .header-mic.recording {
-  color: #fff;
+  color: var(--surface);
   background: var(--c-lilac);
   border-color: var(--c-lilac);
   box-shadow: 0 0 0 3px rgba(88, 67, 246, 0.25);
@@ -2841,8 +2519,8 @@ textarea.field {
   white-space: nowrap;
   font-size: 0.8rem;
   color: var(--c-muted);
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid #e3e0ee;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 999px;
   padding: 0.2rem 0.65rem;
 }
@@ -2864,10 +2542,9 @@ textarea.field {
   align-items: center;
   font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 0.05em;
-  color: #fff;
-  background: #e0303d;
-  border-radius: 999px;
+  color: var(--surface);
+  background: var(--danger);
+  border-radius: var(--radius-sm);
   padding: 0.2rem 0.6rem;
   white-space: nowrap;
   box-shadow: 0 0 0 0 rgba(224, 48, 61, 0.45);
@@ -2895,12 +2572,10 @@ textarea.field {
   gap: 0.35rem;
   height: 36px;
   padding: 0 0.85rem;
-  border: 1px solid #d9d6e6;
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  color: #55505f;
+  background: var(--surface);
+  color: var(--ink-2);
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(27, 27, 27, 0.08);
   transition: border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease,
@@ -2911,7 +2586,7 @@ textarea.field {
   color: var(--c-lilac);
 }
 .editor-mic.active {
-  color: #fff;
+  color: var(--surface);
   background: var(--c-lilac);
   border-color: var(--c-lilac);
   animation: mic-pulse 1.5s ease-in-out infinite;
@@ -2920,7 +2595,7 @@ textarea.field {
 /* Кнопка микрофона в bubble-меню при записи */
 .bubble-btn.recording {
   background: var(--c-lilac);
-  color: #fff;
+  color: var(--surface);
 }
 
 /* Пульсация всего «листа» редактора во время записи:
@@ -2945,7 +2620,7 @@ textarea.field {
   max-width: 520px;
   height: 42px;
   margin: 0.6rem 0;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: rgba(88, 67, 246, 0.06);
   outline: none;
 }
@@ -2954,7 +2629,7 @@ textarea.field {
 .tiptap-wrapper .math-block {
   margin: 0.75rem 0;
   padding: 0.9rem 1rem;
-  border: 1px dashed #d9d6e6;
+  border: 1px dashed var(--border);
   border-radius: var(--radius);
   background: rgba(88, 67, 246, 0.045);
   display: flex;
@@ -3006,10 +2681,10 @@ textarea.field {
   justify-content: center;
   width: 26px;
   height: 26px;
-  border: 1px solid #d9d6e6;
-  border-radius: 7px;
-  background: #fff;
-  color: #6f6b80;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-2);
   cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
@@ -3022,9 +2697,9 @@ textarea.field {
 
 .math-block-btn.danger:hover,
 .sketch-block-btn.danger:hover {
-  border-color: #ecc5bc;
-  color: #c5422d;
-  background: #fdeae5;
+  border-color: var(--danger-border);
+  color: var(--danger-ink);
+  background: var(--danger-soft);
 }
 
 /* --- блочная формула (в просмотре) --- */
@@ -3061,10 +2736,9 @@ textarea.field {
 
 .math-overlay-card {
   width: min(560px, 100%);
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   box-shadow: 0 24px 70px rgba(27, 27, 27, 0.28);
   padding: 1.1rem 1.25rem 1.25rem;
 }
@@ -3091,7 +2765,7 @@ textarea.field {
   justify-content: center;
   width: 30px;
   height: 30px;
-  border: 1px solid #e3e0ee;
+  border: 1px solid var(--border);
   border-radius: 50%;
   background: transparent;
   color: var(--c-muted);
@@ -3101,9 +2775,9 @@ textarea.field {
 
 .math-overlay-close:hover,
 .sketch-modal-close:hover {
-  color: #c5422d;
-  border-color: #ecc5bc;
-  background: #fdeae5;
+  color: var(--danger-ink);
+  border-color: var(--danger-border);
+  background: var(--danger-soft);
 }
 
 .math-live-field {
@@ -3111,9 +2785,9 @@ textarea.field {
   min-height: 64px;
   font-size: 1.5rem;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #d9d6e6;
-  border-radius: 12px;
-  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
   box-shadow: inset 0 1px 3px rgba(27, 27, 27, 0.04);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -3136,7 +2810,7 @@ textarea.field {
 .tiptap-wrapper .sketch-block {
   margin: 0.75rem 0;
   padding: 0.75rem;
-  border: 1px dashed #d9d6e6;
+  border: 1px dashed var(--border);
   border-radius: var(--radius);
   background: rgba(88, 67, 246, 0.035);
   display: flex;
@@ -3156,7 +2830,7 @@ textarea.field {
   max-height: 420px;
   width: auto;
   height: auto;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   /* SVG выгружается с прозрачным фоном — не рисуем никакой подложки. */
   background: transparent;
 }
@@ -3170,7 +2844,7 @@ textarea.field {
   display: inline-block;
   max-width: 100%;
   max-height: 480px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: transparent;
 }
 
@@ -3180,10 +2854,9 @@ textarea.field {
   flex-direction: column;
   width: min(980px, 100%);
   max-height: calc(100vh - 3rem);
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   box-shadow: 0 24px 70px rgba(27, 27, 27, 0.28);
   padding: 1.1rem 1.25rem 1.25rem;
   overflow: hidden;
@@ -3192,15 +2865,15 @@ textarea.field {
 .sketch-modal-canvas {
   height: 58vh;
   min-height: 360px;
-  border: 1px solid #e3e0ee;
-  border-radius: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   overflow: hidden;
-  background: #faf9fc;
+  background: var(--bg);
 }
 
 .sketch-modal-canvas .excalidraw {
   --color-primary: var(--c-lilac);
-  --color-primary-contrast-offset: #fff;
+  --color-primary-contrast-offset: var(--surface);
   width: 100%;
   height: 100%;
 }
@@ -3218,9 +2891,9 @@ textarea.field {
 .sketch-error {
   margin-top: 0.7rem;
   padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  background: #fdeae5;
-  color: #c5422d;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--danger-ink);
   font-size: 0.85rem;
 }
 /* ================================================================
@@ -3236,7 +2909,7 @@ textarea.field {
 
 .skeleton-line {
   height: 14px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: linear-gradient(
     90deg,
     rgba(27, 27, 27, 0.05),
@@ -3286,11 +2959,6 @@ textarea.field {
   animation: content-in 0.22s ease both;
 }
 
-/* Empty TOC column while the card is loading. */
-.workspace-toc-spacer {
-  min-height: 6rem;
-}
-
 /* Confirm dialog: proper fixed overlay (rendered via portal to <body>). */
 .confirm-backdrop {
   position: fixed;
@@ -3307,9 +2975,9 @@ textarea.field {
 .confirm-content {
   position: relative;
   width: min(420px, 100%);
-  background: rgba(255, 255, 255, 0.97);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   box-shadow: 0 24px 70px rgba(27, 27, 27, 0.28);
   padding: 1.4rem 1.4rem 1.5rem;
 }
@@ -3380,7 +3048,7 @@ textarea.field {
   width: 40px;
   height: 40px;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: transparent;
   color: var(--c-black);
   cursor: pointer;
@@ -3451,8 +3119,8 @@ textarea.field {
     height: 34px;
     margin-right: 1.5rem;
     border: none;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.7);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
     color: var(--c-muted);
     cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease;
@@ -3500,21 +3168,20 @@ textarea.field {
     gap: 0;
   }
 
-  .workspace-sidebar,
-  .workspace-toc {
+  .workspace-sidebar {
     display: none;
   }
 
   .lecture-card {
     padding: 1.25rem 0.75rem 1.5rem;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
   }
 
   /* --- Content canvas (dashboard / courses / notes). --- */
   .content-canvas {
     margin: 0.5rem 0;
     padding: 1.25rem 0.75rem;
-    border-radius: 18px;
+    border-radius: var(--radius-lg);
     min-height: auto;
   }
 
@@ -3545,7 +3212,7 @@ textarea.field {
   }
 
   .lecture-view-content h2 {
-    font-size: 1.2rem;
+    font-size: 0.9rem;
   }
 
   .lecture-view-content h3 {
@@ -3563,15 +3230,6 @@ textarea.field {
 
 /* --- Очень узкие экраны (<480px): ещё компактнее правая часть шапки. --- */
 @media (max-width: 479.98px) {
-  .search-box {
-    width: 150px;
-    padding: 0 0.8rem;
-  }
-
-  .search-box.focused {
-    width: calc(100vw - 150px);
-  }
-
   .header-mic-dictate {
     display: none;
   }
@@ -3595,63 +3253,115 @@ textarea.field {
    DASHBOARD 2.0 (Hero + quick actions + resume + widgets)
    ============================================ */
 
-.dashboard-canvas {
-  padding: var(--space-xl) var(--space-xl) var(--space-2xl); /* было 2rem 2.25rem 2.75rem */
+/* --- Borderless dashboard: fills the space right of the sidebar. --- */
+.dashboard-page {
+  max-width: none;
+  padding: 40px 40px 48px; /* task: свободные отступы 40px сверху/с боков */
 }
 
-/* --- Hero --- */
+/* --- Hero: приветствие + факт недели (одна колонка) --- */
 .hero-section {
-  padding: 0.25rem 0 1.75rem; /* было 1.5rem — больше отступ снизу */
-  border-bottom: 1px solid rgba(27, 27, 27, 0.06); /* разделитель под секцией */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-xl);
+  padding: 0.25rem 0 var(--space-lg);
+  border-bottom: 1px solid var(--border);
 }
 .hero-main {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
 }
-.hero-eyebrow {
-  margin: 0 0 0.35rem;
-  font-size: 0.78rem; /* было 0.8rem */
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--c-lilac);
+/* Пульс активности справа от приветствия (не отдельный виджет) */
+.hero-heatmap {
+  display: flex;
+  justify-content: flex-end;
 }
 .hero-greeting {
   margin: 0;
-  font-size: 2.3rem; /* было 2.1rem — крупнее */
-  font-weight: 700;
+  font-size: 1.5rem; /* h1 по шкале §2 (22px), с поправкой на плотность */
+  font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--c-black);
-  line-height: 1.1;
+  color: var(--ink);
+  line-height: 1.15;
 }
-.hero-sub {
-  margin: 0;
-  color: var(--c-muted);
-  font-size: 1rem;
+.hero-stats-text {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--ink-2);
 }
-.hero-stats-inline {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-lg);
-  margin-top: 1rem;
-}
-.hero-stat-item {
+
+/* --- Activity heatmap (pure CSS Grid, compact "pulse"). --- */
+.heatmap {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  align-items: flex-end;
+  gap: 0.5rem;
 }
-.hero-stat-value {
-  font-family: "Golos UI", "Inter", sans-serif;
-  font-size: 2rem; /* было 1.7rem */
-  font-weight: 700;
-  color: var(--c-lilac);
-  line-height: 1;
+.heatmap-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 10px);
+  gap: 3px;
 }
-.hero-stat-label {
-  font-size: 0.82rem; /* было 0.8rem */
+.heat-cell {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.03);
+  position: relative;
+  transition: background 0.12s ease;
+}
+.heat-cell.heat-1 { background: rgba(88, 67, 246, 0.18); }
+.heat-cell.heat-2 { background: rgba(88, 67, 246, 0.42); }
+.heat-cell.heat-3 { background: rgba(88, 67, 246, 0.85); }
+.heat-cell:hover { background: rgba(88, 67, 246, 1); }
+
+/* Мини-тултип на hover: «20 августа: 4 действия». */
+.heat-cell::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(2px);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--c-black);
+  color: var(--surface);
+  font-size: 0.72rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 20;
+}
+.heat-cell:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Легенда интенсивности. */
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.heatmap-legend-label {
+  font-size: 0.68rem;
   color: var(--c-muted);
+  margin: 0 4px;
 }
+.heat-legend-cell {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.heat-legend-cell.heat-0 { background: rgba(0, 0, 0, 0.03); }
+.heat-legend-cell.heat-1 { background: rgba(88, 67, 246, 0.18); }
+.heat-legend-cell.heat-2 { background: rgba(88, 67, 246, 0.42); }
+.heat-legend-cell.heat-3 { background: rgba(88, 67, 246, 0.85); }
 
 /* --- Quick actions --- */
 .quick-actions {
@@ -3664,12 +3374,12 @@ textarea.field {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.6rem 1.1rem;
-  border-radius: 12px;
+  padding: 0.5rem 0.9rem;   /* диета ~20%: было 0.6rem 1.1rem */
+  border-radius: var(--radius);
   border: 1px solid rgba(27, 27, 27, 0.08);
-  background: #ffffff;
+  background: var(--surface);
   color: var(--c-black);
-  font: 500 0.92rem/1 "Inter", "Golos UI", sans-serif;
+  font: 500 13px/1 "Inter", sans-serif; /* инпуты/кнопки: 13px */
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
@@ -3680,163 +3390,123 @@ textarea.field {
 .quick-action.primary {
   background: var(--c-lilac);
   border-color: transparent;
-  color: #ffffff;
+  color: var(--surface);
 }
 .quick-action.primary:hover {
-  background: #4b38e0;
-}
-
-/* --- Resume («Продолжить») --- */
-.resume-block {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md); /* было 1rem */
-  margin: 0 0 var(--space-lg); /* было 1.5rem */
-  padding: var(--space-md) var(--space-md); /* было 1rem 1.25rem */
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(88, 67, 246, 0.08), rgba(255, 106, 42, 0.05));
-  border: 1px solid rgba(88, 67, 246, 0.14);
-}
-.resume-icon {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: var(--c-lilac);
-  color: #ffffff;
-}
-.resume-info {
-  min-width: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-}
-.resume-label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--c-lilac);
-}
-.resume-title {
-  font: 600 1.05rem/1.3 "Golos UI", "Inter", sans-serif;
-  color: var(--c-black);
-  text-decoration: none;
-  overflow-wrap: anywhere;
-}
-.resume-title:hover {
-  color: var(--c-lilac);
-}
-.resume-meta {
-  font-size: 0.85rem;
-  color: var(--c-muted);
-}
-.resume-cta {
-  margin-left: auto;
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  color: var(--c-black);
-  background: #ffffff;
-  border: 1px solid rgba(27, 27, 27, 0.08);
-  transition: background 0.15s ease, color 0.15s ease;
-}
-.resume-cta:hover {
-  background: var(--c-lilac);
-  color: #ffffff;
+  background: var(--brand-1-hover);
 }
 
 /* --- Create slot (new course from dashboard) --- */
 .dashboard-create-slot {
   margin: 0 0 1.5rem;
-  padding: 1rem 1.25rem;
-  border-radius: 18px;
-  background: #ffffff;
+  padding: 0.8rem 1rem; /* диета ~20%: было 1rem 1.25rem */
+  border-radius: var(--radius-lg);
+  background: var(--surface);
   border: 1px solid rgba(27, 27, 27, 0.06);
   box-shadow: 0 12px 34px rgba(27, 27, 27, 0.07);
 }
 
-/* --- Bento: widgets row --- */
-.dashboard-bento {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); /* РАВНЫЕ колонки вместо 1.4fr 1fr */
-  gap: var(--space-lg); /* было 1.25rem — больше воздуха */
-  align-items: start;
-}
 .widget {
-  background: #ffffff;
-  border: 1px solid rgba(27, 27, 27, 0.06);
-  border-radius: 20px;
-  padding: var(--space-lg); /* было 1.4rem 1.5rem 1.5rem */
-  box-shadow: 0 14px 40px rgba(27, 27, 27, 0.07);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-md);
+}
+/* Шапка виджета: заголовок + ссылка «дальше» (виджет не должен быть тупиком) */
+.widget-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-sm);
 }
 .widget-title {
-  margin: 0 0 1.1rem;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--c-black);
+  margin: 0;
+  font-size: 1.0625rem; /* h2 по шкале §2 */
+  font-weight: 600;
+  color: var(--ink);
 }
+.widget-link {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ink-3);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.widget-link:hover { color: var(--brand-1); }
 .widget-empty {
   margin: 0;
-  color: var(--c-muted);
-  font-size: 0.92rem;
+  color: var(--ink-3);
+  font-size: 0.875rem;
 }
 
-/* --- Courses widget --- */
+/* --- Сигнатурная карточка курса (DESIGN.md §5) --- */
 .widget-courses-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.9rem;
+  gap: var(--space-sm);
 }
-.course-mini-card {
+.course-card-slot {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+.course-card {
+  flex: 1;
+  min-width: 0;
+  height: 100%; /* карточки в одном ряду одной высоты */
+  display: block;
+  padding: 3px; /* градиентная рамка — единственное место цвета */
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--course-card-grad, var(--brand-gradient));
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.18s cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 0.18s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.course-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-brand);
+}
+.course-card-inner {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem; /* было 0.4rem */
-  padding: 1.25rem; /* было 1rem 1.1rem — больше воздуха */
-  border-radius: 18px; /* было 16px */
-  background: #ffffff; /* было rgba(242, 241, 247, 0.6) */
-  border: 1px solid rgba(27, 27, 27, 0.06); /* было 0.05 */
-  box-shadow: 0 8px 20px rgba(27, 27, 27, 0.06); /* добавлено */
-  text-decoration: none;
-  transition: transform 0.18s cubic-bezier(0.32, 0.72, 0, 1),
-    box-shadow 0.18s cubic-bezier(0.32, 0.72, 0, 1),
-    border-color 0.18s ease;
+  gap: 0.5rem;
+  height: 100%;
+  padding: 14px;
+  border-radius: calc(var(--radius-lg) - 3px);
+  background: var(--surface);
 }
-.course-mini-card:hover {
-  transform: translateY(-3px); /* было -2px */
-  box-shadow: 0 16px 40px rgba(88, 67, 246, 0.18); /* лиловое свечение */
-  border-color: rgba(88, 67, 246, 0.25); /* было 0.3 */
+.course-card-badge {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
 }
-.course-mini-color {
-  width: 36px; /* было 30px */
-  height: 7px; /* было 6px */
-  border-radius: 4px; /* было 3px */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* добавлено */
-}
-.course-mini-card:hover .course-mini-color {
-  box-shadow: 0 0 12px currentColor, 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition: box-shadow 0.3s ease;
-}
-.course-mini-name {
-  font: 600 1.05rem/1.25 "Golos UI", "Inter", sans-serif; /* было 1rem */
-  color: var(--c-black);
+.course-card-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink);
   overflow-wrap: anywhere;
-  margin-top: 0.15rem; /* отступ от цветного индикатора */
 }
-.course-mini-count {
-  font-size: 0.82rem; /* было 0.8rem */
-  color: var(--c-muted);
-  white-space: nowrap;
+.course-card-meta {
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--ink-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-  line-height: 1.4; /* добавлено */
 }
 
 /* --- Activity timeline --- */
@@ -3864,7 +3534,7 @@ textarea.field {
   background: var(--c-lilac);
 }
 .timeline-dot.note {
-  background: var(--c-ginger);
+  background: var(--brand-2);
 }
 .timeline-body {
   min-width: 0;
@@ -3873,7 +3543,7 @@ textarea.field {
   gap: 0.1rem;
 }
 .timeline-title {
-  font: 500 0.95rem/1.3 "Inter", "Golos UI", sans-serif;
+  font: 500 0.95rem/1.3 "Inter", sans-serif;
   color: var(--c-black);
   text-decoration: none;
   overflow-wrap: anywhere;
@@ -3893,21 +3563,11 @@ textarea.field {
   white-space: nowrap;
   padding-top: 0.2rem;
 }
-.timeline-total {
-  margin: 0.9rem 0 0;
-  font-size: 0.82rem;
-  color: var(--c-muted);
-}
 
 /* --- Dashboard: mobile stack --- */
 @media (max-width: 1023.98px) {
-  .dashboard-bento {
-    grid-template-columns: 1fr;
-  }
-  .hero-section {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+  .dashboard-page {
+    padding: 1.5rem 1rem 2rem; /* borderless, но с дыханием */
   }
   .widget-courses-grid {
     grid-template-columns: 1fr;
@@ -3915,7 +3575,7 @@ textarea.field {
   .resume-info {
     align-items: flex-start;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0.1rem;
   }
   .resume-cta {
     align-self: center;
@@ -3924,7 +3584,7 @@ textarea.field {
 
 @media (prefers-reduced-motion: reduce) {
   .quick-action,
-  .course-mini-card,
+  .course-card,
   .resume-cta {
     transition: none !important;
     transform: none !important;
@@ -3958,7 +3618,7 @@ textarea.field {
   border: 1px solid rgba(88, 67, 246, 0.24);
   background: rgba(88, 67, 246, 0.06);
   color: var(--c-lilac);
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   padding: 0.45rem 1rem;
   font-size: 0.85rem;
   font-weight: 600;
@@ -3982,15 +3642,15 @@ textarea.field {
   font-size: 0.85rem;
   font-weight: 600;
   padding: 0.25rem 0.7rem;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
 }
 .flash-stat.known {
-  color: #15803d;
+  color: var(--success-ink);
   background: rgba(90, 207, 101, 0.16);
 }
 .flash-stat.repeat {
-  color: #c2410c;
+  color: var(--danger-ink);
   background: rgba(254, 78, 28, 0.14);
 }
 .flash-progress {
@@ -4003,7 +3663,7 @@ textarea.field {
 .flash-progress-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #5843f6, #9c8fe2);
+  background: var(--brand-gradient);
   transition: width 0.25s ease;
 }
 .flash-card-stage {
@@ -4016,7 +3676,7 @@ textarea.field {
 .flash-glow {
   position: absolute;
   inset: 0;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   pointer-events: none;
   z-index: 3;
 }
@@ -4041,9 +3701,9 @@ textarea.field {
   inset: 0;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid rgba(88, 67, 246, 0.14);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 18px 40px rgba(27, 27, 27, 0.1);
   padding: 1.5rem;
   display: flex;
@@ -4071,7 +3731,7 @@ textarea.field {
   max-height: 100%;
   width: auto;
   object-fit: contain;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   display: block;
   margin: 0.25rem auto;
 }
@@ -4082,17 +3742,17 @@ textarea.field {
 }
 .flash-reveal {
   padding: 0.7rem 1.6rem;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
-  background: #5843f6;
-  color: #fff;
+  background: var(--brand-1);
+  color: var(--surface);
   font-weight: 600;
   font-size: 0.95rem;
 }
 .flash-btn {
   padding: 0.7rem 1.4rem;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
   font-weight: 600;
@@ -4104,11 +3764,11 @@ textarea.field {
 }
 .flash-btn.known {
   background: rgba(90, 207, 101, 0.18);
-  color: #15803d;
+  color: var(--success-ink);
 }
 .flash-btn.repeat {
   background: rgba(254, 78, 28, 0.14);
-  color: #c2410c;
+  color: var(--danger-ink);
 }
 .flash-hint {
   color: var(--c-muted);
@@ -4161,7 +3821,7 @@ textarea.field {
 .deck-tile-icon {
   width: 46px;
   height: 46px;
-  border-radius: 13px;
+  border-radius: var(--radius);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4191,7 +3851,7 @@ textarea.field {
   font-weight: 600;
   background: rgba(88, 67, 246, 0.08);
   padding: 0.15rem 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
 }
 .deck-tile-actions {
   position: absolute;
@@ -4250,8 +3910,8 @@ textarea.field {
   transition: transform 0.12s ease, border-color 0.12s ease;
 }
 .deck-color-swatch.active {
-  border-color: #fff;
-  box-shadow: 0 0 0 2px #5843f6;
+  border-color: var(--surface);
+  box-shadow: 0 0 0 2px var(--brand-1);
 }
 .deck-editor-cards {
   display: flex;
@@ -4260,9 +3920,9 @@ textarea.field {
 }
 .deck-editor-card {
   border: 1px solid rgba(88, 67, 246, 0.16);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: 1rem 1rem 0.6rem;
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--surface);
   box-shadow: 0 6px 18px rgba(27, 27, 27, 0.05);
 }
 .deck-editor-card-head {
@@ -4281,7 +3941,6 @@ textarea.field {
   color: var(--c-muted);
   margin: 0.6rem 0 0.25rem;
   font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 .deck-editor-add {
@@ -4290,7 +3949,7 @@ textarea.field {
   justify-content: center;
   gap: 0.5rem;
   padding: 0.9rem;
-  border-radius: 14px;
+  border-radius: var(--radius);
   border: 1px dashed rgba(88, 67, 246, 0.4);
   background: rgba(88, 67, 246, 0.04);
   color: var(--c-lilac);
@@ -4311,10 +3970,10 @@ textarea.field {
   align-items: center;
   gap: 0.5rem;
   padding: 0.7rem 1.5rem;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   border: none;
-  background: #5843f6;
-  color: #fff;
+  background: var(--brand-1);
+  color: var(--surface);
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
@@ -4326,7 +3985,7 @@ textarea.field {
 
 /* --- Timeline deck dot --- */
 .timeline-dot.deck {
-  background: #5843f6;
+  background: var(--brand-1);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4342,3 +4001,269 @@ textarea.field {
   }
 }
 
+
+/* ============================================================
+   PHASE 7 - DESIGN SYSTEM LAYER (authority: /DESIGN.md)
+   ------------------------------------------------------------
+   Brand tokens, curated course gradients, the two-layer course
+   card, restructured sidebar (logo/search/courses/profile-bottom,
+   gradient active nav) and the dashboard block order per DESIGN.md
+   sec. 7. All tokens now live in the single :root at the top of this
+   file — this layer only consumes them.
+   ============================================================ */
+
+
+/* --- Sidebar: logo --- */
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.2rem 0 0.2rem 0.25rem;
+}
+.sidebar-logo-img {
+  height: 24px; /* fit the wordmark into the compact sidebar */
+  width: auto;  /* keep the lockup aspect ratio */
+  display: block;
+}
+
+/* --- Sidebar: flex spacer pushes the profile to the bottom --- */
+
+/* --- Sidebar: search --- */
+.sidebar-search { position: relative; }
+.sidebar-search .search-box {
+  width: 100%; display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg); border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.sidebar-search .search-box:focus-within {
+  background: var(--surface); border-color: var(--brand-1);
+  box-shadow: 0 0 0 3px rgba(88,67,246,0.12);
+}
+.sidebar-search .search-box svg { flex: none; color: var(--ink-3); }
+.sidebar-search input {
+  flex: 1; min-width: 0; border: none; outline: none; background: transparent;
+  font: 400 13px/1.2 Inter, sans-serif; color: var(--ink);
+}
+.sidebar-search input::placeholder { color: var(--ink-3); }
+.sidebar-search .search-loading { color: var(--ink-3); font-size: 11px; }
+.sidebar-search-dropdown {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: 0 16px 40px rgba(27,27,27,0.12);
+  padding: 0.4rem; z-index: 2000; max-height: 320px; overflow-y: auto;
+}
+.sidebar-search-item {
+  display: block; padding: 0.5rem 0.6rem; border-radius: var(--radius-sm);
+  text-decoration: none; color: var(--ink); font: 500 13px/1.3 Inter, sans-serif;
+}
+.sidebar-search-item:hover { background: var(--bg); }
+.sidebar-search-item .course {
+  display: block;
+  font: 500 11px/1.3 Inter, sans-serif;
+  color: var(--brand-1);
+  margin-top: 0.1rem;
+}
+.sidebar-search-item .snippet {
+  display: block; font: 400 11px/1.35 Inter, sans-serif; color: var(--ink-3);
+  margin-top: 0.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sidebar-search-empty {
+  padding: 0.5rem 0.6rem; font: 400 12px/1.3 Inter, sans-serif; color: var(--ink-3);
+}
+
+/* --- Дерево курсов: строка = шеврон + точка-градиент + имя + счётчик.
+       Раскрытие отдельной кнопкой, клик по имени всегда ведёт на курс. --- */
+.sidebar-course-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: var(--radius-sm);
+  color: var(--ink-2);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.sidebar-course-row:hover { background: var(--bg); color: var(--ink); }
+.sidebar-course-row.open { color: var(--ink); }
+.sidebar-course-toggle {
+  flex: none;
+  width: 18px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.sidebar-course-toggle:hover { color: var(--brand-1); }
+.sidebar-course-toggle svg { transition: transform 0.15s ease; }
+.sidebar-course-toggle svg.rotate { transform: rotate(90deg); }
+.sidebar-course-link {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px;
+  font-size: 13px;
+  font-weight: 500;
+  color: inherit;
+  text-decoration: none;
+}
+.sidebar-course-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+.sidebar-course-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar-course-count {
+  flex: none;
+  padding-right: 8px;
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+.sidebar-course-notes {
+  margin: 1px 0 3px;
+  padding-left: 28px; /* выравнивание по названию курса */
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.sidebar-course-notes .sidebar-note-row {
+  display: block;
+  padding: 5px 10px;
+  font-size: 13px;
+  color: var(--ink-2);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.sidebar-course-notes .sidebar-note-row:hover { background: var(--bg); color: var(--ink); }
+.sidebar-course-notes .sidebar-note-row.active {
+  background: var(--brand-wash);
+  color: var(--brand-1);
+}
+
+/* --- Sidebar: gradient active indicator (DESIGN sec. 6) --- */
+.sidebar-nav-item.active {
+  background: linear-gradient(90deg, rgba(88,67,246,0.08), rgba(181,203,250,0.10));
+  color: var(--brand-1); position: relative;
+}
+.sidebar-nav-item.active::before {
+  content: ""; position: absolute; left: 0; top: 18%; bottom: 18%;
+  width: 3px; border-radius: 3px; background: var(--brand-gradient);
+}
+
+
+/* --- Quick actions: three equal compact buttons (no dominating pill) --- */
+.quick-action {
+  border-radius: var(--radius-sm); padding: 8px 14px;
+  border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink);
+  font: 500 13px/1 Inter, sans-serif; display: inline-flex; align-items: center; gap: 0.4rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.quick-action:hover { background: var(--bg); box-shadow: 0 2px 8px rgba(27,27,27,0.06); }
+.quick-action.primary {
+  background: var(--brand-gradient); border-color: transparent; color: var(--surface);
+  box-shadow: 0 6px 16px rgba(88,67,246,0.28);
+}
+
+
+/* --- Resume: gradient hero banner with progress (DESIGN sec. 2) --- */
+.resume-block {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1.1rem 1.25rem; border-radius: var(--radius-lg);
+  background: var(--brand-gradient); color: var(--surface); position: relative; overflow: hidden;
+  box-shadow: 0 14px 34px rgba(88,67,246,0.28);
+  margin-bottom: var(--space-lg);
+}
+.resume-icon {
+  flex: none; width: 48px; height: 48px; border-radius: 50%;
+  background: rgba(255,255,255,0.18); display: grid; place-items: center; color: var(--surface);
+}
+.resume-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.resume-label {
+  font: 600 11px/1 Inter, sans-serif; letter-spacing: 0.05em; opacity: 0.85;
+}
+.resume-title {
+  font: 600 1.05rem/1.3 Inter, sans-serif; color: var(--surface);
+  text-decoration: none; overflow-wrap: anywhere;
+}
+.resume-cta {
+  flex: none; display: inline-flex; align-items: center; gap: 0.4rem;
+  white-space: nowrap; margin-left: auto;
+  padding: 9px 18px; border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.16); color: var(--surface);
+  text-decoration: none; font: 500 13px/1 Inter, sans-serif;
+  transition: background 0.15s ease;
+}
+.resume-cta:hover { background: rgba(255,255,255,0.28); }
+
+/* Пустое состояние «Продолжить»: приглашение, а не hero. Бренд-градиент здесь
+   неуместен — продолжать ещё нечего, и белый текст на нём не читается. */
+.resume-block.resume-empty {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink);
+}
+.resume-empty .resume-icon {
+  background: var(--brand-wash);
+  color: var(--brand-1);
+}
+.resume-empty .resume-label { color: var(--ink-3); opacity: 1; }
+.resume-empty .resume-title { color: var(--ink); }
+.resume-empty .resume-cta {
+  background: var(--brand-gradient);
+  color: #fff;
+  box-shadow: var(--shadow-brand);
+}
+.resume-empty .resume-cta:hover { background: var(--brand-1); }
+
+/* --- Review block: to-repeat (decks) --- */
+.review-widget .review-list { display: flex; flex-direction: column; gap: 0.55rem; }
+.review-item {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.7rem 0.75rem; border-radius: var(--radius);
+  background: var(--bg); text-decoration: none; color: var(--ink);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.review-item:hover { background: var(--border); transform: translateY(-1px); }
+.review-item-icon {
+  flex: none; width: 34px; height: 34px; border-radius: var(--radius-sm);
+  background: var(--brand-gradient); display: grid; place-items: center; color: var(--surface);
+}
+.review-item-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.review-item-title { font: 500 0.92rem/1.3 Inter, sans-serif; color: var(--ink); overflow-wrap: anywhere; }
+.review-empty { color: var(--ink-3); font-size: 0.92rem; margin: 0; }
+
+/* --- Dashboard grid: equal columns --- */
+.dashboard-grid {
+  display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+  gap: var(--space-lg); align-items: start; margin-top: var(--space-lg);
+}
+.col-main { display: flex; flex-direction: column; gap: var(--space-lg); min-width: 0; }
+.col-side { display: flex; flex-direction: column; gap: var(--space-lg); min-width: 0; }
+
+/* --- Activity widget with embedded heatmap --- */
+.timeline-heatmap { margin: 0 0 0.9rem; }
+.timeline-heatmap .heatmap { align-items: flex-start; }
+
+/* --- Responsive --- */
+@media (max-width: 1023.98px) {
+  .dashboard-grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .course-card, .resume-block, .review-item { transition: none !important; }
+}

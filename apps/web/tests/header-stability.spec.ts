@@ -31,32 +31,35 @@ test("шапка не «дёргается» при переключении л�
   await expect(page.locator(".hero-greeting")).toBeVisible();
 
   // Дашборд → курс «Математический анализ» → лекция «Предел последовательности».
-  const courseTile = page.locator(".course-mini-card", {
+  const courseTile = page.locator(".course-card", {
     hasText: "Математический анализ",
   });
   await waitForStable(page, courseTile);
-  await courseTile.click();
+  // dispatchEvent вместо click: у плиток/карточек hover-transform
+  // (transition 0.18s), из-за которого штатный клик в headed-Firefox
+  // висит до таймаута. Приём уже применён в app-shell/lecture-workflow.
+  await courseTile.dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis");
   await page
     .locator(".tile-click", { hasText: "Предел последовательности" })
-    .click();
+    .first()
+    .dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis/limit-of-sequence");
   await expect(page.locator(".lecture-card-title")).toHaveText(
     "Предел последовательности"
   );
-  await expect(page.locator(".workspace-toc")).toBeVisible();
+  await expect(page.locator(".global-sidebar .toc-item").first()).toBeVisible();
 
   const before = await measureHeader(page);
 
-  // Быстрый переход на другую лекцию из сайдбара. Целимся ЯВНО в лекцию курса:
-  // с появлением группы ОСНОВНОЕ первый `.sidebar-nav-item` в сайдбаре — это
-  // «Рабочий стол», а не соседняя лекция.
+  // Быстрый переход на другую лекцию из сайдбара. Целимся ЯВНО в запись курса
+  // (`.sidebar-note-row`): `.sidebar-nav-item` — это глобальная навигация.
   const other = page
-    .locator(".global-sidebar .sidebar-nav-item:not(.active)")
+    .locator(".global-sidebar .sidebar-note-row:not(.active)")
     .filter({ hasText: "Производная функции" })
     .first();
   await expect(other).toBeVisible();
-  await other.click();
+  await other.dispatchEvent("click");
 
   await page.waitForURL((url) => !url.pathname.endsWith("limit-of-sequence"));
   const title = page.locator(".lecture-card-title");

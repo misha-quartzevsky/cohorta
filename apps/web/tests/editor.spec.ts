@@ -25,15 +25,19 @@ test("формула видна сразу при SPA-навигации; авт
   await page.waitForURL("**/s/demo");
 
   // SPA-переход на лекцию с формулой (клики по плиткам, без reload).
-  const courseTile = page.locator(".course-mini-card", {
+  const courseTile = page.locator(".course-card", {
     hasText: "Математический анализ",
   });
   await waitForStable(page, courseTile);
-  await courseTile.click();
+  await courseTile.dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis");
+  // dispatchEvent, а не click: у `.tile-click` hover-transform (transition
+  // 0.18s), из-за которого штатный клик в headed-Firefox висит до таймаута —
+  // тот же приём уже применён в lecture-workflow/app-shell.
   await page
     .locator(".tile-click", { hasText: "Предел последовательности" })
-    .click();
+    .first()
+    .dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis/limit-of-sequence");
 
   const view = page.locator(".lecture-view-content");
@@ -44,7 +48,9 @@ test("формула видна сразу при SPA-навигации; авт
   });
 
   // Edit-режим: NodeView формул тоже рендерит <math-div>.
-  await page.locator('button[title="Редактировать"]').click();
+  // dispatchEvent: та же болезнь headed-Firefox с «element not stable»,
+  // что и у плиток/сайдбара — кнопка живёт в анимированной шапке карточки.
+  await page.locator('button[title="Редактировать"]').dispatchEvent("click");
   await page.waitForURL("**/limit-of-sequence/edit");
   await expect(
     page

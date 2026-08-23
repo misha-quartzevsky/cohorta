@@ -17,3 +17,7 @@ pocketbase/*.backup*
 Thumbs.db
 .vscode/
 .idea/
+
+# Личные учебные материалы (исходники билетов/ответов).
+# Тестам достаточно текстовых фикстур в apps/web/tests/fixtures/.
+*.docx

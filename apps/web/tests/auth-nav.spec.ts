@@ -25,24 +25,31 @@ test("демо-логин: редирект на /s/demo и TOC-асид с от
   await expect(page.locator(".global-sidebar")).toBeVisible();
 
   // Дашборд → курс (виджет «Курсы семестра»).
-  const courseTile = page.locator(".course-mini-card", {
+  const courseTile = page.locator(".course-card", {
     hasText: "Математический анализ",
   });
   await waitForStable(page, courseTile);
-  await courseTile.click();
+  await courseTile.dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis");
 
   // Лекция → просмотр внутри LectureLayout.
+  // dispatchEvent вместо click: у плиток/карточек hover-transform
+  // (transition 0.18s), из-за которого штатный клик в headed-Firefox
+  // висит до таймаута. Приём уже применён в app-shell/lecture-workflow.
   await page
     .locator(".tile-click", { hasText: "Предел последовательности" })
     .first()
-    .click();
+    .dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis/limit-of-sequence");
 
-  // Правый TOC-асид (внутри LectureLayout поверх карточки):
-  // наличие + корректный sticky-отступ 30px от верха.
-  const toc = page.locator(".workspace-toc");
-  await expect(toc).toBeVisible();
-  const tocTop = await toc.evaluate((el) => getComputedStyle(el).top);
-  expect(tocTop).toBe("30px");
+  // Оглавление живёт ТОЛЬКО в сайдбаре (правая колонка освобождена под
+  // будущую панель редактирования): секция + непустой список пунктов.
+  await expect(
+    page.locator(".global-sidebar .sidebar-section-title", {
+      hasText: "Оглавление",
+    })
+  ).toBeVisible();
+  await expect(
+    page.locator(".global-sidebar .toc-item").first()
+  ).toBeVisible();
 });

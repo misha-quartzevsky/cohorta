@@ -7,10 +7,11 @@
  *   1. Seamless navigation: при переключении лекций из сайдбара Header
  *      остаётся ТЕМ ЖЕ DOM-узлом (layout-route не перемонтируется),
  *      карточка лекции сменяется с fade-анимацией content-in.
- *   2. TOC (ОГЛАВЛЕНИЕ в сайдбаре): пункты соответствуют H1–H3 заголовкам
+ *   2. TOC («Оглавление» в сайдбаре): пункты соответствуют H1–H3 заголовкам
  *      контента, клик по пункту плавно скроллит к заголовку.
- *   3. Контекстный режим: на лекции секция «НЕДАВНИЕ» исчезает, появляются
- *      «ЛЕКЦИИ КУРСА» + «ОГЛАВЛЕНИЕ»; возврат к курсу — «НЕДАВНИЕ» снова в сайдбаре.
+ *   3. Дерево курсов: на дашборде видно дерево «Курсы», на лекции активный
+ *      курс раскрыт и добавляется секция «Оглавление»; на странице курса
+ *      «Оглавление» уходит, дерево остаётся.
  */
 
 import { test, expect } from "@playwright/test";
@@ -60,7 +61,7 @@ test("seamless navigation: Header — тот же узел, карточка а�
   // в headed-Firefox («performing click action»), а событие клика всё равно
   // обрабатывает React-обработчик Link → SPA-навигация.
   const next = page
-    .locator(".global-sidebar .sidebar-nav-item:not(.active)")
+    .locator(".global-sidebar .sidebar-note-row:not(.active)")
     .filter({ hasText: "Производная функции" })
     .first();
   await expect(next).toBeVisible();
@@ -111,10 +112,10 @@ test("TOC в сайдбаре: пункты = H1–H3, клик скроллит
   await page.waitForURL("**/s/demo");
   await openLimitOfSequence(page);
 
-  // Секция «ОГЛАВЛЕНИЕ» в сайдбаре со списком toc-item.
+  // Секция «Оглавление» в сайдбаре со списком toc-item.
   await expect(
     page.locator(".global-sidebar .sidebar-section-title", {
-      hasText: "ОГЛАВЛЕНИЕ",
+      hasText: "Оглавление",
     })
   ).toBeVisible();
 
@@ -126,79 +127,95 @@ test("TOC в сайдбаре: пункты = H1–H3, клик скроллит
   await expect(tocItems.nth(3)).toHaveText("Свойства пределов");
   await expect(tocItems.nth(4)).toHaveText("Единственность предела");
 
-  // Плавный скролл к нижнему заголовку (тот же scrollIntoView, что в обработчике
-  // клика TOC). Целимся в последний H2 ниже фолда и проверяем, что он ПОДНЯЛСЯ
-  // во вьюпорте — этим доказываем, что скролл к заголовку реально работает.
+  // Клик по пункту оглавления должен привести к своему заголовку. Проверяем
+  // РЕАЛЬНЫЙ клик по кнопке в сайдбаре и то, что обработчик позвал
+  // scrollIntoView именно на нужном <h2>.
+  //
+  // Пиксельное смещение здесь измерять нельзя: `TableOfContents.scrollTo`
+  // использует `behavior: "smooth"`, а Playwright-Firefox плавный скролл
+  // ИГНОРИРУЕТ (обычный scrollIntoView в нём работает — проверено замером:
+  // scrollTo(0,250) → 250, scrollIntoView без behavior → 368, со smooth → 0).
+  // Прошлая версия теста звала scrollIntoView сама из page.evaluate и мерила
+  // сдвиг — то есть проверяла возможности браузера, а не наш код, и была
+  // записана в .clinerules как известный флак.
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page.waitForTimeout(200);
-  const h2last = page
-    .locator(".lecture-view-content h2")
-    .filter({ hasText: "Единственность предела" });
-  const beforeTop = await h2last.evaluate((el) => el.getBoundingClientRect().top);
-  await h2last.evaluate((el) =>
-    el.scrollIntoView({ behavior: "smooth", block: "start" })
-  );
-  await page.waitForTimeout(1200);
-  const afterTop = await h2last.evaluate((el) => el.getBoundingClientRect().top);
-  expect(afterTop, "Заголовок не поднялся — плавный скролл не сработал").toBeLessThan(
-    beforeTop
+  await page.evaluate(() => {
+    const w = window as unknown as Record<string, unknown>;
+    w.__tocScrollTarget = null;
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function (this: Element, ...args) {
+      w.__tocScrollTarget = this.textContent;
+      return original.apply(this, args as []);
+    };
+  });
+
+  await page
+    .locator(".global-sidebar .toc-item", { hasText: "Единственность предела" })
+    .dispatchEvent("click");
+
+  await page.waitForFunction(
+    () =>
+      (window as unknown as Record<string, unknown>).__tocScrollTarget ===
+      "Единственность предела",
+    undefined,
+    { timeout: 5000 }
   );
 });
 
-test("контекстный режим: НЕДАВНИЕ ↔ ЛЕКЦИИ КУРСА", async ({ page }) => {
+test("дерево курсов: на дашборде дерево, на лекции активный курс раскрыт", async ({
+  page,
+}) => {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
 
-  // Вне лекции — секции НЕДАВНИЕ и ЗАМЕТКИ, переключатель семестра.
-  await expect(
-    page.locator(".global-sidebar .sidebar-section-title", {
-      hasText: "НЕДАВНИЕ",
-    })
-  ).toBeVisible();
-  await expect(
-    page.locator(".global-sidebar .sidebar-section-title", {
-      hasText: "ЗАМЕТКИ",
-    })
-  ).toBeVisible();
+  // Общие блоки: переключатель семестра + дерево «Курсы».
   await expect(page.locator(".sidebar-semester-btn")).toBeVisible();
-
-  // Входим в лекцию → контекстный режим.
-  await openLimitOfSequence(page);
+  await expect(
+    page.locator(".global-sidebar .sidebar-section-title", {
+      hasText: "Курсы",
+    })
+  ).toBeVisible();
+  await expect(
+    page
+      .locator(".global-sidebar .sidebar-course-row", {
+        hasText: "Математический анализ",
+      })
+      .first()
+  ).toBeVisible();
+  // Секции ПОСЛЕДНИЕ ЗАМЕТКИ (НЕДАВНИЕ) больше нет.
   await expect(
     page.locator(".global-sidebar .sidebar-section-title", {
       hasText: "НЕДАВНИЕ",
     })
   ).toHaveCount(0);
+
+  // Входим в лекцию → активный курс раскрыт: вложенные лекции + «Оглавление».
+  await openLimitOfSequence(page);
   await expect(
     page.locator(".global-sidebar .sidebar-section-title", {
-      hasText: "ЛЕКЦИИ КУРСА",
+      hasText: "Оглавление",
     })
   ).toBeVisible();
   await expect(
-    page.locator(".global-sidebar .sidebar-section-title", {
-      hasText: "ОГЛАВЛЕНИЕ",
-    })
+    page
+      .locator(".global-sidebar .sidebar-course-row.open", {
+        hasText: "Математический анализ",
+      })
+      .first()
   ).toBeVisible();
-  // Лекции курса реально видны в списке.
   await expect(
-    page.locator(".global-sidebar .sidebar-nav-item", {
-      hasText: "Производная функции",
-    })
+    page
+      .locator(".global-sidebar .sidebar-note-row", {
+        hasText: "Производная функции",
+      })
+      .first()
   ).toBeVisible();
 
-  // «← Назад к курсу» → лекционная контекстная секция уходит, НЕДАВНИЕ возвращается.
-  const backBtn = page.locator(".sidebar-back-btn");
-  await expect(backBtn).toBeVisible();
-  await backBtn.dispatchEvent("click");
-  await page.waitForURL("**/s/demo/math-analysis");
+  // Переход на страницу курса → «Оглавление» уходит, дерево остаётся.
+  await page.goto("/s/demo/math-analysis");
   await expect(
     page.locator(".global-sidebar .sidebar-section-title", {
-      hasText: "НЕДАВНИЕ",
-    })
-  ).toBeVisible();
-  await expect(
-    page.locator(".global-sidebar .sidebar-section-title", {
-      hasText: "ЛЕКЦИИ КУРСА",
+      hasText: "Оглавление",
     })
   ).toHaveCount(0);
 });

@@ -24,17 +24,20 @@ test("ровно один .global-sidebar и ни одного .workspace-sideba
 
   // Курс.
   await page
-    .locator(".course-mini-card", { hasText: "Математический анализ" })
-    .click();
+    .locator(".course-card", { hasText: "Математический анализ" })
+    .dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis");
   await expect(page.locator(".global-sidebar")).toHaveCount(1);
   await expect(page.locator(".workspace-sidebar")).toHaveCount(0);
 
   // Лекция.
+  // dispatchEvent вместо click: у плиток/карточек hover-transform
+  // (transition 0.18s), из-за которого штатный клик в headed-Firefox
+  // висит до таймаута. Приём уже применён в app-shell/lecture-workflow.
   await page
     .locator(".tile-click", { hasText: "Предел последовательности" })
     .first()
-    .click();
+    .dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis/limit-of-sequence");
   await expect(page.locator(".lecture-card-title")).toHaveText(
     "Предел последовательности"

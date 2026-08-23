@@ -3,16 +3,23 @@
  *  GlobalSidebar.tsx — Fixed left navigation panel
  * ============================================
  *
- * Persistent glass sidebar visible on all protected pages:
- *  - User profile (avatar, name, email, logout)
- *  - Semester switcher (current semester card + badge + popup)
- *  - Group ОСНОВНОЕ (Рабочий стол / Все курсы / Все заметки)
- *  - Group УЧЁБА (context-aware: НЕДАВНИЕ or ЛЕКЦИИ КУРСА + ОГЛАВЛЕНИЕ or
- *    ВСЕ ЗАМЕТКИ + ОГЛАВЛЕНИЕ)
- *  - Group БИБЛИОТЕКА (КАРТОЧКИ — последние колоды + библиотека)
+ * Структура по DESIGN.md §7.1 — ровно один источник правды на каждый список:
+ *  1. Логотип
+ *  2. Переключатель семестра (виден всегда, включая страницы лекций и заметок)
+ *  3. Поиск
+ *  4. Глобальная навигация: Рабочий стол · Все заметки · Карточки
+ *  5. Дерево курсов: точка-градиент + название + счётчик, раскрывается
+ *     отдельным шевроном (клик по названию всегда ведёт на курс).
+ *     Последняя ветка — «Без курса»: незакреплённые заметки.
+ *  6. Оглавление — только на странице лекции/заметки
+ *  7. Профиль — внизу, второстепенный вес
+ *
+ * Между поиском и профилем всё живёт в одной скроллируемой области
+ * (`.sidebar-scroll`): каркас статичен, профиль не выдавливается за экран,
+ * сколько бы ни было курсов.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -21,28 +28,31 @@ import {
   ChevronRight,
   X,
   Home,
-  BookOpen,
   FileText,
   Layers,
-  Clock,
+  Calendar,
+  Search,
 } from "lucide-react";
 
 import { useAuth } from "../hooks/useAuth";
 import { useSemester } from "../lib/semesterContext";
 import { useRecentLectures } from "../hooks/useRecentLectures";
 import { useLectures } from "../hooks/useLectures";
-import { useDecks } from "../hooks/useDecks";
+import { useLectureSearch } from "../hooks/useLectureSearch";
+import { useCourses } from "../hooks/useCourses";
 import { useLectureFrame } from "../lib/lectureFrame";
 import { pb } from "../lib/pocketbase";
 import { lastSemesterSlug } from "../lib/lastSemester";
-import type { User, Semester, Deck } from "../lib/types";
+import { courseGradient } from "../lib/courseGradient";
+import type { User, Semester } from "../lib/types";
 import {
   semesterSlug,
   lectureSlug,
   lectureTitle,
   lectureCourseId,
-  deckTitle,
-  deckSlug,
+  courseName,
+  courseSlug,
+  courseColor,
 } from "../lib/types";
 import TableOfContents from "./TableOfContents";
 import ScrollBar from "./scrollbar/ScrollBar";
@@ -64,29 +74,23 @@ function avatarSrc(user: User): string {
   return pb.files.getURL(user, user.avatar);
 }
 
-/** Check if current route is a lecture page */
+/** Route is a lecture page: /s/:semester/:course/:lecture(/edit). */
 function isLectureRoute(pathname: string): {
   isLecture: boolean;
   courseSlug?: string;
   semesterSlug?: string;
 } {
-  // Match /s/:semester/:course/:lecture or /s/:semester/:course/:lecture/edit
   const match = pathname.match(/^\/s\/([^/]+)\/([^/]+)\/([^/]+)/);
   if (match) {
-    return {
-      isLecture: true,
-      semesterSlug: match[1],
-      courseSlug: match[2],
-    };
+    return { isLecture: true, semesterSlug: match[1], courseSlug: match[2] };
   }
   return { isLecture: false };
 }
 
-/** Check if current route is an unassigned note page (/note/:slug or /edit).
- *  The create page `/note/new` is intentionally NOT a note context (no card
- *  content to build a TOC from yet). */
-function isNoteRoute(pathname: string): { isNote: boolean } {
-  return { isNote: /^\/note\/[^/]+(\/edit)?$/.test(pathname) };
+/** Route is an unassigned-note page. `/note/new` is deliberately excluded:
+ *  there is no content to build a table of contents from yet. */
+function isNoteRoute(pathname: string): boolean {
+  return /^\/note\/[^/]+(\/edit)?$/.test(pathname);
 }
 
 interface Props {
@@ -105,8 +109,11 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
   const { current, semesters } = useSemester();
   const [semesterPopupOpen, setSemesterPopupOpen] = useState(false);
   const [popupTop, setPopupTop] = useState(0);
+  /** Явно свёрнутые/раскрытые курсы. Ключ — id курса (или "" для «Без курса»);
+   *  отсутствие ключа = состояние по умолчанию (раскрыт активный). */
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const semesterBtnRef = useRef<HTMLButtonElement | null>(null);
-  const sidebarRef = useRef<HTMLElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const semesterPopupRef = useRef<HTMLDivElement | null>(null);
   const prevPathRef = useRef(location.pathname);
 
@@ -128,10 +135,14 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
     };
   }, [open]);
 
-  // Fetch a larger window so the "ВСЕ ЗАМЕТКИ" context can list every unassigned
-  // note; the default НЕДАВНИЕ section slices it down to 3.
+  // Достаточно широкое окно, чтобы дерево курсов и «Без курса» показывали
+  // все записи; сам список скроллится внутри `.sidebar-scroll`.
   const { lectures: recentLectures } = useRecentLectures(100);
-  const { decks: recentDecks } = useDecks(3);
+
+  const [sidebarQuery, setSidebarQuery] = useState("");
+  const { results: sidebarResults, loading: sidebarLoading } =
+    useLectureSearch(sidebarQuery, sidebarQuery.trim().length >= 2);
+  const { courses: semesterCourses } = useCourses(current?.id ?? "");
 
   const handleLogout = () => {
     logout();
@@ -145,46 +156,118 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
 
   const toggleSemesterPopup = () => {
     // Anchor the overlay near its trigger button. The popup is portaled to
-    // document.body — the sidebar's backdrop-filter would otherwise turn
-    // position:fixed into a sidebar-relative box that overflows the sidebar
-    // and adds horizontal scroll.
+    // document.body so it overlays the content instead of widening the sidebar.
     if (!semesterPopupOpen && semesterBtnRef.current) {
       const rect = semesterBtnRef.current.getBoundingClientRect();
       setPopupTop(rect.bottom + 8);
     }
-    setSemesterPopupOpen((open) => !open);
+    setSemesterPopupOpen((prev) => !prev);
   };
 
   const avatar = user ? avatarSrc(user) : "";
 
-  // Semester slug for the ОСНОВНОЕ links. On non-semester routes (/notes,
-  // /note/…, /decks) `current` is null — fall back to the last visited
-  // semester (SemesterProvider writes it on every /s/… visit).
+  // Семестр для ссылок навигации. На /notes, /note/…, /decks `current` пуст —
+  // берём последний рабочий (SemesterProvider пишет его на каждом /s/…).
   const homeSemSlug = current ? semesterSlug(current) : lastSemesterSlug() || "1";
 
-  // Active state for the ОСНОВНОЕ group links.
+  // Запись семестра для карточки-переключателя: на не-семестровых маршрутах
+  // ищем её по слагу, чтобы контекст не исчезал (раньше кнопка просто пропадала).
+  const activeSemester = useMemo(
+    () =>
+      current ??
+      semesters.find((s) => semesterSlug(s) === homeSemSlug) ??
+      null,
+    [current, semesters, homeSemSlug]
+  );
+
+  // Active state for the global nav links.
   const isDashboardRoute = /^\/s\/[^/]+$/.test(location.pathname);
-  const isCoursesRoute = /^\/s\/[^/]+\/courses$/.test(location.pathname);
   const isNotesRoute = location.pathname === "/notes";
+  const isDecksRoute = location.pathname.startsWith("/decks");
 
-  // Determine if we're on a lecture page
-  const { isLecture, courseSlug: currentCourseSlug, semesterSlug: currentSemSlug } = isLectureRoute(location.pathname);
+  const {
+    isLecture,
+    courseSlug: currentCourseSlug,
+    semesterSlug: currentSemSlug,
+  } = isLectureRoute(location.pathname);
+  const isNote = isNoteRoute(location.pathname);
 
-  // Determine if we're on an unassigned-note page
-  const { isNote } = isNoteRoute(location.pathname);
-
-  // All unassigned notes (for the "ВСЕ ЗАМЕТКИ" context section).
+  // Незакреплённые заметки — ветка «Без курса» того же дерева.
   const unassignedNotes = recentLectures.filter((lec) => !lectureCourseId(lec));
 
-  // Fetch lectures of current course if on lecture page
-  const { lectures: courseLectures, course } = useLectures(
+  // Активный курс (для подсветки и авто-раскрытия ветки).
+  const { course } = useLectures(
     isLecture && currentCourseSlug ? currentCourseSlug : "",
     isLecture
   );
 
-  // TOC data comes from the LectureFrame context, provided by <AppLayout/>
-  // (available on every protected page, including lectures).
+  // TOC data comes from the LectureFrame context, provided by <AppLayout/>.
   const { tocContainerRef, tocVersion } = useLectureFrame();
+
+  const semSlugForLinks = currentSemSlug || homeSemSlug;
+
+  /** Одна ветка дерева: строка курса + вложенные записи. */
+  const renderBranch = (
+    key: string,
+    name: string,
+    to: string,
+    dotStyle: string | null,
+    notes: typeof recentLectures,
+    noteHref: (slug: string) => string,
+    autoOpen: boolean
+  ) => {
+    const isOpen = expanded[key] ?? autoOpen;
+    return (
+      <li key={key || "unassigned"} className="sidebar-course">
+        <div className={"sidebar-course-row" + (isOpen ? " open" : "")}>
+          <button
+            type="button"
+            className="sidebar-course-toggle"
+            aria-expanded={isOpen}
+            aria-label={isOpen ? `Свернуть ${name}` : `Раскрыть ${name}`}
+            onClick={() => setExpanded((p) => ({ ...p, [key]: !isOpen }))}
+          >
+            <ChevronRight size={13} className={isOpen ? "rotate" : ""} />
+          </button>
+          <Link to={to} className="sidebar-course-link">
+            <span
+              className="sidebar-course-dot"
+              style={
+                dotStyle
+                  ? { background: dotStyle }
+                  : { background: "var(--border-strong)" }
+              }
+            />
+            <span className="sidebar-course-name">{name}</span>
+          </Link>
+          <span className="sidebar-course-count">{notes.length}</span>
+        </div>
+        {isOpen && notes.length > 0 && (
+          <ul className="sidebar-course-notes">
+            {notes.map((lec) => {
+              const href = noteHref(lectureSlug(lec));
+              return (
+                <li key={lec.id}>
+                  <Link
+                    to={href}
+                    className={
+                      "sidebar-note-row" +
+                      (location.pathname === href ||
+                      location.pathname === `${href}/edit`
+                        ? " active"
+                        : "")
+                    }
+                  >
+                    {lectureTitle(lec)}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </li>
+    );
+  };
 
   return (
     <>
@@ -196,10 +279,7 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
           role="presentation"
         />
       )}
-      <aside
-        ref={sidebarRef}
-        className={`global-sidebar${open ? " open" : ""}`}
-      >
+      <aside className={`global-sidebar${open ? " open" : ""}`}>
         {/* Close button — only shown on mobile (drawer mode). */}
         <button
           type="button"
@@ -210,305 +290,229 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
           <X size={18} />
         </button>
 
-        {/* User Profile */}
-      {user && (
-        <div className="sidebar-profile">
-          <div className="profile-avatar">
-            {avatar ? (
-              <img className="profile-avatar-img" src={avatar} alt="" />
-            ) : (
-              <span className="profile-avatar-initial">{userInitial(user)}</span>
-            )}
-          </div>
-          <div className="profile-info">
-            <span className="profile-name" title={userName(user)}>
-              {userName(user)}
-            </span>
-            <span className="profile-email" title={user.email}>
-              {user.email}
-            </span>
-          </div>
-          <button
-            type="button"
-            className="profile-logout"
-            onClick={handleLogout}
-            title="Выйти"
-          >
-            <LogOut size={16} />
-          </button>
+        {/* 1. Логотип */}
+        <div className="sidebar-logo">
+          <img
+            className="sidebar-logo-img"
+            src="/cohorta-black.svg"
+            alt="Cohorta"
+          />
         </div>
-      )}
 
-      {/* Semester Switcher */}
-      {current && !isLecture && !isNote && (
-        <div className="sidebar-semester">
-          <button
-            ref={semesterBtnRef}
-            type="button"
-            className="sidebar-semester-btn"
-            onClick={toggleSemesterPopup}
-          >
-            <span className="sidebar-semester-current">
-              <span className="semester-badge">{semesterSlug(current)}</span>
-              {semesterSlug(current)} семестр
-            </span>
-            <ChevronDown size={16} className={semesterPopupOpen ? "rotate" : ""} />
-          </button>
-        </div>
-      )}
-
-      {/* Semester popup — portaled to document.body so it renders ON TOP of the
-          sidebar (the sidebar's backdrop-filter would otherwise make the popup's
-          position:fixed sidebar-relative → it drifted past the edge and added
-          horizontal scroll instead of overlaying). */}
-      {semesterPopupOpen &&
-        current &&
-        createPortal(
-          <>
-            <div
-              className="sidebar-semester-backdrop"
-              onClick={() => setSemesterPopupOpen(false)}
-            />
-            <div
-              ref={semesterPopupRef}
-              className="sidebar-semester-popup"
-              style={{ top: popupTop }}
+        {/* 2. Переключатель семестра — виден на всех маршрутах */}
+        {activeSemester && (
+          <div className="sidebar-semester">
+            <button
+              ref={semesterBtnRef}
+              type="button"
+              className="sidebar-semester-btn"
+              onClick={toggleSemesterPopup}
             >
-              {semesters.map((sem) => (
-                <button
-                  key={sem.id}
-                  type="button"
-                  className={`sidebar-semester-item${
-                    sem.id === current.id ? " active" : ""
-                  }`}
-                  onClick={() => handleSemesterSelect(sem)}
-                >
-                  {semesterSlug(sem)} семестр
-                </button>
-              ))}
-              <ScrollBar scrollRef={semesterPopupRef} />
-            </div>
-          </>,
-          document.body
+              <Calendar size={16} />
+              <span className="sidebar-semester-current">
+                {semesterSlug(activeSemester)} семестр
+              </span>
+              <ChevronDown
+                size={14}
+                className={semesterPopupOpen ? "rotate" : ""}
+              />
+            </button>
+          </div>
         )}
 
-      {/* ===== ГРУППА 1: ОСНОВНОЕ (всегда видна) ===== */}
-      <nav className="sidebar-section">
-        <h3 className="sidebar-section-title">
-          <span className="section-icon">
-            <Home size={14} />
-          </span>
-          ОСНОВНОЕ
-        </h3>
-        <ul className="sidebar-nav">
-          <li>
-            <Link
-              to={`/s/${homeSemSlug}`}
-              className={`sidebar-nav-item${isDashboardRoute ? " active" : ""}`}
-            >
-              <Home size={16} />
-              <span>Рабочий стол</span>
-            </Link>
-          </li>
-          <li>
-            <Link
-              to={`/s/${homeSemSlug}/courses`}
-              className={`sidebar-nav-item${isCoursesRoute ? " active" : ""}`}
-            >
-              <BookOpen size={16} />
-              <span>Все курсы</span>
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/notes"
-              className={`sidebar-nav-item${isNotesRoute ? " active" : ""}`}
-            >
-              <FileText size={16} />
-              <span>Все заметки</span>
-            </Link>
-          </li>
-        </ul>
-      </nav>
+        {/* 3. Поиск */}
+        <div className="sidebar-search">
+          <div className="search-box">
+            <Search size={14} />
+            <input
+              type="text"
+              value={sidebarQuery}
+              onChange={(e) => setSidebarQuery(e.target.value)}
+              placeholder="Найти заметку"
+              aria-label="Найти заметку"
+            />
+            {sidebarLoading && <span className="search-loading">…</span>}
+          </div>
+          {sidebarQuery.trim().length >= 2 && (
+            <div className="sidebar-search-dropdown">
+              {sidebarResults.length === 0 ? (
+                <div className="sidebar-search-empty">Ничего не найдено</div>
+              ) : (
+                sidebarResults.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    className="sidebar-search-item"
+                    onClick={() => {
+                      navigate(r.to);
+                      setSidebarQuery("");
+                      onClose?.();
+                    }}
+                  >
+                    {r.title}
+                    {r.courseName && (
+                      <span className="course">{r.courseName}</span>
+                    )}
+                    {r.snippet && <span className="snippet">{r.snippet}</span>}
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
 
-      {/* ===== ГРУППА 2: УЧЁБА (контекстная) ===== */}
-      {/* Context-aware content */}
-      {isNote ? (
-        <>
-          {/* All unassigned notes section */}
+        {/* Semester popup — portaled to document.body so it overlays the
+            content (the sidebar's own stacking context would clip it). */}
+        {semesterPopupOpen &&
+          activeSemester &&
+          createPortal(
+            <>
+              <div
+                className="sidebar-semester-backdrop"
+                onClick={() => setSemesterPopupOpen(false)}
+              />
+              <div
+                ref={semesterPopupRef}
+                className="sidebar-semester-popup"
+                style={{ top: popupTop }}
+              >
+                {semesters.map((sem) => (
+                  <button
+                    key={sem.id}
+                    type="button"
+                    className={`sidebar-semester-item${
+                      sem.id === activeSemester.id ? " active" : ""
+                    }`}
+                    onClick={() => handleSemesterSelect(sem)}
+                  >
+                    {semesterSlug(sem)} семестр
+                  </button>
+                ))}
+                <ScrollBar scrollRef={semesterPopupRef} />
+              </div>
+            </>,
+            document.body
+          )}
+
+        {/* Всё между поиском и профилем скроллится внутри одной области */}
+        <div className="sidebar-scroll" ref={scrollRef}>
+          {/* 4. Глобальная навигация (без заголовка — три пункта говорят сами) */}
           <nav className="sidebar-section">
-            <button
-              type="button"
-              className="sidebar-back-btn"
-              onClick={() => navigate("/notes")}
-            >
-              {"\u2190"} Все заметки
-            </button>
-            <h3 className="sidebar-section-title">ВСЕ ЗАМЕТКИ</h3>
-            <ul className="sidebar-nav sidebar-nav-scrollable">
-              {unassignedNotes.map((lec) => {
-                const slug = lectureSlug(lec);
-                const to = `/note/${slug}`;
-                const isActive =
-                  location.pathname === to ||
-                  location.pathname === `${to}/edit`;
-                return (
-                  <li key={lec.id}>
-                    <Link
-                      to={to}
-                      className={`sidebar-nav-item${isActive ? " active" : ""}`}
-                    >
-                      {lectureTitle(lec)}
-                    </Link>
-                  </li>
-                );
-              })}
+            <ul className="sidebar-nav">
+              <li>
+                <Link
+                  to={`/s/${homeSemSlug}`}
+                  className={`sidebar-nav-item${
+                    isDashboardRoute ? " active" : ""
+                  }`}
+                >
+                  <Home size={16} />
+                  <span>Рабочий стол</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/notes"
+                  className={`sidebar-nav-item${isNotesRoute ? " active" : ""}`}
+                >
+                  <FileText size={16} />
+                  <span>Все заметки</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/decks"
+                  className={`sidebar-nav-item${isDecksRoute ? " active" : ""}`}
+                >
+                  <Layers size={16} />
+                  <span>Карточки</span>
+                </Link>
+              </li>
             </ul>
           </nav>
 
-          {/* Table of Contents */}
-          <nav className="sidebar-section">
-            <h3 className="sidebar-section-title">ОГЛАВЛЕНИЕ</h3>
-            {tocContainerRef && tocVersion !== undefined ? (
-              <TableOfContents containerRef={tocContainerRef} version={tocVersion} hideTitle />
-            ) : (
-              <div className="sidebar-toc-placeholder">
-                <p style={{ fontSize: '0.85rem', color: 'var(--c-muted)', padding: '0.5rem 0.75rem' }}>
-                  Загрузка...
-                </p>
-              </div>
-            )}
-          </nav>
-        </>
-      ) : isLecture ? (
-        <>
-          {/* Course lectures section */}
-          {course && (
-            <nav className="sidebar-section">
-              <button
-                type="button"
-                className="sidebar-back-btn"
-                onClick={() => navigate(`/s/${currentSemSlug}/${currentCourseSlug}`)}
-              >
-                ← Назад к курсу
-              </button>
-              <h3 className="sidebar-section-title">ЛЕКЦИИ КУРСА</h3>
-              <ul className="sidebar-nav sidebar-nav-scrollable">
-                {courseLectures.map((lec) => {
-                  const slug = lectureSlug(lec);
-                  const to = `/s/${currentSemSlug}/${currentCourseSlug}/${slug}`;
-                  const isActive = location.pathname.startsWith(to);
-                  return (
-                    <li key={lec.id}>
-                      <Link
-                        to={to}
-                        className={`sidebar-nav-item${isActive ? " active" : ""}`}
-                      >
-                        {lectureTitle(lec)}
-                      </Link>
-                    </li>
+          {/* 5. Дерево курсов + ветка «Без курса» */}
+          <nav className="sidebar-section sidebar-courses">
+            <h3 className="sidebar-section-title">Курсы</h3>
+            <ul className="sidebar-nav">
+              {semesterCourses.map((c, i) => {
+                const cSlug = courseSlug(c) || c.id;
+                const courseUrl = `/s/${semSlugForLinks}/${cSlug}`;
+                const notes = recentLectures
+                  .filter((lec) => lectureCourseId(lec) === c.id)
+                  .sort(
+                    (a, b) =>
+                      new Date(b.updated).getTime() -
+                      new Date(a.updated).getTime()
                   );
-                })}
-              </ul>
+                return renderBranch(
+                  c.id,
+                  courseName(c),
+                  courseUrl,
+                  courseGradient(courseColor(c), i),
+                  notes,
+                  (slug) => `${courseUrl}/${slug}`,
+                  isLecture && course?.id === c.id
+                );
+              })}
+              {unassignedNotes.length > 0 &&
+                renderBranch(
+                  "",
+                  "Без курса",
+                  "/notes",
+                  null,
+                  unassignedNotes,
+                  (slug) => `/note/${slug}`,
+                  isNote
+                )}
+            </ul>
+          </nav>
+
+          {/* 6. Оглавление — только в контексте записи */}
+          {(isLecture || isNote) && (
+            <nav className="sidebar-section">
+              <h3 className="sidebar-section-title">Оглавление</h3>
+              <TableOfContents
+                containerRef={tocContainerRef}
+                version={tocVersion}
+                hideTitle
+              />
             </nav>
           )}
 
-          {/* Table of Contents */}
-          <nav className="sidebar-section">
-            <h3 className="sidebar-section-title">ОГЛАВЛЕНИЕ</h3>
-            {tocContainerRef && tocVersion !== undefined ? (
-              <TableOfContents containerRef={tocContainerRef} version={tocVersion} hideTitle />
-            ) : (
-              <div className="sidebar-toc-placeholder">
-                <p style={{ fontSize: '0.85rem', color: 'var(--c-muted)', padding: '0.5rem 0.75rem' }}>
-                  Загрузка...
-                </p>
-              </div>
-            )}
-          </nav>
-        </>
-      ) : (
-        <>
-          {/* Section: НЕДАВНИЕ (last 3 lectures) */}
-          <nav className="sidebar-section">
-            <h3 className="sidebar-section-title">
-              <Link className="sidebar-section-link" to={`/s/${homeSemSlug}/courses`}>
-                <span className="section-icon">
-                  <Clock size={14} />
+          <ScrollBar scrollRef={scrollRef} />
+        </div>
+
+        {/* 7. Профиль */}
+        {user && (
+          <div className="sidebar-profile">
+            <div className="profile-avatar">
+              {avatar ? (
+                <img className="profile-avatar-img" src={avatar} alt="" />
+              ) : (
+                <span className="profile-avatar-initial">
+                  {userInitial(user)}
                 </span>
-                НЕДАВНИЕ
-                <ChevronRight size={12} className="title-arrow" />
-              </Link>
-            </h3>
-            <ul className="sidebar-nav">
-              {recentLectures.slice(0, 3).map((lec) => {
-                const unassigned = !lectureCourseId(lec);
-                const slug = lectureSlug(lec);
-                let to: string;
-                
-                if (unassigned) {
-                  to = `/note/${slug}`;
-                } else {
-                  // Get course from expanded data or fallback
-                  const expandedCourse = lec.expand?.field;
-                  const cSlug = expandedCourse?.slug || expandedCourse?.id || "unknown";
-                  // Resolve the semester slug WITHOUT assuming `current` is non-null:
-                  // current is null on non-semester routes (/notes) and right after
-                  // login / while the semester list is still loading. Calling
-                  // semesterSlug(current!) with null crashed and blanked the screen.
-                  let semSlug = currentSemSlug || (current ? semesterSlug(current) : "");
-                  if (!semSlug && expandedCourse?.semesters) {
-                    const sem = semesters.find((s) => s.id === expandedCourse.semesters);
-                    if (sem) semSlug = semesterSlug(sem);
-                  }
-                  to = semSlug ? `/s/${semSlug}/${cSlug}/${slug}` : `/note/${slug}`;
-                }
-                
-                return (
-                  <li key={lec.id}>
-                    <Link to={to} className="sidebar-nav-item">
-                      {lectureTitle(lec)}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-
-          {/* Section: ЗАМЕТКИ */}
-          <nav className="sidebar-section">
-            <h3 className="sidebar-section-title">
-              <Link className="sidebar-section-link" to="/notes">
-                ЗАМЕТКИ
-                <ChevronRight size={12} className="title-arrow" />
-              </Link>
-            </h3>
-          </nav>
-        </>
-      )}
-
-      {/* ===== ГРУППА 3: БИБЛИОТЕКА — КАРТОЧКИ (всегда видна) ===== */}
-      <nav className="sidebar-section">
-        <h3 className="sidebar-section-title">
-          <Link className="sidebar-section-link" to="/decks">
-            <span className="section-icon">
-              <Layers size={14} />
-            </span>
-            КАРТОЧКИ
-            <ChevronRight size={12} className="title-arrow" />
-          </Link>
-        </h3>
-        <ul className="sidebar-nav">
-          {recentDecks.slice(0, 3).map((deck: Deck) => (
-            <li key={deck.id}>
-              <Link to={`/decks/${deckSlug(deck)}`} className="sidebar-nav-item">
-                {deckTitle(deck)}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <ScrollBar scrollRef={sidebarRef} />
+              )}
+            </div>
+            <div className="profile-info">
+              <span className="profile-name" title={userName(user)}>
+                {userName(user)}
+              </span>
+              <span className="profile-email" title={user.email}>
+                {user.email}
+              </span>
+            </div>
+            <button
+              type="button"
+              className="profile-logout"
+              onClick={handleLogout}
+              title="Выйти"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+        )}
       </aside>
     </>
   );

@@ -6,19 +6,17 @@
  * Shared top bar used on every protected page.
  * Ghosted transparent design with:
  *  - center — clickable breadcrumbs
- *  - right  — microphone + search
+ *  - right  — microphone
  *
- * Profile and semester switcher moved to GlobalSidebar.
+ * Профиль, переключатель семестра и ПОИСК живут в GlobalSidebar
+ * (DESIGN.md §7.1: один поиск на продукт, в сайдбаре).
  */
 
-import { useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { AudioLines, Menu, Mic, MicOff, Search, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { AudioLines, Menu, Mic, MicOff, X } from "lucide-react";
 
-import { useLectureSearch } from "../hooks/useLectureSearch";
 import { useSpeech } from "../lib/speechContext";
 import { useUiShell } from "../lib/uiShellContext";
-import ScrollBar from "./scrollbar/ScrollBar";
 
 export interface Crumb {
   label: string;
@@ -38,17 +36,8 @@ interface Props {
 }
 
 function Header({ crumbs = [], crumbsLoading = false }: Props) {
-  const navigate = useNavigate();
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [query, setQuery] = useState("");
-  const [open, setOpen] = useState(false);
-  const searchWrapRef = useRef<HTMLDivElement | null>(null);
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
-
   // Mobile drawer toggle (the burger button is hidden on desktop by CSS).
   const { sidebarOpen, toggleSidebar } = useUiShell();
-
-  const { results, loading } = useLectureSearch(query, open);
 
   // Голосовой ввод: кнопка микрофона (пульс при записи) + interim-подсказка.
   // В браузерах без Web Speech API (Firefox) всё равно показываем кнопку —
@@ -57,23 +46,8 @@ function Header({ crumbs = [], crumbsLoading = false }: Props) {
     useSpeech();
   const canCapture = supported || audioOnly;
 
-  /** Прыжок к найденной лекции + закрытие дропдауна. */
-  const go = (to: string) => {
-    setOpen(false);
-    setQuery("");
-    setIsSearchFocused(false);
-    navigate(to);
-  };
-
-  const close = () => {
-    setOpen(false);
-    setIsSearchFocused(false);
-  };
-
-  const showDropdown = open && query.trim().length >= 2;
-
   return (
-    <header className={`app-header${isSearchFocused ? " search-focused" : ""}`}>
+    <header className="app-header">
       <div className="app-header-inner">
         {/* --- burger (mobile drawer toggle, hidden on desktop) --- */}
         <button
@@ -88,10 +62,7 @@ function Header({ crumbs = [], crumbsLoading = false }: Props) {
 
         {/* --- breadcrumbs (center), только когда есть куда «вернуться» --- */}
         {crumbs.length > 1 && (
-          <nav
-            className={`breadcrumbs${isSearchFocused ? " faded" : ""}`}
-            aria-label="Хлебные крошки"
-          >
+          <nav className="breadcrumbs" aria-label="Хлебные крошки">
             {crumbsLoading ? (
               <span
                 className="skeleton-line crumb-skeleton"
@@ -122,7 +93,7 @@ function Header({ crumbs = [], crumbsLoading = false }: Props) {
           </nav>
         )}
 
-        {/* --- microphone + search (right) --- */}
+        {/* --- microphone (right) --- */}
         <div className="header-right">
           {canCapture && (
             <div className="header-mic-wrap">
@@ -160,74 +131,6 @@ function Header({ crumbs = [], crumbsLoading = false }: Props) {
               )}
             </div>
           )}
-          <div
-            ref={searchWrapRef}
-            className="search-wrap"
-            onBlur={(e) => {
-              if (
-                searchWrapRef.current &&
-                !searchWrapRef.current.contains(e.relatedTarget as Node)
-              ) {
-                close();
-              }
-            }}
-          >
-            <label className={`search-box${isSearchFocused ? " focused" : ""}`}>
-              <Search size={16} className="search-icon" />
-              <input
-                className="search-input"
-                type="text"
-                placeholder="Найти заметку"
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  if (!open) setOpen(true);
-                }}
-                onFocus={() => {
-                  setIsSearchFocused(true);
-                  setOpen(true);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") {
-                    e.currentTarget.blur();
-                    setQuery("");
-                    close();
-                  }
-                }}
-              />
-            </label>
-
-            {showDropdown && (
-              <div ref={dropdownRef} className="search-dropdown">
-                {loading && <div className="search-status">Ищем…</div>}
-                {!loading && results.length === 0 && (
-                  <div className="search-status">Ничего не найдено</div>
-                )}
-                {results.map((hit) => (
-                  <button
-                    key={hit.id}
-                    type="button"
-                    className="search-dropdown-item"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => go(hit.to)}
-                  >
-                    <span className="search-item-title">{hit.title}</span>
-                    {hit.snippet && (
-                      <span className="search-item-snippet">
-                        {hit.snippet}
-                      </span>
-                    )}
-                    {hit.courseName && (
-                      <span className="search-item-course">
-                        {hit.courseName}
-                      </span>
-                    )}
-                  </button>
-                ))}
-                <ScrollBar scrollRef={dropdownRef} />
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </header>

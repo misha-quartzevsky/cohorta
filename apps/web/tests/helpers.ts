@@ -55,6 +55,12 @@ export async function login(page: Page, semesterSlug: string): Promise<void> {
   );
   await page.goto("/login");
   await page.locator('input[type="email"]').fill(DEMO_EMAIL);
-  await page.locator('input[type="password"]').fill(DEMO_PASSWORD);
-  await page.getByRole("button", { name: "Войти" }).click();
+  const password = page.locator('input[type="password"]');
+  await password.fill(DEMO_PASSWORD);
+  // Отправляем форму Enter'ом, а не кликом по «Войти». Клик по этой кнопке
+  // хронически завешивал прогон в headed-Firefox: Playwright доходил до
+  // «performing click action» и висел до таймаута 60 с (тот же флак, из-за
+  // которого клики по сайдбару делаются через dispatchEvent). Enter идёт по
+  // клавиатурному пути, вызывает тот же onSubmit и не залипает.
+  await password.press("Enter");
 }

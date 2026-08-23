@@ -38,14 +38,6 @@ export function timeAgo(iso: string): string {
   return formatDate(iso);
 }
 
-/** Акцентный CSS-класс градиента плитки (`tile-feature`). */
-export type TileAccent = "lilac" | "ginger" | "black";
-
-/** Выбирает акцент по индексу плитки в сетке (0 → lilac, 1 → ginger, 2 → black). */
-export function tileAccent(index: number): TileAccent {
-  const first = index % 3;
-  return first === 0 ? "lilac" : first === 1 ? "ginger" : "black";
-}
 
 /**
  * Человекочитаемое сообщение об ошибке из любого значения.

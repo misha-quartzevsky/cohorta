@@ -120,7 +120,6 @@ function CoursesPage() {
                         course={course}
                         index={i}
                         featured={featured[course.id]}
-                        wide={i === 0}
                         onClick={() =>
                           navigate(`/s/${semSlug}/${courseSlug(course)}`)
                         }

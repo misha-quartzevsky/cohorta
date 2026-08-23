@@ -3,15 +3,16 @@
  *  LectureTile.tsx
  * ============================================
  *
- * Card for a single lecture inside a course
- * grid.  Shows initials badge, title, content
- * excerpt, creation date, and a kebab menu
- * for edit/delete actions.
+ * Карточка лекции в сетке курса. Нейтральная белая поверхность: заголовок,
+ * превью, дата. Цветной плашки-баннера с инициалами больше нет (DESIGN.md §0),
+ * а принадлежность курсу показывает бейдж по §6 — нейтральный фон плюс
+ * маленькая точка цвета курса, без заливки всего бейджа.
  */
 
-import { formatDate, tileAccent } from "../lib/format";
+import { formatDate } from "../lib/format";
 import type { Course, Lecture } from "../lib/types";
 import { lectureTitle, lectureExcerpt, courseName } from "../lib/types";
+import { courseAccent } from "../lib/courseGradient";
 import { tileActions } from "../lib/tileActions";
 import KebabMenu from "./KebabMenu";
 import { BookOpen } from "lucide-react";
@@ -19,7 +20,7 @@ import { BookOpen } from "lucide-react";
 interface Props {
   /** The lecture record from PocketBase. */
   lecture: Lecture;
-  /** Zero-based index in the grid (drives color accent + width). */
+  /** Zero-based index in the grid (fallback for the course dot color). */
   index: number;
   /** Click handler (opens full lecture view). */
   onClick: () => void;
@@ -33,9 +34,9 @@ interface Props {
   courses?: Course[];
   /** Called when a course is chosen from the assign dropdown. */
   onAssignCourse?: (lecture: Lecture, courseId: string) => void;
-  /** Course name tag shown in the bottom-left corner (assigned lectures). */
+  /** Course name tag shown above the title (assigned lectures). */
   courseTag?: string;
-  /** Course color used for the tag background (assigned lectures). */
+  /** Course color — drives the tag's dot (assigned lectures). */
   courseColorTag?: string;
 }
 
@@ -43,7 +44,7 @@ interface Props {
  * Renders a lecture card.
  *
  * @param Props.lecture  — lecture data to display
- * @param Props.index    — used to pick accent color and wide variant
+ * @param Props.index    — fallback index for the course dot color
  * @param Props.onClick  — opens the full lecture view
  * @param Props.onEdit   — opens edit form
  * @param Props.onDelete — opens delete confirmation
@@ -60,8 +61,6 @@ function LectureTile({
   courseTag,
   courseColorTag,
 }: Props) {
-  const accent = tileAccent(index);
-
   const content = lectureExcerpt(lecture);
   const hasAssign = unassigned && !!courses && courses.length > 0;
 
@@ -71,12 +70,18 @@ function LectureTile({
   });
 
   return (
-    <div className={`tile ${index === 0 ? "wide" : ""}`}>
+    <div className="tile lecture-tile">
       <button className="tile-click" onClick={onClick} type="button">
-        <div className={`tile-feature ${accent}`}>
-          {lectureTitle(lecture).slice(0, 2).toUpperCase()}
-        </div>
         <div className="tile-body">
+          {courseTag && (
+            <span className="lecture-course-tag">
+              <span
+                className="lecture-course-dot"
+                style={{ background: courseAccent(courseColorTag, index) }}
+              />
+              {courseTag}
+            </span>
+          )}
           <div className="tile-title">{lectureTitle(lecture)}</div>
           {content && <div className="tile-excerpt">{content}</div>}
           <div className="tile-meta">{formatDate(lecture.created)}</div>
@@ -89,10 +94,7 @@ function LectureTile({
       </button>
 
       {hasAssign && onAssignCourse && (
-        <div
-          className="tile-assign"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="tile-assign" onClick={(e) => e.stopPropagation()}>
           <span className="tile-assign-label">Привязать к курсу</span>
           <select
             className="note-assign-select"
@@ -116,15 +118,6 @@ function LectureTile({
       )}
 
       <KebabMenu actions={kebabActions} />
-
-      {courseTag && (
-        <span
-          className="lecture-course-tag"
-          style={courseColorTag ? { background: courseColorTag } : undefined}
-        >
-          {courseTag}
-        </span>
-      )}
     </div>
   );
 }

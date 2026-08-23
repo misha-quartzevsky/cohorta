@@ -13,8 +13,11 @@ import { DEMO_EMAIL, login } from "./helpers";
 test("неверные данные: ошибка на странице /login", async ({ page }) => {
   await page.goto("/login");
   await page.locator('input[type="email"]').fill("bad@example.com");
-  await page.locator('input[type="password"]').fill("wrong-password");
-  await page.getByRole("button", { name: "Войти" }).click();
+  const password = page.locator('input[type="password"]');
+  await password.fill("wrong-password");
+  // Enter вместо клика — см. комментарий в helpers.login (клик по «Войти»
+  // завешивает headed-Firefox).
+  await password.press("Enter");
 
   await expect(page.locator(".login-error")).toContainText(
     "Не удалось войти"

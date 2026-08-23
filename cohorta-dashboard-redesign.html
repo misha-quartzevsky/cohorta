@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Cohorta — редизайн дашборда и сайдбара</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+  :root{
+    --brand-1:#5843F6;
+    --brand-2:#B5CBFA;
+    --ink:#1C1C22;
+    --ink-2:#5B5B66;
+    --ink-3:#9494A0;
+    --bg:#F7F7F9;
+    --surface:#FFFFFF;
+    --border:#EAEAEF;
+    --border-strong:#DFDFE6;
+    --radius:12px;
+    --radius-sm:8px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    display:flex;
+    min-height:900px;
+    max-width:1360px;
+    margin:0 auto;
+    border:1px solid var(--border);
+    background:var(--surface);
+  }
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    width:264px;
+    flex-shrink:0;
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    padding:20px 14px;
+  }
+  .logo{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:4px 6px 20px;
+  }
+  .logo-mark{
+    width:16px;height:16px;
+    background:linear-gradient(160deg,var(--brand-2),var(--brand-1));
+    clip-path:polygon(50% 0%, 0% 100%, 100% 100%);
+  }
+  .logo-word{font-weight:700;font-size:16px;letter-spacing:-0.01em;color:#2C2C33;}
+
+  .semester{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 10px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    font-size:13px;font-weight:500;color:var(--ink-2);
+    margin-bottom:14px;cursor:pointer;
+  }
+  .semester i{font-size:14px;color:var(--ink-3);}
+
+  .search{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 10px;margin-bottom:18px;
+    background:var(--bg);border-radius:var(--radius-sm);
+    color:var(--ink-3);font-size:13px;
+  }
+  .search i{font-size:15px;}
+
+  .nav-section{margin-bottom:6px;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:8px 10px;border-radius:var(--radius-sm);
+    font-size:13.5px;font-weight:500;color:var(--ink-2);
+    cursor:pointer;margin-bottom:2px;
+  }
+  .nav-item i{font-size:17px;color:var(--ink-3);}
+  .nav-item.active{
+    background:linear-gradient(90deg, rgba(88,67,246,0.08), rgba(181,203,250,0.10));
+    color:var(--brand-1);
+    position:relative;
+  }
+  .nav-item.active i{color:var(--brand-1);}
+  .nav-item.active::before{
+    content:"";position:absolute;left:-14px;top:6px;bottom:6px;width:3px;
+    background:linear-gradient(180deg,var(--brand-1),var(--brand-2));
+    border-radius:0 3px 3px 0;
+  }
+  .nav-item:hover:not(.active){background:var(--bg);}
+
+  .courses-label{
+    font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--ink-3);
+    text-transform:uppercase;margin:18px 10px 8px;
+  }
+  .course-row{
+    display:flex;align-items:center;gap:9px;
+    padding:7px 10px;border-radius:var(--radius-sm);
+    font-size:13.5px;color:var(--ink);cursor:pointer;
+  }
+  .course-row:hover{background:var(--bg);}
+  .course-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+  .course-name{flex:1;font-weight:500;}
+  .course-count{font-size:11.5px;color:var(--ink-3);}
+  .course-notes{margin-left:29px;margin-bottom:6px;}
+  .note-row{
+    padding:5px 10px;font-size:13px;color:var(--ink-2);
+    border-radius:var(--radius-sm);cursor:pointer;
+  }
+  .note-row:hover{background:var(--bg);color:var(--ink);}
+
+  .sidebar-spacer{flex:1;}
+  .profile{
+    display:flex;align-items:center;gap:10px;
+    padding:10px;border-top:1px solid var(--border);margin-top:10px;
+  }
+  .avatar{
+    width:30px;height:30px;border-radius:50%;
+    background:linear-gradient(160deg,var(--brand-2),var(--brand-1));
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:12.5px;font-weight:600;flex-shrink:0;
+  }
+  .profile-info{flex:1;line-height:1.25;}
+  .profile-name{font-size:13px;font-weight:500;}
+  .profile-email{font-size:11.5px;color:var(--ink-3);}
+  .profile i{color:var(--ink-3);font-size:16px;cursor:pointer;}
+
+  /* ---------- MAIN ---------- */
+  .main{flex:1;padding:32px 40px;}
+  .greeting-row{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    margin-bottom:26px;
+  }
+  .greeting h1{font-size:22px;font-weight:600;margin:0 0 4px;}
+  .greeting p{font-size:13.5px;color:var(--ink-2);margin:0;}
+
+  .quick-actions{display:flex;gap:8px;}
+  .qa-btn{
+    display:flex;align-items:center;gap:7px;
+    padding:8px 14px;border:1px solid var(--border-strong);
+    border-radius:var(--radius-sm);font-size:13px;font-weight:500;
+    color:var(--ink);cursor:pointer;background:var(--surface);
+  }
+  .qa-btn i{font-size:15px;color:var(--ink-2);}
+  .qa-btn.primary{
+    background:linear-gradient(120deg,var(--brand-1),var(--brand-2));
+    border:none;color:#fff;
+  }
+  .qa-btn.primary i{color:#fff;}
+
+  /* continue hero */
+  .continue-card{
+    display:flex;align-items:center;gap:20px;
+    padding:22px 26px;border-radius:16px;margin-bottom:28px;
+    background:linear-gradient(120deg,var(--brand-1),var(--brand-2));
+    color:#fff;position:relative;overflow:hidden;
+  }
+  .continue-play{
+    width:48px;height:48px;border-radius:50%;
+    background:rgba(255,255,255,0.18);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;font-size:20px;
+  }
+  .continue-body{flex:1;}
+  .continue-eyebrow{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;opacity:.8;margin-bottom:4px;font-weight:600;}
+  .continue-title{font-size:17px;font-weight:600;margin-bottom:10px;}
+  .continue-progress{
+    height:5px;border-radius:3px;background:rgba(255,255,255,0.28);
+    width:260px;overflow:hidden;
+  }
+  .continue-progress span{
+    display:block;height:100%;width:62%;
+    background:#fff;border-radius:3px;
+  }
+  .continue-cta{
+    padding:9px 18px;background:rgba(255,255,255,0.16);
+    border-radius:var(--radius-sm);font-size:13px;font-weight:500;
+    cursor:pointer;flex-shrink:0;
+  }
+
+  .section-title{
+    font-size:14px;font-weight:600;margin:0 0 12px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .section-title a{font-size:12.5px;font-weight:500;color:var(--ink-2);cursor:pointer;}
+
+  .content-grid{display:flex;gap:28px;}
+  .col-main{flex:1;min-width:0;}
+  .col-side{width:280px;flex-shrink:0;}
+
+  .course-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:32px;
+  }
+  .course-card{
+    border-radius:16px;padding:3px;
+  }
+  .course-card-inner{
+    background:var(--surface);border-radius:13px;
+    padding:14px;height:100%;
+  }
+  .course-card-head{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:36px;
+  }
+  .course-card-badge{
+    width:26px;height:26px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;
+  }
+  .course-card-more{color:var(--ink-3);font-size:16px;cursor:pointer;}
+  .course-card-title{font-size:14px;font-weight:600;margin-bottom:3px;}
+  .course-card-sub{font-size:12px;color:var(--ink-3);}
+
+  .add-course{
+    border:1.5px dashed var(--border-strong);
+    border-radius:16px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:8px;
+    color:var(--ink-3);font-size:13px;font-weight:500;cursor:pointer;
+  }
+  .add-course i{font-size:20px;}
+
+  .review-card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:14px;padding:16px;margin-bottom:16px;
+  }
+  .review-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;
+  }
+  .review-row:last-child{border-bottom:none;}
+  .review-deck{font-weight:500;}
+  .review-count{
+    font-size:12px;font-weight:600;color:var(--brand-1);
+    background:rgba(88,67,246,0.09);padding:2px 9px;border-radius:20px;
+  }
+
+  .activity-item{
+    display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);
+  }
+  .activity-item:last-child{border-bottom:none;}
+  .activity-dot{width:6px;height:6px;border-radius:50%;margin-top:6px;flex-shrink:0;}
+  .activity-title{font-size:13px;font-weight:500;}
+  .activity-sub{font-size:11.5px;color:var(--ink-3);}
+  .activity-time{font-size:11px;color:var(--ink-3);margin-left:auto;flex-shrink:0;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-mark"></div>
+      <div class="logo-word">cohorta</div>
+    </div>
+
+    <div class="semester">
+      5 семестр <i class="ti ti-chevron-down"></i>
+    </div>
+
+    <div class="search"><i class="ti ti-search"></i> Найти заметку</div>
+
+    <div class="nav-section">
+      <div class="nav-item active"><i class="ti ti-layout-dashboard"></i>Дашборд</div>
+      <div class="nav-item"><i class="ti ti-notes"></i>Все заметки</div>
+      <div class="nav-item"><i class="ti ti-cards"></i>Карточки</div>
+    </div>
+
+    <div class="courses-label">Курсы</div>
+
+    <div class="course-row">
+      <div class="course-dot" style="background:linear-gradient(135deg,#5843F6,#B5CBFA)"></div>
+      <div class="course-name">Философия</div>
+      <div class="course-count">6</div>
+    </div>
+    <div class="course-notes">
+      <div class="note-row">Три идола современности</div>
+      <div class="note-row">Тест новых фич</div>
+    </div>
+
+    <div class="course-row">
+      <div class="course-dot" style="background:linear-gradient(135deg,#FF6B4A,#FFB199)"></div>
+      <div class="course-name">Видеопроизводство</div>
+      <div class="course-count">9</div>
+    </div>
+
+    <div class="course-row">
+      <div class="course-dot" style="background:linear-gradient(135deg,#2F80ED,#A5D8FF)"></div>
+      <div class="course-name">Сторителлинг</div>
+      <div class="course-count">4</div>
+    </div>
+
+    <div class="course-row">
+      <div class="course-dot" style="background:linear-gradient(135deg,#0F9D77,#A8E6C9)"></div>
+      <div class="course-name">Математический анализ</div>
+      <div class="course-count">11</div>
+    </div>
+
+    <div class="sidebar-spacer"></div>
+
+    <div class="profile">
+      <div class="avatar">М</div>
+      <div class="profile-info">
+        <div class="profile-name">Маргарита</div>
+        <div class="profile-email">margart773@gma…</div>
+      </div>
+      <i class="ti ti-settings"></i>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="greeting-row">
+      <div class="greeting">
+        <h1>Добрый день, Маргарита</h1>
+        <p>На этой неделе: 8 новых заметок в 3 курсах</p>
+      </div>
+      <div class="quick-actions">
+        <div class="qa-btn"><i class="ti ti-folder-plus"></i>Новый курс</div>
+        <div class="qa-btn"><i class="ti ti-cards"></i>Карточки</div>
+        <div class="qa-btn primary"><i class="ti ti-plus"></i>Новая заметка</div>
+      </div>
+    </div>
+
+    <div class="continue-card">
+      <div class="continue-play"><i class="ti ti-player-play-filled"></i></div>
+      <div class="continue-body">
+        <div class="continue-eyebrow">Продолжить · Видеопроизводство</div>
+        <div class="continue-title">Скоринг</div>
+        <div class="continue-progress"><span></span></div>
+      </div>
+      <div class="continue-cta">Открыть</div>
+    </div>
+
+    <div class="content-grid">
+      <div class="col-main">
+        <div class="section-title">Курсы семестра <a>Все курсы</a></div>
+        <div class="course-grid">
+
+          <div class="course-card" style="background:linear-gradient(135deg,#5843F6,#B5CBFA)">
+            <div class="course-card-inner">
+              <div class="course-card-head">
+                <div class="course-card-badge" style="background:linear-gradient(135deg,#5843F6,#B5CBFA)"><i class="ti ti-brain"></i></div>
+                <i class="ti ti-dots course-card-more"></i>
+              </div>
+              <div class="course-card-title">Философия</div>
+              <div class="course-card-sub">Три идола современности</div>
+            </div>
+          </div>
+
+          <div class="course-card" style="background:linear-gradient(135deg,#FF6B4A,#FFB199)">
+            <div class="course-card-inner">
+              <div class="course-card-head">
+                <div class="course-card-badge" style="background:linear-gradient(135deg,#FF6B4A,#FFB199)"><i class="ti ti-video"></i></div>
+                <i class="ti ti-dots course-card-more"></i>
+              </div>
+              <div class="course-card-title">Видеопроизводство</div>
+              <div class="course-card-sub">Скоринг</div>
+            </div>
+          </div>
+
+          <div class="course-card" style="background:linear-gradient(135deg,#2F80ED,#A5D8FF)">
+            <div class="course-card-inner">
+              <div class="course-card-head">
+                <div class="course-card-badge" style="background:linear-gradient(135deg,#2F80ED,#A5D8FF)"><i class="ti ti-books"></i></div>
+                <i class="ti ti-dots course-card-more"></i>
+              </div>
+              <div class="course-card-title">Сторителлинг</div>
+              <div class="course-card-sub">Тестируем с айфона</div>
+            </div>
+          </div>
+
+          <div class="add-course"><i class="ti ti-plus"></i>Добавить курс</div>
+
+        </div>
+      </div>
+
+      <div class="col-side">
+        <div class="section-title">К повторению сегодня</div>
+        <div class="review-card">
+          <div class="review-row"><div class="review-deck">Сетчатка глаза</div><div class="review-count">5</div></div>
+          <div class="review-row"><div class="review-deck">История России</div><div class="review-count">12</div></div>
+          <div class="review-row"><div class="review-deck">Мат. анализ — производные</div><div class="review-count">3</div></div>
+        </div>
+
+        <div class="section-title">Последняя активность</div>
+        <div class="review-card">
+          <div class="activity-item">
+            <div class="activity-dot" style="background:#5843F6"></div>
+            <div>
+              <div class="activity-title">Предел последовательности</div>
+              <div class="activity-sub">Математический анализ</div>
+            </div>
+            <div class="activity-time">4 мин</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot" style="background:#FF6B4A"></div>
+            <div>
+              <div class="activity-title">Законы Ньютона</div>
+              <div class="activity-sub">Физика</div>
+            </div>
+            <div class="activity-time">9 ч</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot" style="background:#0F9D77"></div>
+            <div>
+              <div class="activity-title">Ряд Тейлора</div>
+              <div class="activity-sub">Математический анализ</div>
+            </div>
+            <div class="activity-time">9 ч</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

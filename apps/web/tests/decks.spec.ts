@@ -24,12 +24,17 @@ test("деки: перелистывание колоды (flip + «Знаю»)"
   );
 
   // Переворачиваем — появляется .is-flipped, на обороте ответ.
-  await page.getByRole("button", { name: "Показать ответ" }).click();
+  // dispatchEvent вместо click: плеер анимируется framer-motion (flip, drag,
+  // AnimatePresence), поэтому кнопки не «успокаиваются» для headed-Firefox и
+  // штатный клик висит до таймаута. Тот же приём, что для микрофона и сайдбара.
+  await page
+    .getByRole("button", { name: "Показать ответ" })
+    .dispatchEvent("click");
   await expect(page.locator(".flash-3d-inner.is-flipped")).toBeVisible();
   await expect(page.locator(".flash-face.back")).toContainText("Сетчатка (лат");
 
   // «Знаю» → следующая карточка (новая монтируется неперевёрнутой).
-  await page.getByRole("button", { name: "Знаю" }).click();
+  await page.getByRole("button", { name: "Знаю" }).dispatchEvent("click");
   await expect(page.locator(".flash-face.front")).toContainText(
     "Какие фоторецепторы"
   );
@@ -45,7 +50,7 @@ test("деки: клавиатура переворачивает и «Знаю�
   await expect(page.locator(".flash-card-stage")).toBeVisible();
 
   // Space переворачивает карточку.
-  await page.locator(".flash-card-stage").click();
+  await page.locator(".flash-card-stage").dispatchEvent("click");
   await page.keyboard.press(" ");
   await expect(page.locator(".flash-3d-inner.is-flipped")).toBeVisible();
 

@@ -1,57 +1,71 @@
 /**
  * ============================================
- *  CoursesWidget.tsx — «Курсы семестра»
+ *  CoursesWidget.tsx — курсы семестра
  * ============================================
- *
- * Адаптирована под remote `useCourses`: вместо `counts` (кол-во лекций)
- * принимает `featured` — карта «id курса → название последней лекции»,
- * и показывает её как подпись карточки («Последняя лекция: …»).
+ *  Сетка карточек по общему паттерну DESIGN.md §5 (компонент `CourseCard`):
+ *  цвет живёт только в градиентной рамке и бейдже. Ссылка «Все курсы»
+ *  закрывает тупик — из виджета видно не больше четырёх курсов.
  */
 
 import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import type { Course } from "../../lib/types";
-import { courseColor, courseName, courseSlug } from "../../lib/types";
+import { courseSlug } from "../../lib/types";
+import CourseCard from "../../components/CourseCard";
 
 interface Props {
   courses: Course[];
-  /** Course id → название последней лекции. */
   featured: Record<string, string>;
-  /** Слаг семестра — для построения путей. */
   semesterSlug: string;
+  /** Сколько курсов в семестре всего — для подписи ссылки «Все курсы». */
+  total?: number;
 }
 
-export default function CoursesWidget({ courses, featured, semesterSlug }: Props) {
+export default function CoursesWidget({
+  courses,
+  featured,
+  semesterSlug,
+  total,
+}: Props) {
+  const allCoursesLink = (
+    <Link to={`/s/${semesterSlug}/courses`} className="widget-link">
+      Все курсы
+      {typeof total === "number" && total > courses.length ? ` (${total})` : ""}
+      <ArrowRight size={14} />
+    </Link>
+  );
+
   if (courses.length === 0) {
     return (
       <div className="widget courses-widget">
-        <h3 className="widget-title">Курсы семестра</h3>
-        <p className="widget-empty">В этом семестре пока нет курсов.</p>
+        <div className="widget-head">
+          <h3 className="widget-title">Курсы семестра</h3>
+        </div>
+        <p className="widget-empty">Добавь первый курс семестра.</p>
       </div>
     );
   }
+
   return (
     <div className="widget courses-widget">
-      <h3 className="widget-title">Курсы семестра</h3>
+      <div className="widget-head">
+        <h3 className="widget-title">Курсы семестра</h3>
+        {allCoursesLink}
+      </div>
       <div className="widget-courses-grid">
-        {courses.map((c) => {
-          const latest = featured[c.id];
-          return (
-            <Link
-              key={c.id}
-              to={`/s/${semesterSlug}/${courseSlug(c)}`}
-              className="course-mini-card"
-            >
-              <span
-                className="course-mini-color"
-                style={{ background: courseColor(c) || "#5843f6" }}
-              />
-              <span className="course-mini-name">{courseName(c)}</span>
-              <span className="course-mini-count" title={latest ? `Последняя лекция: ${latest}` : undefined}>
-                {latest ? `Последняя лекция: ${latest}` : "Пока без лекций"}
-              </span>
-            </Link>
-          );
-        })}
+        {courses.map((c, i) => (
+          <CourseCard
+            key={c.id}
+            course={c}
+            index={i}
+            meta={
+              featured[c.id]
+                ? `Последняя лекция: ${featured[c.id]}`
+                : "Лекций пока нет"
+            }
+            to={`/s/${semesterSlug}/${courseSlug(c)}`}
+          />
+        ))}
       </div>
     </div>
   );
