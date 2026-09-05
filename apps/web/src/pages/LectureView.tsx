@@ -1,6 +1,12 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Pencil, Trash2 } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Trash2 } from "lucide-react";
 
 import {
   courseName,
@@ -9,68 +15,156 @@ import {
   lectureExcerpt,
   lectureSlug,
   lectureTitle,
+  stripHtml,
+  tagLectureIds,
 } from "../lib/types";
 import { formatDate } from "../lib/format";
 import { writeLastVisited } from "../lib/lastVisited";
-import { deleteLecture, resolveFileTokens } from "../services/lectureService";
+import {
+  deleteLecture,
+  resolveFileTokens,
+  tokenizePbFileUrls,
+  updateLecture,
+  uploadLectureImages,
+} from "../services/lectureService";
+import { fetchTags } from "../services/tagService";
 import { useLectureBySlug } from "../hooks/useLectureBySlug";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
+import { useAutosave } from "../hooks/useAutosave";
 import { useLectureFrame } from "../lib/lectureFrame";
+import { useUndo } from "../lib/undoContext";
 
 import ErrorBanner from "../components/ErrorBanner";
 import ConfirmDialog from "../components/ConfirmDialog";
 import CardSkeleton from "../components/CardSkeleton";
-import TagBadges from "../components/TagBadges";
+import Editor from "../components/Editor";
+import SpeechToText from "../components/SpeechToText";
+import TagEditor from "../components/TagEditor";
+import SaveIndicator from "../components/SaveIndicator";
 import { renderLatexInto } from "../components/math/renderLatex";
 
 /**
- * LectureView — страница лекции / заметки.
- * Рендерится внутри <LectureLayout/> (карточка + оглавление в <Outlet/>);
- * шапка и сайдбар живут в лейауте и не перемонтируются при смене лекции.
+ * LectureView — страница лекции / заметки с редактированием «на месте».
+ *
+ * Notion/Obsidian-стиль: отдельного режима правки нет. Тело записи сначала
+ * показывается как статичный HTML (дёшево, MathLive-формулы гидрируются
+ * императивно), а по первому клику в текст на его месте лениво монтируется
+ * полноценный Tiptap-редактор с кареткой в точке клика. Заголовок и теги
+ * редактируемы всегда. Всё пишется в PocketBase с debounce (~1.2 с).
+ *
+ * Рендерится внутри <LectureLayout/> (карточка в <Outlet/>); шапка и сайдбар
+ * живут в лейауте и не перемонтируются при смене лекции.
  */
 function LectureView() {
   const { semesterSlug, courseSlug, lectureSlug: lectureSlugParam } =
     useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { lecture, loading, error } = useLectureBySlug(lectureSlugParam ?? "");
   const isCourseContext = !!courseSlug;
 
-  const [content, setContent] = useState("");
-  const contentRef = useRef<HTMLDivElement | null>(null);
+  // `/…/edit` — рабочий алиас: та же страница, но сразу в режиме редактора.
+  const startLive = location.pathname.endsWith("/edit");
+  const startLiveRef = useRef(startLive);
+  startLiveRef.current = startLive;
 
-  // `ready` needed by effects below — compute it here (not only near the JSX).
-  const ready = !!lecture && !loading;
+  const [mode, setMode] = useState<"static" | "live">(
+    startLive ? "live" : "static"
+  );
+  const [clickCoords, setClickCoords] = useState<{
+    left: number;
+    top: number;
+  } | null>(null);
+
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  const titleRef = useRef("");
+  const contentRef = useRef("");
+  const tagsRef = useRef<string[]>([]);
+
+  // Стабильный контейнер для сканера оглавления (не перемонтируется при
+  // static↔live свапе); staticBodyRef — внутренний div статичного HTML.
+  const contentWrapRef = useRef<HTMLDivElement | null>(null);
+  const staticBodyRef = useRef<HTMLDivElement | null>(null);
+
+  const ready = !!lecture && loaded;
 
   const confirm = useConfirmDialog();
+  const { scheduleDelete } = useUndo();
   const frame = useLectureFrame();
-  const { setTitle, tocContainerRef } = frame;
+  const {
+    setTitle: setCrumbTitle,
+    registerFlush,
+    tocContainerRef,
+    bumpToc,
+  } = frame;
 
-  // Assign contentRef to the shared TOC container in the layout context.
-  // Depends on `ready`: the container div only mounts after the lecture loads,
-  // so re-assign the ref when it appears (was once-only → sidebar TOC saw null).
-  useLayoutEffect(() => {
-    tocContainerRef.current = contentRef.current;
-  }, [tocContainerRef, ready]);
+  // При смене цели: сбрасываем «загружено», крошку и режим тела.
+  useEffect(() => {
+    setLoaded(false);
+    setCrumbTitle("");
+    setMode(startLiveRef.current ? "live" : "static");
+    setClickCoords(null);
+  }, [lectureSlugParam, setCrumbTitle]);
 
-  // Токены `[[file:…]]` → абсолютные URL файлов PB перед отрисовкой.
-  useLayoutEffect(() => {
+  // Инициализация полей + тегов, когда лекция резолвится.
+  useEffect(() => {
     if (!lecture) return;
-    setContent(resolveFileTokens(lectureBody(lecture), lecture) || "");
+    let cancelled = false;
+    const t = lectureTitle(lecture);
+    // Токены `[[file:…]]` → абсолютные URL (чтобы картинки видел и TipTap).
+    const c = resolveFileTokens(lectureBody(lecture), lecture);
+    titleRef.current = t;
+    contentRef.current = c;
+    setTitle(t);
+    setContent(c);
+    // Пустую запись открываем сразу в редакторе — читать нечего.
+    if (startLiveRef.current || !stripHtml(c).trim()) setMode("live");
+    fetchTags()
+      .then((all) => {
+        if (cancelled) return;
+        const ids = all
+          .filter((tg) => tagLectureIds(tg).includes(lecture.id))
+          .map((tg) => tg.id);
+        tagsRef.current = ids;
+        setTags(ids);
+      })
+      .catch((e) => {
+        console.error("Ошибка загрузки тегов:", e);
+      })
+      .finally(() => {
+        if (!cancelled) setLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [lecture]);
 
-    // Отрисовываем формулы MathLive после вставки HTML (данные — в атрибуте).
-  // useLayoutEffect срабатывает после commit-фазы, когда dangerouslySetInnerHTML
-  // уже применил HTML к DOM. Зависимость от id лекции: при SPA-переходе на
-  // лекцию с идентичным `content` эффект перезапускается.
-  //
-  // Рендер формулы вынесен в «самовосстанавливающийся» слой: помимо синхронного
-  // вызова — retry-таймеры и MutationObserver на контейнере. Это защищает от
-  // гонки, при которой React re-render (или wipe dangerouslySetInnerHTML после
-  // очередного апдейта `content`) стирает только-что вставленный <math-div>,
-  // а зависимые useLayoutEffect deps `[content]` могут не измениться.
+  // Синхронизируем последнюю крошку шапки (живёт в LectureLayout).
   useLayoutEffect(() => {
-    const root = contentRef.current;
+    if (lecture) setCrumbTitle(lectureTitle(lecture));
+  }, [lecture, setCrumbTitle]);
+
+  // Контейнер оглавления — внешний wrapper, стабильный через static↔live.
+  useLayoutEffect(() => {
+    tocContainerRef.current = contentWrapRef.current;
+  }, [tocContainerRef, ready, mode]);
+
+  // Смена режима меняет DOM тела — просим сайдбар пере-сканировать заголовки.
+  useEffect(() => {
+    bumpToc();
+  }, [mode, bumpToc]);
+
+  // Отрисовываем формулы MathLive в статичном HTML (в live-режиме этим
+  // занимается NodeView MathBlock). Логика «самовосстановления» — как раньше:
+  // синхронный проход + retry-таймеры + MutationObserver на контейнере.
+  useLayoutEffect(() => {
+    if (mode !== "static") return;
+    const root = staticBodyRef.current;
     if (!root) return;
 
     const renderBlocks = () => {
@@ -81,16 +175,11 @@ function LectureView() {
         });
     };
 
-    // Синхронный рендер сразу после коммита (HTML уже в DOM).
     renderBlocks();
-
-    // «Повторные выстрелы» — на случай missed первого рендера.
     const t1 = window.setTimeout(renderBlocks, 120);
     const t2 = window.setTimeout(renderBlocks, 600);
     const t3 = window.setTimeout(renderBlocks, 1500);
 
-    // Самовосстановление: пере-рендерим формулы каждый раз, когда React или
-    // dangerouslySetInnerHTML вставит/снимет math-block внутри контейнера.
     const observer = new MutationObserver(() => renderBlocks());
     observer.observe(root, { childList: true, subtree: true });
 
@@ -100,17 +189,12 @@ function LectureView() {
       clearTimeout(t3);
       observer.disconnect();
     };
-  }, [content, lecture?.id]);
+    // `ready` is a dep: content is seeded one render before `loaded` flips, so
+    // the static container (gated on `ready`) mounts without `content` changing
+    // — without `ready` here the effect would never see the attached ref.
+  }, [content, lecture?.id, mode, ready]);
 
-  // Синхронизируем последнюю крошку шапки (живёт в LectureLayout).
-  useLayoutEffect(() => {
-    setTitle("");
-  }, [lectureSlugParam, setTitle]);
-  useLayoutEffect(() => {
-    if (lecture) setTitle(lectureTitle(lecture));
-  }, [lecture, setTitle]);
-
-  // «Продолжить» (Dashboard): пишем последнюю посещённую лекцию в localStorage.
+  // «Продолжить» (Dashboard): пишем последнюю посещённую запись в localStorage.
   useEffect(() => {
     if (!lecture) return;
     const course = lecture.expand?.field;
@@ -127,38 +211,92 @@ function LectureView() {
     });
   }, [lecture, isCourseContext, semesterSlug, courseSlug]);
 
-  const handleEdit = () => {
-    if (isCourseContext) {
-      navigate(`/s/${semesterSlug}/${courseSlug}/${lectureSlugParam}/edit`);
-    } else {
-      navigate(`/note/${lectureSlugParam}/edit`);
+  // ---- Автосохранение (title / content / tags) --------------------------
+  const doSave = useCallback(async () => {
+    if (!lecture) return;
+    await updateLecture(
+      lecture.id,
+      titleRef.current.trim() || "Без названия",
+      // Абсолютные URL картинок → портативные токены [[file:…]].
+      tokenizePbFileUrls(contentRef.current, lecture),
+      tagsRef.current
+    );
+  }, [lecture]);
+
+  const { saveState, saveText, flush } = useAutosave({
+    save: doSave,
+    deps: [title, content, tags],
+    enabled: ready,
+  });
+
+  // Навигация по сайдбару в лейауте сначала сбрасывает несохранённое.
+  useEffect(() => {
+    if (mode !== "live") {
+      registerFlush(null);
+      return;
     }
+    registerFlush(async () => {
+      await flush();
+    });
+    return () => registerFlush(null);
+  }, [mode, flush, registerFlush]);
+
+  const updateTitle = (v: string) => {
+    titleRef.current = v;
+    setTitle(v);
+  };
+  const updateContent = (v: string) => {
+    contentRef.current = v;
+    setContent(v);
+  };
+  const updateTags = (ids: string[]) => {
+    tagsRef.current = ids;
+    setTags(ids);
   };
 
-  const title = lecture ? lectureTitle(lecture) : "";
-  const unassigned = lecture ? !lectureCourseId(lecture) : false;
+  // Загрузка картинок в поле `file` лекции (для Editor'а и диктофона).
+  const handleUploadImages = useCallback(
+    async (files: File[]) => {
+      if (!lecture) {
+        throw new Error("Запись ещё не создана.");
+      }
+      return uploadLectureImages(lecture, files);
+    },
+    [lecture]
+  );
+
+  // Клик в статичное тело → монтируем редактор с кареткой в точке клика.
+  const enterLiveAt = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const el = e.target as HTMLElement;
+    // Ссылки / чекбоксы задач работают нативно, не перехватываем.
+    if (el.closest("a, input")) return;
+    setClickCoords({ left: e.clientX, top: e.clientY });
+    setMode("live");
+  };
 
   const handleDelete = () => {
     if (!lecture) return;
-    confirm.ask("Удалить запись?", `Запись «${title}» будет удалена.`, () => {
-      void deleteLecture(lecture.id).then(() => {
-        navigate(
-          isCourseContext
-            ? `/s/${semesterSlug}/${courseSlug}`
-            : `/s/${semesterSlug}`
-        );
-      });
+    const id = lecture.id;
+    const name = lectureTitle(lecture);
+    confirm.ask("Удалить запись?", `Запись «${name}» будет удалена.`, () => {
+      scheduleDelete(`lecture:${id}`, `Запись «${name}» удалена`, () =>
+        deleteLecture(id)
+      );
+      navigate(
+        isCourseContext
+          ? `/s/${semesterSlug}/${courseSlug}`
+          : `/s/${semesterSlug}`
+      );
     });
   };
 
+  const unassigned = lecture ? !lectureCourseId(lecture) : false;
   const isHtmlContent = !!(lecture && /<[a-z][\s\S]*>/i.test(content));
 
   return (
     <>
-      <main
-        className="workspace-main"
-        key={lectureSlugParam || "view"}
-      >
+      <main className="workspace-main" key={lectureSlugParam || "view"}>
         {error && !lecture && (
           <ErrorBanner message={error || "Запись не найдена."} />
         )}
@@ -174,34 +312,56 @@ function LectureView() {
                 {formatDate(lecture.created)}
                 {unassigned && " · Не привязана к курсу"}
               </p>
-              <h1 className="lecture-card-title">{title}</h1>
-              <TagBadges lectureId={lecture.id} />
+              <input
+                className="lecture-title-input"
+                value={title}
+                placeholder="Название записи"
+                onChange={(e) => updateTitle(e.target.value)}
+              />
+              <TagEditor selectedIds={tags} onChange={updateTags} />
               <div className="lecture-card-actions">
-                <button
-                  className="icon-btn"
-                  type="button"
-                  onClick={handleEdit}
-                  title="Редактировать"
-                >
-                  <Pencil size={15} />
-                </button>
+                <SaveIndicator state={saveState} text={saveText} />
                 <button
                   className="icon-btn danger"
                   type="button"
                   onClick={handleDelete}
                   title="Удалить"
+                  aria-label="Удалить"
                 >
                   <Trash2 size={15} />
                 </button>
               </div>
             </header>
-            <div
-              ref={contentRef}
-              className={`lecture-card-body lecture-view-content ${
-                isHtmlContent ? "is-html" : "is-plain"
-              }`}
-              dangerouslySetInnerHTML={{ __html: content || "" }}
-            />
+
+            <div ref={contentWrapRef} className="lecture-card-body">
+              {mode === "static" ? (
+                <div
+                  ref={staticBodyRef}
+                  className={`lecture-view-content editable-surface ${
+                    isHtmlContent ? "is-html" : "is-plain"
+                  }`}
+                  title="Нажмите, чтобы редактировать"
+                  onPointerDown={enterLiveAt}
+                  dangerouslySetInnerHTML={{ __html: content || "" }}
+                />
+              ) : (
+                <>
+                  <Editor
+                    // key=id: между лекциями редактор пересоздаётся целиком
+                    // (иначе при идентичном content застревает прошлый текст,
+                    // а блоки формул не перемонтируются).
+                    key={lecture.id}
+                    value={content}
+                    onUpdate={updateContent}
+                    className="editor-inline"
+                    onUploadImages={handleUploadImages}
+                    selectionCoords={clickCoords}
+                  />
+                  {/* Речь + аудиозапись: регистрирует запись в SpeechProvider. */}
+                  <SpeechToText lecture={lecture} onUpload={handleUploadImages} />
+                </>
+              )}
+            </div>
           </article>
         )}
       </main>

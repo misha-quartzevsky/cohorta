@@ -231,6 +231,7 @@ async function upsertDeck(pb: PocketBase): Promise<void> {
       deck: deck.id,
       front: card.front,
       back: card.back,
+      position: i,
     };
     if (i === SEED_DECK.cards.length - 1) {
       payload.attachments = [retinaSvg()];
@@ -254,6 +255,144 @@ async function upsertDeck(pb: PocketBase): Promise<void> {
     }
   }
   log(`Deck cards seeded: ${SEED_DECK.cards.length}.`);
+}
+
+// ---------------------------------------------------------------------------
+// Demo exam — реальные формулировки (философия, 6 семестр, предоставлены
+// заказчиком), а не выдуманные короткие строки: длина 41-227 символов на
+// настоящем списке — карта билетов и тултипы должны держать её, а не
+// только «Билет №1» из 10 символов.
+// ---------------------------------------------------------------------------
+
+const EXAM_TICKETS: Array<{
+  number: number;
+  question: string;
+  status: "empty" | "draft" | "ready";
+  answer?: string;
+}> = [
+  {
+    number: 1,
+    status: "ready",
+    question:
+      "Идеология революционного народничества. Основные подходы лидеров народничества к политической борьбе.",
+    answer:
+      para(
+        "Народничество — общественное движение разночинной интеллигенции второй половины XIX века, искавшее для России некапиталистический путь развития через крестьянскую общину."
+      ) + math("x^2 + y^2 = z^2"), // синтетическая формула — для проверки рендера MathLive на шпаргалке
+  },
+  {
+    number: 2,
+    status: "ready",
+    question:
+      "Почвенничество и толстовство: социально-политические идеи Ф.М. Достоевского и Л.Н. Толстого.",
+    answer: para(
+      "Почвенничество — течение, искавшее синтез между западничеством и славянофильством через возвращение к «почве», то есть к народным началам."
+    ),
+  },
+  {
+    number: 3,
+    status: "draft",
+    question:
+      "Понятие анархии. Разновидности анархизма. Анархо-коммунизм П.А. Кропоткина.",
+    answer: para("Черновик: анархизм отрицает государство как форму принуждения…"),
+  },
+  {
+    number: 4,
+    status: "empty",
+    question:
+      "Русский политический консерватизм. Основные идеи, направления (византизм и монархизм) и представители (Н.М. Карамзин, Н.Я. Данилевский, К.Н. Леонтьев, М.Н. Катков, К.П. Победоносцев, Л.А. Тихомиров и др.) русского консерватизм.",
+  },
+  {
+    number: 5,
+    status: "empty",
+    question:
+      "Философия всеединства В.С. Соловьева: метафизика, историософия, этика.",
+  },
+  {
+    number: 6,
+    status: "empty",
+    question:
+      "Персонализм Н. А. Бердяева: русская идея, антроподицея, философия свободы.",
+  },
+  {
+    number: 7,
+    status: "empty",
+    question:
+      "Интуитивизм Н.О. Лосского и экзистенциальный иррационализм Л. И. Шестова.",
+  },
+  {
+    number: 8,
+    status: "empty",
+    question:
+      "Русский космизм: основные представители и идеи (Н.Ф. Федоров, К.Э. Циолковский, В.И. Вернадский и др.)",
+  },
+];
+
+/**
+ * Экзамен курса «Математический анализ» — upsert по паре (course, owner),
+ * та же уникальность, что задаёт индекс `idx_exams_course_owner`.
+ *
+ * ВАЖНО: `exams`/`exam_tickets` — первые owner-scoped коллекции проекта
+ * (см. миграции 1787400000/1787400100). Анонимно их не создать — сид
+ * логинится демо-пользователем на время этого шага и разлогинивается
+ * сразу после, чтобы не менять поведение остального скрипта (курсы/
+ * лекции/колоды по-прежнему сидируются анонимно, как раньше).
+ */
+async function upsertExam(pb: PocketBase, courseId: string): Promise<void> {
+  let authed: { id: string };
+  try {
+    authed = (
+      await pb.collection("users").authWithPassword(DEMO_EMAIL, DEMO_PASSWORD)
+    ).record;
+  } catch (e) {
+    log(`WARN: could not auth demo user for exam seeding, skipping: ${(e as Error).message}`);
+    return;
+  }
+
+  try {
+    let exam = (
+      await pb.collection("exams").getFullList<{ id: string }>({
+        filter: `course = "${courseId}" && owner = "${authed.id}"`,
+        perPage: 1,
+        fields: "id",
+      })
+    )[0];
+    if (!exam) {
+      exam = await pb.collection("exams").create<{ id: string }>({
+        course: courseId,
+        owner: authed.id,
+        mode: "solo",
+      });
+      log(`Exam created for course ${courseId}.`);
+    } else {
+      log(`Exam already exists for course ${courseId} — upserting tickets.`);
+    }
+
+    for (const t of EXAM_TICKETS) {
+      const existing = (
+        await pb.collection("exam_tickets").getFullList<{ id: string }>({
+          filter: `exam = "${exam.id}" && number = ${t.number}`,
+          perPage: 1,
+          fields: "id",
+        })
+      )[0];
+      const payload = {
+        exam: exam.id,
+        number: t.number,
+        question: t.question,
+        answer: t.answer ?? "",
+        status: t.status,
+      };
+      if (existing) {
+        await pb.collection("exam_tickets").update(existing.id, payload);
+      } else {
+        await pb.collection("exam_tickets").create(payload);
+      }
+    }
+    log(`Exam tickets seeded: ${EXAM_TICKETS.length}.`);
+  } finally {
+    pb.authStore.clear();
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -376,6 +515,9 @@ export async function seed(pb: PocketBase): Promise<void> {
 
   // 4. Demo deck (flashcards) — upsert by slug.
   await upsertDeck(pb);
+
+  // 5. Demo exam — на первом курсе (math-analysis).
+  await upsertExam(pb, courses[0].id);
 
   log(
     "Done. Open http://127.0.0.1:5173, switch the semester to «demo» and check the dashboard.",

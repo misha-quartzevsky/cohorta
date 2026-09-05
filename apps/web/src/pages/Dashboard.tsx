@@ -7,8 +7,9 @@ import { useAuth } from "../hooks/useAuth";
 import { useLastVisited } from "../hooks/useLastVisited";
 import { useActivityTimeline } from "../hooks/useActivityTimeline";
 import { useSemester } from "../lib/semesterContext";
-import { semesterSlug } from "../lib/types";
+import { semesterSlug, examCourseId } from "../lib/types";
 import { useActivityHeatmap } from "../hooks/useActivityHeatmap";
+import { useUpcomingExam, useExam } from "../hooks/useExam";
 
 import Header from "../components/Header";
 import ErrorBanner from "../components/ErrorBanner";
@@ -18,15 +19,20 @@ import { CourseCreateSlot } from "../components/CourseFormTile";
 
 import HeroSection from "./dashboard/HeroSection";
 import QuickActionsBar from "./dashboard/QuickActionsBar";
-import ResumeBlock from "./dashboard/ResumeBlock";
+import PriorityHero from "./dashboard/PriorityHero";
 import CoursesWidget from "./dashboard/CoursesWidget";
+import StudyWeekStrip from "./dashboard/StudyWeekStrip";
 import ActivityTimeline from "./dashboard/ActivityTimeline";
 import ReviewBlock from "./dashboard/ReviewBlock";
 
 /**
- * Дашборд по DESIGN.md §7.2, порядок блоков по частоте использования:
- * приветствие (+ пульс активности) → «Продолжить» → быстрые действия →
- * курсы семестра | (колоды + последняя активность).
+ * Дашборд — Design Sprint, Концепция A (Wednesday Decide, DESIGN.md §7.2
+ * обновлён по её итогам). Один явный герой вместо двух конкурирующих блоков
+ * («Продолжить» и «Ближайший экзамен» раньше рендерились отдельно):
+ * приветствие → PriorityHero (экзамен скоро ИЛИ продолжить ИЛИ пусто) →
+ * быстрые действия → курсы семестра | эта неделя → колоды | активность.
+ * Полный календарь месяца свёрнут в полоску текущей недели — та же
+ * честная активность, без пустой сетки на треть экрана.
  * Редактирование курсов/лекций намеренно живёт на своих страницах.
  */
 function Dashboard() {
@@ -38,7 +44,6 @@ function Dashboard() {
 
   const {
     courses,
-    featured,
     loading: coursesLoading,
     error: coursesError,
     createCourse,
@@ -46,6 +51,11 @@ function Dashboard() {
   } = useCourses(semesterId);
 
   const { decks } = useDecks(4);
+  const { exam: upcomingExam } = useUpcomingExam();
+  const { tickets: upcomingTickets } = useExam(
+    upcomingExam ? examCourseId(upcomingExam) : "",
+    !!upcomingExam
+  );
 
   const lastVisited = useLastVisited();
   const timeline = useActivityTimeline(10);
@@ -69,10 +79,7 @@ function Dashboard() {
             <HeroSection
               user={user}
               stats={{ notesThisWeek: heatmap.notesThisWeek }}
-              activity={heatmap.days}
             />
-
-
 
             {form.creating && (
               <div className="dashboard-create-slot">
@@ -80,9 +87,12 @@ function Dashboard() {
               </div>
             )}
 
-
-
-            <ResumeBlock lastVisited={lastVisited} />
+            <PriorityHero
+              exam={upcomingExam}
+              tickets={upcomingTickets}
+              semesterSlug={semSlug}
+              lastVisited={lastVisited}
+            />
 
             <QuickActionsBar
               onNewNote={() => navigate("/note/new")}
@@ -91,18 +101,22 @@ function Dashboard() {
             />
 
             <div className="dashboard-grid">
-              <div className="col-main">
-                <CoursesWidget
-                  courses={courses.slice(0, 4)}
-                  featured={featured}
-                  semesterSlug={semSlug}
-                  total={courses.length}
-                />
-              </div>
-              <div className="col-side">
-                <ReviewBlock decks={decks} />
-                <ActivityTimeline items={timeline} />
-              </div>
+              <CoursesWidget
+                courses={courses.slice(0, 6)}
+                semesterSlug={semSlug}
+                total={courses.length}
+              />
+              <StudyWeekStrip
+                days={heatmap.days}
+                dayLectures={heatmap.dayLectures}
+                dayDeckCount={heatmap.dayDeckCount}
+                semesterSlug={semSlug}
+              />
+            </div>
+
+            <div className="dashboard-grid">
+              <ReviewBlock decks={decks} />
+              <ActivityTimeline items={timeline} />
             </div>
           </div>
         </>

@@ -55,6 +55,7 @@ Statuses: pending · in-progress · awaiting-evidence · done · deferred: <reas
 | 2026-08-29 | 9 | CUT: вся геймификация + дубли | heatmap/StudyWeekStrip, score-чипы, эмодзи, дубль списка билетов, 2 лишних входа в экзамен, мёртвый SemesterSwitcher, popover пустых дней, is_public без UI. EXP-059…062. |
 | 2026-08-29 | 9 | BUILD: B1 конспект→карточка, B2 «на сегодня» (простое), B3 дата экзамена, B4 визард, B5 надёжный автосейв | Замыкают Hook-цикл. B2 = «давно не повторял», без интервалов/оценок. EXP-055…058. |
 | 2026-08-29 | 9 | BOF на P0-экранах чинятся вместе с P0 | not-found+404, сырые ошибки загрузки, индикатор автосейва. Остальные задворки — P1–P2. EXP-063/064. |
+| 2026-08-29 | fixes | Сессия правок по жалобе пользователя: «битые даты» + DnD в редакторе | EXP-066 (единый `parsePbDate` — формат PocketBase не ISO-8601, Firefox/Safari давали Invalid Date) и EXP-065 (грип-хэндл `@tiptap/extension-drag-handle-react` для блоков/списков/формул; `@dnd-kit/sortable` + `deck_cards.position` для порядка карточек; drop картинки из соседней вкладки; снят клик-ловушка на блоке формулы). Скиллы: design-everyday-things (грип = сигнификатор), microinteractions (MI9), refactoring-ui (грип в токен-системе, 0 новых токенов). Требует рестарта PocketBase `serve` (миграция `1787500000`). |
 
 ## Журней завершён (2026-08-29)
 

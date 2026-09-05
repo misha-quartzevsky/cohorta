@@ -12,9 +12,8 @@ import { useDecks } from "./useDecks";
 import { useSemester } from "../lib/semesterContext";
 import {
   courseName,
-  courseSlug,
   lectureCourseId,
-  lectureSlug,
+  lectureHref,
   lectureTitle,
   semesterSlug,
   deckTitle,
@@ -48,9 +47,7 @@ function toItem(lec: Lecture, semSlug: string): TimelineItem {
     title: lectureTitle(lec),
     course: course ? courseName(course) : undefined,
     time: timeAgo(lec.updated),
-    to: unassigned
-      ? `/note/${lectureSlug(lec)}`
-      : `/s/${semSlug}/${courseSlug(course!)}/${lectureSlug(lec)}`,
+    to: lectureHref(lec, semSlug),
   };
 }
 

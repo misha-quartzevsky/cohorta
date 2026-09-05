@@ -1,15 +1,14 @@
 /**
  * ============================================
- *  HeroSection.tsx — приветствие + факт недели + пульс активности
+ *  HeroSection.tsx — приветствие + факт недели
  * ============================================
  *  Первый блок дашборда (DESIGN.md §7.2): факт без эмодзи и без придуманной
- *  геймификации. Тепловая карта стоит справа от приветствия — компактный
- *  пульс, а не отдельный виджет.
+ *  геймификации. Активность теперь живёт в отдельном виджете-календаре
+ *  (StudyCalendar) — здесь только текст.
  */
 
 import type { User } from "../../lib/types";
 import { userName, pluralRu } from "../../lib/format";
-import ActivityHeatmap from "./ActivityHeatmap";
 
 interface Props {
   user: User | null;
@@ -17,11 +16,9 @@ interface Props {
     /** Сколько заметок СОЗДАНО за последние 7 дней. */
     notesThisWeek?: number;
   };
-  /** Карта «день → число действий» для пульса активности. */
-  activity?: Map<string, number>;
 }
 
-export default function HeroSection({ user, stats, activity }: Props) {
+export default function HeroSection({ user, stats }: Props) {
   const week = stats?.notesThisWeek ?? 0;
   return (
     <section className="hero-section">
@@ -39,11 +36,6 @@ export default function HeroSection({ user, stats, activity }: Props) {
               ])} на этой неделе.`}
         </p>
       </div>
-      {activity && activity.size > 0 && (
-        <div className="hero-heatmap">
-          <ActivityHeatmap days={activity} />
-        </div>
-      )}
     </section>
   );
 }

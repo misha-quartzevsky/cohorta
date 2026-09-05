@@ -22,8 +22,31 @@ export interface UseAuthResult {
   isValid: boolean;
   /** Authenticate with email + password via the `users` collection. */
   login: (email: string, password: string) => Promise<void>;
+  /**
+   * Create a new `users` record and immediately sign in with it.
+   * Mirrors `login` — `pb.authStore.onChange` propagates the new session.
+   */
+  register: (
+    email: string,
+    password: string,
+    passwordConfirm: string
+  ) => Promise<void>;
   /** Sign out and clear the stored token. */
   logout: () => void;
+}
+
+/**
+ * Guards against ending up authenticated as somebody else
+ * (e.g. a browser autofill filled a saved account, or a
+ * cached response resolved to a stale record). If the freshly
+ * stored session isn't the email we asked for, wipe it and fail.
+ */
+function assertSignedInAs(email: string): void {
+  const actual = pb.authStore.record?.email;
+  if (!actual || actual.toLowerCase() !== email.trim().toLowerCase()) {
+    pb.authStore.clear();
+    throw new Error("Сессия не совпадает с указанным email.");
+  }
 }
 
 /**
@@ -32,24 +55,45 @@ export interface UseAuthResult {
  * into view components.
  */
 export function useAuth(): UseAuthResult {
-  const [user, setUser] = useState<User | null>(
-    () => (pb.authStore.model as User | null) ?? null
-  );
+  const [user, setUser] = useState<User | null>(() => {
+    // An expired token can leave `record` populated — don't surface a ghost user.
+    if (!pb.authStore.isValid) {
+      if (pb.authStore.record) pb.authStore.clear();
+      return null;
+    }
+    return (pb.authStore.record as User | null) ?? null;
+  });
 
   useEffect(() => {
-    const unsubscribe = pb.authStore.onChange((_token, model) => {
-      setUser(model ? (model as User) : null);
+    const unsubscribe = pb.authStore.onChange((_token, record) => {
+      setUser(record ? (record as User) : null);
     });
     return unsubscribe;
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
+    // Drop any stale / foreign token before authenticating so a failed
+    // request can never leave the app showing a previous user.
+    pb.authStore.clear();
     await pb.collection("users").authWithPassword(email, password);
+    assertSignedInAs(email);
   }, []);
+
+  const register = useCallback(
+    async (email: string, password: string, passwordConfirm: string) => {
+      pb.authStore.clear();
+      await pb
+        .collection("users")
+        .create({ email, password, passwordConfirm, emailVisibility: true });
+      await pb.collection("users").authWithPassword(email, password);
+      assertSignedInAs(email);
+    },
+    []
+  );
 
   const logout = useCallback(() => {
     pb.authStore.clear();
   }, []);
 
-  return { user, isValid: pb.authStore.isValid, login, logout };
+  return { user, isValid: pb.authStore.isValid, login, register, logout };
 }

@@ -107,6 +107,13 @@ ICE: Impact / Confidence / Ease, каждый 1–10; score = I×C×E / 100 (0�
 | EXP-063 | BOF на P0-экранах: not-found+404 (BOF1), сырые ошибки загрузки (BOF3), индикатор автосейва (BOF5) — чинятся с P0 | P0 | 6 | 9 | 6 | 3.2 | P0-экраны проходят планку hero | proposed |
 | EXP-064 | BOF прочее (BOF2,4,6,7,8,9,11) | P1–P2 | 4 | 8 | 6 | 1.9 | Задворки подтянуты к планке | proposed |
 
+### Из сессии правок редактора (2026-08-29) — по жалобе пользователя
+
+| ID | Идея (из находки) | Приоритет | I | C | E | ICE | Метрика-прокси | Status |
+|---|---|---|---|---|---|---|---|---|
+| EXP-065 | DnD в редакторе: (а) грип в левом гаттере — тащить абзац/заголовок/пункт списка/блок формулы (расширение `@tiptap/extension-drag-handle-react`, `nested`); (б) drop картинки из другой вкладки (`text/html`/`uri-list`) + подсветка drop-зоны; (в) порядок карточек колоды — `@dnd-kit/sortable` за грип + поле `deck_cards.position`; (г) снять клик-по-всему-блоку у формулы (мешал каретке и перетаскиванию) | P1 | 6 | 8 | 5 | 2.4 | Ручной чек-лист: абзац/список/формула переставляются грипом и порядок держится после reload; порядок карточек колоды переживает reload; картинка из соседней вкладки вставляется по drop | done (code) |
+| EXP-066 | Даты в UI не «битые»: единый `parsePbDate` нормализует формат PocketBase (`"YYYY-MM-DD HH:MM:SS.sssZ"` → ISO) во всех местах (`timeAgo`/`formatDate`/сайдбар/дашборд-хуки); в Firefox/Safari больше не `Invalid Date` и не сырая строка с `Z` | P0 (BOF3/BOF5-класс) | 7 | 9 | 8 | 5.0 | В Firefox шапка конспекта показывает «29 августа 2026 г.», лента активности не пустеет; `.lecture-card-meta` не содержит `Z` (тест `editor.spec.ts`) | done (code) |
+
 ## Experiment Cards
 
 ### EXP-001 — Экран «Новый семестр» из пустого состояния
@@ -121,6 +128,48 @@ ICE: Impact / Confidence / Ease, каждый 1–10; score = I×C×E / 100 (0�
 - Decision rule: 5/5 → persevere (в работу); 3–4/5 → iterate (упростить); ≤2/5 → pivot
   (пересмотреть модель «семестр как контейнер»).
 - Result & verdict: _(pending — код не трогаем в этом прогоне)_
+
+### EXP-066 — Единый парсер дат PocketBase
+- Hypothesis: «битые» даты в редакторе — это `new Date()` на формате PocketBase с пробелом
+  вместо `T` (не ISO-8601); Chrome прощает, Firefox/Safari дают `Invalid Date`, и
+  `formatDate` печатает сырую строку, `timeAgo` — пустоту.
+- Type: bugfix + регрессионный тест Playwright.
+- Primary metric & threshold (pre-committed): в Firefox `.lecture-card-meta` матчит
+  «день месяц-словом год» и не содержит `Z`/`Invalid`; лента активности на дашборде не
+  пустая. Тест `editor.spec.ts › человекочитаемую дату` зелёный.
+- Guardrail: существующие тесты (`navigation`, `header-stability`, `lecture-workflow`,
+  `decks`, `tables`, `editor`) остаются зелёными.
+- Result & verdict: код внесён 2026-08-29; `parsePbDate` в `apps/web/src/lib/format.ts`,
+  прогнан через `timeAgo`/`formatDate`, `GlobalSidebar`, `useActivityHeatmap`,
+  `useCourseProgress`. Тест добавлен и проходит. **persevere.**
+- Follow-up (не в этой сессии): `LectureView.doSave` игнорирует запись, которую вернул
+  `updateLecture` → `lecture.updated` заморожен на сессию (устаревшее «изменено N назад»,
+  устаревший `writeLastVisited`). Требует `mutate`/`refetch` в `useAsyncData` →
+  `useLectureBySlug`. Отдельная карточка.
+
+### EXP-065 — Drag-n-drop в редакторе
+- Hypothesis: DnD «не работает», потому что (1) перестановки блоков не было вообще
+  (ни drag-handle, ни sortable, ни поля порядка); (2) drop картинки — no-op для всего,
+  что не `image/*`-файл (картинка из соседней вкладки приходит как `text/html`); (3) у
+  формул/скетчей/аудио `draggable:true` без сигнификатора и с кликом-ловушкой на всём блоке.
+- Type: feature + bugfix; ручная приёмка (headed-Firefox не пропускает клавиатурный DnD).
+- Primary metric & threshold (pre-committed) — ручной чек-лист:
+  1. Грип появляется при наведении на абзац/заголовок/пункт списка/блок формулы; перетас­
+     кивание меняет порядок; после reload порядок сохранён.
+  2. Картинку из другой вкладки браузера бросаем на «лист» → вставляется как `<img>`;
+     зона подсвечивается «Отпустите, чтобы вставить картинку».
+  3. В редакторе колоды карточка тащится за грип; после «Сохранить колоду» + reload
+     порядок держится (`deck_cards.position`).
+  4. Одиночный клик по блоку формулы больше не открывает overlay (только ✏️ / double-click).
+- Guardrail: `editor.spec.ts`, `tables.spec.ts`, `decks.spec.ts` зелёные; сборка и
+  `tsc -b`/`oxlint` чистые; редактор колоды грузится и на не-мигрированном backend
+  (fallback сортировки в `fetchDeckCards`).
+- Result & verdict: код внесён 2026-08-29. Зависимости: `@tiptap/extension-drag-handle-react`
+  (пин `3.30.1` — peer совпадает со стеком), `@dnd-kit/core|sortable|utilities`. Миграция
+  `pocketbase/pb_migrations/1787500000_deck_cards_position.js`. **Нужен рестарт PocketBase
+  `serve`, чтобы `serve`-процесс увидел колонку `position`** (миграция уже применена к БД).
+  E2E полного жеста нет — headed-Firefox глотает клавиатурный DnD `@dnd-kit`; тест
+  проверяет наличие доступного грипа. **persevere; закрыть ручной приёмкой.**
 
 ## Notes
 - Метрики-прокси считаются вручную по чек-листу «новый студент» из

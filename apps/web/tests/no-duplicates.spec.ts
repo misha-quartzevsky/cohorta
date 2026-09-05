@@ -24,7 +24,7 @@ test("ровно один .global-sidebar и ни одного .workspace-sideba
 
   // Курс.
   await page
-    .locator(".course-card", { hasText: "Математический анализ" })
+    .locator(".course-row", { hasText: "Математический анализ" })
     .dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis");
   await expect(page.locator(".global-sidebar")).toHaveCount(1);
@@ -39,7 +39,7 @@ test("ровно один .global-sidebar и ни одного .workspace-sideba
     .first()
     .dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis/limit-of-sequence");
-  await expect(page.locator(".lecture-card-title")).toHaveText(
+  await expect(page.locator(".lecture-title-input")).toHaveValue(
     "Предел последовательности"
   );
   await expect(page.locator(".global-sidebar")).toHaveCount(1);

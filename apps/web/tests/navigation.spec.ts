@@ -22,7 +22,7 @@ test("переключение семестра в сайдбаре меняет
   await expect(page.locator(".hero-greeting")).toBeVisible();
 
   const courses = page.locator(".courses-widget");
-  const demoCourse = courses.locator(".course-card", {
+  const demoCourse = courses.locator(".course-row", {
     hasText: "Математический анализ",
   });
   await waitForStable(page, demoCourse);
@@ -48,14 +48,14 @@ test("переключение семестра в сайдбаре меняет
   await expect(
     page
       .locator(".courses-widget")
-      .locator(".course-card", { hasText: "Математический анализ" })
+      .locator(".course-row", { hasText: "Математический анализ" })
   ).toHaveCount(0);
 
   // Обратно на demo: курсы снова на месте.
   await switchSemester("demo");
   await expect(page.locator(".hero-greeting")).toBeVisible();
   await expect(
-    page.locator(".courses-widget .course-card", {
+    page.locator(".courses-widget .course-row", {
       hasText: "Математический анализ",
     })
   ).toBeVisible();

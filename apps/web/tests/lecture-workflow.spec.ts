@@ -27,7 +27,7 @@ import { login } from "./helpers";
  */
 async function openLimitOfSequence(page: import("@playwright/test").Page) {
   await page.goto("/s/demo/math-analysis/limit-of-sequence");
-  await expect(page.locator(".lecture-card-title")).toHaveText(
+  await expect(page.locator(".lecture-title-input")).toHaveValue(
     "Предел последовательности"
   );
 }
@@ -67,7 +67,7 @@ test("seamless navigation: Header — тот же узел, карточка а�
   await expect(next).toBeVisible();
   await next.dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis/derivative-geometry");
-  await expect(page.locator(".lecture-card-title")).toHaveText(
+  await expect(page.locator(".lecture-title-input")).toHaveValue(
     "Производная функции"
   );
 

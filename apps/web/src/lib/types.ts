@@ -63,6 +63,46 @@ export interface DeckCard extends PbRecord {
   deck?: string;
   /** Файлы-вложения (картинки) карточки (поле "file" в PB). */
   attachments?: string | string[];
+  /** Ручной порядок в колоде (drag-n-drop). Меньше — выше. */
+  position?: number;
+}
+
+/** Состояние работы над билетом. Хранится, а не выводится из пустоты
+ *  ответа: переход draft → ready — осознанное действие человека. */
+export type TicketStatus = "empty" | "draft" | "ready";
+
+export interface Exam extends PbRecord {
+  /** PocketBase relation → courses. Экзамен — singleton внутри курса. */
+  course?: string;
+  /** «Экзамен» / «Зачёт» / «Пересдача». Пусто → показываем «Экзамен». */
+  title?: string;
+  /** ISO-дата экзамена; пусто = даты нет и счётчик дней не показываем. */
+  exam_date?: string;
+  /** PocketBase relation → users (владелец). */
+  owner?: string;
+  mode?: "solo" | "group";
+  /** Expanded course data (when using expand:"course"). */
+  expand?: {
+    course?: Course;
+  };
+}
+
+export interface ExamTicket extends PbRecord {
+  /** PocketBase relation → exams. */
+  exam?: string;
+  /** Номер билета — поле порядка и адрес в URL. */
+  number: number;
+  /** Формулировка вопроса (plain text, как lectures.title). */
+  question: string;
+  /** Rich-контент ответа (тип "editor" в PB). */
+  answer?: string;
+  /** Файлы-вложения ответа (поле "file" в PB). */
+  attachments?: string | string[];
+  status?: TicketStatus;
+  /** Multiple-relation → lectures: из каких конспектов собран ответ. */
+  sources?: string[];
+  /** PocketBase relation → users. Задел на Group Mode. */
+  author?: string;
 }
 
 export interface User extends PbRecord {
@@ -106,6 +146,23 @@ export const FIELDS = {
   deckCardDeck: "deck",
   // Файлы-вложения карточки (тип "file" в PB)
   deckCardAttachments: "attachments",
+  // Ручной порядок карточки в колоде (drag-n-drop)
+  deckCardPosition: "position",
+  // Поля коллекции exams
+  examCourse: "course",
+  examTitle: "title",
+  examDate: "exam_date",
+  examOwner: "owner",
+  examMode: "mode",
+  // Поля коллекции exam_tickets
+  ticketExam: "exam",
+  ticketNumber: "number",
+  ticketQuestion: "question",
+  ticketAnswer: "answer",
+  ticketAttachments: "attachments",
+  ticketStatus: "status",
+  ticketSources: "sources",
+  ticketAuthor: "author",
 } as const;
 
 // Вспомогательные геттеры, защищающие от разной схемы в БД
@@ -161,6 +218,18 @@ export function lectureSlug(l: Lecture): string {
   return l.slug ? String(l.slug) : l.id;
 }
 
+/**
+ * Путь навигации к лекции: привязанные к курсу лекции живут под
+ * /s/:semester/:course/:lecture, непривязанные — под /note/:lecture.
+ * Единая точка для этой развилки — раньше дублировалась в
+ * useActivityTimeline и, отдельно, в компонентах календаря дашборда.
+ */
+export function lectureHref(l: Lecture, semesterSlugValue: string): string {
+  const course = lectureCourseId(l) ? l.expand?.field : undefined;
+  if (!course) return `/note/${lectureSlug(l)}`;
+  return `/s/${semesterSlugValue}/${courseSlug(course)}/${lectureSlug(l)}`;
+}
+
 /** URL identifier of a semester (e.g. "5"). */
 export function semesterSlug(s: Semester): string {
   return String(s.slug ?? "");
@@ -185,12 +254,16 @@ export function stripHtml(html: string): string {
 
 /**
  * Плейн-текстовая выдержка лекции для плиток и результатов поиска.
- * Обрезает до `maxLen` символов (по границе не рвёт — просто обрезает).
+ * Обрезает до `maxLen` символов по границе последнего целого слова —
+ * никогда не рвёт слово посередине (было: "...вторая по...").
  */
 export function lectureExcerpt(l: Lecture, maxLen = 150): string {
   const text = stripHtml(lectureBody(l));
   if (text.length <= maxLen) return text;
-  return text.slice(0, maxLen).trimEnd() + "…";
+  const cut = text.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(" ");
+  const trimmed = lastSpace > 0 ? cut.slice(0, lastSpace) : cut;
+  return trimmed.trimEnd() + "…";
 }
 
 export function tagName(t: Tag): string {
@@ -243,4 +316,78 @@ export function deckCardAttachmentNames(c: DeckCard): string[] {
   if (Array.isArray(v)) return v.map(String);
   if (typeof v === "string" && v) return [v];
   return [];
+}
+
+
+/** Заголовок экзамена; по умолчанию — нейтральное «Экзамен». */
+export function examTitle(e: Exam): string {
+  const t = String(e.title ?? "").trim();
+  return t || "Экзамен";
+}
+
+/** PocketBase id курса, к которому привязан экзамен ("" = нет). */
+export function examCourseId(e: Exam): string {
+  return String(e.course ?? "");
+}
+
+/** ISO-дата экзамена ("" = не задана). */
+export function examDate(e: Exam): string {
+  return String(e.exam_date ?? "");
+}
+
+/**
+ * Сколько полных дней осталось до экзамена.
+ *
+ * Считаем по календарным суткам, а не по «24 часа»: экзамен завтра
+ * утром — это «завтра», даже если до него 15 часов.
+ *
+ * @returns число дней (0 = сегодня, отрицательное = прошёл),
+ *          либо null, когда дата не задана или не разбирается
+ */
+export function examDaysLeft(e: Exam, now: Date = new Date()): number | null {
+  const raw = examDate(e);
+  if (!raw) return null;
+  const target = new Date(raw);
+  if (Number.isNaN(target.getTime())) return null;
+  const startOfDay = (d: Date) =>
+    Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  return Math.round((startOfDay(target) - startOfDay(now)) / 86400000);
+}
+
+/** Статус билета с безопасным значением по умолчанию. */
+export function ticketStatus(t: ExamTicket): TicketStatus {
+  const v = String(t.status ?? "");
+  return v === "draft" || v === "ready" ? v : "empty";
+}
+
+export function ticketNumber(t: ExamTicket): number {
+  const n = Number(t.number);
+  return Number.isFinite(n) ? n : 0;
+}
+
+export function ticketQuestion(t: ExamTicket): string {
+  return String(t.question ?? "");
+}
+
+export function ticketAnswer(t: ExamTicket): string {
+  return String(t.answer ?? "");
+}
+
+/** PocketBase id экзамена, которому принадлежит билет ("" = нет). */
+export function ticketExamId(t: ExamTicket): string {
+  return String(t.exam ?? "");
+}
+
+/** Имена файлов-вложений билета (поле `attachments`). */
+export function ticketAttachmentNames(t: ExamTicket): string[] {
+  const v = t.attachments;
+  if (Array.isArray(v)) return v.map(String);
+  if (typeof v === "string" && v) return [v];
+  return [];
+}
+
+/** Id лекций-источников ответа. */
+export function ticketSourceIds(t: ExamTicket): string[] {
+  const v = t.sources;
+  return Array.isArray(v) ? v.map(String) : [];
 }

@@ -41,6 +41,31 @@ test("деки: перелистывание колоды (flip + «Знаю»)"
   await expect(page.locator(".flash-3d-inner")).not.toHaveClass(/is-flipped/);
 });
 
+test("деки: у каждой карточки есть доступный грип для перетаскивания", async ({
+  page,
+}) => {
+  await login(page, "demo");
+  await page.waitForURL("**/s/demo");
+  await page.goto("/decks/retina-vision/edit");
+
+  const cards = page.locator(".deck-editor-card");
+  await expect(cards.first()).toBeVisible({ timeout: 15000 });
+  const count = await cards.count();
+  expect(count).toBeGreaterThan(1);
+
+  // Сигнификатор аффорданса draggable: по грипу-кнопке на карточку,
+  // это доступный контрол с aria-label и его можно сфокусировать.
+  const grips = page.locator(".deck-editor-card .deck-card-drag");
+  await expect(grips).toHaveCount(count);
+  const first = grips.first();
+  await expect(first).toHaveAttribute("aria-label", /Перетащить карточку/);
+  await first.focus();
+  await expect(first).toBeFocused();
+
+  // Сам жест перетаскивания проверяется вручную (headed-Firefox не пропускает
+  // клавиатурный DnD @dnd-kit) — см. docs/EXPERIMENTS.md, EXP-065.
+});
+
 test("деки: клавиатура переворачивает и «Знаю» продвигает", async ({
   page,
 }) => {

@@ -22,10 +22,23 @@ export function pluralRu(n: number, forms: [string, string, string]): string {
   return forms[2];
 }
 
+/**
+ * PocketBase отдаёт datetime как «2026-01-15 10:00:00.123Z» — пробел вместо `T`,
+ * это не валидный ISO-8601. Chrome такое парсит, Firefox/Safari возвращают
+ * Invalid Date. Нормализуем в ISO и подставляем `Z`, если зоны нет вовсе.
+ */
+export function parsePbDate(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const iso = String(value).trim().replace(" ", "T");
+  const withZone = /[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : `${iso}Z`;
+  const date = new Date(withZone);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 /** Относительное русское время («15 мин. назад», «вчера», …). */
 export function timeAgo(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "";
+  const date = parsePbDate(iso);
+  if (!date) return "";
   const diff = Date.now() - date.getTime();
   const min = Math.floor(diff / 60000);
   if (min < 1) return "только что";
@@ -52,8 +65,8 @@ export function errorMessage(e: unknown): string {
  * (например "2026-01-15 10:00:00.123Z" → "15 января 2026 г.").
  */
 export function formatDate(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso || "";
+  const date = parsePbDate(iso);
+  if (!date) return "";
   return date.toLocaleDateString("ru-RU", {
     day: "numeric",
     month: "long",

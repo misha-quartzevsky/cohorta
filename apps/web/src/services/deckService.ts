@@ -34,12 +34,26 @@ export async function getDeckCard(cardId: string): Promise<DeckCard> {
   return pb.collection("deck_cards").getOne<DeckCard>(cardId);
 }
 
-/** Fetch the cards of one deck (in stable creation order). */
+/**
+ * Fetch the cards of one deck in the user's manual order (`position`), with
+ * `created` as the tie-breaker for legacy rows that never got a position.
+ *
+ * Falls back to plain `created` order if the backend hasn't picked up the
+ * `position` column yet (migration applied but the `serve` process not
+ * restarted) — the client stays usable through the rollout.
+ */
 export async function fetchDeckCards(deckId: string): Promise<DeckCard[]> {
-  return pb.collection("deck_cards").getFullList<DeckCard>({
-    filter: `${FIELDS.deckCardDeck}="${deckId}"`,
-    sort: "created",
-  });
+  const filter = `${FIELDS.deckCardDeck}="${deckId}"`;
+  try {
+    return await pb.collection("deck_cards").getFullList<DeckCard>({
+      filter,
+      sort: `${FIELDS.deckCardPosition},created`,
+    });
+  } catch {
+    return pb
+      .collection("deck_cards")
+      .getFullList<DeckCard>({ filter, sort: "created" });
+  }
 }
 
 /** Fetch all cards across decks (used to count cards per deck in the library). */
@@ -87,7 +101,11 @@ export async function deleteDeck(deckId: string): Promise<void> {
   await pb.collection("decks").delete(deckId);
 }
 
-/** Create a single card inside a deck. */
+/**
+ * Create a single card inside a deck. Order (`position`) is written separately
+ * by `persistDeckCardOrder` so this call works on a backend that hasn't picked
+ * up the `position` column yet.
+ */
 export async function createDeckCard(
   deckId: string,
   front: string,
@@ -110,6 +128,25 @@ export async function updateDeckCard(
     [FIELDS.deckCardFront]: front,
     [FIELDS.deckCardBack]: back,
   });
+}
+
+/**
+ * Persist the manual card order (drag-n-drop): writes each id's array index
+ * into `position`. Best-effort — if the backend hasn't got the column yet the
+ * whole call is a no-op so it never blocks a content save.
+ */
+export async function persistDeckCardOrder(orderedIds: string[]): Promise<void> {
+  try {
+    await Promise.all(
+      orderedIds.map((id, i) =>
+        pb
+          .collection("deck_cards")
+          .update(id, { [FIELDS.deckCardPosition]: i })
+      )
+    );
+  } catch (e) {
+    console.warn("Не удалось сохранить порядок карточек:", e);
+  }
 }
 
 /** Delete a single card (e.g. removed while editing a deck). */

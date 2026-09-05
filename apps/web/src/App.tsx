@@ -10,8 +10,8 @@
  *   /s/:semesterSlug                           → semester dashboard
  *   /s/:semesterSlug/courses                   → all courses of the semester
  *   /s/:semesterSlug/:courseSlug               → lectures of a course
- *   /s/:semesterSlug/:courseSlug/:lectureSlug  → lecture view
- *   /s/:semesterSlug/:courseSlug/:lectureSlug/edit → lecture edit
+ *   /s/:semesterSlug/:courseSlug/:lectureSlug  → lecture (inline edit on click)
+ *   /s/:semesterSlug/:courseSlug/:lectureSlug/edit → same surface, editor open
  *   /note/:lectureSlug(+/edit)                 → unassigned notes (no semester)
  */
 
@@ -21,12 +21,17 @@ import Dashboard from "./pages/Dashboard";
 import CoursesPage from "./pages/CoursesPage";
 import LecturesPage from "./pages/LecturesPage";
 import LectureView from "./pages/LectureView";
-import LectureEdit from "./pages/LectureEdit";
 import NotesPage from "./pages/NotesPage";
 import NoteCreate from "./pages/NoteCreate";
 import CardLibraryPage from "./pages/CardLibraryPage";
 import CardStudyPage from "./pages/CardStudyPage";
 import DeckEditorPage from "./pages/DeckEditorPage";
+import ExamsPage from "./pages/ExamsPage";
+import ExamHubPage from "./pages/ExamHubPage";
+import ExamImportPage from "./pages/ExamImportPage";
+import TicketView from "./pages/TicketView";
+import TicketEdit from "./pages/TicketEdit";
+import CheatsheetPage from "./pages/CheatsheetPage";
 import Header from "./components/Header";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingState from "./components/LoadingState";
@@ -35,6 +40,7 @@ import LectureLayout from "./components/LectureLayout";
 import AppLayout from "./components/AppLayout";
 import { SemesterProvider } from "./lib/SemesterProvider";
 import { SpeechProvider } from "./lib/SpeechProvider";
+import { UndoProvider } from "./lib/undoContext";
 import {
   useSemester,
   LAST_SEMESTER_KEY,
@@ -75,6 +81,7 @@ function HomeRedirect() {
 function App() {
   return (
     <BrowserRouter>
+      <UndoProvider>
       <SpeechProvider>
         <SemesterProvider>
         <Routes>
@@ -84,12 +91,18 @@ function App() {
               <Route path="/" element={<HomeRedirect />} />
               <Route path="/s/:semesterSlug" element={<Dashboard />} />
               <Route path="/s/:semesterSlug/courses" element={<CoursesPage />} />
+              {/* Сводка по всем экзаменам семестра — статический сегмент
+                  "exams" (RESERVED_SLUGS), встаёт до :courseSlug ниже. */}
+              <Route path="/s/:semesterSlug/exams" element={<ExamsPage />} />
               <Route path="/s/:semesterSlug/:courseSlug" element={<LecturesPage />} />
               <Route path="/notes" element={<NotesPage />} />
               <Route path="/note/new" element={<NoteCreate />} />
-              {/* Lecture view/edit share one persistent frame: the header and
-                  course sidebar live in LectureLayout and stay mounted while the
-                  user switches between lectures (no full-screen flicker). */}
+              {/* Lecture view + edit are ONE surface (Notion-style inline
+                  editing): LectureView shows the record and mounts the editor
+                  in place on first click. `/…/edit` stays as an alias that
+                  simply opens straight in editor mode (external links, muscle
+                  memory, tests). The header + course sidebar live in
+                  LectureLayout and stay mounted while switching lectures. */}
               <Route element={<LectureLayout />}>
                 <Route
                   path="/s/:semesterSlug/:courseSlug/:lectureSlug"
@@ -97,7 +110,7 @@ function App() {
                 />
                 <Route
                   path="/s/:semesterSlug/:courseSlug/:lectureSlug/edit"
-                  element={<LectureEdit />}
+                  element={<LectureView />}
                 />
                 {/* Unassigned notes (no semester in URL) */}
                 <Route
@@ -106,9 +119,33 @@ function App() {
                 />
                 <Route
                   path="/note/:lectureSlug/edit"
-                  element={<LectureEdit />}
+                  element={<LectureView />}
                 />
               </Route>
+              {/* Exam Engine: экзамен — свойство курса, singleton внутри него.
+                  Статический сегмент "exam" ранжируется React Router выше
+                  динамического :lectureSlug на этом же месте, поэтому лекция
+                  со слагом "exam" туда не попадёт (см. RESERVED_SLUGS). */}
+              <Route
+                path="/s/:semesterSlug/:courseSlug/exam"
+                element={<ExamHubPage />}
+              />
+              <Route
+                path="/s/:semesterSlug/:courseSlug/exam/import"
+                element={<ExamImportPage />}
+              />
+              <Route
+                path="/s/:semesterSlug/:courseSlug/exam/cheatsheet"
+                element={<CheatsheetPage />}
+              />
+              <Route
+                path="/s/:semesterSlug/:courseSlug/exam/:number"
+                element={<TicketView />}
+              />
+              <Route
+                path="/s/:semesterSlug/:courseSlug/exam/:number/edit"
+                element={<TicketEdit />}
+              />
               {/* Flashcards: cards module (not semester-scoped) */}
               <Route path="/decks" element={<CardLibraryPage />} />
               <Route path="/decks/new" element={<DeckEditorPage />} />
@@ -120,6 +157,7 @@ function App() {
         </Routes>
         </SemesterProvider>
       </SpeechProvider>
+      </UndoProvider>
     </BrowserRouter>
   );
 }

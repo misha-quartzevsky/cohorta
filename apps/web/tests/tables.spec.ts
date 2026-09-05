@@ -17,12 +17,9 @@ test("таблица вставляется из slash-меню, есть тул
 }) => {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
-  await page.goto("/s/demo/math-analysis/limit-of-sequence");
-
-  // dispatchEvent: та же болезнь headed-Firefox с «element not stable»,
-  // что и у плиток/сайдбара — кнопка живёт в анимированной шапке карточки.
-  await page.locator('button[title="Редактировать"]').dispatchEvent("click");
-  await page.waitForURL("**/limit-of-sequence/edit");
+  // Редактор открывается сразу через /edit-алиас (отдельной страницы правки
+  // больше нет — это тот же LectureView, смонтированный в режиме редактора).
+  await page.goto("/s/demo/math-analysis/limit-of-sequence/edit");
 
   const editable = page.locator(".tiptap-editor");
   await expect(editable).toBeVisible();
@@ -31,16 +28,11 @@ test("таблица вставляется из slash-меню, есть тул
   // на этом индексе.
   const before = await page.locator(".tiptap-editor table").count();
 
-  // Ставим курсор в конец документа.
-  await editable.evaluate((el) => {
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    range.collapse(false);
-    const sel = window.getSelection();
-    sel?.removeAllRanges();
-    sel?.addRange(range);
-    (el as HTMLElement).focus();
-  });
+  // Курсор в конец документа: реальный клик в редактор (ProseMirror ставит
+  // выделение надёжно, без гонки DOM-range ↔ PM при монтировании), затем
+  // Ctrl+End — штатный переход в конец документа.
+  await editable.click({ force: true, position: { x: 20, y: 20 } });
+  await page.keyboard.press("Control+End");
 
   // Slash-меню открывается в начале строки — переходим на новый пустой блок.
   await page.keyboard.press("Enter");
@@ -70,6 +62,8 @@ test("таблица вставляется из slash-меню, есть тул
     { timeout: 20000 }
   );
   await page.reload();
+  // URL остался на /edit-алиасе — редактор поднимается сразу.
+  await expect(page.locator(".tiptap-editor")).toBeVisible({ timeout: 15000 });
   const persisted = page
     .locator(".tiptap-editor table")
     .filter({ hasText: "e2e-table" })
@@ -85,12 +79,9 @@ test("вставка markdown-таблицы из Obsidian собирает на
 }) => {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
-  await page.goto("/s/demo/math-analysis/limit-of-sequence");
-
-  // dispatchEvent: та же болезнь headed-Firefox с «element not stable»,
-  // что и у плиток/сайдбара — кнопка живёт в анимированной шапке карточки.
-  await page.locator('button[title="Редактировать"]').dispatchEvent("click");
-  await page.waitForURL("**/limit-of-sequence/edit");
+  // Редактор открывается сразу через /edit-алиас (отдельной страницы правки
+  // больше нет — это тот же LectureView, смонтированный в режиме редактора).
+  await page.goto("/s/demo/math-analysis/limit-of-sequence/edit");
 
   const editable = page.locator(".tiptap-editor");
   await expect(editable).toBeVisible();
@@ -104,16 +95,13 @@ test("вставка markdown-таблицы из Obsidian собирает на
     "| **Объем рынка** | Очень высокий | Средний | Низкий |",
     "| **Рост EdTech** | 34% (2024) | 21% (2023) | 8% (2024) |",
   ].join("\n");
+  // Курсор в конец документа: реальный клик + Ctrl+End.
+  await editable.click({ force: true, position: { x: 20, y: 20 } });
+  await page.keyboard.press("Control+End");
+
   await page.evaluate(
     ({ md }) => {
       const el = document.querySelector(".tiptap-editor") as HTMLElement;
-      // Курсор в конец документа — вставка случится последним блоком.
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      range.collapse(false);
-      const sel = window.getSelection();
-      sel?.removeAllRanges();
-      sel?.addRange(range);
       el.focus();
 
       const dt = new DataTransfer();

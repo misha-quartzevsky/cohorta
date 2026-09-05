@@ -27,7 +27,7 @@ test("холодный deep-link → формула с контентом", asyn
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
   await page.goto(LECTURE);
-  await expect(page.locator(".lecture-card-title")).toHaveText(
+  await expect(page.locator(".lecture-title-input")).toHaveValue(
     "Предел последовательности"
   );
   await expect(
@@ -46,11 +46,11 @@ test("hard reload на лекции → формула с контентом", a
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
   await page.goto(LECTURE);
-  await expect(page.locator(".lecture-card-title")).toHaveText(
+  await expect(page.locator(".lecture-title-input")).toHaveValue(
     "Предел последовательности"
   );
   await page.reload();
-  await expect(page.locator(".lecture-card-title")).toHaveText(
+  await expect(page.locator(".lecture-title-input")).toHaveValue(
     "Предел последовательности"
   );
   await expect(
@@ -69,7 +69,7 @@ test("переключение туда-обратно рендерит форм
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
   await page.goto(LECTURE);
-  await expect(page.locator(".lecture-card-title")).toHaveText(
+  await expect(page.locator(".lecture-title-input")).toHaveValue(
     "Предел последовательности"
   );
   // Переключаемся на другую лекцию из сайдбара и возвращаемся. Целимся явно
@@ -88,7 +88,7 @@ test("переключение туда-обратно рендерит форм
     })
     .dispatchEvent("click");
   await page.waitForURL("**/limit-of-sequence");
-  await expect(page.locator(".lecture-card-title")).toHaveText(
+  await expect(page.locator(".lecture-title-input")).toHaveValue(
     "Предел последовательности"
   );
 

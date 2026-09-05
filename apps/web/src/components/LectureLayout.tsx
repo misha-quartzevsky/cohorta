@@ -17,7 +17,7 @@
  */
 
 import { useEffect } from "react";
-import { Outlet, useLocation, useParams } from "react-router-dom";
+import { Outlet, useParams } from "react-router-dom";
 
 import Header from "./Header";
 import { useLectures } from "../hooks/useLectures";
@@ -27,9 +27,6 @@ import { lastSemesterSlug } from "../lib/lastSemester";
 
 export default function LectureLayout() {
   const { semesterSlug, courseSlug, lectureSlug } = useParams();
-  const location = useLocation();
-
-  const isEdit = location.pathname.endsWith("/edit");
 
   // Course for breadcrumbs
   const { course } = useLectures(courseSlug || "");
@@ -54,7 +51,7 @@ export default function LectureLayout() {
     course,
     courseSlug,
     title,
-    finalFallback: isEdit ? "Редактирование" : "Запись",
+    finalFallback: "Запись",
   });
 
   return (

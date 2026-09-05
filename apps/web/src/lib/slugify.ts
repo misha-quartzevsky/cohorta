@@ -11,6 +11,10 @@
  * Also provides `uniqueSlug` to append a numeric
  * suffix when a slug is already taken
  * (e.g. "filosofia" → "filosofia-1").
+ *
+ * Slugs share the URL namespace with static route
+ * segments, so `RESERVED_SLUGS` keeps a record from
+ * claiming a word the router already owns.
  */
 
 /** Cyrillic → latin transliteration map. */
@@ -71,8 +75,39 @@ export function slugify(text: string): string {
 }
 
 /**
+ * Words the router owns, so no record may take them as a slug.
+ *
+ * A slug sits in the same URL position as a static segment:
+ * `/s/:sem/:course/exam` and `/s/:sem/:course/:lectureSlug`
+ * are the same shape, and React Router ranks the static one
+ * higher. A lecture slugged "exam" would therefore exist but
+ * be unreachable forever. Same for a course slugged "courses",
+ * which collides with `/s/:sem/courses`.
+ *
+ * Cyrillic titles are safe — «Экзамен» transliterates to
+ * "ekzamen". Only a latin title can hit this.
+ */
+export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
+  "exam",
+  "exams",
+  "cheatsheet",
+  "import",
+  "courses",
+  "decks",
+  "notes",
+  "note",
+  "login",
+  "new",
+  "edit",
+  "s",
+]);
+
+/**
  * Returns `base` if it is free, otherwise appends the smallest
  * numeric suffix that is not taken: `base-1`, `base-2`, …
+ *
+ * Reserved words count as taken, so a lecture titled "Exam"
+ * becomes "exam-1" instead of shadowing the exam route.
  *
  * @param base  — desired slug (already slugified)
  * @param taken — slugs that are already occupied
@@ -83,8 +118,9 @@ export function uniqueSlug(
   taken: ReadonlySet<string> | string[]
 ): string {
   const occupied = taken instanceof Set ? taken : new Set(taken);
-  if (!occupied.has(base)) return base;
+  const isFree = (s: string) => !occupied.has(s) && !RESERVED_SLUGS.has(s);
+  if (isFree(base)) return base;
   let i = 1;
-  while (occupied.has(`${base}-${i}`)) i++;
+  while (!isFree(`${base}-${i}`)) i++;
   return `${base}-${i}`;
 }

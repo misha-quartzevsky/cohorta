@@ -7,7 +7,7 @@
  *  1. Логотип
  *  2. Переключатель семестра (виден всегда, включая страницы лекций и заметок)
  *  3. Поиск
- *  4. Глобальная навигация: Рабочий стол · Все заметки · Карточки
+ *  4. Глобальная навигация: Рабочий стол · Все заметки · Карточки · Экзамены
  *  5. Дерево курсов: точка-градиент + название + счётчик, раскрывается
  *     отдельным шевроном (клик по названию всегда ведёт на курс).
  *     Последняя ветка — «Без курса»: незакреплённые заметки.
@@ -31,6 +31,7 @@ import {
   FileText,
   Layers,
   Calendar,
+  GraduationCap,
   Search,
 } from "lucide-react";
 
@@ -41,9 +42,11 @@ import { useLectures } from "../hooks/useLectures";
 import { useLectureSearch } from "../hooks/useLectureSearch";
 import { useCourses } from "../hooks/useCourses";
 import { useLectureFrame } from "../lib/lectureFrame";
+import { useExam } from "../hooks/useExam";
 import { pb } from "../lib/pocketbase";
 import { lastSemesterSlug } from "../lib/lastSemester";
 import { courseGradient } from "../lib/courseGradient";
+import { parsePbDate } from "../lib/format";
 import type { User, Semester } from "../lib/types";
 import {
   semesterSlug,
@@ -53,6 +56,7 @@ import {
   courseName,
   courseSlug,
   courseColor,
+  ticketStatus,
 } from "../lib/types";
 import TableOfContents from "./TableOfContents";
 import ScrollBar from "./scrollbar/ScrollBar";
@@ -91,6 +95,29 @@ function isLectureRoute(pathname: string): {
  *  there is no content to build a table of contents from yet. */
 function isNoteRoute(pathname: string): boolean {
   return /^\/note\/[^/]+(\/edit)?$/.test(pathname);
+}
+
+/**
+ * Строка «Экзамен» внутри раскрытой ветки курса. Отдельный компонент,
+ * а не инлайн-фетч в родителе: монтируется только когда ветка открыта
+ * (см. вызов ниже), поэтому запрос экзамена идёт максимум для одного
+ * курса за раз, а не для всех курсов дерева сразу.
+ */
+function CourseExamRow({ courseId, to }: { courseId: string; to: string }) {
+  const { exam, tickets } = useExam(courseId, true);
+  if (!exam) return null;
+  const ready = tickets.filter((t) => ticketStatus(t) === "ready").length;
+  return (
+    <li>
+      <Link to={to} className="sidebar-note-row sidebar-exam-row">
+        <GraduationCap size={13} />
+        <span>Экзамен</span>
+        <span className="sidebar-exam-count">
+          {ready}/{tickets.length}
+        </span>
+      </Link>
+    </li>
+  );
 }
 
 interface Props {
@@ -139,10 +166,27 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
   // все записи; сам список скроллится внутри `.sidebar-scroll`.
   const { lectures: recentLectures } = useRecentLectures(100);
 
+  // Семестр для ссылок навигации. На /notes, /note/…, /decks `current` пуст —
+  // берём последний рабочий (SemesterProvider пишет его на каждом /s/…).
+  const homeSemSlug = current ? semesterSlug(current) : lastSemesterSlug() || "1";
+
+  // Запись семестра для карточки-переключателя: на не-семестровых маршрутах
+  // ищем её по слагу, чтобы контекст не исчезал (раньше кнопка просто пропадала).
+  const activeSemester = useMemo(
+    () =>
+      current ??
+      semesters.find((s) => semesterSlug(s) === homeSemSlug) ??
+      null,
+    [current, semesters, homeSemSlug]
+  );
+
   const [sidebarQuery, setSidebarQuery] = useState("");
   const { results: sidebarResults, loading: sidebarLoading } =
     useLectureSearch(sidebarQuery, sidebarQuery.trim().length >= 2);
-  const { courses: semesterCourses } = useCourses(current?.id ?? "");
+  // На не-семестровых маршрутах (/decks, /notes) `current` пуст — берём
+  // activeSemester (фолбэк на последний рабочий семестр), иначе дерево
+  // курсов пустеет, хотя переключатель семестра остаётся на месте.
+  const { courses: semesterCourses } = useCourses(activeSemester?.id ?? "");
 
   const handleLogout = () => {
     logout();
@@ -166,24 +210,11 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
 
   const avatar = user ? avatarSrc(user) : "";
 
-  // Семестр для ссылок навигации. На /notes, /note/…, /decks `current` пуст —
-  // берём последний рабочий (SemesterProvider пишет его на каждом /s/…).
-  const homeSemSlug = current ? semesterSlug(current) : lastSemesterSlug() || "1";
-
-  // Запись семестра для карточки-переключателя: на не-семестровых маршрутах
-  // ищем её по слагу, чтобы контекст не исчезал (раньше кнопка просто пропадала).
-  const activeSemester = useMemo(
-    () =>
-      current ??
-      semesters.find((s) => semesterSlug(s) === homeSemSlug) ??
-      null,
-    [current, semesters, homeSemSlug]
-  );
-
   // Active state for the global nav links.
   const isDashboardRoute = /^\/s\/[^/]+$/.test(location.pathname);
   const isNotesRoute = location.pathname === "/notes";
   const isDecksRoute = location.pathname.startsWith("/decks");
+  const isExamsRoute = /^\/s\/[^/]+\/exams$/.test(location.pathname);
 
   const {
     isLecture,
@@ -214,7 +245,8 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
     dotStyle: string | null,
     notes: typeof recentLectures,
     noteHref: (slug: string) => string,
-    autoOpen: boolean
+    autoOpen: boolean,
+    courseId?: string
   ) => {
     const isOpen = expanded[key] ?? autoOpen;
     return (
@@ -242,8 +274,9 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
           </Link>
           <span className="sidebar-course-count">{notes.length}</span>
         </div>
-        {isOpen && notes.length > 0 && (
+        {isOpen && (notes.length > 0 || courseId) && (
           <ul className="sidebar-course-notes">
+            {courseId && <CourseExamRow courseId={courseId} to={`${to}/exam`} />}
             {notes.map((lec) => {
               const href = noteHref(lectureSlug(lec));
               return (
@@ -428,6 +461,15 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
                   <span>Карточки</span>
                 </Link>
               </li>
+              <li>
+                <Link
+                  to={`/s/${homeSemSlug}/exams`}
+                  className={`sidebar-nav-item${isExamsRoute ? " active" : ""}`}
+                >
+                  <GraduationCap size={16} />
+                  <span>Экзамены</span>
+                </Link>
+              </li>
             </ul>
           </nav>
 
@@ -442,8 +484,8 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
                   .filter((lec) => lectureCourseId(lec) === c.id)
                   .sort(
                     (a, b) =>
-                      new Date(b.updated).getTime() -
-                      new Date(a.updated).getTime()
+                      (parsePbDate(b.updated)?.getTime() ?? 0) -
+                      (parsePbDate(a.updated)?.getTime() ?? 0)
                   );
                 return renderBranch(
                   c.id,
@@ -452,7 +494,8 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
                   courseGradient(courseColor(c), i),
                   notes,
                   (slug) => `${courseUrl}/${slug}`,
-                  isLecture && course?.id === c.id
+                  isLecture && course?.id === c.id,
+                  c.id
                 );
               })}
               {unassignedNotes.length > 0 &&

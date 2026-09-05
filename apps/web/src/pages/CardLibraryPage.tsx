@@ -13,6 +13,7 @@ import { Layers, Pencil, Trash2 } from "lucide-react";
 
 import { useDecks } from "../hooks/useDecks";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
+import { useUndo } from "../lib/undoContext";
 import {
   deckColor,
   deckDescription,
@@ -70,6 +71,7 @@ function DeckTile({
           type="button"
           className="icon-btn"
           title="Редактировать"
+          aria-label="Редактировать"
           onClick={(e) => {
             e.stopPropagation();
             onEdit();
@@ -81,6 +83,7 @@ function DeckTile({
           type="button"
           className="icon-btn danger"
           title="Удалить"
+          aria-label="Удалить"
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
@@ -111,6 +114,8 @@ function CardLibraryPage() {
   }, [decks]);
 
   const confirm = useConfirmDialog();
+  const { scheduleDelete, isPending } = useUndo();
+  const visibleDecks = decks.filter((d) => !isPending(`deck:${d.id}`));
 
   const actions = useMemo(() => {
     return {
@@ -121,11 +126,15 @@ function CardLibraryPage() {
           "Удалить колоду?",
           `Колода «${deckTitle(d)}» и все её карточки будут удалены.`,
           () => {
-            void deleteDeck(d.id).then(() => void refetch());
+            scheduleDelete(
+              `deck:${d.id}`,
+              `Колода «${deckTitle(d)}» удалена`,
+              () => deleteDeck(d.id).then(() => refetch())
+            );
           }
         ),
     };
-  }, [navigate, confirm, refetch]);
+  }, [navigate, confirm, refetch, scheduleDelete]);
 
   if (loading && decks.length === 0) {
     return (
@@ -156,7 +165,7 @@ function CardLibraryPage() {
             свежо.
           </p>
 
-          {decks.length === 0 ? (
+          {visibleDecks.length === 0 ? (
             <div className="empty">Пока нет колод — создайте первую!</div>
           ) : null}
 
@@ -169,7 +178,7 @@ function CardLibraryPage() {
               + Новая колода
             </button>
 
-            {decks.map((deck, i) => (
+            {visibleDecks.map((deck, i) => (
               <DeckTile
                 key={deck.id}
                 deck={deck}

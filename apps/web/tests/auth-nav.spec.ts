@@ -25,7 +25,7 @@ test("демо-логин: редирект на /s/demo и TOC-асид с от
   await expect(page.locator(".global-sidebar")).toBeVisible();
 
   // Дашборд → курс (виджет «Курсы семестра»).
-  const courseTile = page.locator(".course-card", {
+  const courseTile = page.locator(".course-row", {
     hasText: "Математический анализ",
   });
   await waitForStable(page, courseTile);

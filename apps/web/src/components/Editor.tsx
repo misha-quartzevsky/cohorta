@@ -19,6 +19,7 @@ import { FloatingMenu } from "@tiptap/react/menus";
 import type { BubbleMenuPluginProps } from "@tiptap/extension-bubble-menu";
 import type { FloatingMenuPluginProps } from "@tiptap/extension-floating-menu";
 import type { EditorView } from "@tiptap/pm/view";
+import { TextSelection } from "@tiptap/pm/state";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import ImageExtension from "@tiptap/extension-image";
@@ -31,7 +32,8 @@ import {
   TableCell as TableCellExt,
   TableHeader as TableHeaderExt,
 } from "@tiptap/extension-table";
-import { AudioLines, Mic, MicOff, Plus } from "lucide-react";
+import { DragHandle } from "@tiptap/extension-drag-handle-react";
+import { AudioLines, GripVertical, Mic, MicOff, Plus } from "lucide-react";
 import type { UploadedImage } from "../services/lectureService";
 
 import { createSlashMenu } from "./SlashMenu";
@@ -62,6 +64,13 @@ interface EditorProps {
    * Без него «Картинка» фолбэчит на вставку по URL.
    */
   onUploadImages?: (files: File[]) => Promise<UploadedImage[]>;
+  /** Ставить фокус в редактор при монтировании (по умолчанию — да). */
+  autoFocus?: boolean;
+  /**
+   * Координаты клика (viewport), которым редактор был смонтирован из статичного
+   * просмотра — каретка встаёт в эту точку. Читается один раз при mount.
+   */
+  selectionCoords?: { left: number; top: number } | null;
 }
 
 export default function Editor({
@@ -70,7 +79,11 @@ export default function Editor({
   placeholder,
   className,
   onUploadImages,
+  autoFocus = true,
+  selectionCoords,
 }: EditorProps) {
+  // Захватываем координаты клика один раз — последующие изменения игнорируем.
+  const selectionCoordsRef = useRef(selectionCoords);
   // Upload plumbing: refs, drop/paste, file picker (see editor/useImageUpload).
   const {
     fileInputRef,
@@ -131,6 +144,8 @@ export default function Editor({
     () => [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
+        // Заметный индикатор позиции вставки при перетаскивании блока.
+        dropcursor: { color: "var(--c-lilac)", width: 2 },
         // Link уже включён в StarterKit v3 — настраиваем здесь,
         // отдельное подключение создаёт дубль имени 'link'.
         link: {
@@ -229,8 +244,45 @@ export default function Editor({
 
   // Focus the editor on mount.
   useEffect(() => {
-    editor.commands.focus();
-  }, [editor]);
+    if (!editor || !autoFocus) return;
+
+    const coords = selectionCoordsRef.current;
+    if (!coords) {
+      // Смонтированы не кликом по статике (создание заметки, /edit-алиас) —
+      // прежнее поведение: просто фокус.
+      editor.commands.focus();
+      return;
+    }
+
+    // Смонтированы кликом в статичный просмотр: ставим каретку в точку клика.
+    // Отложено на два кадра, чтобы раскладка (async теги, картинки, NodeView
+    // формул) успела устаканиться — иначе posAtCoords промахнётся на строку.
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        if (editor.isDestroyed) return;
+        const at = editor.view.posAtCoords({
+          left: coords.left,
+          top: coords.top,
+        });
+        if (at) {
+          // TextSelection.near снапится к ближайшей валидной inline-позиции
+          // (клик мог прийтись на границу таблицы / атомарный узел). Без
+          // scrollIntoView — точка клика по определению уже на экране.
+          const { state, view } = editor;
+          const sel = TextSelection.near(state.doc.resolve(at.pos));
+          view.dispatch(state.tr.setSelection(sel));
+          view.dom.focus({ preventScroll: true });
+        } else {
+          editor.commands.focus("end");
+        }
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [editor, autoFocus]);
 
   // Регистрируем редактор как цель диктовки (SpeechProvider) — это нужно
   // и для кнопки микрофона в шапке, и для вставки распознанного текста.
@@ -300,8 +352,34 @@ export default function Editor({
     editor.chain().focus().insertContent("/").run();
   };
 
+  // Drag-over подсветка «листа»: обратная связь, что сюда можно бросить файл.
+  // Счётчик вложенности — dragenter/dragleave стреляют на каждом дочернем узле.
+  const [dragOver, setDragOver] = useState(false);
+  const dragDepth = useRef(0);
+  const hasFiles = (e: React.DragEvent) =>
+    Array.from(e.dataTransfer.types).includes("Files");
+  const onDragEnter = (e: React.DragEvent) => {
+    if (!hasFiles(e)) return;
+    dragDepth.current += 1;
+    setDragOver(true);
+  };
+  const onDragLeave = (e: React.DragEvent) => {
+    if (!hasFiles(e)) return;
+    dragDepth.current = Math.max(0, dragDepth.current - 1);
+    if (dragDepth.current === 0) setDragOver(false);
+  };
+  const onDropCapture = () => {
+    dragDepth.current = 0;
+    setDragOver(false);
+  };
+
   return (
-    <div className={`tiptap-wrapper ${className || ""}${recording ? " is-recording" : ""}`}>
+    <div
+      className={`tiptap-wrapper ${className || ""}${recording ? " is-recording" : ""}${dragOver ? " is-drag-over" : ""}`}
+      onDragEnter={onDragEnter}
+      onDragLeave={onDragLeave}
+      onDropCapture={onDropCapture}
+    >
       <input
         ref={fileInputRef}
         type="file"
@@ -371,6 +449,23 @@ export default function Editor({
 
       {/* Table quick toolbar (appears when the cursor is inside a table). */}
       <TableMenu editor={editor} />
+
+      {/* Notion-style grip in the left gutter: drag a block (or a nested list
+          item) to reorder it. ProseMirror already handles the drop; this adds
+          the missing signifier. */}
+      {editor.isEditable && (
+        <DragHandle editor={editor} nested className="editor-drag-handle">
+          <button
+            type="button"
+            className="editor-drag-handle-btn"
+            title="Перетащить блок"
+            aria-label="Перетащить блок"
+            onMouseDown={(e) => e.preventDefault()}
+          >
+            <GripVertical size={16} />
+          </button>
+        </DragHandle>
+      )}
 
       <EditorContent editor={editor} />
 

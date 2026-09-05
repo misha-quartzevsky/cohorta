@@ -31,7 +31,7 @@ test("шапка не «дёргается» при переключении л�
   await expect(page.locator(".hero-greeting")).toBeVisible();
 
   // Дашборд → курс «Математический анализ» → лекция «Предел последовательности».
-  const courseTile = page.locator(".course-card", {
+  const courseTile = page.locator(".course-row", {
     hasText: "Математический анализ",
   });
   await waitForStable(page, courseTile);
@@ -45,7 +45,7 @@ test("шапка не «дёргается» при переключении л�
     .first()
     .dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis/limit-of-sequence");
-  await expect(page.locator(".lecture-card-title")).toHaveText(
+  await expect(page.locator(".lecture-title-input")).toHaveValue(
     "Предел последовательности"
   );
   await expect(page.locator(".global-sidebar .toc-item").first()).toBeVisible();
@@ -62,9 +62,9 @@ test("шапка не «дёргается» при переключении л�
   await other.dispatchEvent("click");
 
   await page.waitForURL((url) => !url.pathname.endsWith("limit-of-sequence"));
-  const title = page.locator(".lecture-card-title");
+  const title = page.locator(".lecture-title-input");
   await title.waitFor({ state: "attached" });
-  await expect(title).not.toHaveText("Предел последовательности");
+  await expect(title).not.toHaveValue("Предел последовательности");
 
   const after = await measureHeader(page);
 

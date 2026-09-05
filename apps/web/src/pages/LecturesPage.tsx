@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { GraduationCap } from "lucide-react";
 import { useLectures } from "../hooks/useLectures";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
+import { useUndo } from "../lib/undoContext";
+import { useExam } from "../hooks/useExam";
 import { useSemester } from "../lib/semesterContext";
 import {
   courseName,
   courseSlug,
   courseSemesterId,
+  examTitle,
   lectureSlug,
   lectureTitle,
   semesterSlug,
+  ticketStatus,
 } from "../lib/types";
 import Header from "../components/Header";
 import LectureTile from "../components/LectureTile";
@@ -33,12 +38,18 @@ function LecturesPage() {
   const { course, lectures, loading, error, refetch, deleteLecture } =
     useLectures(courseSlugParam ?? "");
 
+  // Экзамен — свойство курса: точка входа живёт прямо на странице лекций,
+  // не отдельным пунктом навигации (см. DESIGN.md §7.1).
+  const { exam, tickets } = useExam(course?.id ?? "", !!course);
+  const readyCount = tickets.filter((t) => ticketStatus(t) === "ready").length;
+
   // UI state for the "create lecture" flow
   const [editingPlusIndex, setEditingPlusIndex] = useState<number | null>(
     null
   );
 
   const confirm = useConfirmDialog();
+  const { scheduleDelete, isPending } = useUndo();
 
   /**
    * Called when a lecture is saved (created or updated).
@@ -98,8 +109,31 @@ function LecturesPage() {
                 Отсортировано по дате — новые выше.
               </p>
 
+              {course && (
+                <Link
+                  to={`/s/${semSlug}/${courseSlugParam}/exam${exam ? "" : "/import"}`}
+                  className={`exam-entry${exam ? "" : " exam-entry-empty"}`}
+                >
+                  <span className="exam-entry-icon">
+                    <GraduationCap size={20} />
+                  </span>
+                  <span className="exam-entry-body">
+                    <span className="exam-entry-title">
+                      {exam ? examTitle(exam) : "Экзамен"}
+                    </span>
+                    <span className="exam-entry-meta">
+                      {exam
+                        ? `${readyCount} из ${tickets.length} готовы`
+                        : "Загрузи список билетов"}
+                    </span>
+                  </span>
+                </Link>
+              )}
+
               <div className="bento">
-                {lectures.map((lec, i) => (
+                {lectures
+                  .filter((lec) => !isPending(`lecture:${lec.id}`))
+                  .map((lec, i) => (
                   <LectureTile
                     key={lec.id}
                     lecture={lec}
@@ -120,7 +154,12 @@ function LecturesPage() {
                         "Удалить запись?",
                         `Запись «${t}» будет удалена.`,
                         () => {
-                          void deleteLecture(lec.id);
+                          // Прячем плитку сразу; сам deleteLecture (сервер +
+                          // refetch) откладывается — «Отменить» в тосте
+                          // просто гасит таймер, к серверу ничего не уходит.
+                          scheduleDelete(`lecture:${lec.id}`, `Запись «${t}» удалена`, () =>
+                            deleteLecture(lec.id)
+                          );
                         }
                       );
                     }}

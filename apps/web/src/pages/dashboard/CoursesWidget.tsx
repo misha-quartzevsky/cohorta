@@ -2,31 +2,35 @@
  * ============================================
  *  CoursesWidget.tsx — курсы семестра
  * ============================================
- *  Сетка карточек по общему паттерну DESIGN.md §5 (компонент `CourseCard`):
- *  цвет живёт только в градиентной рамке и бейдже. Ссылка «Все курсы»
- *  закрывает тупик — из виджета видно не больше четырёх курсов.
+ *  Список строк вместо плоской сетки карточек: бейдж курса + название +
+ *  реальное число лекций + сегментированная полоска недавней активности
+ *  (заполненный сегмент = лекция правилась за последние ACTIVE_WINDOW_DAYS,
+ *  см. useCourseProgress). Никакого «прогресса завершения» — такой отметки
+ *  в модели нет, и рисовать её было бы той же фикцией, что уже убирали
+ *  из hero-баннера «Продолжить».
  */
 
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import type { Course } from "../../lib/types";
-import { courseSlug } from "../../lib/types";
-import CourseCard from "../../components/CourseCard";
+import { courseColor, courseName, courseSlug } from "../../lib/types";
+import { courseGradient } from "../../lib/courseGradient";
+import { ACTIVE_WINDOW_DAYS, useCourseProgress } from "../../hooks/useCourseProgress";
+import { pluralRu } from "../../lib/format";
 
 interface Props {
   courses: Course[];
-  featured: Record<string, string>;
   semesterSlug: string;
   /** Сколько курсов в семестре всего — для подписи ссылки «Все курсы». */
   total?: number;
 }
 
-export default function CoursesWidget({
-  courses,
-  featured,
-  semesterSlug,
-  total,
-}: Props) {
+/** Максимум сегментов в полоске — дальше рост не читается глазом. */
+const MAX_SEGMENTS = 8;
+
+export default function CoursesWidget({ courses, semesterSlug, total }: Props) {
+  const progress = useCourseProgress(courses.map((c) => c.id));
+
   const allCoursesLink = (
     <Link to={`/s/${semesterSlug}/courses`} className="widget-link">
       Все курсы
@@ -52,21 +56,65 @@ export default function CoursesWidget({
         <h3 className="widget-title">Курсы семестра</h3>
         {allCoursesLink}
       </div>
-      <div className="widget-courses-grid">
-        {courses.map((c, i) => (
-          <CourseCard
-            key={c.id}
-            course={c}
-            index={i}
-            meta={
-              featured[c.id]
-                ? `Последняя лекция: ${featured[c.id]}`
-                : "Лекций пока нет"
-            }
-            to={`/s/${semesterSlug}/${courseSlug(c)}`}
-          />
-        ))}
-      </div>
+      <ul className="course-progress-list">
+        {courses.map((c, i) => {
+          const gradient = courseGradient(courseColor(c), i);
+          const p = progress[c.id];
+          const count = p?.count ?? 0;
+          const recent = Math.min(p?.recentCount ?? 0, MAX_SEGMENTS);
+          const segments = Math.min(Math.max(count, 1), MAX_SEGMENTS);
+          return (
+            <li key={c.id}>
+              <Link
+                to={`/s/${semesterSlug}/${courseSlug(c)}`}
+                className="course-row"
+              >
+                <span
+                  className="course-row-badge"
+                  style={{ background: gradient }}
+                />
+                <span className="course-row-body">
+                  <span className="course-row-name">{courseName(c)}</span>
+                  <span className="course-row-meta">
+                    {count === 0
+                      ? "Лекций пока нет"
+                      : `${count} ${pluralRu(count, [
+                          "лекция",
+                          "лекции",
+                          "лекций",
+                        ])}`}
+                  </span>
+                </span>
+                {count > 0 && (
+                  <span
+                    className="course-row-bar"
+                    aria-hidden="true"
+                    title={
+                      recent > 0
+                        ? `Правки за последние ${ACTIVE_WINDOW_DAYS} дней`
+                        : undefined
+                    }
+                  >
+                    {Array.from({ length: segments }).map((_, seg) => (
+                      <span
+                        key={seg}
+                        className={
+                          "course-row-seg" + (seg < recent ? " filled" : "")
+                        }
+                        style={
+                          seg < recent
+                            ? { background: gradient }
+                            : undefined
+                        }
+                      />
+                    ))}
+                  </span>
+                )}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

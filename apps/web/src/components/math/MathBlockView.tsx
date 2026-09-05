@@ -48,10 +48,10 @@ export function MathBlockView({ node, editor, getPos }: NodeViewProps) {
   return (
     <NodeViewWrapper
       className={`math-block${editor.isEditable ? " editable" : ""}`}
-      onClick={() => {
-        // Клик по блоку открывает визуальный редактор MathLive.
-        onEdit();
-      }}
+      // Двойной клик открывает редактор MathLive. Одиночный клик раньше висел
+      // на всём блоке и перехватывал попытку поставить каретку рядом / потащить
+      // блок за грип в гаттере — теперь открываем только по ✏️ или double-click.
+      onDoubleClick={onEdit}
     >
       <div className="math-block-inner">
         <div ref={containerRef} className="math-block-render" />
@@ -59,6 +59,7 @@ export function MathBlockView({ node, editor, getPos }: NodeViewProps) {
           <div
             className="math-block-toolbar"
             onClick={(event) => event.stopPropagation()}
+            onDoubleClick={(event) => event.stopPropagation()}
           >
             <button
               type="button"

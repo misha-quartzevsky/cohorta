@@ -12,7 +12,11 @@
   /* ---- Нейтральные: UI-хром, текст, фон (DESIGN.md §1.3) ---- */
   --ink: #1C1C22;
   --ink-2: #5B5B66;
-  --ink-3: #9494A0;
+  /* Было #9494A0 — 3.0:1 на белом, ниже порога WCAG AA (4.5:1) для
+     обычного текста. Токен используется в 78 местах именно как текст
+     (метки, таймстемпы, подписи), не только декоративно — темнее нужен
+     самому токену, не точечным местам его использования. */
+  --ink-3: #72727D;
   --bg: #F7F7F9;
   --surface: #FFFFFF;
   --border: #EAEAEF;
@@ -27,6 +31,8 @@
   --danger-soft: rgba(226, 75, 74, 0.1);
   --danger-border: rgba(226, 75, 74, 0.28);
   --warning: #F5A623;
+  --warning-ink: #8A5A00;
+  --warning-soft: rgba(245, 166, 35, 0.12);
   --highlight: rgba(245, 166, 35, 0.25);
 
   /* ---- Тёмный блок кода (единственная тёмная поверхность) ---- */
@@ -189,7 +195,7 @@ html::-webkit-scrollbar {
   text-align: center;
   padding: 3rem 1rem;
   color: var(--c-muted);
-  font-size: 1.05rem;
+  font-size: 1rem;
 }
 
 .topbar {
@@ -222,7 +228,7 @@ html::-webkit-scrollbar {
 }
 
 .semester-switcher-label {
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--c-muted);
   white-space: nowrap;
@@ -235,7 +241,7 @@ html::-webkit-scrollbar {
   background: var(--surface);
   color: var(--c-black);
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -249,7 +255,7 @@ html::-webkit-scrollbar {
 
 .inline-editor .semester-select {
   width: 100%;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.75rem;
 }
 
 .back-link {
@@ -318,24 +324,24 @@ html::-webkit-scrollbar {
 
 
 .tile-body {
-  padding: 0.9rem 1rem 1.1rem;
+  padding: 1rem 1rem 1rem;
 }
 
 .tile-title {
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 1rem;
   color: var(--c-black);
   margin: 0 0 0.25rem;
 }
 
 .tile-meta {
-  font-size: 0.82rem;
+  font-size: 0.875rem;
   color: var(--c-muted);
 }
 
 .tile-excerpt {
-  margin: 0.4rem 0 0;
-  font-size: 0.92rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
   color: var(--ink-2);
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -357,7 +363,7 @@ html::-webkit-scrollbar {
 }
 
 .tile-unassigned {
-  margin-top: 0.35rem;
+  margin-top: 0.25rem;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -365,7 +371,7 @@ html::-webkit-scrollbar {
 }
 
 .tile-assign {
-  padding: 0.15rem 1rem 0.6rem;
+  padding: 0.15rem 1rem 0.5rem;
 }
 
 .tile-assign-label {
@@ -377,8 +383,8 @@ html::-webkit-scrollbar {
 
 .note-assign-select {
   width: 100%;
-  font-size: 0.85rem;
-  padding: 0.45rem 0.6rem;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.5rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg);
@@ -420,17 +426,19 @@ html::-webkit-scrollbar {
   color: var(--c-black);
 }
 
+/* Портировано в document.body (KebabMenu.tsx) — position: fixed,
+   top/right считаются от getBoundingClientRect() кнопки. Раньше это
+   было position: absolute внутри .tile (overflow: hidden), из-за чего
+   меню обрезалось и было невидимо и некликабельно. */
 .kebab-dropdown {
-  position: absolute;
-  right: 0.75rem;
-  bottom: 3.1rem;
-  z-index: 20;
+  position: fixed;
+  z-index: 1000;
   min-width: 150px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: 0 10px 24px rgba(54, 54, 54, 0.12);
-  padding: 0.3rem;
+  padding: 0.25rem;
 }
 
 .kebab-item {
@@ -438,12 +446,12 @@ html::-webkit-scrollbar {
   align-items: center;
   gap: 0.5rem;
   width: 100%;
-  padding: 0.5rem 0.6rem;
+  padding: 0.5rem 0.5rem;
   border: none;
   background: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.88rem;
+  font-size: 0.875rem;
   color: var(--c-black);
 }
 
@@ -460,7 +468,7 @@ html::-webkit-scrollbar {
   text-align: center;
   padding: 3rem 1rem;
   color: var(--c-muted);
-  font-size: 1.05rem;
+  font-size: 1rem;
 }
 
 .error-banner {
@@ -468,9 +476,9 @@ html::-webkit-scrollbar {
   border: 1px solid var(--danger-border);
   color: var(--danger-ink);
   border-radius: var(--radius);
-  padding: 0.9rem 1rem;
+  padding: 1rem 1rem;
   margin-bottom: 1.25rem;
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 
 /* ---------- форма добавления лекции ---------- */
@@ -484,18 +492,18 @@ html::-webkit-scrollbar {
 
 .create-form h3 {
   margin: 0 0 1rem;
-  font-size: 1.15rem;
+  font-size: 1.125rem;
   color: var(--c-black);
 }
 
 .field {
   display: block;
   width: 100%;
-  padding: 0.65rem 0.9rem;
+  padding: 0.75rem 1rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: 1rem;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.75rem;
   background: var(--surface);
   color: var(--c-black);
   font-family: inherit;
@@ -522,8 +530,8 @@ textarea.field {
   border: 1px solid transparent;
   cursor: pointer;
   border-radius: var(--radius);
-  padding: 0.6rem 1.1rem;
-  font-size: 0.95rem;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
   font-weight: 600;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -582,7 +590,7 @@ textarea.field {
 /* ---------- tiptap редактор ---------- */
 .tiptap-wrapper {
   position: relative;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
@@ -596,7 +604,7 @@ textarea.field {
 
 .tiptap-wrapper .tiptap-editor {
   min-height: 200px;
-  padding: 0.65rem 0.9rem;
+  padding: 0.75rem 1rem;
   outline: none;
   font-size: 1rem;
   line-height: 1.6;
@@ -604,17 +612,17 @@ textarea.field {
 }
 
 .tiptap-wrapper .tiptap-editor p {
-  margin: 0.4rem 0;
+  margin: 0.5rem 0;
 }
 
-.tiptap-wrapper .tiptap-editor h1 { font-size: 1.6rem; font-weight: 700; margin: 0.6rem 0 0.4rem; }
-.tiptap-wrapper .tiptap-editor h2 { font-size: 1.35rem; font-weight: 700; margin: 0.5rem 0 0.35rem; }
-.tiptap-wrapper .tiptap-editor h3 { font-size: 1.15rem; font-weight: 600; margin: 0.4rem 0 0.3rem; }
-.tiptap-wrapper .tiptap-editor ul, .tiptap-wrapper .tiptap-editor ol { padding-left: 1.5rem; margin: 0.3rem 0; }
+.tiptap-wrapper .tiptap-editor h1 { font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 0.5rem; }
+.tiptap-wrapper .tiptap-editor h2 { font-size: 1.25rem; font-weight: 700; margin: 0.5rem 0 0.25rem; }
+.tiptap-wrapper .tiptap-editor h3 { font-size: 1.125rem; font-weight: 600; margin: 0.5rem 0 0.25rem; }
+.tiptap-wrapper .tiptap-editor ul, .tiptap-wrapper .tiptap-editor ol { padding-left: 1.5rem; margin: 0.25rem 0; }
 .tiptap-wrapper .tiptap-editor blockquote {
   border-left: 3px solid var(--c-lilac);
   padding-left: 0.75rem;
-  margin: 0.4rem 0;
+  margin: 0.5rem 0;
   color: var(--ink-2);
 }
 .tiptap-wrapper .tiptap-editor code {
@@ -662,7 +670,7 @@ textarea.field {
 .lecture-view-content th,
 .lecture-view-content td {
   border: 1px solid var(--border);
-  padding: 0.5rem 0.6rem;
+  padding: 0.5rem 0.5rem;
   vertical-align: top;
   text-align: left;
 }
@@ -709,7 +717,7 @@ textarea.field {
   background: var(--surface);
   border: 1px solid rgba(27, 27, 27, 0.08);
   border-radius: var(--radius);
-  padding: 0.3rem;
+  padding: 0.25rem;
   box-shadow: 0 10px 30px rgba(27, 27, 27, 0.16);
 }
 .table-menu-btn {
@@ -737,7 +745,7 @@ textarea.field {
   width: 1px;
   height: 18px;
   background: rgba(27, 27, 27, 0.12);
-  margin: 0 0.2rem;
+  margin: 0 0.25rem;
 }
 
 
@@ -749,20 +757,20 @@ textarea.field {
 }
 
 .lecture-view-meta {
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   color: var(--c-muted);
-  margin: 0 0 0.6rem;
+  margin: 0 0 0.5rem;
 }
 
 .lecture-view-title {
-  font-size: 1.9rem;
+  font-size: 1.875rem;
   font-weight: 800;
   color: var(--c-black);
-  margin: 0 0 1.2rem;
+  margin: 0 0 1.25rem;
 }
 
 .lecture-view-content {
-  font-size: 1.02rem;
+  font-size: 1rem;
   line-height: 1.7;
   color: var(--code-bg);
   white-space: pre-wrap;
@@ -782,7 +790,7 @@ textarea.field {
 .color-picker {
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.6rem;
+  margin-top: 0.5rem;
 }
 
 .color-swatch {
@@ -803,12 +811,12 @@ textarea.field {
 .lecture-course-tag {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
   margin: 0 0 0.5rem;
-  padding: 0.22rem 0.5rem;
+  padding: 0.25rem 0.5rem;
   border-radius: var(--radius-sm);
   background: var(--bg);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--ink-2);
   max-width: 100%;
@@ -828,7 +836,7 @@ textarea.field {
 .lecture-view-content h1,
 .lecture-view-content h2,
 .lecture-view-content h3 {
-  margin: 1.2rem 0 0.5rem;
+  margin: 1.25rem 0 0.5rem;
   line-height: 1.3;
   color: var(--c-black);
 }
@@ -838,17 +846,17 @@ textarea.field {
 }
 
 .lecture-view-content h2 {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
 }
 
 .lecture-view-content h3 {
-  font-size: 1.1rem;
+  font-size: 1.125rem;
 }
 
 .lecture-view-content ul,
 .lecture-view-content ol {
   margin: 0.5rem 0 1rem;
-  padding-left: 1.4rem;
+  padding-left: 1.5rem;
 }
 
 .lecture-view-content li {
@@ -859,7 +867,7 @@ textarea.field {
   background: var(--bg);
   color: var(--brand-1);
   border-radius: var(--radius-sm);
-  padding: 0.15rem 0.35rem;
+  padding: 0.15rem 0.25rem;
   font-size: 0.92em;
 }
 
@@ -869,7 +877,7 @@ textarea.field {
   border-radius: var(--radius);
   padding: 1rem;
   overflow-x: auto;
-  margin: 0.8rem 0;
+  margin: 0.75rem 0;
 }
 
 .lecture-view-content pre code {
@@ -880,8 +888,8 @@ textarea.field {
 
 .lecture-view-content blockquote {
   border-left: 4px solid var(--c-lilac);
-  margin: 0.8rem 0;
-  padding: 0.3rem 1rem;
+  margin: 0.75rem 0;
+  padding: 0.25rem 1rem;
   color: var(--ink-2);
   background: var(--bg);
   border-radius: var(--radius-sm);
@@ -894,14 +902,14 @@ textarea.field {
 
 .lecture-view-content table {
   border-collapse: collapse;
-  margin: 0.8rem 0;
+  margin: 0.75rem 0;
   width: 100%;
 }
 
 .lecture-view-content th,
 .lecture-view-content td {
   border: 1px solid var(--border);
-  padding: 0.4rem 0.7rem;
+  padding: 0.5rem 0.75rem;
   text-align: left;
 }
 
@@ -916,12 +924,12 @@ textarea.field {
 }
 
 .dashboard-section {
-  margin-bottom: 2.25rem;
+  margin-bottom: 2.5rem;
 }
 
 
 .section-title {
-  font-size: 1.15rem;
+  font-size: 1.125rem;
   font-weight: 800;
   color: var(--c-black);
   margin: 0;
@@ -933,7 +941,7 @@ textarea.field {
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.5rem;
   border: 1.5px dashed var(--border);
   border-radius: var(--radius-lg);
   background: transparent;
@@ -976,7 +984,7 @@ textarea.field {
 .inline-editor {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.5rem;
   padding: 1rem;
   background: var(--surface);
   border-radius: var(--radius-lg);
@@ -986,7 +994,7 @@ textarea.field {
 
 .inline-editor .row {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.5rem;
 }
 
 .inline-editor .field {
@@ -997,17 +1005,17 @@ textarea.field {
 .actions-row {
   display: flex;
   gap: 0.5rem;
-  margin-top: 1.4rem;
+  margin-top: 1.5rem;
   align-items: center;
 }
 
 .lecture-date {
   color: var(--c-muted);
-  font-size: 0.85rem;
+  font-size: 0.875rem;
 }
 
 .lecture-date.sm {
-  font-size: 0.82rem;
+  font-size: 0.875rem;
 }
 
 /* ---------- полная страница лекции ---------- */
@@ -1022,7 +1030,7 @@ textarea.field {
 
 
 .lecture-view-title {
-  font-size: 2rem;
+  font-size: 1.875rem;
   font-weight: 800;
   color: var(--c-black);
   margin: 0 0 1rem;
@@ -1033,8 +1041,8 @@ textarea.field {
   background: var(--c-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 1.5rem 1.75rem;
-  font-size: 1.05rem;
+  padding: 1.5rem 2rem;
+  font-size: 1rem;
   line-height: 1.7;
   color: var(--c-black);
   white-space: pre-wrap;
@@ -1048,12 +1056,17 @@ textarea.field {
 .icon-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: center;
+  gap: 0.5rem;
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius);
-  padding: 0.45rem 0.85rem;
-  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+  /* Мин. 44×44 — минимальный тач-таргет (WCAG 2.5.5 / Apple HIG), иконка
+     без текста иначе даёт ~29px и промахи на мобильном. */
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--c-lilac);
   cursor: pointer;
@@ -1068,11 +1081,11 @@ textarea.field {
 
 /* ---------- rendered markdown styles (lecture view) ---------- */
 .lecture-view-content { max-width: 760px; }
-.lecture-view-content h1 { font-size: 1.8rem; font-weight: 800; margin: 0.5rem 0; }
-.lecture-view-content h2 { font-size: 1.4rem; font-weight: 700; margin: 0.4rem 0; }
-.lecture-view-content h3 { font-size: 1.2rem; font-weight: 600; margin: 0.3rem 0; }
-.lecture-view-content ul, .lecture-view-content ol { margin: 0.3rem 0; padding-left: 1.5rem; }
-.lecture-view-content li { margin: 0.2rem 0; }
+.lecture-view-content h1 { font-size: 1.875rem; font-weight: 800; margin: 0.5rem 0; }
+.lecture-view-content h2 { font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0; }
+.lecture-view-content h3 { font-size: 1.25rem; font-weight: 600; margin: 0.25rem 0; }
+.lecture-view-content ul, .lecture-view-content ol { margin: 0.25rem 0; padding-left: 1.5rem; }
+.lecture-view-content li { margin: 0.25rem 0; }
 .lecture-view-content blockquote { margin: 0.5rem 0; padding: 0.5rem 1rem; border-left: 3px solid var(--c-lilac); background: rgba(88, 67, 246, 0.04); font-style: italic; }
 .lecture-view-content strong { font-weight: 700; }
 .lecture-view-content em { font-style: italic; }
@@ -1080,8 +1093,8 @@ textarea.field {
 .lecture-view-content hr { border: none; height: 1px; background: rgba(54, 54, 54, 0.1); margin: 0.75rem 0; }
 .lecture-view-content code { font-family: "JetBrains Mono", "SF Mono", "Fira Code", monospace; background: rgba(54, 54, 54, 0.06); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
 .lecture-view-content pre { background: var(--bg); padding: 0.75rem 1rem; border-radius: var(--radius-sm); overflow-x: auto; margin: 0.5rem 0; }
-.lecture-view-content pre code { background: none; padding: 0; font-size: 0.85rem; }
-.lecture-view-content p { margin: 0.4rem 0; }
+.lecture-view-content pre code { background: none; padding: 0; font-size: 0.875rem; }
+.lecture-view-content p { margin: 0.5rem 0; }
 .lecture-view-content a { color: var(--c-lilac); text-decoration: none; }
 .lecture-view-content a:hover { text-decoration: underline; }
 .lecture-view-content img { max-width: 100%; border-radius: var(--radius-sm); margin: 0.5rem 0; }
@@ -1094,7 +1107,7 @@ textarea.field {
 .workspace {
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr) 230px;
-  gap: 1.1rem;
+  gap: 1rem;
   align-items: start;
 }
 
@@ -1120,15 +1133,15 @@ textarea.field {
   border: none;
   background: transparent;
   color: var(--c-muted);
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   font-family: inherit;
   cursor: pointer;
-  padding: 0.3rem 0.55rem;
-  margin: -0.3rem 0 0.35rem -0.55rem;
+  padding: 0.25rem 0.5rem;
+  margin: -0.25rem 0 0.25rem -0.5rem;
   border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.25rem;
 }
 
 .sidebar-back:hover {
@@ -1138,7 +1151,7 @@ textarea.field {
 
 .workspace-sidebar-title {
   margin: 0 0 0.5rem;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--c-muted);
   overflow: hidden;
@@ -1162,8 +1175,8 @@ textarea.field {
   border: none;
   background: transparent;
   border-radius: var(--radius-sm);
-  padding: 0.5rem 0.7rem;
-  font-size: 0.92rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
   font-family: inherit;
   color: var(--c-black);
   cursor: pointer;
@@ -1190,7 +1203,7 @@ textarea.field {
   border: 1px solid rgba(27, 27, 27, 0.05);
   /* Light Craft: мягкая, глубоко «парящая» тень листа. */
   box-shadow: 0 20px 50px rgba(27, 27, 27, 0.1), 0 2px 8px rgba(27, 27, 27, 0.04);
-  padding: 2rem 2.25rem 2.5rem;
+  padding: 2rem 2.5rem 2.5rem;
 }
 
 .lecture-card-head {
@@ -1199,13 +1212,13 @@ textarea.field {
 
 .lecture-card-meta {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   color: var(--c-muted);
 }
 
 .lecture-card-title {
   margin: 0.5rem 0 0.75rem;
-  font-size: 2rem;
+  font-size: 1.875rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--c-black);
@@ -1244,7 +1257,7 @@ textarea.field {
   outline: none;
   background: transparent;
   font-family: inherit;
-  font-size: 2rem;
+  font-size: 1.875rem;
   font-weight: 700;
   color: var(--c-black);
   letter-spacing: -0.01em;
@@ -1266,8 +1279,8 @@ textarea.field {
 .save-indicator {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
+  gap: 0.5rem;
+  font-size: 0.875rem;
   color: var(--c-muted);
   white-space: nowrap;
 }
@@ -1287,17 +1300,17 @@ textarea.field {
 .tag-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.5rem;
   margin-bottom: 0.25rem;
 }
 
 .tag-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.22rem 0.6rem;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
   border-radius: var(--radius-sm);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--c-black);
   border: 1px solid rgba(27, 27, 27, 0.1);
@@ -1314,19 +1327,19 @@ textarea.field {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem;
-  margin: 0.4rem 0 1rem;
+  gap: 0.5rem;
+  margin: 0.5rem 0 1rem;
 }
 
 .tag-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.25rem;
   border: 1px solid rgba(27, 27, 27, 0.12);
   background: var(--c-surface);
   border-radius: var(--radius-sm);
-  padding: 0.3rem 0.65rem;
-  font-size: 0.83rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
   font-family: inherit;
   cursor: pointer;
   color: var(--c-muted);
@@ -1346,14 +1359,14 @@ textarea.field {
 .tag-editor-new {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
 }
 
 .tag-input {
   border: 1px solid rgba(27, 27, 27, 0.12);
   border-radius: var(--radius-sm);
-  padding: 0.35rem 0.8rem;
-  font-size: 0.85rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
   font-family: inherit;
   outline: none;
   width: 8.5rem;
@@ -1367,15 +1380,15 @@ textarea.field {
 
 /* ---------- table of contents ---------- */
 .toc-title {
-  margin: 0 0 0.6rem;
-  font-size: 0.78rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--c-muted);
 }
 
 .toc-empty {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   color: var(--c-muted);
 }
 
@@ -1395,8 +1408,8 @@ textarea.field {
   border: none;
   background: transparent;
   border-radius: var(--radius-sm);
-  padding: 0.3rem 0.55rem;
-  font-size: 0.88rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
   font-family: inherit;
   color: var(--c-muted);
   cursor: pointer;
@@ -1416,12 +1429,13 @@ textarea.field {
   color: var(--c-black);
 }
 
-.toc-item.lvl-2 { padding-left: 1.1rem; }
-.toc-item.lvl-3 { padding-left: 1.7rem; font-size: 0.84rem; }
+.toc-item.lvl-2 { padding-left: 1rem; }
+.toc-item.lvl-3 { padding-left: 1.5rem; font-size: 0.875rem; }
 
 .toc-item.active {
   color: var(--c-lilac);
   background: rgba(88, 67, 246, 0.1);
+  font-weight: 600;
 }
 
 /* ---------- bubble menu (text selection) ---------- */
@@ -1432,7 +1446,7 @@ textarea.field {
   background: var(--surface);
   border: 1px solid rgba(27, 27, 27, 0.08);
   border-radius: var(--radius);
-  padding: 0.3rem;
+  padding: 0.25rem;
   box-shadow: 0 10px 30px rgba(27, 27, 27, 0.16);
 }
 
@@ -1506,6 +1520,61 @@ textarea.field {
   border-color: var(--c-lilac);
 }
 
+/* ---------- drag handle («грип» в левом гаттере) ---------- */
+/* Портал от @tiptap/extension-drag-handle-react; позицию задаёт плагин. */
+.editor-drag-handle {
+  display: flex;
+  align-items: center;
+  padding-right: 4px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.editor-drag-handle:hover,
+.editor-drag-handle:has(:focus-visible) {
+  opacity: 1;
+}
+.editor-drag-handle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-2);
+  cursor: grab;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.editor-drag-handle-btn:hover {
+  background: rgba(88, 67, 246, 0.1);
+  color: var(--c-lilac);
+}
+.editor-drag-handle-btn:active {
+  cursor: grabbing;
+}
+
+/* Файл тащат на «лист» — подсвечиваем зону, куда можно бросить картинку. */
+.tiptap-wrapper.is-drag-over {
+  border-color: var(--c-lilac);
+  box-shadow: 0 0 0 3px rgba(88, 67, 246, 0.15);
+}
+.tiptap-wrapper.is-drag-over::after {
+  content: "Отпустите, чтобы вставить картинку";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  background: rgba(88, 67, 246, 0.06);
+  color: var(--c-lilac);
+  font-size: 0.875rem;
+  font-weight: 600;
+  pointer-events: none;
+}
+
 /* ---------- slash menu («/») ---------- */
 .slash-menu {
   min-width: 240px;
@@ -1513,22 +1582,22 @@ textarea.field {
   border: 1px solid rgba(27, 27, 27, 0.08);
   border-radius: var(--radius);
   box-shadow: 0 12px 34px rgba(27, 27, 27, 0.16);
-  padding: 0.35rem;
+  padding: 0.25rem;
 }
 
 .slash-menu-item {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
   width: 100%;
   border: none;
   background: transparent;
   text-align: left;
   cursor: pointer;
   border-radius: var(--radius-sm);
-  padding: 0.45rem 0.6rem;
+  padding: 0.5rem 0.5rem;
   font-family: inherit;
-  font-size: 0.92rem;
+  font-size: 0.875rem;
   color: var(--c-black);
 }
 
@@ -1555,7 +1624,7 @@ textarea.field {
 
 .slash-desc {
   display: block;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: var(--c-muted);
   font-weight: 400;
 }
@@ -1563,7 +1632,7 @@ textarea.field {
 .slash-menu-empty {
   padding: 0.5rem 0.75rem;
   color: var(--c-muted);
-  font-size: 0.88rem;
+  font-size: 0.875rem;
 }
 
 /* ---------- text menu («…» popover in bubble) ---------- */
@@ -1580,12 +1649,12 @@ textarea.field {
   border: 1px solid rgba(27, 27, 27, 0.08);
   border-radius: var(--radius);
   box-shadow: 0 12px 34px rgba(27, 27, 27, 0.18);
-  padding: 0.35rem;
+  padding: 0.25rem;
 }
 
 .text-menu-label {
-  padding: 0.35rem 0.6rem 0.25rem;
-  font-size: 0.7rem;
+  padding: 0.25rem 0.5rem 0.25rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--c-muted);
@@ -1595,16 +1664,16 @@ textarea.field {
 .text-menu-item {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
   width: 100%;
   border: none;
   background: transparent;
   text-align: left;
   cursor: pointer;
   border-radius: var(--radius-sm);
-  padding: 0.45rem 0.6rem;
+  padding: 0.5rem 0.5rem;
   font-family: inherit;
-  font-size: 0.92rem;
+  font-size: 0.875rem;
   color: var(--c-black);
 }
 
@@ -1620,8 +1689,8 @@ textarea.field {
 .text-menu-swatch-row {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.6rem;
+  gap: 0.5rem;
+  padding: 0.5rem 0.5rem;
 }
 
 .text-menu-eraser {
@@ -1645,7 +1714,7 @@ textarea.field {
 .text-menu-sep {
   height: 1px;
   background: rgba(27, 27, 27, 0.1);
-  margin: 0.3rem 0;
+  margin: 0.25rem 0;
 }
 
 /* ---------- editor inside the card (borderless) ---------- */
@@ -1665,8 +1734,28 @@ textarea.field {
 .tiptap-wrapper.editor-inline .tiptap-editor {
   padding: 0;
   min-height: 420px;
-  font-size: 1.02rem;
+  font-size: 1rem;
   line-height: 1.7;
+}
+
+/* ---------- static body: click-to-edit surface (Notion-style) ---------- */
+/* Matches `.editor-inline .tiptap-editor` box so mounting the editor on click
+   causes no layout shift. The affordance is a text caret + a faint hover. */
+.lecture-view-content.editable-surface {
+  padding: 0;
+  min-height: 420px;
+  cursor: text;
+  border-radius: var(--radius-sm);
+  transition: background 0.12s ease;
+}
+
+.lecture-view-content.editable-surface:hover {
+  background: rgba(88, 67, 246, 0.03);
+}
+
+/* Align the autosave chip with the delete button in the card corner. */
+.lecture-card-actions {
+  align-items: center;
 }
 
 /* ---------- shared rich-content styles (editor + rendered view) ---------- */
@@ -1674,7 +1763,7 @@ textarea.field {
 .lecture-view-content ul[data-type="taskList"] {
   list-style: none;
   padding-left: 0.25rem;
-  margin: 0.4rem 0;
+  margin: 0.5rem 0;
 }
 
 .tiptap-editor ul[data-type="taskList"] li,
@@ -1687,7 +1776,7 @@ textarea.field {
 .tiptap-editor ul[data-type="taskList"] li > label,
 .lecture-view-content ul[data-type="taskList"] li > label {
   flex: none;
-  margin-top: 0.2rem;
+  margin-top: 0.25rem;
 }
 
 .tiptap-editor ul[data-type="taskList"] li > div,
@@ -1790,7 +1879,7 @@ textarea.field {
 .header-profile {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.75rem;
   min-width: 0;
   z-index: 1;
 }
@@ -1805,7 +1894,7 @@ textarea.field {
   place-items: center;
   background: var(--brand-gradient);
   color: var(--surface);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
   user-select: none;
 }
@@ -1819,7 +1908,7 @@ textarea.field {
 
 
 .profile-name {
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--c-black);
   white-space: nowrap;
@@ -1828,7 +1917,7 @@ textarea.field {
 }
 
 .profile-email {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: var(--c-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -1837,7 +1926,7 @@ textarea.field {
 
 .logout-btn {
   flex: none;
-  margin-left: 0.2rem;
+  margin-left: 0.25rem;
   width: 30px;
   height: 30px;
   display: grid;
@@ -1870,8 +1959,8 @@ textarea.field {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
-  font-size: 0.95rem;
+  gap: 0.25rem;
+  font-size: 1rem;
   /* Провисания высоты нет: пока грузится заголовок лекции, шапка не
      «дышит» — вместо текста рендерится скелетон той же высоты. */
   min-height: 28px;
@@ -1888,17 +1977,17 @@ textarea.field {
 .crumb {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.25rem;
   min-width: 0;
 }
 
 .crumb-sep {
   color: var(--border-strong);
-  font-size: 0.85rem;
+  font-size: 0.875rem;
 }
 
 .crumb-link {
-  padding: 0.2rem 0.4rem;
+  padding: 0.25rem 0.5rem;
   border-radius: var(--radius-sm);
   color: var(--c-muted);
   text-decoration: none;
@@ -1916,7 +2005,7 @@ textarea.field {
 }
 
 .crumb-label {
-  padding: 0.2rem 0;
+  padding: 0.25rem 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -1997,7 +2086,7 @@ textarea.field {
   place-items: center;
   background: var(--brand-gradient);
   color: var(--surface);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 600;
   user-select: none;
 }
@@ -2073,8 +2162,8 @@ textarea.field {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.35rem 0.6rem;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -2134,7 +2223,7 @@ textarea.field {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: 0 12px 32px rgba(54, 54, 54, 0.14);
-  padding: 0.35rem;
+  padding: 0.25rem;
   z-index: 120;
 }
 
@@ -2142,7 +2231,7 @@ textarea.field {
   display: block;
   width: 100%;
   text-align: left;
-  padding: 0.65rem 0.85rem;
+  padding: 0.75rem 0.75rem;
   border: none;
   background: transparent;
   border-radius: var(--radius-sm);
@@ -2172,7 +2261,7 @@ textarea.field {
 
 /* Микро-лейбл секции — sentence case (DESIGN.md §2: никаких ВСЕ КАПС) */
 .sidebar-section-title {
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.25rem;
   padding: 0 10px;
   font-size: 12px;
   font-weight: 600;
@@ -2347,14 +2436,14 @@ textarea.field {
 }
 
 .login-title {
-  margin: 0 0 0.3rem;
+  margin: 0 0 0.25rem;
   font-size: 1.5rem;
   color: var(--c-black);
 }
 
 .login-subtitle {
-  margin: 0 0 1.75rem;
-  font-size: 0.9rem;
+  margin: 0 0 2rem;
+  font-size: 0.875rem;
   color: var(--c-muted);
 }
 
@@ -2368,23 +2457,23 @@ textarea.field {
 .login-field {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.25rem;
 }
 
 .login-label {
-  font-size: 0.82rem;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--c-black);
 }
 
 .login-input {
   height: 32px;
-  padding: 0 0.9rem;
+  padding: 0 1rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: var(--c-black);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -2397,11 +2486,11 @@ textarea.field {
 
 .login-error {
   margin: 0;
-  padding: 0.6rem 0.8rem;
+  padding: 0.5rem 0.75rem;
   border-radius: var(--radius-sm);
   background: rgba(255, 106, 42, 0.1);
   color: var(--danger-ink);
-  font-size: 0.85rem;
+  font-size: 0.875rem;
 }
 
 .login-submit {
@@ -2432,6 +2521,23 @@ textarea.field {
 .login-submit:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.login-switch {
+  margin-top: 1.25rem;
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--c-lilac);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.login-switch:hover {
+  color: var(--brand-1-hover);
+  text-decoration: underline;
 }
 
 /* --- responsive: шапка --- */
@@ -2517,19 +2623,19 @@ textarea.field {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--c-muted);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 0.2rem 0.65rem;
+  padding: 0.25rem 0.75rem;
 }
 
 /* --- запись: индикаторы и пульсация «листа» --- */
 
 /* Подпись режима диктофона рядом с иконкой в шапке */
 .header-mic-dictate {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   margin-left: 3px;
   letter-spacing: 0.01em;
@@ -2540,21 +2646,21 @@ textarea.field {
 .editor-rec {
   display: inline-flex;
   align-items: center;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 800;
   color: var(--surface);
   background: var(--danger);
   border-radius: var(--radius-sm);
-  padding: 0.2rem 0.6rem;
+  padding: 0.25rem 0.5rem;
   white-space: nowrap;
   box-shadow: 0 0 0 0 rgba(224, 48, 61, 0.45);
   animation: rec-blink 1.6s ease-in-out infinite;
 }
-.header-rec { margin-left: 0.4rem; }
+.header-rec { margin-left: 0.5rem; }
 .editor-rec {
-  font-size: 0.62rem;
-  padding: 0.14rem 0.42rem;
-  margin-left: 0.35rem;
+  font-size: 0.75rem;
+  padding: 0.14rem 0.5rem;
+  margin-left: 0.25rem;
 }
 @keyframes rec-blink {
   0%, 100% { box-shadow: 0 0 0 0 rgba(224, 48, 61, 0.45); }
@@ -2569,9 +2675,9 @@ textarea.field {
   z-index: 20;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.25rem;
   height: 36px;
-  padding: 0 0.85rem;
+  padding: 0 0.75rem;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--surface);
@@ -2619,7 +2725,7 @@ textarea.field {
   width: 100%;
   max-width: 520px;
   height: 42px;
-  margin: 0.6rem 0;
+  margin: 0.5rem 0;
   border-radius: var(--radius-sm);
   background: rgba(88, 67, 246, 0.06);
   outline: none;
@@ -2628,7 +2734,7 @@ textarea.field {
 /* --- блочная формула (в редакторе) --- */
 .tiptap-wrapper .math-block {
   margin: 0.75rem 0;
-  padding: 0.9rem 1rem;
+  padding: 1rem 1rem;
   border: 1px dashed var(--border);
   border-radius: var(--radius);
   background: rgba(88, 67, 246, 0.045);
@@ -2662,7 +2768,7 @@ textarea.field {
 }
 
 .math-block-render .math-render {
-  font-size: 1.15rem;
+  font-size: 1.125rem;
   padding: 0.15rem 0;
   color: var(--c-black);
 }
@@ -2671,7 +2777,7 @@ textarea.field {
 .sketch-block-toolbar {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.25rem;
 }
 
 .math-block-btn,
@@ -2705,7 +2811,7 @@ textarea.field {
 /* --- блочная формула (в просмотре) --- */
 .lecture-view-content [data-type="math-block"] {
   margin: 1rem 0;
-  padding: 0.8rem 1rem;
+  padding: 0.75rem 1rem;
   border-radius: var(--radius);
   background: rgba(88, 67, 246, 0.05);
   display: flex;
@@ -2715,8 +2821,8 @@ textarea.field {
 }
 
 .lecture-view-content [data-type="math-block"] .math-render {
-  font-size: 1.15rem;
-  padding: 0.2rem 0;
+  font-size: 1.125rem;
+  padding: 0.25rem 0;
   color: var(--c-black);
 }
 
@@ -2740,7 +2846,7 @@ textarea.field {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: 0 24px 70px rgba(27, 27, 27, 0.28);
-  padding: 1.1rem 1.25rem 1.25rem;
+  padding: 1rem 1.25rem 1.25rem;
 }
 
 .math-overlay-head,
@@ -2748,7 +2854,7 @@ textarea.field {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.9rem;
+  margin-bottom: 1rem;
 }
 
 .math-overlay-title,
@@ -2802,7 +2908,7 @@ textarea.field {
 .sketch-modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.6rem;
+  gap: 0.5rem;
   margin-top: 1rem;
 }
 
@@ -2816,7 +2922,7 @@ textarea.field {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.5rem;
 }
 
 .tiptap-wrapper .sketch-block.selectedNode {
@@ -2858,7 +2964,7 @@ textarea.field {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: 0 24px 70px rgba(27, 27, 27, 0.28);
-  padding: 1.1rem 1.25rem 1.25rem;
+  padding: 1rem 1.25rem 1.25rem;
   overflow: hidden;
 }
 
@@ -2885,16 +2991,16 @@ textarea.field {
   gap: 0.5rem;
   height: 100%;
   color: var(--c-muted);
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 
 .sketch-error {
-  margin-top: 0.7rem;
+  margin-top: 0.75rem;
   padding: 0.5rem 0.75rem;
   border-radius: var(--radius-sm);
   background: var(--danger-soft);
   color: var(--danger-ink);
-  font-size: 0.85rem;
+  font-size: 0.875rem;
 }
 /* ================================================================
    Phase C — layout frame: card skeleton, content fade, modals
@@ -2979,7 +3085,7 @@ textarea.field {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: 0 24px 70px rgba(27, 27, 27, 0.28);
-  padding: 1.4rem 1.4rem 1.5rem;
+  padding: 1.5rem 1.5rem 1.5rem;
 }
 
 .confirm-close {
@@ -3003,15 +3109,15 @@ textarea.field {
 }
 
 .confirm-title {
-  margin: 0 0 0.4rem;
-  font-size: 1.05rem;
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--c-black);
 }
 
 .confirm-message {
-  margin: 0 0 1.1rem;
-  font-size: 0.95rem;
+  margin: 0 0 1rem;
+  font-size: 1rem;
   color: var(--c-muted);
 }
 
@@ -3200,31 +3306,31 @@ textarea.field {
 
   /* --- Типографика: компактные H1, чтобы не занимали пол-экрана. --- */
   .page-title {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
   }
 
   .lecture-card-title {
-    font-size: 1.45rem;
+    font-size: 1.5rem;
   }
 
   .lecture-view-content h1 {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
   }
 
   .lecture-view-content h2 {
-    font-size: 0.9rem;
+    font-size: 0.875rem;
   }
 
   .lecture-view-content h3 {
-    font-size: 1.05rem;
+    font-size: 1rem;
   }
 
   .tiptap-wrapper .tiptap-editor h1 {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
   }
 
   .tiptap-wrapper .tiptap-editor h2 {
-    font-size: 1.18rem;
+    font-size: 1.125rem;
   }
 }
 
@@ -3235,7 +3341,7 @@ textarea.field {
   }
 
   .app-header .header-right {
-    gap: 0.4rem;
+    gap: 0.5rem;
   }
 }
 
@@ -3259,24 +3365,15 @@ textarea.field {
   padding: 40px 40px 48px; /* task: свободные отступы 40px сверху/с боков */
 }
 
-/* --- Hero: приветствие + факт недели (одна колонка) --- */
+/* --- Hero: приветствие + факт недели --- */
 .hero-section {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: var(--space-xl);
   padding: 0.25rem 0 var(--space-lg);
   border-bottom: 1px solid var(--border);
 }
 .hero-main {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-}
-/* Пульс активности справа от приветствия (не отдельный виджет) */
-.hero-heatmap {
-  display: flex;
-  justify-content: flex-end;
+  gap: 0.25rem;
 }
 .hero-greeting {
   margin: 0;
@@ -3292,77 +3389,6 @@ textarea.field {
   color: var(--ink-2);
 }
 
-/* --- Activity heatmap (pure CSS Grid, compact "pulse"). --- */
-.heatmap {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.5rem;
-}
-.heatmap-grid {
-  display: grid;
-  grid-auto-flow: column;
-  grid-template-rows: repeat(7, 10px);
-  gap: 3px;
-}
-.heat-cell {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  background: rgba(0, 0, 0, 0.03);
-  position: relative;
-  transition: background 0.12s ease;
-}
-.heat-cell.heat-1 { background: rgba(88, 67, 246, 0.18); }
-.heat-cell.heat-2 { background: rgba(88, 67, 246, 0.42); }
-.heat-cell.heat-3 { background: rgba(88, 67, 246, 0.85); }
-.heat-cell:hover { background: rgba(88, 67, 246, 1); }
-
-/* Мини-тултип на hover: «20 августа: 4 действия». */
-.heat-cell::after {
-  content: attr(data-label);
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%) translateY(2px);
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  background: var(--c-black);
-  color: var(--surface);
-  font-size: 0.72rem;
-  line-height: 1.2;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.12s ease, transform 0.12s ease;
-  z-index: 20;
-}
-.heat-cell:hover::after {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* Легенда интенсивности. */
-.heatmap-legend {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-.heatmap-legend-label {
-  font-size: 0.68rem;
-  color: var(--c-muted);
-  margin: 0 4px;
-}
-.heat-legend-cell {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-}
-.heat-legend-cell.heat-0 { background: rgba(0, 0, 0, 0.03); }
-.heat-legend-cell.heat-1 { background: rgba(88, 67, 246, 0.18); }
-.heat-legend-cell.heat-2 { background: rgba(88, 67, 246, 0.42); }
-.heat-legend-cell.heat-3 { background: rgba(88, 67, 246, 0.85); }
-
 /* --- Quick actions --- */
 .quick-actions {
   display: flex;
@@ -3374,7 +3400,7 @@ textarea.field {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.9rem;   /* диета ~20%: было 0.6rem 1.1rem */
+  padding: 0.5rem 1rem;   /* диета ~20%: было 0.6rem 1.1rem */
   border-radius: var(--radius);
   border: 1px solid rgba(27, 27, 27, 0.08);
   background: var(--surface);
@@ -3399,7 +3425,7 @@ textarea.field {
 /* --- Create slot (new course from dashboard) --- */
 .dashboard-create-slot {
   margin: 0 0 1.5rem;
-  padding: 0.8rem 1rem; /* диета ~20%: было 1rem 1.25rem */
+  padding: 0.75rem 1rem; /* диета ~20%: было 1rem 1.25rem */
   border-radius: var(--radius-lg);
   background: var(--surface);
   border: 1px solid rgba(27, 27, 27, 0.06);
@@ -3423,7 +3449,7 @@ textarea.field {
 }
 .widget-title {
   margin: 0;
-  font-size: 1.0625rem; /* h2 по шкале §2 */
+  font-size: 1.125rem; /* h2 по шкале §2 */
   font-weight: 600;
   color: var(--ink);
 }
@@ -3432,7 +3458,7 @@ textarea.field {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--ink-3);
   text-decoration: none;
@@ -3445,12 +3471,71 @@ textarea.field {
   font-size: 0.875rem;
 }
 
-/* --- Сигнатурная карточка курса (DESIGN.md §5) --- */
-.widget-courses-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-sm);
+/* --- Список курсов на дашборде: строка вместо сетки карточек --- */
+.course-progress-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
+.course-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 8px 6px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s ease;
+}
+.course-row:hover {
+  background: var(--bg);
+}
+.course-row-badge {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+}
+.course-row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.course-row-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.course-row-meta {
+  font-size: 0.75rem;
+  color: var(--ink-3);
+}
+.course-row-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.course-row-seg {
+  width: 5px;
+  height: 16px;
+  border-radius: 3px;
+  background: var(--border);
+}
+.course-row-seg.filled {
+  /* фон задаёт градиент курса через inline style */
+}
+
+/* --- Сигнатурная карточка курса (DESIGN.md §5), используется на
+   странице «Все курсы» --- */
 .course-card-slot {
   position: relative;
   display: flex;
@@ -3493,14 +3578,14 @@ textarea.field {
   border-radius: var(--radius-sm);
 }
 .course-card-name {
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 600;
   line-height: 1.25;
   color: var(--ink);
   overflow-wrap: anywhere;
 }
 .course-card-meta {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1.35;
   color: var(--ink-3);
   display: -webkit-box;
@@ -3519,7 +3604,7 @@ textarea.field {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-  padding: 0.55rem 0;
+  padding: 0.5rem 0;
   border-bottom: 1px solid rgba(27, 27, 27, 0.05);
 }
 .timeline-item:last-child {
@@ -3527,7 +3612,7 @@ textarea.field {
 }
 .timeline-dot {
   flex: none;
-  margin-top: 0.4rem;
+  margin-top: 0.5rem;
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -3552,25 +3637,22 @@ textarea.field {
   color: var(--c-lilac);
 }
 .timeline-course {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--c-muted);
 }
 .timeline-time {
   margin-left: auto;
   flex: none;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: var(--c-muted);
   white-space: nowrap;
-  padding-top: 0.2rem;
+  padding-top: 0.25rem;
 }
 
 /* --- Dashboard: mobile stack --- */
 @media (max-width: 1023.98px) {
   .dashboard-page {
     padding: 1.5rem 1rem 2rem; /* borderless, но с дыханием */
-  }
-  .widget-courses-grid {
-    grid-template-columns: 1fr;
   }
   .resume-info {
     align-items: flex-start;
@@ -3611,7 +3693,7 @@ textarea.field {
 }
 .flash-count {
   color: var(--c-muted);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
 .flash-exit {
   margin-left: auto;
@@ -3619,8 +3701,8 @@ textarea.field {
   background: rgba(88, 67, 246, 0.06);
   color: var(--c-lilac);
   border-radius: var(--radius-sm);
-  padding: 0.45rem 1rem;
-  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
 }
@@ -3639,9 +3721,9 @@ textarea.field {
   max-width: 600px;
 }
 .flash-stat {
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  padding: 0.25rem 0.7rem;
+  padding: 0.25rem 0.75rem;
   border-radius: var(--radius-sm);
   white-space: nowrap;
 }
@@ -3722,7 +3804,7 @@ textarea.field {
 }
 .card-face-content.is-plain {
   white-space: pre-wrap;
-  font-size: 1.05rem;
+  font-size: 1rem;
   line-height: 1.5;
 }
 .card-face-content img {
@@ -3741,22 +3823,22 @@ textarea.field {
   align-items: center;
 }
 .flash-reveal {
-  padding: 0.7rem 1.6rem;
+  padding: 0.75rem 1.5rem;
   border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
   background: var(--brand-1);
   color: var(--surface);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 .flash-btn {
-  padding: 0.7rem 1.4rem;
+  padding: 0.75rem 1.5rem;
   border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 .flash-btn:disabled {
   opacity: 0.35;
@@ -3772,7 +3854,7 @@ textarea.field {
 }
 .flash-hint {
   color: var(--c-muted);
-  font-size: 0.82rem;
+  font-size: 0.875rem;
   text-align: center;
 }
 .flash-done {
@@ -3781,10 +3863,10 @@ textarea.field {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
 }
 .flash-done-emoji {
-  font-size: 2.6rem;
+  font-size: 2.75rem;
 }
 .flash-done-title {
   margin: 0;
@@ -3812,7 +3894,7 @@ textarea.field {
 .deck-tile .tile-click {
   display: flex;
   align-items: flex-start;
-  gap: 0.9rem;
+  gap: 1rem;
   text-align: left;
   width: 100%;
   height: 100%;
@@ -3832,25 +3914,25 @@ textarea.field {
   flex: 1;
 }
 .deck-tile-title {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 .deck-tile-desc {
-  margin: 0.2rem 0 0;
+  margin: 0.25rem 0 0;
   color: var(--c-muted);
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .deck-tile-count {
   display: inline-block;
-  margin-top: 0.45rem;
+  margin-top: 0.5rem;
   color: var(--c-muted);
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 600;
   background: rgba(88, 67, 246, 0.08);
-  padding: 0.15rem 0.55rem;
+  padding: 0.15rem 0.5rem;
   border-radius: var(--radius-sm);
 }
 .deck-tile-actions {
@@ -3879,7 +3961,7 @@ textarea.field {
   gap: 0.75rem;
 }
 .deck-editor-title {
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: 700;
   border: none;
   outline: none;
@@ -3893,7 +3975,7 @@ textarea.field {
   resize: none;
   background: transparent;
   color: var(--c-muted);
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-family: inherit;
   width: 100%;
 }
@@ -3916,30 +3998,59 @@ textarea.field {
 .deck-editor-cards {
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 1rem;
 }
 .deck-editor-card {
   border: 1px solid rgba(88, 67, 246, 0.16);
   border-radius: var(--radius-lg);
-  padding: 1rem 1rem 0.6rem;
+  padding: 1rem 1rem 0.5rem;
   background: var(--surface);
   box-shadow: 0 6px 18px rgba(27, 27, 27, 0.05);
 }
 .deck-editor-card-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.4rem;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 .deck-editor-card-num {
   font-weight: 600;
   color: var(--c-muted);
-  font-size: 0.85rem;
+  font-size: 0.875rem;
+}
+.deck-editor-card-head .icon-btn.danger {
+  margin-left: auto;
+}
+.deck-card-drag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-muted);
+  cursor: grab;
+  touch-action: none;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.deck-card-drag:hover {
+  background: rgba(88, 67, 246, 0.1);
+  color: var(--c-lilac);
+}
+.deck-card-drag:active {
+  cursor: grabbing;
+}
+.deck-editor-card.is-dragging {
+  box-shadow: 0 12px 30px rgba(27, 27, 27, 0.16);
+  opacity: 0.95;
 }
 .deck-editor-label {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: var(--c-muted);
-  margin: 0.6rem 0 0.25rem;
+  margin: 0.5rem 0 0.25rem;
   font-weight: 600;
   letter-spacing: 0.03em;
 }
@@ -3948,13 +4059,13 @@ textarea.field {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.9rem;
+  padding: 1rem;
   border-radius: var(--radius);
   border: 1px dashed rgba(88, 67, 246, 0.4);
   background: rgba(88, 67, 246, 0.04);
   color: var(--c-lilac);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -3969,13 +4080,13 @@ textarea.field {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.7rem 1.5rem;
+  padding: 0.75rem 1.5rem;
   border-radius: var(--radius-sm);
   border: none;
   background: var(--brand-1);
   color: var(--surface);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
   cursor: pointer;
 }
 .deck-editor-save:disabled {
@@ -4017,8 +4128,8 @@ textarea.field {
 .sidebar-logo {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.2rem 0 0.2rem 0.25rem;
+  gap: 0.5rem;
+  padding: 0.25rem 0 0.25rem 0.25rem;
 }
 .sidebar-logo-img {
   height: 24px; /* fit the wordmark into the compact sidebar */
@@ -4032,7 +4143,7 @@ textarea.field {
 .sidebar-search { position: relative; }
 .sidebar-search .search-box {
   width: 100%; display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem 0.5rem;
   background: var(--bg); border-radius: var(--radius-sm);
   border: 1px solid transparent;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
@@ -4052,10 +4163,10 @@ textarea.field {
   position: absolute; left: 0; right: 0; top: calc(100% + 6px);
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); box-shadow: 0 16px 40px rgba(27,27,27,0.12);
-  padding: 0.4rem; z-index: 2000; max-height: 320px; overflow-y: auto;
+  padding: 0.5rem; z-index: 2000; max-height: 320px; overflow-y: auto;
 }
 .sidebar-search-item {
-  display: block; padding: 0.5rem 0.6rem; border-radius: var(--radius-sm);
+  display: block; padding: 0.5rem 0.5rem; border-radius: var(--radius-sm);
   text-decoration: none; color: var(--ink); font: 500 13px/1.3 Inter, sans-serif;
 }
 .sidebar-search-item:hover { background: var(--bg); }
@@ -4070,7 +4181,7 @@ textarea.field {
   margin-top: 0.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .sidebar-search-empty {
-  padding: 0.5rem 0.6rem; font: 400 12px/1.3 Inter, sans-serif; color: var(--ink-3);
+  padding: 0.5rem 0.5rem; font: 400 12px/1.3 Inter, sans-serif; color: var(--ink-3);
 }
 
 /* --- Дерево курсов: строка = шеврон + точка-градиент + имя + счётчик.
@@ -4152,12 +4263,17 @@ textarea.field {
 .sidebar-course-notes .sidebar-note-row.active {
   background: var(--brand-wash);
   color: var(--brand-1);
+  font-weight: 600;
 }
 
-/* --- Sidebar: gradient active indicator (DESIGN sec. 6) --- */
+/* --- Sidebar: gradient active indicator (DESIGN sec. 6) ---
+   font-weight добавлен намеренно (Refactoring UI аудит): раньше активный
+   пункт отличался ТОЛЬКО цветом — в grayscale/для дальтоников активный и
+   обычный пункт были неразличимы. Полоска слева тоже цветная, а не форма —
+   вес шрифта даёт независимый от цвета сигнал. */
 .sidebar-nav-item.active {
   background: linear-gradient(90deg, rgba(88,67,246,0.08), rgba(181,203,250,0.10));
-  color: var(--brand-1); position: relative;
+  color: var(--brand-1); font-weight: 600; position: relative;
 }
 .sidebar-nav-item.active::before {
   content: ""; position: absolute; left: 0; top: 18%; bottom: 18%;
@@ -4169,7 +4285,7 @@ textarea.field {
 .quick-action {
   border-radius: var(--radius-sm); padding: 8px 14px;
   border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink);
-  font: 500 13px/1 Inter, sans-serif; display: inline-flex; align-items: center; gap: 0.4rem;
+  font: 500 13px/1 Inter, sans-serif; display: inline-flex; align-items: center; gap: 0.5rem;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -4183,7 +4299,7 @@ textarea.field {
 /* --- Resume: gradient hero banner with progress (DESIGN sec. 2) --- */
 .resume-block {
   display: flex; align-items: center; gap: 1rem;
-  padding: 1.1rem 1.25rem; border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem; border-radius: var(--radius-lg);
   background: var(--brand-gradient); color: var(--surface); position: relative; overflow: hidden;
   box-shadow: 0 14px 34px rgba(88,67,246,0.28);
   margin-bottom: var(--space-lg);
@@ -4201,7 +4317,7 @@ textarea.field {
   text-decoration: none; overflow-wrap: anywhere;
 }
 .resume-cta {
-  flex: none; display: inline-flex; align-items: center; gap: 0.4rem;
+  flex: none; display: inline-flex; align-items: center; gap: 0.5rem;
   white-space: nowrap; margin-left: auto;
   padding: 9px 18px; border-radius: var(--radius-sm);
   background: rgba(255,255,255,0.16); color: var(--surface);
@@ -4231,11 +4347,219 @@ textarea.field {
 }
 .resume-empty .resume-cta:hover { background: var(--brand-1); }
 
+/* --- Календарь занятий (замена heatmap-пульса): месяц, два честных
+   состояния — сегодня и «была активность», без выдуманного «запланировано». --- */
+.study-calendar {
+  display: flex;
+  flex-direction: column;
+}
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.calendar-nav-btn {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.calendar-nav-btn:hover {
+  background: var(--bg);
+  color: var(--ink);
+}
+.calendar-month-label {
+  min-width: 6.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ink-2);
+  text-transform: capitalize;
+}
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+}
+.calendar-weekdays span {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.calendar-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  color: var(--ink-2);
+  /* .calendar-cell — теперь <button> (кликабельный день, StudyWeekStrip),
+     не <span>: сбрасываем нативные стили кнопки под прежний вид ячейки. */
+  border: none;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+  padding: 0;
+}
+.calendar-cell:hover {
+  background: var(--bg);
+}
+.calendar-cell.empty {
+  visibility: hidden;
+  cursor: default;
+}
+.calendar-cell.active {
+  background: var(--brand-wash);
+  color: var(--brand-1);
+  font-weight: 600;
+}
+.calendar-cell.active:hover {
+  background: var(--brand-ring);
+}
+.calendar-cell.today {
+  box-shadow: inset 0 0 0 1.5px var(--brand-1);
+  font-weight: 600;
+  color: var(--ink);
+}
+.calendar-cell.today.active {
+  background: var(--brand-1);
+  color: #fff;
+}
+.calendar-cell.today.active:hover {
+  background: var(--brand-1-hover);
+}
+.calendar-cell-number {
+  line-height: 1;
+}
+.calendar-cell-dots {
+  display: flex;
+  gap: 3px;
+}
+.calendar-cell-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  flex: none;
+  /* Тонкое кольцо — точка остаётся различима на любом фоне ячейки:
+     прозрачном, brand-wash (.active) и сплошном brand-1 (.today.active). */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+.calendar-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: auto;
+  padding-top: var(--space-sm);
+  font-size: 0.75rem;
+  color: var(--ink-3);
+}
+.calendar-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+  margin-left: 0.5rem;
+}
+.calendar-legend-dot:first-child {
+  margin-left: 0;
+}
+.calendar-legend-dot.today {
+  box-shadow: inset 0 0 0 1.5px var(--brand-1);
+  background: var(--surface);
+}
+.calendar-legend-dot.active {
+  background: var(--brand-wash);
+}
+
+/* --- День недели: попап с разбором по курсам (DayDetailPopover.tsx) ---
+   Визуальный язык 1:1 с .kebab-dropdown — тот же портал-паттерн, та же
+   поверхность, не изобретаем второй стиль всплывающей панели. */
+.day-popover {
+  position: fixed;
+  z-index: 1000;
+  min-width: 220px;
+  max-width: 280px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 24px rgba(54, 54, 54, 0.12);
+  padding: 0.75rem 0.75rem;
+}
+.day-popover-date {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-transform: capitalize;
+  margin-bottom: 0.5rem;
+}
+.day-popover-empty {
+  font-size: 0.875rem;
+  color: var(--ink-3);
+  margin: 0;
+}
+.day-popover-course-group {
+  margin-bottom: 0.5rem;
+}
+.day-popover-course-group:last-child {
+  margin-bottom: 0;
+}
+.day-popover-course-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+.day-popover-course-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+  flex: none;
+}
+.day-popover-course-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.day-popover-lecture-link {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--ink);
+  text-decoration: none;
+  padding: 0.25rem 0 0.25rem 1.25rem;
+  border-radius: var(--radius-sm);
+}
+.day-popover-lecture-link:hover {
+  color: var(--brand-1);
+  background: var(--bg);
+}
+.day-popover-deck-line {
+  font-size: 0.75rem;
+  color: var(--ink-3);
+  padding-top: 0.5rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--border);
+}
+
 /* --- Review block: to-repeat (decks) --- */
-.review-widget .review-list { display: flex; flex-direction: column; gap: 0.55rem; }
+.review-widget .review-list { display: flex; flex-direction: column; gap: 0.5rem; }
 .review-item {
-  display: flex; align-items: center; gap: 0.7rem;
-  padding: 0.7rem 0.75rem; border-radius: var(--radius);
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.75rem 0.75rem; border-radius: var(--radius);
   background: var(--bg); text-decoration: none; color: var(--ink);
   transition: background 0.15s ease, transform 0.15s ease;
 }
@@ -4246,19 +4570,16 @@ textarea.field {
 }
 .review-item-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
 .review-item-title { font: 500 0.92rem/1.3 Inter, sans-serif; color: var(--ink); overflow-wrap: anywhere; }
-.review-empty { color: var(--ink-3); font-size: 0.92rem; margin: 0; }
+.review-empty { color: var(--ink-3); font-size: 0.875rem; margin: 0; }
 
-/* --- Dashboard grid: equal columns --- */
+/* --- Dashboard grid: equal columns, растянутые по высоте строки —
+   у виджетов в паре («Курсы» + «Календарь», «Колоды» + «Активность»)
+   контент разной длины, stretch не даёт короткой карточке «звисать»
+   на фоне страницы рядом с длинной. --- */
 .dashboard-grid {
   display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr);
-  gap: var(--space-lg); align-items: start; margin-top: var(--space-lg);
+  gap: var(--space-lg); margin-top: var(--space-lg);
 }
-.col-main { display: flex; flex-direction: column; gap: var(--space-lg); min-width: 0; }
-.col-side { display: flex; flex-direction: column; gap: var(--space-lg); min-width: 0; }
-
-/* --- Activity widget with embedded heatmap --- */
-.timeline-heatmap { margin: 0 0 0.9rem; }
-.timeline-heatmap .heatmap { align-items: flex-start; }
 
 /* --- Responsive --- */
 @media (max-width: 1023.98px) {
@@ -4266,4 +4587,238 @@ textarea.field {
 }
 @media (prefers-reduced-motion: reduce) {
   .course-card, .resume-block, .review-item { transition: none !important; }
+}
+
+/* ============================================================
+   EXAM ENGINE MODULE — Solo Mode
+   Курс → экзамен → билеты. Карта билетов — сигнатурный элемент
+   (DESIGN.md §6 «Чип статуса»): десятки билетов, где главный
+   вопрос экрана «где пробелы», а не «что это за элемент».
+   ============================================================ */
+
+/* --- Точка входа на странице курса --- */
+.exam-entry {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-md); margin: 0 0 var(--space-lg);
+  padding: var(--space-md); border-radius: var(--radius-lg);
+  background: var(--surface); border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm); text-decoration: none; color: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.exam-entry:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.exam-entry-icon {
+  flex: none; width: 40px; height: 40px; border-radius: var(--radius-sm);
+  background: var(--brand-gradient); display: grid; place-items: center; color: #fff;
+}
+.exam-entry-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.exam-entry-title { font: 600 0.95rem/1.3 Inter, sans-serif; color: var(--ink); }
+.exam-entry-meta { font: 500 0.82rem/1.3 Inter, sans-serif; color: var(--ink-3); }
+.exam-entry-empty .exam-entry-icon { background: var(--brand-wash); color: var(--brand-1); }
+
+/* --- Центр подготовки: hero --- */
+.exam-hero {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  flex-wrap: wrap; gap: var(--space-md);
+  padding: 0.25rem 0 var(--space-lg); border-bottom: 1px solid var(--border);
+}
+.exam-hero-title { margin: 0 0 0.25rem; font: 600 1.5rem/1.2 "Golos UI", Inter, sans-serif; color: var(--ink); letter-spacing: -0.02em; }
+.exam-hero-meta { margin: 0; font: 500 0.9rem/1.4 Inter, sans-serif; color: var(--ink-2); }
+.exam-hero-progress { display: flex; flex-direction: column; gap: 0.5rem; min-width: 220px; }
+.exam-progress-bar {
+  display: block; width: 100%; height: 8px; border-radius: 999px; background: var(--bg);
+  border: 1px solid var(--border); overflow: hidden;
+}
+.exam-progress-fill {
+  display: block; height: 100%; border-radius: 999px; background: var(--success);
+  transition: width 0.25s ease;
+}
+.exam-progress-text { font: 500 0.82rem/1.3 Inter, sans-serif; color: var(--ink-3); text-align: right; }
+
+/* --- Карта билетов (DESIGN.md §6 «Чип статуса») --- */
+.exam-map-widget { margin: var(--space-lg) 0; }
+.exam-map-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: var(--space-xs);
+}
+.exam-chip {
+  aspect-ratio: 1; border-radius: var(--radius-sm);
+  font: 500 13px/1 Inter, sans-serif;
+  display: grid; place-items: center; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg); color: var(--ink-3);
+  transition: transform 0.12s ease;
+}
+.exam-chip:hover { transform: translateY(-1px); }
+.exam-chip.draft { background: var(--warning-soft); color: var(--warning-ink); border-color: var(--warning); }
+.exam-chip.ready { background: var(--success-soft); color: var(--success-ink); border-color: var(--success); }
+
+/* --- Билеты (список в .col-main) --- */
+.exam-ticket-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.exam-ticket-row {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.5rem 0.75rem; border-radius: var(--radius);
+  background: var(--bg); text-decoration: none; color: var(--ink);
+  transition: background 0.15s ease;
+}
+.exam-ticket-row:hover { background: var(--border); }
+.exam-ticket-number {
+  flex: none; width: 28px; height: 28px; border-radius: var(--radius-sm);
+  display: grid; place-items: center; font: 600 0.8rem/1 Inter, sans-serif;
+  background: var(--surface); color: var(--ink-3); border: 1px solid var(--border);
+}
+.exam-ticket-row.draft .exam-ticket-number { color: var(--warning-ink); border-color: var(--warning); }
+.exam-ticket-row.ready .exam-ticket-number { color: var(--success-ink); border-color: var(--success); }
+.exam-ticket-question {
+  flex: 1; min-width: 0; font: 500 0.9rem/1.4 Inter, sans-serif;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* --- Импорт билетов --- */
+.exam-import-textarea {
+  width: 100%; min-height: 260px; resize: vertical;
+  padding: var(--space-md); border-radius: var(--radius); border: 1px solid var(--border);
+  background: var(--bg); color: var(--ink); font: 400 0.92rem/1.6 Inter, sans-serif;
+}
+.exam-import-textarea:focus {
+  outline: none; border-color: var(--brand-1);
+  box-shadow: 0 0 0 3px var(--brand-ring);
+}
+.exam-import-source { margin: 0.5rem 0 0; font: 500 0.82rem/1.4 Inter, sans-serif; color: var(--ink-3); }
+.exam-preview-list { display: flex; flex-direction: column; gap: 0.5rem; margin: var(--space-md) 0; }
+.exam-preview-row {
+  display: flex; align-items: flex-start; gap: 0.5rem;
+  padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); background: var(--bg);
+}
+.exam-preview-number { flex: none; font: 600 0.8rem/1.5 Inter, sans-serif; color: var(--ink-3); min-width: 1.6rem; }
+.exam-preview-text {
+  flex: 1; min-width: 0; font: 400 0.88rem/1.5 Inter, sans-serif; color: var(--ink);
+  background: transparent; border: none; resize: none; padding: 0;
+}
+.exam-preview-text:focus { outline: none; }
+.exam-preview-remove {
+  flex: none; border: none; background: transparent; color: var(--ink-3); cursor: pointer;
+  padding: 0.25rem; border-radius: var(--radius-sm);
+}
+.exam-preview-remove:hover { color: var(--danger); background: var(--danger-soft); }
+
+/* --- Шпаргалка --- */
+.exam-cheatsheet { max-width: 720px; margin: 0 auto; }
+.exam-cheatsheet-nav {
+  position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 0.25rem;
+  padding: 0.75rem 0; margin-bottom: var(--space-md); background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.exam-cheatsheet-nav a {
+  width: 30px; height: 30px; display: grid; place-items: center; border-radius: var(--radius-sm);
+  background: var(--success-soft); color: var(--success-ink); text-decoration: none;
+  font: 600 0.78rem/1 Inter, sans-serif;
+}
+.exam-cheatsheet-ticket { padding: var(--space-lg) 0; border-bottom: 1px solid var(--border); scroll-margin-top: 5rem; }
+.exam-cheatsheet-ticket:last-child { border-bottom: none; }
+.exam-cheatsheet-question { margin: 0 0 0.5rem; font: 600 1.05rem/1.4 "Golos UI", Inter, sans-serif; color: var(--ink); }
+.exam-cheatsheet-question::before {
+  content: attr(data-number) ". "; color: var(--ink-3); font-weight: 500;
+}
+
+/* --- Sidebar exam row --- */
+.sidebar-exam-row {
+  display: flex !important; align-items: center; gap: 0.5rem;
+  font-weight: 500;
+}
+.sidebar-exam-row span:first-of-type { flex: 1; }
+.sidebar-exam-count {
+  font-size: 11px; color: var(--ink-3); font-weight: 600;
+}
+
+/* --- Карточка курса на экране «Все экзамены» (ExamCourseCard) ---
+   Переиспользует .course-card/.course-card-inner/.course-card-badge
+   (DESIGN.md §5) — здесь только тело ниже названия курса: прогресс-бар
+   и счётчик (или приглашение, если экзамена ещё нет). См. ExamCourseCard.tsx. */
+.exam-course-card-body { display: flex; flex-direction: column; gap: 0.25rem; }
+.exam-course-card-stats {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 0.5rem; font: 500 0.78rem/1.3 Inter, sans-serif; color: var(--ink-3);
+}
+.exam-course-card-empty {
+  font: 500 0.82rem/1.3 Inter, sans-serif; color: var(--brand-1);
+}
+
+/* --- Responsive --- */
+@media (max-width: 1023.98px) {
+  .exam-map-grid { grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); }
+  .exam-hero { flex-direction: column; align-items: flex-start; }
+  .exam-hero-progress { width: 100%; min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .exam-entry, .exam-chip, .exam-ticket-row, .exam-progress-fill { transition: none !important; }
+}
+
+/* ---------- Undo-тост для отложенных удалений (см. lib/undoContext.tsx) ---------- */
+.undo-toast-stack {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 3000;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  pointer-events: none;
+}
+.undo-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 280px;
+  max-width: min(420px, calc(100vw - 32px));
+  background: var(--c-black);
+  color: #fff;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  position: relative;
+  overflow: hidden;
+  animation: undo-toast-in 0.18s ease-out;
+}
+.undo-toast-message {
+  flex: 1;
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+.undo-toast-action {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--brand-2);
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  min-height: 32px;
+}
+.undo-toast-action:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.undo-toast-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.45);
+  transform-origin: left;
+  animation: undo-toast-shrink 5s linear forwards;
+}
+@keyframes undo-toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes undo-toast-shrink {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .undo-toast { animation: none; }
+  .undo-toast-bar { animation: none; opacity: 0; }
 }
