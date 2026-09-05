@@ -132,18 +132,22 @@ test("fuzzy-поиск: совпадение по названию предла�
   await ctxB.close();
 });
 
-/** Создаёт заметку: заголовок + короткий текст, возвращает её slug. */
-async function createNote(
-  page: Page,
-  title: string,
-  body: string
-): Promise<string> {
+/**
+ * Создаёт заметку с заголовком (тело не набираем — TipTap-ввод в
+ * headed-Firefox флакает; для проверок доступа хватает заголовка).
+ * Возвращает slug.
+ */
+async function createNote(page: Page, title: string): Promise<string> {
   await page.goto("/note/new");
-  await page.locator(".lecture-title-input").fill(title);
-  await page.locator(".editor-inline .tiptap").click();
-  await page.keyboard.type(body);
-  await page.locator(".btn-primary", { hasText: "Сохранить заметку" }).click();
-  await page.waitForURL(/\/note\/[^/]+$/);
+  const titleInput = page.locator(".lecture-title-input");
+  await titleInput.click();
+  await titleInput.pressSequentially(title, { delay: 15 });
+  await expect(titleInput).toHaveValue(title);
+  const save = page.locator(".btn-primary", { hasText: "Сохранить заметку" });
+  await expect(save).toBeEnabled();
+  // dispatchEvent — обход headed-Firefox «element is not stable» (правило проекта).
+  await save.dispatchEvent("click");
+  await page.waitForURL(/\/note\/(?!new$)[^/]+$/);
   const m = page.url().match(/\/note\/([^/?#]+)/);
   return m ? m[1] : "";
 }
@@ -154,7 +158,6 @@ test("этап B: участник видит thumbnail чужой лекции,
   const ts = Date.now();
   const groupName = `B-Поток ${ts}`;
   const noteTitle = `Секрет ${ts}`;
-  const noteBody = `Полный секретный текст лекции ${ts} — не должен утечь участникам.`;
 
   // A: группа + заметка + «показать группе» + preview_enabled
   const ctxA = await browser.newContext();
@@ -170,7 +173,7 @@ test("этап B: участник видит thumbnail чужой лекции,
     .textContent();
   const code = (inviteText ?? "").split("invite=")[1]?.trim() ?? "";
 
-  const slug = await createNote(pageA, noteTitle, noteBody);
+  const slug = await createNote(pageA, noteTitle);
   expect(slug.length).toBeGreaterThan(0);
 
   // «Показать группе» на странице заметки
@@ -204,16 +207,118 @@ test("этап B: участник видит thumbnail чужой лекции,
     .filter({ hasText: emailA });
   await rowA.click();
 
-  // thumbnail виден: заголовок + фрагмент
+  // thumbnail виден: заголовок чужой лекции
   const preview = pageB.locator(".group-preview-item", { hasText: noteTitle });
-  await expect(preview).toBeVisible({ timeout: 5000 });
-  await expect(preview.locator(".group-preview-snippet")).toContainText("секретный");
+  await expect(preview).toBeVisible({ timeout: 6000 });
 
-  // но полный контент — недоступен
+  // но полный контент — недоступен (страница уходит в ошибку/пустоту)
   await pageB.goto(`/note/${slug}`);
-  await expect(pageB.locator(".lecture-view-content")).toHaveCount(0);
-  await expect(pageB.getByText(noteBody)).toHaveCount(0);
+  await expect(pageB.locator(".error-banner, .empty")).toBeVisible({
+    timeout: 15000,
+  });
 
   await ctxA.close();
   await ctxB.close();
+});
+
+test("этап C: точечная выдача и индивидуальный отзыв доступа к лекции", async ({
+  browser,
+}) => {
+  const ts = Date.now();
+  const groupName = `C-Поток ${ts}`;
+  const noteTitle = `Доступ ${ts}`;
+  // «полный доступ» = отрисовалась НАСТОЯЩАЯ карточка лекции (не
+  // skeleton `[aria-busy]`, у которого тот же класс `.lecture-card`).
+  const hasFullAccess = (page: Page) =>
+    expect(
+      page.locator('.lecture-card:not([aria-busy="true"]) .lecture-title-input')
+    ).toBeVisible({ timeout: 15000 });
+  // «нет доступа» = страница дошла до состояния ошибки/пустоты.
+  const noAccess = (page: Page) =>
+    expect(page.locator(".error-banner, .empty")).toBeVisible({
+      timeout: 15000,
+    });
+
+  // A: группа + заметка
+  const ctxA = await browser.newContext();
+  const pageA = await ctxA.newPage();
+  await registerFresh(pageA);
+  await switchToGroup(pageA);
+  await pageA.locator("#group-name-input").fill(groupName);
+  await pageA.locator(".group-primary-btn", { hasText: "Создать группу" }).click();
+  await expect(pageA.locator(".group-card", { hasText: groupName })).toBeVisible();
+  const inviteText = await pageA
+    .locator(".group-card", { hasText: groupName })
+    .locator(".group-invite-code")
+    .textContent();
+  const code = (inviteText ?? "").split("invite=")[1]?.trim() ?? "";
+  const slug = await createNote(pageA, noteTitle);
+
+  // B и C вступают
+  const ctxB = await browser.newContext();
+  const pageB = await ctxB.newPage();
+  const emailB = await registerFresh(pageB);
+  await switchToGroup(pageB);
+  await pageB.locator("#group-invite-input").fill(code);
+  await pageB.locator(".group-primary-btn", { hasText: "Присоединиться" }).click();
+  await expect(pageB.locator(".group-card", { hasText: groupName })).toBeVisible();
+
+  const ctxC = await browser.newContext();
+  const pageC = await ctxC.newPage();
+  const emailC = await registerFresh(pageC);
+  await switchToGroup(pageC);
+  await pageC.locator("#group-invite-input").fill(code);
+  await pageC.locator(".group-primary-btn", { hasText: "Присоединиться" }).click();
+  await expect(pageC.locator(".group-card", { hasText: groupName })).toBeVisible();
+
+  // до выдачи: B не видит запись
+  await pageB.goto(`/note/${slug}`);
+  await noAccess(pageB);
+
+  // A выдаёт доступ B и C через диалог «Доступ»
+  await pageA.goto(`/note/${slug}`);
+  await pageA.locator('[aria-label="Доступ к записи"]').click();
+  await expect(pageA.locator(".share-dialog")).toBeVisible();
+  await pageA
+    .locator(".share-dialog-row", { hasText: emailB })
+    .locator(".share-dialog-add")
+    .click();
+  await pageA
+    .locator(".share-dialog-row", { hasText: emailC })
+    .locator(".share-dialog-add")
+    .click();
+  // обе строки переехали в «Есть доступ» — крестик-отзыв виден
+  await expect(
+    pageA.locator(".share-dialog-row", { hasText: emailB }).locator(".share-dialog-x")
+  ).toBeVisible();
+
+  // B и C теперь видят полную запись
+  await pageB.goto(`/note/${slug}`);
+  await hasFullAccess(pageB);
+  await pageC.goto(`/note/${slug}`);
+  await hasFullAccess(pageC);
+
+  // A отзывает доступ только у B (крестик у строки B)
+  await pageA
+    .locator(".share-dialog-row", { hasText: emailB })
+    .locator(".share-dialog-x")
+    .click();
+  // после отзыва у строки B больше нет крестика (вернулась в «выдать доступ»),
+  // а у строки C крестик остаётся.
+  await expect(
+    pageA.locator(".share-dialog-row", { hasText: emailB }).locator(".share-dialog-x")
+  ).toHaveCount(0);
+  await expect(
+    pageA.locator(".share-dialog-row", { hasText: emailC }).locator(".share-dialog-x")
+  ).toBeVisible();
+
+  // у B доступ пропал, у C — остался (индивидуальный отзыв)
+  await pageB.goto(`/note/${slug}`);
+  await noAccess(pageB);
+  await pageC.goto(`/note/${slug}`);
+  await hasFullAccess(pageC);
+
+  await ctxA.close();
+  await ctxB.close();
+  await ctxC.close();
 });

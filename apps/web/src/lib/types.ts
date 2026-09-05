@@ -53,6 +53,19 @@ export interface LecturePreview extends PbRecord {
   preview_text?: string;
 }
 
+/** Точечная выдача полного доступа к лекции конкретному человеку. */
+export interface LectureShare extends PbRecord {
+  /** PocketBase relation → lectures. */
+  lecture: string;
+  /** PocketBase relation → users (автор лекции, дублируется для правила). */
+  owner: string;
+  /** PocketBase relation → users (кому выдан полный доступ). */
+  grantee: string;
+  expand?: {
+    grantee?: User;
+  };
+}
+
 export interface Semester extends PbRecord {
   slug: string;
 }
@@ -186,6 +199,10 @@ export const FIELDS = {
   previewOwner: "owner",
   previewTitle: "title",
   previewText: "preview_text",
+  // Поля коллекции lecture_shares
+  shareLecture: "lecture",
+  shareOwner: "owner",
+  shareGrantee: "grantee",
   // Поля коллекции decks
   deckTitle: "title",
   deckColor: "color",

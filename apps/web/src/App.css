@@ -5293,3 +5293,103 @@ button.group-roster-item:hover .group-roster-name {
 .share-group-chip-x:hover {
   background: var(--brand-ring);
 }
+
+/* --- GROUP MODE этап C: диалог «Доступ» (lecture_shares) --- */
+
+.share-dialog {
+  max-width: 420px;
+  text-align: left;
+}
+
+.share-dialog-section {
+  margin: var(--space-md) 0 var(--space-xs);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.share-dialog-section:first-of-type {
+  margin-top: var(--space-sm);
+}
+
+.share-dialog-hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ink-3);
+}
+
+.share-dialog-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.share-dialog-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  font-size: 0.875rem;
+  color: var(--ink);
+}
+
+.share-dialog-x {
+  display: inline-flex;
+  padding: 3px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.share-dialog-x:hover {
+  background: var(--danger-soft);
+  color: var(--danger-ink);
+}
+
+.share-dialog-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--brand-ring);
+  border-radius: var(--radius-sm);
+  background: var(--brand-wash);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--brand-1);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.share-dialog-add:hover {
+  background: var(--brand-ring);
+}
+.share-dialog-add:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.share-dialog-search {
+  width: 100%;
+  height: 36px;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font: inherit;
+  color: var(--ink);
+  margin-bottom: var(--space-xs);
+}
+.share-dialog-search:focus {
+  outline: none;
+  border-color: var(--brand-1);
+  box-shadow: 0 0 0 3px var(--brand-ring);
+}

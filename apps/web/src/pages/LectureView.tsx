@@ -42,6 +42,7 @@ import SpeechToText from "../components/SpeechToText";
 import TagEditor from "../components/TagEditor";
 import SaveIndicator from "../components/SaveIndicator";
 import ShareToGroupButton from "../components/ShareToGroupButton";
+import ShareAccessButton from "../components/ShareAccessButton";
 import { renderLatexInto } from "../components/math/renderLatex";
 
 /**
@@ -324,6 +325,7 @@ function LectureView() {
               <TagEditor selectedIds={tags} onChange={updateTags} />
               <div className="lecture-card-actions">
                 <SaveIndicator state={saveState} text={saveText} />
+                <ShareAccessButton lecture={lecture} />
                 <ShareToGroupButton lecture={lecture} onChanged={refetch} />
                 <button
                   className="icon-btn danger"
