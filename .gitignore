@@ -17,6 +17,17 @@ pocketbase/*.backup*
 Thumbs.db
 .vscode/
 .idea/
+.claude/
+
+# E2E artifacts, если Playwright запускался из корня (спеки живут в apps/web)
+/test-results/
+/playwright-report/
+
+# Внешние материалы, не часть кодовой базы (методология NMT, распакованные скиллы, архивы)
+Next-Move-Theory-Canon/
+skills-extracted/
+skills-main/
+*.zip
 
 # Личные учебные материалы (исходники билетов/ответов).
 # Тестам достаточно текстовых фикстур в apps/web/tests/fixtures/.
