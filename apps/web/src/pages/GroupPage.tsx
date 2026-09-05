@@ -9,9 +9,11 @@
  *      прогоняется через обязательный fuzzy-поиск существующих групп;
  *      при совпадении сверху предлагается «Присоединиться к «…»»,
  *      а создание превращается в неприметное «Всё равно создать новую».
- *   3. Мои группы: код-приглашение + ростер участников.
+ *   3. Мои группы: код-приглашение, тумблер «показывать мои конспекты»,
+ *      ростер участников с раскрытием thumbnail-превью чужих конспектов.
  *
- * Этап A: без превью конспектов и точечного шеринга.
+ * Этап B: превью конспектов есть. Точечная выдача полного доступа
+ * («Доступ» / lecture_shares) — этап C.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -31,12 +33,15 @@ import {
   joinGroupById,
   searchSimilarGroups,
   leaveGroup,
+  setPreviewEnabled,
+  fetchOwnerPreviews,
   type GroupCandidate,
 } from "../services/groupService";
 import { errorMessage, userName } from "../lib/format";
 import {
   type Group,
   type GroupMember,
+  type LecturePreview,
   groupName,
   groupOwnerId,
   memberUserId,
@@ -68,10 +73,60 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   );
 }
 
+function MemberPreviews({ ownerUserId }: { ownerUserId: string }) {
+  const [previews, setPreviews] = useState<LecturePreview[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchOwnerPreviews(ownerUserId)
+      .then((p) => {
+        if (!cancelled) setPreviews(p);
+      })
+      .catch(() => {
+        if (!cancelled) setPreviews([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ownerUserId]);
+
+  if (previews === null) return <p className="group-hint">Загрузка…</p>;
+  if (previews.length === 0) {
+    return <p className="group-hint">Открытых конспектов пока нет.</p>;
+  }
+  return (
+    <ul className="group-preview-list">
+      {previews.map((p) => (
+        <li key={p.id} className="group-preview-item">
+          <span className="group-preview-title">{p.title || "Без названия"}</span>
+          {p.preview_text && (
+            <span className="group-preview-snippet">{p.preview_text}</span>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function GroupCard({ group, meId }: { group: Group; meId: string }) {
   const navigate = useNavigate();
-  const { roster, loading } = useRoster(group.id);
+  const { roster, loading, refetch } = useRoster(group.id);
   const isOwner = groupOwnerId(group) === meId;
+  const [openMember, setOpenMember] = useState<string | null>(null);
+  const [savingPreview, setSavingPreview] = useState(false);
+
+  const myRow = roster.find((m) => memberUserId(m) === meId);
+  const myPreviewOn = !!myRow?.preview_enabled;
+
+  const togglePreview = async () => {
+    setSavingPreview(true);
+    try {
+      await setPreviewEnabled(group.id, !myPreviewOn);
+      await refetch();
+    } finally {
+      setSavingPreview(false);
+    }
+  };
 
   return (
     <div className="group-card">
@@ -99,6 +154,16 @@ function GroupCard({ group, meId }: { group: Group; meId: string }) {
         <CopyButton text={inviteLink(group.invite_code)} label="Копировать" />
       </div>
 
+      <label className="group-preview-toggle">
+        <input
+          type="checkbox"
+          checked={myPreviewOn}
+          disabled={savingPreview}
+          onChange={togglePreview}
+        />
+        Показывать мои конспекты участникам группы
+      </label>
+
       <div className="group-roster">
         <div className="group-roster-head">
           <Users size={14} />
@@ -108,16 +173,41 @@ function GroupCard({ group, meId }: { group: Group; meId: string }) {
           {roster.map((m: GroupMember) => {
             const u = m.expand?.user;
             const name = u ? userName(u) : memberUserId(m);
+            const uid = memberUserId(m);
+            const isMe = uid === meId;
+            const previewOn = !!m.preview_enabled;
+            const expanded = openMember === uid;
             return (
-              <li key={m.id} className="group-roster-item">
-                <span className="group-roster-name">{name}</span>
-                {memberUserId(m) === groupOwnerId(group) && (
-                  <span className="group-tag">владелец</span>
+              <li key={m.id} className="group-roster-item-wrap">
+                <button
+                  type="button"
+                  className="group-roster-item"
+                  onClick={() =>
+                    setOpenMember(expanded ? null : uid)
+                  }
+                >
+                  <span className="group-roster-name">{name}</span>
+                  {uid === groupOwnerId(group) && (
+                    <span className="group-tag">владелец</span>
+                  )}
+                  {isMe && <span className="group-tag">вы</span>}
+                  {previewOn && !isMe && (
+                    <span className="group-tag group-tag-open">
+                      конспекты открыты
+                    </span>
+                  )}
+                </button>
+                {expanded && !isMe && (
+                  <div className="group-member-body">
+                    {previewOn ? (
+                      <MemberPreviews ownerUserId={uid} />
+                    ) : (
+                      <p className="group-hint">
+                        Участник не открыл конспекты для группы.
+                      </p>
+                    )}
+                  </div>
                 )}
-                {memberUserId(m) === meId && (
-                  <span className="group-tag">вы</span>
-                )}
-                {/* TODO(этап B): счётчик написанных лекций (нужно lectures.owner). */}
               </li>
             );
           })}

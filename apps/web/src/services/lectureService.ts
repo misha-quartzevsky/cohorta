@@ -14,6 +14,11 @@ import { slugify } from "../lib/slugify";
 import { uniqueSlugForCollection } from "./genericService";
 import { applyLectureTags } from "./tagService";
 
+/** Id текущего пользователя ("" — не залогинен). */
+function currentUserId(): string {
+  return String(pb.authStore.record?.id ?? "");
+}
+
 /**
  * Fetch a single lecture by its PocketBase ID.
  *
@@ -73,6 +78,7 @@ export async function createLecture(
     [FIELDS.lectureTitle]: title,
     [FIELDS.lectureContent]: content,
     [FIELDS.lectureCourse]: courseId,
+    [FIELDS.lectureOwner]: currentUserId(),
     [FIELDS.lectureSlug]: await uniqueSlugForCollection(
       "lectures",
       FIELDS.lectureSlug,
@@ -99,6 +105,7 @@ export async function createUnassignedLecture(
   return pb.collection("lectures").create<Lecture>({
     [FIELDS.lectureTitle]: title,
     [FIELDS.lectureContent]: content,
+    [FIELDS.lectureOwner]: currentUserId(),
     [FIELDS.lectureSlug]: await uniqueSlugForCollection(
       "lectures",
       FIELDS.lectureSlug,
@@ -137,6 +144,11 @@ export async function updateLecture(
       slugify(title) || "lecture"
     );
   }
+  // Lazy owner backfill: первая правка legacy-лекции закрепляет её за
+  // редактирующим (owner="" по правилу доступен всем — правит кто угодно).
+  if (!existing.owner && currentUserId()) {
+    payload[FIELDS.lectureOwner] = currentUserId();
+  }
   const updated = await pb.collection("lectures").update<Lecture>(id, payload);
   if (tags !== undefined) {
     await applyLectureTags(id, tags);
@@ -151,6 +163,28 @@ export async function updateLecture(
  */
 export async function deleteLecture(id: string): Promise<void> {
   await pb.collection("lectures").delete(id);
+}
+
+/**
+ * «Показать группе»: привязывает лекцию к группе. Серверный хук
+ * `lecture_previews.pb.js` заведёт thumbnail-строку, если автор
+ * включил `preview_enabled` для этой группы. Полный `content`
+ * при этом остаётся закрытым (виден автору и по `lecture_shares`).
+ */
+export async function showLectureToGroup(
+  lectureId: string,
+  groupId: string
+): Promise<Lecture> {
+  return pb.collection("lectures").update<Lecture>(lectureId, {
+    [FIELDS.lectureGroup]: groupId,
+  });
+}
+
+/** Убрать лекцию из группы (thumbnail снимается хуком). */
+export async function hideLectureFromGroup(lectureId: string): Promise<Lecture> {
+  return pb.collection("lectures").update<Lecture>(lectureId, {
+    [FIELDS.lectureGroup]: "",
+  });
 }
 
 /**

@@ -5141,3 +5141,155 @@ textarea.field {
   .group-primary-btn,
   .group-candidate { transition: none; }
 }
+
+/* --- GROUP MODE этап B: превью конспектов, «Показать группе» --- */
+
+.group-preview-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+  font-size: 0.875rem;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.group-preview-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brand-1);
+  cursor: pointer;
+}
+
+.group-roster-item-wrap {
+  border-bottom: 1px solid var(--border);
+}
+.group-roster-item-wrap:last-child {
+  border-bottom: none;
+}
+
+/* ростер-строка теперь кликабельная кнопка */
+button.group-roster-item {
+  width: 100%;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+button.group-roster-item:hover .group-roster-name {
+  color: var(--brand-1);
+}
+
+.group-tag-open {
+  background: var(--success-soft);
+  border-color: transparent;
+  color: var(--success-ink);
+}
+
+.group-member-body {
+  padding: var(--space-xs) 0 var(--space-sm) var(--space-sm);
+}
+
+.group-preview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.group-preview-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+
+.group-preview-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.group-preview-snippet {
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* «Показать группе» на карточке лекции */
+.share-group {
+  position: relative;
+  display: inline-flex;
+}
+
+.share-group-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  min-width: 180px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.share-group-menu-title {
+  margin: 4px 8px 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.share-group-menu-item {
+  display: block;
+  width: 100%;
+  padding: 7px 8px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.share-group-menu-item:hover {
+  background: var(--brand-wash);
+}
+
+.share-group-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px 3px 8px;
+  border-radius: 999px;
+  background: var(--brand-wash);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--brand-1);
+}
+
+.share-group-chip-x {
+  display: inline-flex;
+  padding: 2px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.share-group-chip-x:hover {
+  background: var(--brand-ring);
+}

@@ -20,6 +20,7 @@ export interface UseLectureBySlugResult {
   lecture: Lecture | null;
   loading: boolean;
   error: string;
+  refetch: () => Promise<void>;
 }
 
 /**
@@ -38,9 +39,12 @@ export function useLectureBySlug(slug: string): UseLectureBySlugResult {
     }
   }, [slug]);
 
-  const { data, loading, error } = useAsyncData<Lecture>(fetcher, !!slug);
+  const { data, loading, error, refetch } = useAsyncData<Lecture>(
+    fetcher,
+    !!slug
+  );
 
-  return { lecture: data, loading, error };
+  return { lecture: data, loading, error, refetch };
 }
 
 export default useLectureBySlug;

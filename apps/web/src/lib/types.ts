@@ -18,6 +18,8 @@ export interface Course extends PbRecord {
   slug?: string;
   /** PocketBase relation → semesters (single). */
   semesters?: string;
+  /** PocketBase relation → users. "" у legacy/демо-записей. */
+  owner?: string;
 }
 
 export interface Lecture extends PbRecord {
@@ -29,10 +31,26 @@ export interface Lecture extends PbRecord {
   /** PocketBase relation → courses. */
   field?: string;
   slug?: string;
+  /** PocketBase relation → users (автор). "" у legacy/демо-записей. */
+  owner?: string;
+  /** PocketBase relation → groups. Заполняется действием «Показать группе». */
+  group?: string;
   /** Expanded course data (when using expand:"field"). */
   expand?: {
     field?: Course;
   };
+}
+
+/** Thumbnail чужой лекции для участников группы (ведёт серверный хук). */
+export interface LecturePreview extends PbRecord {
+  /** PocketBase relation → lectures. */
+  lecture: string;
+  /** PocketBase relation → groups. */
+  group: string;
+  /** PocketBase relation → users (автор). */
+  owner: string;
+  title?: string;
+  preview_text?: string;
 }
 
 export interface Semester extends PbRecord {
@@ -52,6 +70,8 @@ export interface Deck extends PbRecord {
   slug?: string;
   description?: string;
   is_public?: boolean;
+  /** PocketBase relation → users. "" у legacy/демо-записей. */
+  owner?: string;
 }
 
 export interface DeckCard extends PbRecord {
@@ -140,12 +160,15 @@ export interface GroupMember extends PbRecord {
 export const FIELDS = {
   courseName: "name",
   courseColor: "color",
+  courseOwner: "owner",
   lectureTitle: "title",
   lectureContent: "content",
   // Файлы (картинки), залитые в лекцию (тип "file" в PB).
   lectureFile: "file",
   // Поле в lectures, которое ссылается на курс (id из courses)
   lectureCourse: "field",
+  lectureOwner: "owner",
+  lectureGroup: "group",
   // URL-идентификаторы (slugs)
   courseSlug: "slug",
   lectureSlug: "slug",
@@ -157,9 +180,16 @@ export const FIELDS = {
   tagColor: "color",
   // Поле в tags, которое ссылается на лекции (multiple-relation)
   tagLectures: "lectures",
+  // Поля коллекции lecture_previews
+  previewLecture: "lecture",
+  previewGroup: "group",
+  previewOwner: "owner",
+  previewTitle: "title",
+  previewText: "preview_text",
   // Поля коллекции decks
   deckTitle: "title",
   deckColor: "color",
+  deckOwner: "owner",
   deckSlug: "slug",
   deckDescription: "description",
   deckIsPublic: "is_public",
@@ -234,6 +264,16 @@ export function lectureFiles(l: Lecture): string[] {
 
 export function lectureCourseId(l: Lecture): string {
   return String(l.field ?? "");
+}
+
+/** PocketBase id автора лекции ("" у legacy/демо-записей). */
+export function lectureOwnerId(l: Lecture): string {
+  return String(l.owner ?? "");
+}
+
+/** PocketBase id группы, которой показана лекция ("" = приватная). */
+export function lectureGroupId(l: Lecture): string {
+  return String(l.group ?? "");
 }
 
 /**

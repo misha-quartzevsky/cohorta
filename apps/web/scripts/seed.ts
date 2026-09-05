@@ -190,7 +190,7 @@ function retinaSvg(): File {
 }
 
 /** Идемпотентный upsert демо-колоды (по slug) с детерминированным набором карточек. */
-async function upsertDeck(pb: PocketBase): Promise<void> {
+async function upsertDeck(pb: PocketBase, ownerId: string): Promise<void> {
   let deck = (
     await pb.collection("decks").getFullList<{ id: string }>({
       filter: `slug = "${SEED_DECK.slug}"`,
@@ -203,6 +203,7 @@ async function upsertDeck(pb: PocketBase): Promise<void> {
       title: SEED_DECK.title,
       description: SEED_DECK.description,
       color: SEED_DECK.color,
+      owner: ownerId,
     });
     log(`Deck "${SEED_DECK.title}" updated (/${SEED_DECK.slug}).`);
   } else {
@@ -212,6 +213,7 @@ async function upsertDeck(pb: PocketBase): Promise<void> {
       color: SEED_DECK.color,
       slug: SEED_DECK.slug,
       is_public: false,
+      owner: ownerId,
     });
     log(`Deck "${SEED_DECK.title}" created (/${SEED_DECK.slug}).`);
   }
@@ -446,6 +448,29 @@ export async function seed(pb: PocketBase): Promise<void> {
 
   await ensureDemoUser(pb);
 
+  // После ужесточения правил (миграция 1787615000) courses/lectures/decks
+  // требуют авторизации на создание и владельца. Логинимся демо-юзером на
+  // всё время сида данных; чистим сессию в конце.
+  const demoUser = (
+    await pb.collection("users").authWithPassword(DEMO_EMAIL, DEMO_PASSWORD)
+  ).record;
+  log(`Authenticated as demo user (${demoUser.id}) for owner-scoped seeding.`);
+
+  // 0. Бэкфилл владельца на ВСЕ записи без owner (legacy / прежние сессии
+  // разработки). На чистом клоне таких нет; на dev-БД они «свои» и по
+  // переходному правилу owner="" видны всем — забираем их демо-юзеру,
+  // чтобы новый зарегистрированный пользователь их не видел.
+  for (const col of ["courses", "lectures", "decks"] as const) {
+    const orphans = await pb.collection(col).getFullList<{ id: string }>({
+      filter: 'owner = ""',
+      fields: "id",
+    });
+    for (const rec of orphans) {
+      await pb.collection(col).update(rec.id, { owner: demoUser.id });
+    }
+    if (orphans.length) log(`Backfilled owner on ${orphans.length} ${col}.`);
+  }
+
   // 1. Semester — find or create (idempotent: re-runs update, don't throw).
   let semester = (
     await pb.collection("semesters").getFullList<{ id: string }>({
@@ -477,6 +502,7 @@ export async function seed(pb: PocketBase): Promise<void> {
       color: c.color,
       slug: c.slug,
       semesters: semester.id,
+      owner: demoUser.id,
     };
     if (existing) {
       await pb.collection("courses").update(existing.id, payload);
@@ -503,6 +529,7 @@ export async function seed(pb: PocketBase): Promise<void> {
       slug: lecture.slug,
       field: courses[lecture.courseIndex].id,
       content: lecture.html,
+      owner: demoUser.id,
     };
     if (existing) {
       await pb.collection("lectures").update(existing.id, payload);
@@ -514,7 +541,10 @@ export async function seed(pb: PocketBase): Promise<void> {
   }
 
   // 4. Demo deck (flashcards) — upsert by slug.
-  await upsertDeck(pb);
+  await upsertDeck(pb, demoUser.id);
+
+  // Дальше exam-шаг сам логинится/чистит сессию; освобождаем её здесь.
+  pb.authStore.clear();
 
   // 5. Demo exam — на первом курсе (math-analysis).
   await upsertExam(pb, courses[0].id);

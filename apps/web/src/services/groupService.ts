@@ -16,7 +16,7 @@
  */
 
 import { pb } from "../lib/pocketbase";
-import type { Group, GroupMember } from "../lib/types";
+import type { Group, GroupMember, LecturePreview } from "../lib/types";
 import { FIELDS } from "../lib/types";
 import { slugify } from "../lib/slugify";
 
@@ -232,4 +232,35 @@ export async function fetchRoster(groupId: string): Promise<GroupMember[]> {
 export async function leaveGroup(groupId: string): Promise<void> {
   const mine = await myMembership(groupId);
   if (mine) await pb.collection("group_members").delete(mine.id);
+}
+
+/**
+ * Переключить `preview_enabled` для текущего пользователя в группе —
+ * персональное разрешение показывать свои конспекты участникам. Хук
+ * `lecture_previews.pb.js` пересоберёт thumbnail-строки.
+ */
+export async function setPreviewEnabled(
+  groupId: string,
+  enabled: boolean
+): Promise<void> {
+  const mine = await myMembership(groupId);
+  if (!mine) return;
+  await pb.collection("group_members").update(mine.id, {
+    [FIELDS.memberPreviewEnabled]: enabled,
+  });
+}
+
+/**
+ * Thumbnail-превью лекций конкретного автора, видимые текущему
+ * пользователю (правило `lecture_previews` = участник той же группы).
+ * `content` лекции сюда не входит — только заголовок + короткий фрагмент.
+ */
+export async function fetchOwnerPreviews(
+  ownerUserId: string
+): Promise<LecturePreview[]> {
+  if (!ownerUserId) return [];
+  return pb.collection("lecture_previews").getFullList<LecturePreview>({
+    filter: pb.filter(`${FIELDS.previewOwner} = {:o}`, { o: ownerUserId }),
+    sort: "-updated",
+  });
 }

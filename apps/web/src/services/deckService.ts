@@ -16,6 +16,11 @@ import {
 import { slugify } from "../lib/slugify";
 import { uniqueSlugForCollection, fetchBySlug } from "./genericService";
 
+/** Id текущего пользователя ("" — не залогинен). */
+function currentUserId(): string {
+  return String(pb.authStore.record?.id ?? "");
+}
+
 /** Fetch all decks, most-recently-updated first. */
 export async function fetchDecks(limit: number = 0): Promise<Deck[]> {
   const items = await pb.collection("decks").getFullList<Deck>({
@@ -75,6 +80,7 @@ export async function createDeck(payload: DeckPayload): Promise<Deck> {
     [FIELDS.deckDescription]: payload.description ?? "",
     [FIELDS.deckColor]: payload.color ?? "",
     [FIELDS.deckIsPublic]: payload.is_public ?? false,
+    [FIELDS.deckOwner]: currentUserId(),
     [FIELDS.deckSlug]: await uniqueSlugForCollection(
       "decks",
       FIELDS.deckSlug,
@@ -88,12 +94,16 @@ export async function updateDeck(
   deck: Deck,
   payload: DeckPayload
 ): Promise<Deck> {
-  return pb.collection("decks").update<Deck>(deck.id, {
+  const data: Record<string, unknown> = {
     [FIELDS.deckTitle]: payload.title,
     [FIELDS.deckDescription]: payload.description ?? "",
     [FIELDS.deckColor]: payload.color ?? "",
     [FIELDS.deckIsPublic]: payload.is_public ?? false,
-  });
+  };
+  if (!deck.owner && currentUserId()) {
+    data[FIELDS.deckOwner] = currentUserId();
+  }
+  return pb.collection("decks").update<Deck>(deck.id, data);
 }
 
 /** Delete a deck (deck_cards cascade via the relation). */

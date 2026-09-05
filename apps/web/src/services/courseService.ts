@@ -15,6 +15,11 @@ import { randomCourseColor } from "../lib/colors";
 import { slugify } from "../lib/slugify";
 import { uniqueSlugForCollection } from "./genericService";
 
+/** Id текущего пользователя ("" — не залогинен). */
+function currentUserId(): string {
+  return String(pb.authStore.record?.id ?? "");
+}
+
 /**
  * Fetch every course, newest-first.
  *
@@ -44,6 +49,7 @@ export async function createCourse(
 ): Promise<Course> {
   const payload: Record<string, unknown> = {
     [FIELDS.courseName]: name,
+    [FIELDS.courseOwner]: currentUserId(),
     [FIELDS.courseSlug]: await uniqueSlugForCollection(
       "courses",
       FIELDS.courseSlug,
@@ -88,6 +94,10 @@ export async function updateCourse(
       FIELDS.courseSlug,
       slugify(name) || "course"
     );
+  }
+  // Lazy owner backfill (legacy rows with owner="" are editable by anyone).
+  if (!existing.owner && currentUserId()) {
+    payload[FIELDS.courseOwner] = currentUserId();
   }
   if (color && color.trim()) {
     payload[FIELDS.courseColor] = color.trim();

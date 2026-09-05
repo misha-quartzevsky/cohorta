@@ -41,6 +41,7 @@ import Editor from "../components/Editor";
 import SpeechToText from "../components/SpeechToText";
 import TagEditor from "../components/TagEditor";
 import SaveIndicator from "../components/SaveIndicator";
+import ShareToGroupButton from "../components/ShareToGroupButton";
 import { renderLatexInto } from "../components/math/renderLatex";
 
 /**
@@ -61,7 +62,9 @@ function LectureView() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { lecture, loading, error } = useLectureBySlug(lectureSlugParam ?? "");
+  const { lecture, loading, error, refetch } = useLectureBySlug(
+    lectureSlugParam ?? ""
+  );
   const isCourseContext = !!courseSlug;
 
   // `/…/edit` — рабочий алиас: та же страница, но сразу в режиме редактора.
@@ -321,6 +324,7 @@ function LectureView() {
               <TagEditor selectedIds={tags} onChange={updateTags} />
               <div className="lecture-card-actions">
                 <SaveIndicator state={saveState} text={saveText} />
+                <ShareToGroupButton lecture={lecture} onChanged={refetch} />
                 <button
                   className="icon-btn danger"
                   type="button"
