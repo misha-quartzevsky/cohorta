@@ -15,7 +15,12 @@
  */
 
 import { pb } from "../lib/pocketbase";
-import type { Exam, ExamTicket, TicketStatus } from "../lib/types";
+import type {
+  Exam,
+  ExamParticipant,
+  ExamTicket,
+  TicketStatus,
+} from "../lib/types";
 import type { UploadedImage } from "./lectureService";
 import { FIELDS, ticketAttachmentNames, stripHtml } from "../lib/types";
 
@@ -144,6 +149,50 @@ export async function updateExam(
 /** Удалить экзамен. Билеты уходят каскадом (cascadeDelete на связи). */
 export async function deleteExam(examId: string): Promise<void> {
   await pb.collection("exams").delete(examId);
+}
+
+/** Переключить режим экзамена (solo ↔ group). */
+export async function setExamMode(
+  examId: string,
+  mode: "solo" | "group"
+): Promise<Exam> {
+  return pb.collection("exams").update<Exam>(examId, { [FIELDS.examMode]: mode });
+}
+
+// ---------------------------------------------------------------------------
+// Участники коллективного экзамена (exam_participants)
+// ---------------------------------------------------------------------------
+
+/** Участники экзамена (с раскрытым пользователем), по дате добавления. */
+export async function fetchParticipants(
+  examId: string
+): Promise<ExamParticipant[]> {
+  if (!examId) return [];
+  return pb.collection("exam_participants").getFullList<ExamParticipant>({
+    filter: pb.filter(`${FIELDS.examParticipantExam} = {:e}`, { e: examId }),
+    expand: FIELDS.examParticipantUser,
+    sort: "created",
+  });
+}
+
+/** Добавить участника (организатор — из ростера своей группы). Идемпотентно. */
+export async function addParticipant(
+  examId: string,
+  userId: string
+): Promise<void> {
+  try {
+    await pb.collection("exam_participants").create<ExamParticipant>({
+      [FIELDS.examParticipantExam]: examId,
+      [FIELDS.examParticipantUser]: userId,
+    });
+  } catch (e) {
+    if (!/not unique/i.test(String((e as Error).message))) throw e;
+  }
+}
+
+/** Убрать участника (удаление строки). */
+export async function removeParticipant(participantId: string): Promise<void> {
+  await pb.collection("exam_participants").delete(participantId);
 }
 
 // ---------------------------------------------------------------------------

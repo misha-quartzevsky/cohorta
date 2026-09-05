@@ -1,22 +1,16 @@
 /**
  * ============================================
- *  tests/group-mode.spec.ts — режим «Группа», этапы A + B
+ *  tests/group-mode.spec.ts — режим «Группа», этапы A / B / C
  * ============================================
  *
- * Этап A:
- *  1. По умолчанию — Соло: пункта «Группа» нет, /s/:sem/group редиректит.
- *  2. Переключатель Соло/Группа под логотипом включает режим и ведёт на экран.
- *  3. Создание группы (с обязательным fuzzy-поиском) → карточка + ростер(1).
- *  4. Fuzzy-поиск против фрагментации: совпадение по названию →
- *     «Присоединиться к «…»», кнопка создания → «Всё равно создать новую».
- *  5. Второй пользователь вступает по коду → ростер(2).
- *
- * Этап B:
- *  6. Автор «показывает группе» лекцию + включает preview_enabled →
- *     участник видит thumbnail (заголовок + фрагмент), но НЕ полный контент
- *     (прямой переход на лекцию → «не найдена»).
- *
- * Точечная выдача полного доступа («Доступ» / lecture_shares) — этап C.
+ * Этап A: Соло по умолчанию; переключатель + создание группы;
+ *   обязательный fuzzy-поиск против фрагментации; вступление по коду.
+ * Этап B: «показать группе» + preview_enabled → участник видит
+ *   thumbnail чужой лекции, но НЕ полный контент.
+ * Этап C ч.1: диалог «Доступ» — точечная выдача полного доступа
+ *   и индивидуальный отзыв (B теряет, C сохраняет).
+ * Этап C ч.2: коллективная подготовка экзамена — виджет «Участники»
+ *   после переключения экзамена в режим group.
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -321,4 +315,64 @@ test("этап C: точечная выдача и индивидуальный 
   await ctxA.close();
   await ctxB.close();
   await ctxC.close();
+});
+
+test("этап C ч.2: коллективная подготовка — виджет и переключение режима экзамена", async ({
+  page,
+  request,
+}) => {
+  const PB = "http://127.0.0.1:8090";
+  // демо-юзер владеет сид-экзаменом math-analysis (mode solo)
+  await page.addInitScript(
+    ({ key, slug }) => localStorage.setItem(key, slug),
+    { key: LAST_SEMESTER_KEY, slug: "demo" }
+  );
+  await page.goto("/login");
+  await page.locator('input[type="email"]').fill("asyaobraz17@gmail.com");
+  const pw = page.locator('input[type="password"]');
+  await pw.fill("12345678");
+  await pw.press("Enter");
+  await page.waitForURL("**/s/demo");
+
+  // включаем режим Группа
+  await page
+    .locator(".mode-toggle-btn", { hasText: "Группа" })
+    .dispatchEvent("click");
+  await page.waitForURL(/\/s\/demo\/group$/);
+
+  // центр подготовки экзамена курса
+  await page.goto("/s/demo/math-analysis/exam");
+  const collectiveWidget = page.locator(".widget", {
+    hasText: "Коллективная подготовка",
+  });
+  await expect(collectiveWidget).toBeVisible({ timeout: 10000 });
+
+  // после переключения — появляется виджет «Участники»
+  await collectiveWidget
+    .locator(".btn-primary", { hasText: "Открыть коллективную подготовку" })
+    .click();
+  await expect(
+    page.locator(".widget", { hasText: "Участники" })
+  ).toBeVisible({ timeout: 10000 });
+
+  // откат: вернуть сид-экзамен в solo напрямую через PocketBase API,
+  // чтобы не мутировать демо-БД для остальных спеков.
+  const auth = await request
+    .post(`${PB}/api/collections/users/auth-with-password`, {
+      data: { identity: "asyaobraz17@gmail.com", password: "12345678" },
+    })
+    .then((r) => r.json());
+  const exams = await request
+    .get(`${PB}/api/collections/exams/records?perPage=100`, {
+      headers: { Authorization: auth.token },
+    })
+    .then((r) => r.json());
+  for (const ex of exams.items ?? []) {
+    if (ex.mode === "group") {
+      await request.patch(`${PB}/api/collections/exams/records/${ex.id}`, {
+        headers: { Authorization: auth.token },
+        data: { mode: "solo" },
+      });
+    }
+  }
 });

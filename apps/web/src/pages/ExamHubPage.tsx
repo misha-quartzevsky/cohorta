@@ -31,6 +31,7 @@ import { useUndo } from "../lib/undoContext";
 import Header from "../components/Header";
 import LoadingState from "../components/LoadingState";
 import SemesterGate from "../components/SemesterGate";
+import ExamParticipantsPanel from "../components/ExamParticipantsPanel";
 
 function ExamHubPage() {
   const navigate = useNavigate();
@@ -42,10 +43,12 @@ function ExamHubPage() {
   const { course, loading: courseLoading } = useCourseBySlug(
     courseSlugParam ?? ""
   );
-  const { exam, tickets: allTickets, loading: examLoading } = useExam(
-    course?.id ?? "",
-    !!course
-  );
+  const {
+    exam,
+    tickets: allTickets,
+    loading: examLoading,
+    refetch: refetchExam,
+  } = useExam(course?.id ?? "", !!course);
 
   const loading = courseLoading || examLoading;
 
@@ -205,6 +208,7 @@ function ExamHubPage() {
                     <ArrowRight size={14} />
                   </Link>
                 </div>
+                <ExamParticipantsPanel exam={exam} onChanged={refetchExam} />
                 {readyCount > 0 && (
                   <div className="widget">
                     <div className="widget-head">

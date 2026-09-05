@@ -120,6 +120,17 @@ export interface Exam extends PbRecord {
   };
 }
 
+/** Участник «пати» коллективного экзамена. */
+export interface ExamParticipant extends PbRecord {
+  /** PocketBase relation → exams. */
+  exam: string;
+  /** PocketBase relation → users. */
+  user: string;
+  expand?: {
+    user?: User;
+  };
+}
+
 export interface ExamTicket extends PbRecord {
   /** PocketBase relation → exams. */
   exam?: string;
@@ -235,6 +246,9 @@ export const FIELDS = {
   memberUser: "user",
   memberJoinedAt: "joined_at",
   memberPreviewEnabled: "preview_enabled",
+  // Поля коллекции exam_participants
+  examParticipantExam: "exam",
+  examParticipantUser: "user",
   // Поля коллекции exam_tickets
   ticketExam: "exam",
   ticketNumber: "number",

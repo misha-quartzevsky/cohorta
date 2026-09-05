@@ -5393,3 +5393,79 @@ button.group-roster-item:hover .group-roster-name {
   border-color: var(--brand-1);
   box-shadow: 0 0 0 3px var(--brand-ring);
 }
+
+/* --- GROUP MODE этап C ч.2: участники коллективного экзамена --- */
+
+.btn.btn-sm {
+  height: 34px;
+  padding: 0 var(--space-md);
+  font-size: 0.875rem;
+}
+
+.exam-part-list {
+  list-style: none;
+  margin: 0 0 var(--space-xs);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.exam-part-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  font-size: 0.875rem;
+  color: var(--ink);
+}
+
+.exam-part-x {
+  display: inline-flex;
+  padding: 2px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.exam-part-x:hover {
+  background: var(--danger-soft);
+  color: var(--danger-ink);
+}
+
+.exam-part-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: var(--space-xs);
+}
+
+.exam-part-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--brand-ring);
+  border-radius: var(--radius-sm);
+  background: var(--brand-wash);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--brand-1);
+  cursor: pointer;
+}
+.exam-part-add-btn:hover {
+  background: var(--brand-ring);
+}
+.exam-part-add-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.exam-part-hint {
+  margin-top: var(--space-xs);
+}
