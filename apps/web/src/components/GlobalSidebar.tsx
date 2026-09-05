@@ -47,7 +47,7 @@ import { useExam } from "../hooks/useExam";
 import { pb } from "../lib/pocketbase";
 import { lastSemesterSlug } from "../lib/lastSemester";
 import { courseGradient } from "../lib/courseGradient";
-import { parsePbDate } from "../lib/format";
+import { parsePbDate, formatDate } from "../lib/format";
 import type { User, Semester } from "../lib/types";
 import {
   semesterSlug,
@@ -58,6 +58,7 @@ import {
   courseSlug,
   courseColor,
   ticketStatus,
+  isPremiumActive,
 } from "../lib/types";
 import TableOfContents from "./TableOfContents";
 import ScrollBar from "./scrollbar/ScrollBar";
@@ -566,6 +567,11 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
               <span className="profile-email" title={user.email}>
                 {user.email}
               </span>
+              {isPremiumActive(user) && (
+                <span className="profile-premium">
+                  Премиум до {formatDate(user.premium_until as string)}
+                </span>
+              )}
             </div>
             <button
               type="button"

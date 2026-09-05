@@ -24,6 +24,7 @@ import { Loader2 } from "lucide-react";
 
 import { useAuth } from "../hooks/useAuth";
 import { loginErrorMessage, registerErrorMessage } from "../lib/authErrors";
+import { joinByInviteCode } from "../services/groupService";
 
 const PENDING_INVITE_KEY = "cohorta:pendingInvite";
 const MIN_PASSWORD = 8;
@@ -89,6 +90,23 @@ function Login() {
         await register(email.trim(), password, passwordConfirm);
       } else {
         await login(email.trim(), password);
+      }
+      // Пришли по ссылке-приглашению в группу — автовступление. Реферальную
+      // атрибуцию (invited_by = owner группы) ставит серверный хук; ошибка
+      // вступления не должна блокировать вход.
+      let invite = "";
+      try {
+        invite = sessionStorage.getItem(PENDING_INVITE_KEY) ?? "";
+        sessionStorage.removeItem(PENDING_INVITE_KEY);
+      } catch {
+        /* storage disabled */
+      }
+      if (invite) {
+        try {
+          await joinByInviteCode(invite);
+        } catch (joinErr) {
+          console.warn("Автовступление по коду не удалось:", joinErr);
+        }
       }
       navigate(from, { replace: true });
     } catch (err) {

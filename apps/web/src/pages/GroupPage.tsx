@@ -153,6 +153,9 @@ function GroupCard({ group, meId }: { group: Group; meId: string }) {
         <code className="group-invite-code">{inviteLink(group.invite_code)}</code>
         <CopyButton text={inviteLink(group.invite_code)} label="Копировать" />
       </div>
+      <p className="group-invite-bonus">
+        Когда приглашённый напишет первый конспект — 14 дней премиума вам обоим.
+      </p>
 
       <label className="group-preview-toggle">
         <input

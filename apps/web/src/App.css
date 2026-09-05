@@ -5469,3 +5469,17 @@ button.group-roster-item:hover .group-roster-name {
 .exam-part-hint {
   margin-top: var(--space-xs);
 }
+
+/* --- P2: реферальная механика (бонус, индикатор премиума) --- */
+
+.group-invite-bonus {
+  margin: calc(-1 * var(--space-xs)) 0 var(--space-sm);
+  font-size: 0.8125rem;
+  color: var(--success-ink);
+}
+
+.profile-premium {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--brand-1);
+}

@@ -153,6 +153,22 @@ export interface User extends PbRecord {
   email: string;
   name?: string;
   avatar?: string;
+  /** Реферальная механика — все четыре поля пишет серверный хук. */
+  invited_by?: string;
+  invited_group?: string;
+  /** ISO-дата: до неё активен премиум ("" / прошлое = нет премиума). */
+  premium_until?: string;
+  referral_rewarded?: boolean;
+}
+
+/** Строка журнала начислений премиума (пишет хук referral.pb.js). */
+export interface PremiumGrant extends PbRecord {
+  user: string;
+  days?: number;
+  source?: "referral_inviter" | "referral_invitee";
+  related_user?: string;
+  related_group?: string;
+  granted_at?: string;
 }
 
 /** Учебная группа/поток (режим «Группа»). */
@@ -338,6 +354,14 @@ export function lectureHref(l: Lecture, semesterSlugValue: string): string {
 /** URL identifier of a semester (e.g. "5"). */
 export function semesterSlug(s: Semester): string {
   return String(s.slug ?? "");
+}
+
+/** Активен ли премиум-доступ пользователя (premium_until в будущем). */
+export function isPremiumActive(u: User, now: Date = new Date()): boolean {
+  const raw = String(u.premium_until ?? "").trim();
+  if (!raw) return false;
+  const until = new Date(raw.replace(" ", "T"));
+  return !Number.isNaN(until.getTime()) && until > now;
 }
 
 /** PocketBase id of the semester a course belongs to ("" = none). */
