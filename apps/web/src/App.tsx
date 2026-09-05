@@ -37,6 +37,7 @@ import Header from "./components/Header";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingState from "./components/LoadingState";
 import Login from "./pages/Login";
+import PrivacyPage from "./pages/PrivacyPage";
 import LectureLayout from "./components/LectureLayout";
 import AppLayout from "./components/AppLayout";
 import { SemesterProvider } from "./lib/SemesterProvider";
@@ -89,6 +90,7 @@ function App() {
         <SemesterProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/" element={<HomeRedirect />} />

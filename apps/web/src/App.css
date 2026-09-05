@@ -5483,3 +5483,105 @@ button.group-roster-item:hover .group-roster-name {
   font-weight: 600;
   color: var(--brand-1);
 }
+
+/* --- P4: гигиена аккаунта (удаление, политика данных) --- */
+
+.sidebar-account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0 0;
+  margin-top: var(--space-xs);
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-account-link {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--ink-3);
+  text-decoration: none;
+  cursor: pointer;
+}
+.sidebar-account-link:hover {
+  color: var(--ink-2);
+  text-decoration: underline;
+}
+.sidebar-account-link.danger:hover {
+  color: var(--danger-ink);
+}
+
+.sidebar-account-note {
+  font-size: 0.75rem;
+  color: var(--ink-3);
+}
+
+.login-notice {
+  margin: 0 0 var(--space-sm);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--success-soft);
+  color: var(--success-ink);
+  font-size: 0.875rem;
+}
+
+.login-footer-link {
+  display: inline-block;
+  margin-top: var(--space-sm);
+  font-size: 0.75rem;
+  color: var(--ink-3);
+  text-decoration: none;
+}
+.login-footer-link:hover {
+  text-decoration: underline;
+}
+
+.privacy-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: var(--bg);
+}
+
+.privacy-card {
+  width: 100%;
+  max-width: 560px;
+  padding: 2.5rem 2rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.privacy-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+  text-decoration: none;
+  margin-bottom: var(--space-md);
+}
+.privacy-back:hover {
+  color: var(--ink-2);
+}
+
+.privacy-title {
+  margin: 0 0 var(--space-md);
+  font-size: 1.5rem;
+  color: var(--ink);
+}
+
+.privacy-text {
+  margin: 0 0 var(--space-sm);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.privacy-text.privacy-muted {
+  color: var(--ink-3);
+  font-size: 0.875rem;
+}

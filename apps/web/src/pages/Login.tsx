@@ -15,6 +15,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import {
+  Link,
   Navigate,
   useLocation,
   useNavigate,
@@ -131,6 +132,12 @@ function Login() {
           Конспекты, курсы и заметки — всё в одном месте
         </p>
 
+        {searchParams.get("deletion") === "1" && (
+          <p className="login-notice">
+            Запрос на удаление аккаунта принят. Мы свяжемся с вами по email.
+          </p>
+        )}
+
         <form className="login-form" onSubmit={handleSubmit}>
           <label className="login-field">
             <span className="login-label">Email</span>
@@ -197,6 +204,10 @@ function Login() {
             ? "Уже есть аккаунт? Войти"
             : "Нет аккаунта? Зарегистрироваться"}
         </button>
+
+        <Link to="/privacy" className="login-footer-link">
+          Политика данных
+        </Link>
       </div>
     </div>
   );

@@ -63,6 +63,7 @@ import {
 import TableOfContents from "./TableOfContents";
 import ScrollBar from "./scrollbar/ScrollBar";
 import ModeToggle from "./ModeToggle";
+import AccountActions from "./AccountActions";
 import { useMode } from "../lib/modeContext";
 
 /** Display name of the user (falls back to the email). */
@@ -583,6 +584,7 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
             </button>
           </div>
         )}
+        {user && <AccountActions />}
       </aside>
     </>
   );
