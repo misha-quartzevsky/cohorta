@@ -27,6 +27,7 @@ import CardLibraryPage from "./pages/CardLibraryPage";
 import CardStudyPage from "./pages/CardStudyPage";
 import DeckEditorPage from "./pages/DeckEditorPage";
 import ExamsPage from "./pages/ExamsPage";
+import GroupPage from "./pages/GroupPage";
 import ExamHubPage from "./pages/ExamHubPage";
 import ExamImportPage from "./pages/ExamImportPage";
 import TicketView from "./pages/TicketView";
@@ -40,6 +41,7 @@ import LectureLayout from "./components/LectureLayout";
 import AppLayout from "./components/AppLayout";
 import { SemesterProvider } from "./lib/SemesterProvider";
 import { SpeechProvider } from "./lib/SpeechProvider";
+import { ModeProvider } from "./lib/ModeProvider";
 import { UndoProvider } from "./lib/undoContext";
 import {
   useSemester,
@@ -81,6 +83,7 @@ function HomeRedirect() {
 function App() {
   return (
     <BrowserRouter>
+      <ModeProvider>
       <UndoProvider>
       <SpeechProvider>
         <SemesterProvider>
@@ -94,6 +97,9 @@ function App() {
               {/* Сводка по всем экзаменам семестра — статический сегмент
                   "exams" (RESERVED_SLUGS), встаёт до :courseSlug ниже. */}
               <Route path="/s/:semesterSlug/exams" element={<ExamsPage />} />
+              {/* Экран «Моя группа» — статический сегмент "group"
+                  (RESERVED_SLUGS), тоже до :courseSlug. */}
+              <Route path="/s/:semesterSlug/group" element={<GroupPage />} />
               <Route path="/s/:semesterSlug/:courseSlug" element={<LecturesPage />} />
               <Route path="/notes" element={<NotesPage />} />
               <Route path="/note/new" element={<NoteCreate />} />
@@ -158,6 +164,7 @@ function App() {
         </SemesterProvider>
       </SpeechProvider>
       </UndoProvider>
+      </ModeProvider>
     </BrowserRouter>
   );
 }

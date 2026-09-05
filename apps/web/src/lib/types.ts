@@ -111,6 +111,30 @@ export interface User extends PbRecord {
   avatar?: string;
 }
 
+/** Учебная группа/поток (режим «Группа»). */
+export interface Group extends PbRecord {
+  name: string;
+  slug: string;
+  /** PocketBase relation → users. */
+  owner: string;
+  invite_code: string;
+}
+
+/** Членство «пользователь ↔ группа» (many-to-many). */
+export interface GroupMember extends PbRecord {
+  /** PocketBase relation → groups. */
+  group: string;
+  /** PocketBase relation → users. */
+  user: string;
+  joined_at?: string;
+  /** Персональное разрешение показывать свои конспекты участникам группы. */
+  preview_enabled?: boolean;
+  expand?: {
+    group?: Group;
+    user?: User;
+  };
+}
+
 // Поля, используемые при работе с PocketBase. Имена физических полей в БД.
 // `as const` — ключи становятся литеральными типами (без `string`-размытия).
 export const FIELDS = {
@@ -154,6 +178,16 @@ export const FIELDS = {
   examDate: "exam_date",
   examOwner: "owner",
   examMode: "mode",
+  // Поля коллекции groups
+  groupName: "name",
+  groupSlug: "slug",
+  groupOwner: "owner",
+  groupInviteCode: "invite_code",
+  // Поля коллекции group_members
+  memberGroup: "group",
+  memberUser: "user",
+  memberJoinedAt: "joined_at",
+  memberPreviewEnabled: "preview_enabled",
   // Поля коллекции exam_tickets
   ticketExam: "exam",
   ticketNumber: "number",
@@ -390,4 +424,23 @@ export function ticketAttachmentNames(t: ExamTicket): string[] {
 export function ticketSourceIds(t: ExamTicket): string[] {
   const v = t.sources;
   return Array.isArray(v) ? v.map(String) : [];
+}
+
+export function groupName(g: Group): string {
+  return String(g.name ?? "Группа");
+}
+
+/** PocketBase id владельца группы. */
+export function groupOwnerId(g: Group): string {
+  return String(g.owner ?? "");
+}
+
+/** Id группы, к которой относится членство. */
+export function memberGroupId(m: GroupMember): string {
+  return String(m.group ?? "");
+}
+
+/** Id пользователя в записи членства. */
+export function memberUserId(m: GroupMember): string {
+  return String(m.user ?? "");
 }

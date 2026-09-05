@@ -32,6 +32,7 @@ import {
   Layers,
   Calendar,
   GraduationCap,
+  Users,
   Search,
 } from "lucide-react";
 
@@ -60,6 +61,8 @@ import {
 } from "../lib/types";
 import TableOfContents from "./TableOfContents";
 import ScrollBar from "./scrollbar/ScrollBar";
+import ModeToggle from "./ModeToggle";
+import { useMode } from "../lib/modeContext";
 
 /** Display name of the user (falls back to the email). */
 function userName(user: User): string {
@@ -133,6 +136,7 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { isGroup } = useMode();
   const { current, semesters } = useSemester();
   const [semesterPopupOpen, setSemesterPopupOpen] = useState(false);
   const [popupTop, setPopupTop] = useState(0);
@@ -215,6 +219,7 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
   const isNotesRoute = location.pathname === "/notes";
   const isDecksRoute = location.pathname.startsWith("/decks");
   const isExamsRoute = /^\/s\/[^/]+\/exams$/.test(location.pathname);
+  const isGroupRoute = /^\/s\/[^/]+\/group$/.test(location.pathname);
 
   const {
     isLecture,
@@ -331,6 +336,9 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
             alt="Cohorta"
           />
         </div>
+
+        {/* 1.5. Переключатель Соло / Группа — сразу под логотипом */}
+        <ModeToggle />
 
         {/* 2. Переключатель семестра — виден на всех маршрутах */}
         {activeSemester && (
@@ -470,6 +478,19 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
                   <span>Экзамены</span>
                 </Link>
               </li>
+              {isGroup && (
+                <li>
+                  <Link
+                    to={`/s/${homeSemSlug}/group`}
+                    className={`sidebar-nav-item${
+                      isGroupRoute ? " active" : ""
+                    }`}
+                  >
+                    <Users size={16} />
+                    <span>Группа</span>
+                  </Link>
+                </li>
+              )}
             </ul>
           </nav>
 

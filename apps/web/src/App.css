@@ -4822,3 +4822,322 @@ textarea.field {
   .undo-toast { animation: none; }
   .undo-toast-bar { animation: none; opacity: 0; }
 }
+
+/* ============================================================
+   GROUP MODE (P1 этап A) — переключатель Соло/Группа + экран «Группа»
+   ============================================================ */
+
+/* Сегментированный тумблер в сайдбаре, сразу под логотипом */
+.mode-toggle {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  margin-bottom: var(--space-sm);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.mode-toggle-btn {
+  flex: 1;
+  padding: 5px 0;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 3px);
+  background: transparent;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mode-toggle-btn:hover:not(.active) {
+  color: var(--ink-2);
+}
+
+.mode-toggle-btn.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Экран «Моя группа» */
+.group-section {
+  margin-bottom: var(--space-xl);
+}
+
+.group-subtitle {
+  margin: 0 0 var(--space-sm);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.group-field-label {
+  display: block;
+  margin-bottom: var(--space-xs);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.group-input {
+  width: 100%;
+  max-width: 460px;
+  height: 40px;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font: inherit;
+  color: var(--ink);
+}
+
+.group-input:focus {
+  outline: none;
+  border-color: var(--brand-1);
+  box-shadow: 0 0 0 3px var(--brand-ring);
+}
+
+.group-join-row {
+  display: flex;
+  gap: var(--space-xs);
+  max-width: 460px;
+}
+
+.group-join-row .group-input {
+  flex: 1;
+}
+
+.group-primary-btn {
+  height: 40px;
+  padding: 0 var(--space-md);
+  border: none;
+  border-radius: var(--radius);
+  background: var(--brand-1);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.group-primary-btn:hover {
+  background: var(--brand-1-hover);
+}
+
+.group-primary-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* «Создать свою группу» — второстепенный блок */
+.group-create {
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border);
+}
+
+.group-create-body {
+  margin-top: var(--space-sm);
+  max-width: 460px;
+}
+
+.group-hint {
+  margin: 0 0 var(--space-xs);
+  font-size: 0.875rem;
+  color: var(--ink-3);
+}
+
+.group-candidates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.group-candidate {
+  padding: 10px var(--space-sm);
+  border: 1px solid var(--brand-ring);
+  border-radius: var(--radius);
+  background: var(--brand-wash);
+  font: inherit;
+  font-weight: 600;
+  color: var(--brand-1);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.group-candidate:hover {
+  background: var(--brand-ring);
+}
+
+/* «Всё равно создать новую» — намеренно неприметно */
+.group-create-anyway {
+  padding: 6px 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--ink-3);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.group-create-anyway:hover {
+  color: var(--ink-2);
+}
+
+.group-error {
+  margin: var(--space-xs) 0 0;
+  font-size: 0.875rem;
+  color: var(--danger-ink);
+}
+
+.group-empty {
+  font-size: 0.9375rem;
+  color: var(--ink-3);
+}
+
+/* Карточка группы + ростер */
+.group-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.group-card {
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.group-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.group-card-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.group-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--brand-wash);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--brand-1);
+}
+
+.group-leave-btn {
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.group-leave-btn:hover {
+  color: var(--danger-ink);
+}
+
+.group-invite-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  padding: var(--space-xs) 0 var(--space-sm);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-sm);
+}
+
+.group-invite-label {
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+}
+
+.group-invite-code {
+  flex: 1;
+  min-width: 180px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.group-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.group-copy-btn:hover {
+  background: var(--bg);
+}
+
+.group-roster-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--space-xs);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.group-roster-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.group-roster-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 0.875rem;
+  color: var(--ink);
+}
+
+.group-tag {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 0.6875rem;
+  color: var(--ink-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mode-toggle-btn,
+  .group-primary-btn,
+  .group-candidate { transition: none; }
+}
