@@ -56,7 +56,7 @@ test("по умолчанию Соло: нет пункта «Группа», /g
 test("переключатель включает режим, создание группы даёт карточку и ростер", async ({
   page,
 }) => {
-  await registerFresh(page);
+  const email = await registerFresh(page);
   await switchToGroup(page);
 
   await expect(
@@ -75,6 +75,11 @@ test("переключатель включает режим, создание �
   await expect(card).toBeVisible();
   await expect(card.locator(".group-badge")).toHaveText("Вы владелец");
   await expect(card.locator(".group-roster-item")).toHaveCount(1);
+  // Фолбэк имени участника без user.name → часть email до «@» (не сырой id,
+  // не пусто, не «Пользователь»). См. memberDisplayName() в lib/format.ts.
+  await expect(card.locator(".group-roster-name")).toHaveText(
+    email.split("@")[0]
+  );
   await expect(card.locator(".group-invite-code")).toContainText("/login?invite=");
 });
 

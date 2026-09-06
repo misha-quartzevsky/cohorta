@@ -3,20 +3,21 @@
  *  MathBlockView.tsx — NodeView блока формулы
  * ============================================
  *
- * Показывает статичный рендер (через `<math-div>`), а в режиме
- * редактирования — маленькую панель «✏️ / 🗑». Клик по ✏️ открывает
- * единственный overlay-редактор MathLive через шину mathBus.
+ * Статичный рендер (`<math-div>`) внутри общей обёртки MediaBlockShell
+ * (DESIGN.md §6 «Вставленные медиа») — без подписи. «Редактировать» или
+ * двойной клик открывает единственный overlay MathLive через mathBus.
  */
 
 import { useCallback, useEffect, useRef } from "react";
-import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
-import { Pencil, Trash2 } from "lucide-react";
+import type { NodeViewProps } from "@tiptap/react";
 
+import { MediaBlockShell } from "../editor/MediaBlockShell";
 import { mathBus } from "./mathBus";
 import { renderLatexInto } from "./renderLatex";
 
-export function MathBlockView({ node, editor, getPos }: NodeViewProps) {
+export function MathBlockView({ node, editor, getPos, selected }: NodeViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const editable = editor.isEditable;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -25,15 +26,11 @@ export function MathBlockView({ node, editor, getPos }: NodeViewProps) {
   }, [node.attrs.latex]);
 
   const onEdit = useCallback(() => {
-    if (!editor.isEditable) return;
+    if (!editable) return;
     const pos = getPos();
     if (typeof pos !== "number") return;
-    mathBus.open({
-      editor,
-      pos,
-      latex: node.attrs.latex || "",
-    });
-  }, [editor, getPos, node.attrs.latex]);
+    mathBus.open({ editor, pos, latex: node.attrs.latex || "" });
+  }, [editable, editor, getPos, node.attrs.latex]);
 
   const onDelete = useCallback(() => {
     const pos = getPos();
@@ -46,40 +43,16 @@ export function MathBlockView({ node, editor, getPos }: NodeViewProps) {
   }, [editor, getPos, node.nodeSize]);
 
   return (
-    <NodeViewWrapper
-      className={`math-block${editor.isEditable ? " editable" : ""}`}
-      // Двойной клик открывает редактор MathLive. Одиночный клик раньше висел
-      // на всём блоке и перехватывал попытку поставить каретку рядом / потащить
-      // блок за грип в гаттере — теперь открываем только по ✏️ или double-click.
+    <MediaBlockShell
+      editable={editable}
+      selected={selected}
+      onEdit={onEdit}
+      onDelete={onDelete}
       onDoubleClick={onEdit}
+      editLabel="Редактировать формулу"
+      className="media-block-math"
     >
-      <div className="math-block-inner">
-        <div ref={containerRef} className="math-block-render" />
-        {editor.isEditable && (
-          <div
-            className="math-block-toolbar"
-            onClick={(event) => event.stopPropagation()}
-            onDoubleClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="math-block-btn"
-              onClick={onEdit}
-              title="Редактировать формулу"
-            >
-              <Pencil size={13} />
-            </button>
-            <button
-              type="button"
-              className="math-block-btn danger"
-              onClick={onDelete}
-              title="Удалить"
-            >
-              <Trash2 size={13} />
-            </button>
-          </div>
-        )}
-      </div>
-    </NodeViewWrapper>
+      <div ref={containerRef} className="math-block-render" />
+    </MediaBlockShell>
   );
 }

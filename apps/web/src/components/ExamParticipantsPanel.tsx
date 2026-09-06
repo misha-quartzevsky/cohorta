@@ -28,7 +28,7 @@ import {
   type ShareCandidate,
 } from "../services/shareService";
 import { type Exam, type ExamParticipant } from "../lib/types";
-import { userName } from "../lib/format";
+import { memberDisplayName } from "../lib/format";
 
 interface Props {
   exam: Exam;
@@ -115,7 +115,7 @@ export default function ExamParticipantsPanel({ exam, onChanged }: Props) {
             const u = p.expand?.user;
             return (
               <li key={p.id} className="exam-part-row">
-                <span>{u ? userName(u) : String(p.user)}</span>
+                <span>{u ? memberDisplayName(u) : "Участник"}</span>
                 {isOwner && String(p.user) !== meId && (
                   <button
                     type="button"

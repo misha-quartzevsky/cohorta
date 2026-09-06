@@ -119,6 +119,7 @@ export default function StudyWeekStrip({
                 );
               }}
             >
+              {count > 0 && <span className="calendar-cell-activity" />}
               <span className="calendar-cell-number">{date.getDate()}</span>
               {dots.length > 0 && (
                 <span className="calendar-cell-dots">
@@ -137,8 +138,8 @@ export default function StudyWeekStrip({
       </div>
 
       <div className="calendar-legend">
-        <span className="calendar-legend-dot today" /> Сегодня
-        <span className="calendar-legend-dot active" /> Была активность
+        <span className="calendar-legend-swatch today" /> Сегодня
+        <span className="calendar-legend-swatch activity" /> Была активность
       </div>
 
       {openDay &&

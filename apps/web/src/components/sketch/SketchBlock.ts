@@ -29,6 +29,7 @@ export const SketchBlock = Node.create({
     return {
       src: { default: "" },
       scene: { default: "" },
+      caption: { default: "" },
     };
   },
 
@@ -37,10 +38,12 @@ export const SketchBlock = Node.create({
       {
         tag: "div[data-type='sketch-block']",
         getAttrs: (el) => {
-          const img = (el as HTMLElement).querySelector("img");
+          const node = el as HTMLElement;
+          const img = node.querySelector("img");
           return {
             src: img?.getAttribute("src") ?? "",
-            scene: (el as HTMLElement).getAttribute("data-scene") ?? "",
+            scene: node.getAttribute("data-scene") ?? "",
+            caption: node.querySelector("figcaption")?.textContent ?? "",
           };
         },
       },
@@ -48,21 +51,19 @@ export const SketchBlock = Node.create({
   },
 
   renderHTML({ node, HTMLAttributes }) {
-    return [
-      "div",
-      mergeAttributes(HTMLAttributes, {
-        "data-type": "sketch-block",
-        "data-scene": node.attrs.scene || "",
-      }),
-      [
-        "img",
-        {
-          src: node.attrs.src || "",
-          alt: "Схема",
-          class: "sketch-block-img",
-        },
-      ],
+    const cap = String(node.attrs.caption ?? "").trim();
+    const attrs = mergeAttributes(HTMLAttributes, {
+      "data-type": "sketch-block",
+      "data-scene": node.attrs.scene || "",
+      class: "media-figure",
+    });
+    const img = [
+      "img",
+      { src: node.attrs.src || "", alt: "Схема", class: "media-block-img" },
     ];
+    return cap
+      ? ["div", attrs, img, ["figcaption", {}, cap]]
+      : ["div", attrs, img];
   },
 
   addNodeView() {

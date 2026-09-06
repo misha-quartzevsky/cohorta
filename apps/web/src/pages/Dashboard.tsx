@@ -102,7 +102,7 @@ function Dashboard() {
 
             <div className="dashboard-grid">
               <CoursesWidget
-                courses={courses.slice(0, 6)}
+                courses={courses.slice(0, 3)}
                 semesterSlug={semSlug}
                 total={courses.length}
               />

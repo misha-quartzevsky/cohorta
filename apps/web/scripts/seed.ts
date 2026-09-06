@@ -40,6 +40,15 @@ function para(text: string): string {
   return `<p>${text}</p>`;
 }
 
+/**
+ * Абзац с таймстампом строки (как проставляет диктовка через NodeTimestamp).
+ * Диктовку в Playwright не воспроизвести — E2E проверяет слой рендера/hover
+ * на заранее размеченном абзаце.
+ */
+function paraTs(text: string, ts: number, label: string): string {
+  return `<p data-ts="${ts}" data-ts-label="${label}">${text}</p>`;
+}
+
 /** Heading builder — used by E2E tests to assert the TOC is populated. */
 function h1(text: string): string {
   return `<h1>${text}</h1>`;
@@ -105,7 +114,11 @@ export const LECTURES: SeedLecture[] = [
     courseIndex: 0,
     html:
       h1("Производная функции") +
-      para("Производная функции равна пределу отношения приращения функции к приращению аргумента.") +
+      paraTs(
+        "Производная функции равна пределу отношения приращения функции к приращению аргумента.",
+        1725623520000,
+        "6 сент., 14:32"
+      ) +
       h2("Геометрический смысл") +
       para("Геометрически она равна тангенсу угла наклона касательной к графику функции.") +
       h3("Формула") +

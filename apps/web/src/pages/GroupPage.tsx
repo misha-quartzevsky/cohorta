@@ -37,7 +37,7 @@ import {
   fetchOwnerPreviews,
   type GroupCandidate,
 } from "../services/groupService";
-import { errorMessage, userName } from "../lib/format";
+import { errorMessage, memberDisplayName } from "../lib/format";
 import {
   type Group,
   type GroupMember,
@@ -175,7 +175,7 @@ function GroupCard({ group, meId }: { group: Group; meId: string }) {
         <ul className="group-roster-list">
           {roster.map((m: GroupMember) => {
             const u = m.expand?.user;
-            const name = u ? userName(u) : memberUserId(m);
+            const name = u ? memberDisplayName(u) : "Участник";
             const uid = memberUserId(m);
             const isMe = uid === meId;
             const previewOn = !!m.preview_enabled;

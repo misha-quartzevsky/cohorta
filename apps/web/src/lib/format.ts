@@ -12,6 +12,19 @@ export function userName(user: User): string {
   return name || user.email || "Пользователь";
 }
 
+/**
+ * Имя участника для ростера группы / списка участников экзамена:
+ * `name` → часть email до «@» → «Участник». Отличается от userName() тем,
+ * что не показывает полный email и падает на «Участник», а не «Пользователь».
+ */
+export function memberDisplayName(user: Pick<User, "name" | "email">): string {
+  const name = user.name ? String(user.name).trim() : "";
+  if (name) return name;
+  const email = user.email ? String(user.email).trim() : "";
+  const local = email.split("@")[0];
+  return local || "Участник";
+}
+
 /** Русские формы множественного числа: [1, 2, 5] → ["материал","материала","материалов"]. */
 export function pluralRu(n: number, forms: [string, string, string]): string {
   const abs = Math.abs(n) % 100;
@@ -71,5 +84,21 @@ export function formatDate(iso: string): string {
     day: "numeric",
     month: "long",
     year: "numeric",
+  });
+}
+
+/**
+ * Короткая локальная дата-время для таймстампа строки при диктовке
+ * (эпоха мс или ISO-строка → «6 сент., 14:32»).
+ */
+export function formatDateTime(value: number | string): string {
+  const date =
+    typeof value === "number" ? new Date(value) : parsePbDate(value);
+  if (!date || Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("ru-RU", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }

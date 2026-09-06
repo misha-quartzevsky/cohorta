@@ -144,10 +144,10 @@ function ExamImportPage() {
         />
         {preview.length === 0 && raw.trim() && (
           <button
-            className="btn btn-outline"
+            className="btn btn-primary"
             type="button"
             onClick={() => runParse("", raw)}
-            style={{ marginTop: "0.6rem" }}
+            style={{ marginTop: "var(--space-sm)" }}
           >
             Разобрать текст
           </button>

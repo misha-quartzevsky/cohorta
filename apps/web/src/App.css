@@ -1521,7 +1521,11 @@ textarea.field {
 }
 
 /* ---------- drag handle («грип» в левом гаттере) ---------- */
-/* Портал от @tiptap/extension-drag-handle-react; позицию задаёт плагин. */
+/* Портал от @tiptap/extension-drag-handle-react; позицию задаёт плагин
+   (он ставит грип на ~24px левее блока — вне .tiptap-wrapper). Грип
+   проявляется, когда указатель над «листом» редактора: раскрывать его по
+   собственному :hover бессмысленно — до невидимого элемента в 24px-полосе
+   слева от текста курсор не доводят, и грип не появлялся нигде. */
 .editor-drag-handle {
   display: flex;
   align-items: center;
@@ -1529,6 +1533,7 @@ textarea.field {
   opacity: 0;
   transition: opacity 0.12s ease;
 }
+.tiptap-wrapper:hover .editor-drag-handle,
 .editor-drag-handle:hover,
 .editor-drag-handle:has(:focus-visible) {
   opacity: 1;
@@ -2641,9 +2646,8 @@ textarea.field {
   letter-spacing: 0.01em;
 }
 
-/* Красный мигающий бейдж «● REC» (в шапке и у кнопки редактора) */
-.header-rec,
-.editor-rec {
+/* Красный мигающий бейдж «● REC» (в шапке приложения) */
+.header-rec {
   display: inline-flex;
   align-items: center;
   font-size: 0.75rem;
@@ -2655,47 +2659,11 @@ textarea.field {
   white-space: nowrap;
   box-shadow: 0 0 0 0 rgba(224, 48, 61, 0.45);
   animation: rec-blink 1.6s ease-in-out infinite;
-}
-.header-rec { margin-left: 0.5rem; }
-.editor-rec {
-  font-size: 0.75rem;
-  padding: 0.14rem 0.5rem;
-  margin-left: 0.25rem;
+  margin-left: 0.5rem;
 }
 @keyframes rec-blink {
   0%, 100% { box-shadow: 0 0 0 0 rgba(224, 48, 61, 0.45); }
   50% { box-shadow: 0 0 0 6px rgba(224, 48, 61, 0); }
-}
-
-/* Постоянная кнопка записи в углу «листа» (в редакторе) */
-.editor-mic {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  z-index: 20;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  height: 36px;
-  padding: 0 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--ink-2);
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(27, 27, 27, 0.08);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease,
-    background 0.15s ease;
-}
-.editor-mic:hover {
-  border-color: var(--c-lilac);
-  color: var(--c-lilac);
-}
-.editor-mic.active {
-  color: var(--surface);
-  background: var(--c-lilac);
-  border-color: var(--c-lilac);
-  animation: mic-pulse 1.5s ease-in-out infinite;
 }
 
 /* Кнопка микрофона в bubble-меню при записи */
@@ -2729,6 +2697,163 @@ textarea.field {
   border-radius: var(--radius-sm);
   background: rgba(88, 67, 246, 0.06);
   outline: none;
+}
+
+/* ============================================
+   Вставленные медиа: единый контейнер (DESIGN.md §6)
+   — картинка, схема, формула в редакторе;
+   .media-figure — то же в сериализации и в режиме чтения.
+   ============================================ */
+.tiptap-wrapper .media-block {
+  margin: 0.75rem 0;
+  padding: var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  background: var(--surface);
+}
+.tiptap-wrapper .media-block.editable {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.tiptap-wrapper .media-block.editable:hover {
+  border-color: var(--border-strong);
+}
+.tiptap-wrapper .media-block.is-selected,
+.tiptap-wrapper .media-block.selectedNode {
+  border-color: var(--brand-1);
+  box-shadow: 0 0 0 3px var(--brand-ring);
+}
+.media-block-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.media-block-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+}
+.media-block-img {
+  display: block;
+  max-width: 100%;
+  max-height: 440px;
+  width: auto;
+  height: auto;
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+/* Панель иконок — по hover / focus-within, не висит постоянно. */
+.media-block-toolbar {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.media-block:hover .media-block-toolbar,
+.media-block:focus-within .media-block-toolbar {
+  opacity: 1;
+}
+.media-block-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-2);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.media-block-btn:hover {
+  border-color: var(--brand-1);
+  color: var(--brand-1);
+}
+.media-block-btn.danger:hover {
+  border-color: var(--danger-border);
+  color: var(--danger-ink);
+  background: var(--danger-soft);
+}
+/* Подпись под медиа */
+.media-block-caption-wrap {
+  width: 100%;
+}
+.media-block-caption {
+  width: 100%;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+  line-height: 1.4;
+}
+.media-block-caption.is-editable {
+  border: none;
+  background: transparent;
+  outline: none;
+  padding: 2px 4px;
+  font-family: inherit;
+}
+.media-block-caption.is-editable::placeholder {
+  color: var(--ink-3);
+  opacity: 0.7;
+}
+
+/* .media-figure — сериализованный / читаемый вид (LectureView вставляет HTML) */
+.lecture-view-content .media-figure {
+  margin: 1rem 0;
+  padding: var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+.lecture-view-content .media-figure img {
+  display: inline-block;
+  max-width: 100%;
+  max-height: 480px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+.lecture-view-content .media-figure figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+  line-height: 1.4;
+}
+
+/* ============================================
+   Таймстамп строки при диктовке (NodeTimestamp)
+   — наведение на абзац/заголовок → точное время записи.
+   ============================================ */
+.tiptap-editor [data-ts],
+.lecture-view-content [data-ts] {
+  position: relative;
+}
+.tiptap-editor [data-ts]:hover::after,
+.lecture-view-content [data-ts]:hover::after {
+  content: attr(data-ts-label);
+  position: absolute;
+  top: 0;
+  right: 100%;
+  margin-right: 8px;
+  white-space: nowrap;
+  padding: 2px 8px;
+  font: 500 12px/1.4 Inter, sans-serif;
+  color: var(--ink-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+  z-index: 5;
 }
 
 /* --- блочная формула (в редакторе) --- */
@@ -3133,8 +3258,6 @@ textarea.field {
   .crumb-skeleton,
   .header-mic-pulse,
   .header-rec,
-  .editor-rec,
-  .editor-mic.active,
   .tiptap-wrapper.is-recording,
   .workspace-main,
   .page {
@@ -4399,6 +4522,7 @@ textarea.field {
   gap: 2px;
 }
 .calendar-cell {
+  position: relative;
   aspect-ratio: 1;
   display: flex;
   flex-direction: column;
@@ -4424,25 +4548,25 @@ textarea.field {
   visibility: hidden;
   cursor: default;
 }
+/* «Сегодня» — только обводка, никогда заливка (совмещается с признаком
+   активности без конфликта). «Была активность» — угловая точка-бейдж
+   .calendar-cell-activity ниже, а не фон ячейки. */
 .calendar-cell.active {
-  background: var(--brand-wash);
-  color: var(--brand-1);
   font-weight: 600;
-}
-.calendar-cell.active:hover {
-  background: var(--brand-ring);
 }
 .calendar-cell.today {
   box-shadow: inset 0 0 0 1.5px var(--brand-1);
   font-weight: 600;
   color: var(--ink);
 }
-.calendar-cell.today.active {
+.calendar-cell-activity {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
   background: var(--brand-1);
-  color: #fff;
-}
-.calendar-cell.today.active:hover {
-  background: var(--brand-1-hover);
 }
 .calendar-cell-number {
   line-height: 1;
@@ -4456,8 +4580,7 @@ textarea.field {
   height: 6px;
   border-radius: 2px;
   flex: none;
-  /* Тонкое кольцо — точка остаётся различима на любом фоне ячейки:
-     прозрачном, brand-wash (.active) и сплошном brand-1 (.today.active). */
+  /* Тонкое кольцо — курсовая точка различима на прозрачном фоне ячейки. */
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7);
 }
 .calendar-legend {
@@ -4469,21 +4592,27 @@ textarea.field {
   font-size: 0.75rem;
   color: var(--ink-3);
 }
-.calendar-legend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 3px;
+.calendar-legend-swatch {
+  width: 10px;
+  height: 10px;
+  flex: none;
   margin-left: 0.5rem;
 }
-.calendar-legend-dot:first-child {
+.calendar-legend-swatch:first-child {
   margin-left: 0;
 }
-.calendar-legend-dot.today {
+/* «Сегодня» — квадрат с обводкой (как ячейка); «была активность» — точка
+   (как угловой бейдж ячейки). Два физически разных сигнала. */
+.calendar-legend-swatch.today {
+  border-radius: 3px;
   box-shadow: inset 0 0 0 1.5px var(--brand-1);
   background: var(--surface);
 }
-.calendar-legend-dot.active {
-  background: var(--brand-wash);
+.calendar-legend-swatch.activity {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand-1);
 }
 
 /* --- День недели: попап с разбором по курсам (DayDetailPopover.tsx) ---
@@ -4656,10 +4785,14 @@ textarea.field {
 .exam-ticket-row {
   display: flex; align-items: center; gap: 0.75rem;
   padding: 0.5rem 0.75rem; border-radius: var(--radius);
+  /* Status as a thin left stripe (DESIGN.md §6); transparent keeps rows aligned. */
+  border-left: 3px solid transparent;
   background: var(--bg); text-decoration: none; color: var(--ink);
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 .exam-ticket-row:hover { background: var(--border); }
+.exam-ticket-row.draft { border-left-color: var(--warning); }
+.exam-ticket-row.ready { border-left-color: var(--success); }
 .exam-ticket-number {
   flex: none; width: 28px; height: 28px; border-radius: var(--radius-sm);
   display: grid; place-items: center; font: 600 0.8rem/1 Inter, sans-serif;

@@ -9,10 +9,14 @@
  * появляются индикаторы записи — класс `.is-recording` на «листе»,
  * активная кнопка и красный бейдж «● REC».
  *
+ * Микрофон живёт в шапке приложения (`.header-mic`) — плавающая кнопка на
+ * «листе» убрана (UX-фиксы демо: на длинном конспекте она уезжала от места
+ * набора).
+ *
  * Сценарий:
  *   1. Вход в лекцию в режиме редактирования (карточка-«лист»).
- *   2. Клик по закреплённой в углу кнопке микрофона `.editor-mic`.
- *   3. В DOM появляется индикатор: `.tiptap-wrapper.is-recording` + `.editor-rec`.
+ *   2. Клик по микрофону в шапке `.header-mic`.
+ *   3. В DOM появляется индикатор: `.tiptap-wrapper.is-recording` + `.header-rec`.
  *   4. Повторный клик («Стоп») — индикатор исчезает.
  */
 
@@ -35,8 +39,8 @@ test("клик по микрофону включает индикатор за�
   await expect(page.locator(".tiptap-editor")).toBeVisible();
 
   // В Firefox (нет Web Speech API) кнопка работает в режиме «диктофона»:
-  // иконка AudioLines + title с подсказкой.
-  const mic = page.locator(".editor-mic");
+  // иконка AudioLines + подпись «Диктофон» + title с подсказкой.
+  const mic = page.locator(".header-mic");
   await expect(mic).toBeVisible();
   await expect(mic).toHaveAttribute("title", /Диктофон/);
 
@@ -44,18 +48,20 @@ test("клик по микрофону включает индикатор за�
   await expect(page.locator(".tiptap-wrapper.is-recording")).toHaveCount(0);
 
   // Старт записи → появляется индикатор на «листе» и бейдж REC.
-  await mic.click();
+  // Клики по кнопке микрофона — через dispatchEvent: headed-Firefox
+  // хронически завешивает `.click()` на кнопках в шапке (тот же флак, что с
+  // кнопкой «Войти» — см. helpers.ts).
+  await mic.dispatchEvent("click");
   await expect(page.locator(".tiptap-wrapper.is-recording")).toHaveCount(1, {
     timeout: 8000,
   });
-  await expect(page.locator(".editor-mic.active")).toHaveCount(1);
-  await expect(page.locator(".editor-rec")).toBeVisible();
+  await expect(page.locator(".header-mic.active")).toHaveCount(1);
+  await expect(page.locator(".header-rec")).toBeVisible();
 
-  // «Стоп» — dispatchEvent, т.к. после активации кнопка пульсирует
-  // (mic-pulse infinite) и обычный click может флакнуть по «element stable».
+  // «Стоп».
   await mic.dispatchEvent("click");
   await expect(page.locator(".tiptap-wrapper.is-recording")).toHaveCount(0, {
     timeout: 8000,
   });
-  await expect(page.locator(".editor-rec")).toHaveCount(0);
+  await expect(page.locator(".header-rec")).toHaveCount(0);
 });

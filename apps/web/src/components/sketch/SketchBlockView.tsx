@@ -3,19 +3,28 @@
  *  SketchBlockView.tsx — NodeView блока схемы
  * ============================================
  *
- * Показывает картинку схемы; в режиме редактирования — панель
- * «✏️ / 🗑». Клик по ✏️ открывает модалку Excalidraw (через sketchBus).
+ * Рендерит картинку схемы внутри общей обёртки MediaBlockShell (DESIGN.md §6
+ * «Вставленные медиа»). «Редактировать» открывает модалку Excalidraw через
+ * sketchBus; подпись правится инлайн в шелле.
  */
 
 import { useCallback } from "react";
-import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
-import { Pencil, Trash2 } from "lucide-react";
+import type { NodeViewProps } from "@tiptap/react";
 
+import { MediaBlockShell } from "../editor/MediaBlockShell";
 import { sketchBus, sketchUploader } from "./sketchBus";
 
-export function SketchBlockView({ node, editor, getPos }: NodeViewProps) {
+export function SketchBlockView({
+  node,
+  editor,
+  getPos,
+  updateAttributes,
+  selected,
+}: NodeViewProps) {
+  const editable = editor.isEditable;
+
   const onEdit = useCallback(() => {
-    if (!editor.isEditable) return;
+    if (!editable) return;
     const pos = getPos();
     if (typeof pos !== "number") return;
     sketchBus.open({
@@ -24,7 +33,7 @@ export function SketchBlockView({ node, editor, getPos }: NodeViewProps) {
       scene: node.attrs.scene || null,
       onUploadImages: sketchUploader,
     });
-  }, [editor, getPos, node.attrs.scene]);
+  }, [editable, editor, getPos, node.attrs.scene]);
 
   const onDelete = useCallback(() => {
     const pos = getPos();
@@ -37,34 +46,22 @@ export function SketchBlockView({ node, editor, getPos }: NodeViewProps) {
   }, [editor, getPos, node.nodeSize]);
 
   return (
-    <NodeViewWrapper
-      className={`sketch-block${editor.isEditable ? " editable" : ""}`}
+    <MediaBlockShell
+      editable={editable}
+      selected={selected}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      editLabel="Редактировать схему"
+      caption={String(node.attrs.caption ?? "")}
+      onCaptionChange={(value) => updateAttributes({ caption: value })}
     >
-      <div className="sketch-block-inner">
-        {node.attrs.src && (
-          <img className="sketch-block-img" src={node.attrs.src} alt="Схема" />
-        )}
-        {editor.isEditable && (
-          <div className="sketch-block-toolbar">
-            <button
-              type="button"
-              className="sketch-block-btn"
-              onClick={onEdit}
-              title="Редактировать схему"
-            >
-              <Pencil size={13} />
-            </button>
-            <button
-              type="button"
-              className="sketch-block-btn danger"
-              onClick={onDelete}
-              title="Удалить"
-            >
-              <Trash2 size={13} />
-            </button>
-          </div>
-        )}
-      </div>
-    </NodeViewWrapper>
+      {node.attrs.src && (
+        <img
+          className="media-block-img"
+          src={String(node.attrs.src)}
+          alt="Схема"
+        />
+      )}
+    </MediaBlockShell>
   );
 }

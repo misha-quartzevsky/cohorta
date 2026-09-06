@@ -522,7 +522,10 @@ export function ticketSourceIds(t: ExamTicket): string[] {
 }
 
 export function groupName(g: Group): string {
-  return String(g.name ?? "Группа");
+  // Fallback covers null/undefined AND empty/whitespace name (legacy rows created
+  // before `name` became required) — never render a blank heading.
+  const name = g.name == null ? "" : String(g.name).trim();
+  return name || "Группа";
 }
 
 /** PocketBase id владельца группы. */

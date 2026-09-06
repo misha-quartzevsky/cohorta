@@ -22,7 +22,6 @@ import type { EditorView } from "@tiptap/pm/view";
 import { TextSelection } from "@tiptap/pm/state";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
-import ImageExtension from "@tiptap/extension-image";
 import Highlight from "@tiptap/extension-highlight";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
@@ -33,7 +32,7 @@ import {
   TableHeader as TableHeaderExt,
 } from "@tiptap/extension-table";
 import { DragHandle } from "@tiptap/extension-drag-handle-react";
-import { AudioLines, GripVertical, Mic, MicOff, Plus } from "lucide-react";
+import { GripVertical, Plus } from "lucide-react";
 import type { UploadedImage } from "../services/lectureService";
 
 import { createSlashMenu } from "./SlashMenu";
@@ -48,6 +47,8 @@ import MathEditorOverlay from "./math/MathEditorOverlay";
 import SketchModal from "./sketch/SketchModal";
 import { pastedMarkdownHtml } from "../lib/markdownTable";
 
+import { ImageBlock } from "./editor/ImageBlock";
+import { NodeTimestamp } from "./editor/NodeTimestamp";
 import { useImageUpload } from "./editor/useImageUpload";
 import { BubbleToolbar } from "./editor/BubbleToolbar";
 import { TextMenu } from "./editor/TextMenu";
@@ -163,7 +164,7 @@ export default function Editor({
           return placeholder || "Начните писать… Нажмите «/» для команд";
         },
       }),
-      ImageExtension.configure({ allowBase64: true }),
+      ImageBlock.configure({ allowBase64: true }),
       Highlight.configure({ multicolor: true }),
       TaskList,
       TaskItem.configure({ nested: true }),
@@ -174,6 +175,7 @@ export default function Editor({
       TableCellExt,
       // Advanced Capture Tools: речь, аудио, формулы, схемы.
       SpeechInterimMark,
+      NodeTimestamp,
       AudioBlock,
       MathBlock,
       SketchBlock,
@@ -389,31 +391,9 @@ export default function Editor({
         onChange={handleFilesChange}
       />
 
-      {/* Постоянная кнопка записи в углу «листа»: быстрый старт
-          диктовки (или «диктофона» в браузерах без Web Speech API). */}
-      {canCapture && (
-        <button
-          type="button"
-          className={`editor-mic${recording ? " active" : ""}`}
-          onClick={toggle}
-          title={
-            recording
-              ? "Остановить запись"
-              : audioOnly
-                ? "Диктофон: аудиозапись (транскрибация не поддерживается)"
-                : "Диктовка: голосовой ввод в текст лекции"
-          }
-        >
-          {recording ? (
-            <MicOff size={18} />
-          ) : supported ? (
-            <Mic size={18} />
-          ) : (
-            <AudioLines size={18} />
-          )}
-          {recording && <span className="editor-rec">● REC</span>}
-        </button>
-      )}
+      {/* Кнопка записи на «листе» убрана: на длинном конспекте она уезжала от
+          места набора. Диктовка запускается из микрофона в шапке приложения
+          и из bubble-меню выделения (см. BubbleToolbar / TextMenu ниже). */}
 
       <BubbleToolbar
         editor={editor}

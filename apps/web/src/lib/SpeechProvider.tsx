@@ -31,6 +31,7 @@ import {
   type SpeechApi,
   type SpeechSession,
 } from "./speechContext";
+import { formatDateTime } from "./format";
 
 /** Минимальный интерфейс SpeechRecognition (TS-типа нет в старых lib.dom). */
 interface RecognitionLike {
@@ -149,6 +150,26 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
       tr = tr.setSelection(TextSelection.create(tr.doc, from + text.length));
       cursorPosRef.current = from + text.length;
       if (!interim) finalEndRef.current = from + text.length;
+
+      // Финальный сегмент «застолбляет» время блока (первая фраза → data-ts).
+      if (!interim) {
+        const $from = tr.doc.resolve(from);
+        if ($from.depth >= 1) {
+          const block = $from.node(1);
+          const type = block.type.name;
+          if (
+            (type === "paragraph" || type === "heading") &&
+            block.attrs.dataTs == null
+          ) {
+            const now = Date.now();
+            tr = tr.setNodeMarkup($from.before(1), undefined, {
+              ...block.attrs,
+              dataTs: String(now),
+              dataTsLabel: formatDateTime(now),
+            });
+          }
+        }
+      }
 
       view.dispatch(tr);
     },
