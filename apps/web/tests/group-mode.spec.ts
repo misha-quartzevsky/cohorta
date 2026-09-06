@@ -353,9 +353,10 @@ test("этап C ч.2: коллективная подготовка — вид�
   await expect(collectiveWidget).toBeVisible({ timeout: 10000 });
 
   // после переключения — появляется виджет «Участники»
+  // dispatchEvent — обход headed-Firefox «.click() hang» (правило проекта).
   await collectiveWidget
     .locator(".btn-primary", { hasText: "Открыть коллективную подготовку" })
-    .click();
+    .dispatchEvent("click");
   await expect(
     page.locator(".widget", { hasText: "Участники" })
   ).toBeVisible({ timeout: 10000 });

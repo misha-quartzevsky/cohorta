@@ -101,26 +101,32 @@ test("8. билет: empty → draft (автосейв) → ready (кнопка)
   request,
 }) => {
   await loginDemo(page);
+  await restoreTicket(request, 4); // на случай мусора от прошлого прогона
 
-  // билет #4 сейчас empty
-  await page.goto(`${EXAM_BASE}/4/edit`);
-  await page.locator(".editor-inline .tiptap").click();
-  await page.keyboard.type("Черновой ответ на билет №4.");
-  await expect(page.locator(".save-indicator.saved")).toBeVisible({
-    timeout: 10000,
-  });
+  try {
+    // билет #4 сейчас empty — набираем ответ
+    await page.goto(`${EXAM_BASE}/4/edit`);
+    const editor = page.locator(".editor-inline .tiptap");
+    await editor.click();
+    await editor.pressSequentially("Черновой ответ на билет №4.", { delay: 20 });
+    await expect(page.locator(".save-indicator.saved")).toBeVisible({
+      timeout: 15000,
+    });
 
-  // статус сам стал draft — на карте чипов теперь 2 draft
-  await page.goto(EXAM_BASE);
-  await expect(page.locator(".exam-chip.draft")).toHaveCount(2);
+    // статус сам стал draft — на карте чипов теперь 2 draft (#3 + #4)
+    await page.goto(EXAM_BASE);
+    await expect(page.locator(".exam-chip.draft")).toHaveCount(2);
 
-  // ручное повышение до ready
-  await page.goto(`${EXAM_BASE}/4/edit`);
-  const readyBtn = page.locator("button", { hasText: /Отметить готовым|Готов/ });
-  await readyBtn.click();
-  await expect(page.locator("button", { hasText: "Готов" })).toBeDisabled();
-
-  await restoreTicket(request, 4);
+    // ручное повышение до ready → markReady уводит на хаб, готовых 2 → 3
+    await page.goto(`${EXAM_BASE}/4/edit`);
+    await page
+      .locator("button", { hasText: "Отметить готовым" })
+      .dispatchEvent("click");
+    await page.waitForURL(/\/exam$/, { timeout: 15000 });
+    await expect(page.locator(".exam-progress-text")).toHaveText("3 из 8 готовы");
+  } finally {
+    await restoreTicket(request, 4);
+  }
 });
 
 /** Откат билета в исходное empty-состояние через PocketBase API. */
