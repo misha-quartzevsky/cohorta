@@ -201,9 +201,10 @@ test("этап B: участник видит thumbnail чужой лекции,
   await pageB.locator(".group-primary-btn", { hasText: "Присоединиться" }).click();
   await expect(pageB.locator(".group-card", { hasText: groupName })).toBeVisible();
 
+  // ростер показывает memberDisplayName = часть email до «@» (не полный email)
   const rowA = pageB
     .locator(".group-roster-item")
-    .filter({ hasText: emailA });
+    .filter({ hasText: emailA.split("@")[0] });
   await rowA.click();
 
   // thumbnail виден: заголовок чужой лекции
