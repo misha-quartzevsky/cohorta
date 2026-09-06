@@ -14,7 +14,7 @@
  */
 
 import { test, expect, type Page } from "@playwright/test";
-import { LAST_SEMESTER_KEY } from "./helpers";
+import { LAST_SEMESTER_KEY, completeOnboardingFast } from "./helpers";
 
 /** Регистрирует нового пользователя и оставляет его залогиненным на /s/1. */
 async function registerFresh(page: Page): Promise<string> {
@@ -30,7 +30,7 @@ async function registerFresh(page: Page): Promise<string> {
   await pw.nth(0).fill("test12345");
   await pw.nth(1).fill("test12345");
   await pw.nth(1).press("Enter");
-  await page.waitForURL(/\/s\//);
+  await completeOnboardingFast(page);
   return email;
 }
 

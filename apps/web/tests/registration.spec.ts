@@ -3,7 +3,7 @@
  *  tests/registration.spec.ts — самостоятельная регистрация
  * ============================================
  *
- * 1. Новый email → автологин → семестровый дашборд, email в профиле.
+ * 1. Новый email → автологин → онбординг → семестровый дашборд, email в профиле.
  * 2. Короткий пароль → ошибка «не короче 8».
  * 3. Несовпадение подтверждения → ошибка «не совпадают».
  * 4. Повторная регистрация того же email → ошибка «уже зарегистрирован».
@@ -13,7 +13,7 @@
  */
 
 import { test, expect, type Page } from "@playwright/test";
-import { LAST_SEMESTER_KEY } from "./helpers";
+import { LAST_SEMESTER_KEY, completeOnboardingFast } from "./helpers";
 
 const PASSWORD = "test12345";
 
@@ -47,7 +47,7 @@ test("новый email: автологин и попадание на дашбо
   await fillForm(page, email, PASSWORD, PASSWORD);
   await page.locator('input[type="password"]').nth(1).press("Enter");
 
-  await page.waitForURL(/\/s\//);
+  await completeOnboardingFast(page);
   await expect(page.locator(".profile-email")).toHaveText(email);
 });
 
@@ -86,7 +86,7 @@ test("стухшая чужая сессия не подменяет профи�
   await fillForm(page, email, PASSWORD, PASSWORD);
   await page.locator('input[type="password"]').nth(1).press("Enter");
 
-  await page.waitForURL(/\/s\//);
+  await completeOnboardingFast(page);
   await expect(page.locator(".profile-email")).toHaveText(email);
 });
 
@@ -117,7 +117,7 @@ test("повторная регистрация того же email: ошибк�
   await openRegister(page);
   await fillForm(page, email, PASSWORD, PASSWORD);
   await page.locator('input[type="password"]').nth(1).press("Enter");
-  await page.waitForURL(/\/s\//);
+  await completeOnboardingFast(page);
 
   // Выходим через профиль сайдбара и пробуем зарегистрировать тот же email.
   await page.locator(".profile-logout").dispatchEvent("click");

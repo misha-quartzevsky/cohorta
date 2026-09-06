@@ -13,7 +13,7 @@
  */
 
 import { test, expect, type Page, type APIRequestContext } from "@playwright/test";
-import { LAST_SEMESTER_KEY } from "./helpers";
+import { LAST_SEMESTER_KEY, completeOnboardingFast } from "./helpers";
 
 const PB = "http://127.0.0.1:8090";
 const PASSWORD = "test12345";
@@ -31,7 +31,7 @@ async function registerFresh(page: Page, invite?: string): Promise<string> {
   await pw.nth(0).fill(PASSWORD);
   await pw.nth(1).fill(PASSWORD);
   await pw.nth(1).press("Enter");
-  await page.waitForURL(/\/s\//);
+  await completeOnboardingFast(page);
   return email;
 }
 
@@ -106,7 +106,13 @@ test("бонус за активацию: начисляется обоим по
     .dispatchEvent("click");
   await pageA.waitForURL(/\/s\/1\/group$/);
   await pageA.locator("#group-name-input").fill(`Ref Поток ${Date.now()}`);
-  await pageA.locator(".group-primary-btn", { hasText: "Создать группу" }).click();
+  // Кнопка недоступна, пока не отработал fuzzy-поиск; клик — через
+  // dispatchEvent (обычный .click() по этой кнопке завешивает headed-Firefox).
+  const createBtn = pageA.locator(".group-primary-btn", {
+    hasText: "Создать группу",
+  });
+  await expect(createBtn).toBeEnabled({ timeout: 5000 });
+  await createBtn.dispatchEvent("click");
   await expect(pageA.locator(".group-card")).toBeVisible();
   const inviteText = await pageA.locator(".group-invite-code").textContent();
   const code = (inviteText ?? "").split("invite=")[1]?.trim() ?? "";

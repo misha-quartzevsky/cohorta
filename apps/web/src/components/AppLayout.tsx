@@ -15,7 +15,8 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 import GlobalSidebar from "./GlobalSidebar";
 import DocumentScrollbar from "./scrollbar/DocumentScrollbar";
 import {
@@ -25,6 +26,13 @@ import {
 import { UIShellContext, type UIShellApi } from "../lib/uiShellContext";
 
 export default function AppLayout() {
+  // Онбординг-гейт: пока профиль не пройден — не пускаем в приложение.
+  // fail-closed: любое значение, кроме явного true (в т.ч. отсутствие
+  // поля в закешированной записи), уводит на мастер, а не в обход.
+  // Проверка вынесена в JSX ниже, чтобы не нарушать rules-of-hooks.
+  const { user } = useAuth();
+  const needsOnboarding = Boolean(user) && user?.onboarding_completed !== true;
+
   // Lecture frame state (shared with GlobalSidebar + LectureLayout pages).
   const [title, setTitle] = useState("");
   const flushRef = useRef<(() => Promise<void>) | null>(null);
@@ -67,6 +75,10 @@ export default function AppLayout() {
     }),
     [sidebarOpen, toggleSidebar, closeSidebar]
   );
+
+  if (needsOnboarding) {
+    return <Navigate to="/onboarding" replace />;
+  }
 
   return (
     <LectureFrameContext.Provider value={api}>

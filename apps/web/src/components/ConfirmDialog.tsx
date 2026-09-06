@@ -21,6 +21,8 @@ interface Props {
   onConfirm: () => void;
   /** Called when the user clicks «Отмена». */
   onCancel: () => void;
+  /** Текст кнопки подтверждения. По умолчанию — «Подтвердить удаление». */
+  confirmLabel?: string;
 }
 
 /**
@@ -38,6 +40,7 @@ function ConfirmDialog({
   message,
   onConfirm,
   onCancel,
+  confirmLabel = "Подтвердить удаление",
 }: Props) {
   if (!open) return null;
 
@@ -69,7 +72,7 @@ function ConfirmDialog({
             onClick={onConfirm}
             type="button"
           >
-            Подтвердить удаление
+            {confirmLabel}
           </button>
         </div>
       </div>

@@ -5718,3 +5718,394 @@ button.group-roster-item:hover .group-roster-name {
   color: var(--ink-3);
   font-size: 0.875rem;
 }
+
+/* ============================================================
+   Онбординг (features/onboarding) — двухпанельный мастер.
+   Переиспользует .field / .btn; собственные токены не заводит.
+   ============================================================ */
+.onb-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--bg);
+}
+
+.onb-shell {
+  width: 100%;
+  max-width: 920px;
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+/* ---- Левая панель ---- */
+.onb-aside {
+  background: var(--brand-gradient);
+  color: #fff;
+  padding: 2.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2rem;
+  min-height: 540px;
+}
+
+.onb-logo {
+  height: 26px;
+  width: auto;
+  filter: brightness(0) invert(1);
+}
+
+.onb-aside-title {
+  margin: 0 0 0.6rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.onb-aside-sub {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.onb-dots {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.onb-dot {
+  height: 4px;
+  width: 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+  transition: width 0.25s ease, background 0.25s ease;
+}
+.onb-dot--on {
+  width: 26px;
+  background: #fff;
+}
+.onb-dot--done {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+/* ---- Правая панель ---- */
+.onb-main {
+  padding: 2.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.onb-progress {
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+  margin-bottom: 1.5rem;
+}
+
+.onb-body {
+  flex: 1;
+}
+
+.onb-step {
+  display: flex;
+  flex-direction: column;
+}
+.onb-step--stack {
+  gap: 1.25rem;
+}
+
+.onb-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+
+.onb-hint {
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+  margin: 0.25rem 0 0;
+}
+
+.onb-mt {
+  margin-top: 0.75rem;
+}
+
+.onb-error {
+  color: var(--danger-ink);
+  font-size: 0.875rem;
+  margin: 0.5rem 0 0;
+}
+
+/* ---- Плитки-опции (ступень, тип периода, вуз) ---- */
+.onb-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.onb-options--grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.onb-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.onb-option:hover {
+  background: var(--bg);
+}
+.onb-option--on {
+  border-color: var(--brand-1);
+  background: var(--brand-wash);
+}
+.onb-option--dashed {
+  border-style: dashed;
+  color: var(--ink-3);
+  justify-content: flex-start;
+}
+
+/* ---- Курс: круглые пилюли ---- */
+.onb-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.onb-pill {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.onb-pill:hover {
+  background: var(--bg);
+}
+.onb-pill--on {
+  background: var(--brand-1);
+  border-color: var(--brand-1);
+  color: #fff;
+}
+
+/* ---- Комбобокс города ---- */
+.onb-combo {
+  position: relative;
+}
+.onb-combo-list {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  margin-top: -0.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.onb-combo-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.625rem 1rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.onb-combo-item:hover {
+  background: var(--bg);
+}
+.onb-combo-item--muted {
+  color: var(--ink-3);
+  border-top: 1px solid var(--border);
+}
+
+/* ---- Список сгенерированных периодов ---- */
+.onb-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+.onb-row-grow {
+  flex: 1;
+}
+
+.onb-periods {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.onb-period-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.onb-period-current {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.onb-period-current--on {
+  background: var(--brand-1);
+  border-color: var(--brand-1);
+  color: #fff;
+}
+.onb-period-input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--ink);
+  outline: none;
+}
+.onb-period-del {
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  display: inline-flex;
+}
+.onb-period-del:hover {
+  color: var(--danger-ink);
+}
+
+/* ---- Аватар ---- */
+.onb-avatar-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2.5rem 1rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.onb-avatar-preview {
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+/* ---- Ссылки-кнопки и нижняя навигация ---- */
+.onb-linkbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  font: inherit;
+  cursor: pointer;
+  padding: 0.35rem 0;
+}
+.onb-linkbtn:hover:not(:disabled) {
+  color: var(--ink);
+}
+.onb-linkbtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.onb-linkbtn--icon {
+  margin-top: 0.25rem;
+}
+
+.onb-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.75rem;
+}
+.onb-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.onb-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+@media (max-width: 720px) {
+  .onb-shell {
+    grid-template-columns: 1fr;
+  }
+  .onb-aside {
+    min-height: 0;
+    padding: 1.5rem;
+    gap: 1rem;
+  }
+  .onb-aside-title {
+    font-size: 1.3rem;
+  }
+  .onb-main {
+    padding: 1.5rem;
+  }
+}
+
+/* Онбординг: поле адреса профиля с суффиксом .cohorta.ru */
+.onb-handle {
+  display: flex;
+  align-items: stretch;
+}
+.onb-handle-input {
+  margin-bottom: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 0;
+}
+.onb-handle-suffix {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.9rem;
+  border: 1px solid var(--border);
+  border-left: 0;
+  border-top-right-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+  background: var(--bg);
+  color: var(--ink-3);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}

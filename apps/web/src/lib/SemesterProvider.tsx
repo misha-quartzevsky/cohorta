@@ -15,8 +15,9 @@
  * Refresh compatibility).
  */
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { pb } from "./pocketbase";
 import { useSemesters } from "../hooks/useSemesters";
 import {
   SemesterContext,
@@ -37,6 +38,21 @@ export function SemesterProvider({
   const location = useLocation();
   const navigate = useNavigate();
   const { semesters, loading, error, refetch } = useSemesters();
+
+  // Периоды теперь per-user: список, загруженный на /login до авторизации,
+  // пуст. Перечитываем только когда МЕНЯЕТСЯ пользователь (вход / выход /
+  // онбординг) — не на каждый `authRefresh`, иначе лишний ре-рендер всего
+  // дерева отцепляет элементы страницы посреди действия.
+  const lastUserId = useRef<string>(pb.authStore.record?.id ?? "");
+  useEffect(() => {
+    const unsubscribe = pb.authStore.onChange(() => {
+      const id = pb.authStore.record?.id ?? "";
+      if (id === lastUserId.current) return;
+      lastUserId.current = id;
+      void refetch();
+    });
+    return unsubscribe;
+  }, [refetch]);
 
   // Extract the semester slug from "/s/:slug/…" paths.
   const semesterSlugFromUrl = useMemo(() => {

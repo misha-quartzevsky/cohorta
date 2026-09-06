@@ -66,9 +66,38 @@ export interface LectureShare extends PbRecord {
   };
 }
 
+/** Тип периода обучения (см. `Semester.type`). */
+export type PeriodType =
+  | "semester"
+  | "trimester"
+  | "quarter"
+  | "module"
+  | "custom";
+
 export interface Semester extends PbRecord {
   slug: string;
+  /** PocketBase relation → users (владелец). Заполняется онбордингом. */
+  user?: string;
+  /** PocketBase relation → groups. Задел на будущее, сейчас всегда пусто. */
+  group?: string;
+  /** Человекочитаемая подпись: «1 семестр», «Осенний триместр». */
+  label?: string;
+  /** Порядковый номер периода (сортировка). slug = String(order). */
+  order?: number;
+  type?: PeriodType;
+  /** Текущий период (максимум один). */
+  is_current?: boolean;
 }
+
+/** Справочник вузов для онбординга (коллекция `universities`). */
+export interface University extends PbRecord {
+  name: string;
+  city: string;
+  region?: string;
+}
+
+/** Ступень образования (см. `User.degree_level`). */
+export type DegreeLevel = "bachelor" | "specialist" | "master" | "other";
 
 export interface Tag extends PbRecord {
   name: string;
@@ -159,6 +188,22 @@ export interface User extends PbRecord {
   /** ISO-дата: до неё активен премиум ("" / прошлое = нет премиума). */
   premium_until?: string;
   referral_rewarded?: boolean;
+  // --- Онбординг: профиль студента ---
+  /** Обращение внутри Cohorta. Уникально (partial index). */
+  username?: string;
+  /** Город обучения (для фильтра вузов). */
+  city?: string;
+  /** PocketBase relation → universities (если вуз нашёлся в справочнике). */
+  university?: string;
+  /** Свободный текст, если вуз не найден в справочнике. */
+  university_custom?: string;
+  degree_level?: DegreeLevel;
+  /** Текст при `degree_level === "other"`. */
+  degree_level_custom?: string;
+  /** Курс обучения. */
+  course?: number;
+  /** Пока false — показываем мастер онбординга вместо приложения. */
+  onboarding_completed?: boolean;
 }
 
 /** Строка журнала начислений премиума (пишет хук referral.pb.js). */
@@ -213,6 +258,27 @@ export const FIELDS = {
   courseSlug: "slug",
   lectureSlug: "slug",
   semesterSlug: "slug",
+  // Поля периода обучения (коллекция semesters, per-user)
+  periodUser: "user",
+  periodGroup: "group",
+  periodLabel: "label",
+  periodOrder: "order",
+  periodType: "type",
+  periodIsCurrent: "is_current",
+  // Поля справочника universities
+  universityName: "name",
+  universityCity: "city",
+  universityRegion: "region",
+  // Поля профиля пользователя (онбординг)
+  userDisplayName: "name",
+  userUsername: "username",
+  userCity: "city",
+  userUniversity: "university",
+  userUniversityCustom: "university_custom",
+  userDegreeLevel: "degree_level",
+  userDegreeLevelCustom: "degree_level_custom",
+  userCourse: "course",
+  userOnboardingCompleted: "onboarding_completed",
   // Поле в courses, которое ссылается на семестр (id из semesters)
   courseSemester: "semesters",
   // Поля коллекции tags
@@ -354,6 +420,20 @@ export function lectureHref(l: Lecture, semesterSlugValue: string): string {
 /** URL identifier of a semester (e.g. "5"). */
 export function semesterSlug(s: Semester): string {
   return String(s.slug ?? "");
+}
+
+/** Порядковый номер периода (fallback — числовой slug, иначе 0). */
+export function semesterOrder(s: Semester): number {
+  const raw = s.order;
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  const n = Number.parseInt(semesterSlug(s), 10);
+  return Number.isNaN(n) ? 0 : n;
+}
+
+/** Подпись периода для UI: `label`, иначе «{slug} семестр». */
+export function semesterLabel(s: Semester): string {
+  const label = String(s.label ?? "").trim();
+  return label || `${semesterSlug(s)} семестр`;
 }
 
 /** Активен ли премиум-доступ пользователя (premium_until в будущем). */

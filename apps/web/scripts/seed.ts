@@ -469,6 +469,12 @@ export async function seed(pb: PocketBase): Promise<void> {
   ).record;
   log(`Authenticated as demo user (${demoUser.id}) for owner-scoped seeding.`);
 
+  // Демо-аккаунт минует онбординг (мастер проходят только новые регистрации).
+  if (demoUser.onboarding_completed !== true) {
+    await pb.collection("users").update(demoUser.id, { onboarding_completed: true });
+    log("Demo user: onboarding_completed = true.");
+  }
+
   // 0. Бэкфилл владельца на ВСЕ записи без owner (legacy / прежние сессии
   // разработки). На чистом клоне таких нет; на dev-БД они «свои» и по
   // переходному правилу owner="" видны всем — забираем их демо-юзеру,
@@ -484,7 +490,15 @@ export async function seed(pb: PocketBase): Promise<void> {
     if (orphans.length) log(`Backfilled owner on ${orphans.length} ${col}.`);
   }
 
-  // 1. Semester — find or create (idempotent: re-runs update, don't throw).
+  // 1. Semester/период — find or create (idempotent). Коллекция стала
+  //    per-user: проставляем владельца + поля периода (label/order/type).
+  const demoPeriod = {
+    slug: "demo",
+    user: demoUser.id,
+    label: "Демо-семестр",
+    order: 0,
+    type: "semester",
+  };
   let semester = (
     await pb.collection("semesters").getFullList<{ id: string }>({
       filter: 'slug = "demo"',
@@ -492,11 +506,10 @@ export async function seed(pb: PocketBase): Promise<void> {
     })
   )[0];
   if (semester) {
+    await pb.collection("semesters").update(semester.id, demoPeriod);
     log(`Semester "demo" already exists (${semester.id}) — upserting data.`);
   } else {
-    semester = await pb.collection("semesters").create<{ id: string }>({
-      slug: "demo",
-    });
+    semester = await pb.collection("semesters").create<{ id: string }>(demoPeriod);
     log(`Semester "demo" created (${semester.id}).`);
   }
 

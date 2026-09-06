@@ -12,7 +12,7 @@
  */
 
 import { test, expect, type Page } from "@playwright/test";
-import { LAST_SEMESTER_KEY } from "./helpers";
+import { LAST_SEMESTER_KEY, completeOnboardingFast } from "./helpers";
 
 const PASSWORD = "test12345";
 
@@ -29,7 +29,7 @@ async function registerFresh(page: Page): Promise<string> {
   await pw.nth(0).fill(PASSWORD);
   await pw.nth(1).fill(PASSWORD);
   await pw.nth(1).press("Enter");
-  await page.waitForURL(/\/s\//);
+  await completeOnboardingFast(page);
   return email;
 }
 

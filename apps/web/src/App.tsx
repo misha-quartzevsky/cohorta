@@ -33,11 +33,11 @@ import ExamImportPage from "./pages/ExamImportPage";
 import TicketView from "./pages/TicketView";
 import TicketEdit from "./pages/TicketEdit";
 import CheatsheetPage from "./pages/CheatsheetPage";
-import Header from "./components/Header";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingState from "./components/LoadingState";
 import Login from "./pages/Login";
 import PrivacyPage from "./pages/PrivacyPage";
+import OnboardingWizard from "./features/onboarding/OnboardingWizard";
 import LectureLayout from "./components/LectureLayout";
 import AppLayout from "./components/AppLayout";
 import { SemesterProvider } from "./lib/SemesterProvider";
@@ -61,17 +61,10 @@ function HomeRedirect() {
 
   if (loading) return <LoadingState />;
 
+  // Периодов нет — пользователь ещё не прошёл онбординг (или удалил все
+  // периоды). Уводим в мастер вместо технической заглушки.
   if (semesters.length === 0) {
-    return (
-      <>
-        <Header crumbs={[{ label: "Рабочий стол" }]} />
-        <div className="page">
-          <div className="empty">
-            Нет семестров. Создайте их в админке PocketBase.
-          </div>
-        </div>
-      </>
-    );
+    return <Navigate to="/onboarding" replace />;
   }
 
   const last = localStorage.getItem(LAST_SEMESTER_KEY);
@@ -92,6 +85,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route element={<ProtectedRoute />}>
+            {/* Мастер онбординга — фуллскрин, без сайдбара, вне AppLayout. */}
+            <Route path="/onboarding" element={<OnboardingWizard />} />
             <Route element={<AppLayout />}>
               <Route path="/" element={<HomeRedirect />} />
               <Route path="/s/:semesterSlug" element={<Dashboard />} />
