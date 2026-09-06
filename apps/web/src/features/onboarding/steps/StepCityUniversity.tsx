@@ -25,6 +25,7 @@ interface Props {
 export default function StepCityUniversity({ value, onChange }: Props) {
   const [cities, setCities] = useState<string[]>([]);
   const [citiesLoading, setCitiesLoading] = useState(true);
+  const [directoryDown, setDirectoryDown] = useState(false);
   const [cityQuery, setCityQuery] = useState(value.city);
   const [cityOpen, setCityOpen] = useState(false);
   const [unis, setUnis] = useState<University[]>([]);
@@ -34,12 +35,26 @@ export default function StepCityUniversity({ value, onChange }: Props) {
   useEffect(() => {
     let alive = true;
     fetchCities()
-      .then((list) => alive && setCities(list))
-      .catch(() => alive && setCities([]))
+      .then((list) => {
+        if (!alive) return;
+        setCities(list);
+        if (list.length === 0) {
+          setDirectoryDown(true);
+          onChange({ customMode: true });
+        }
+      })
+      .catch(() => {
+        if (!alive) return;
+        setCities([]);
+        setDirectoryDown(true);
+        // Справочник недоступен — не запираем пользователя: ручной ввод.
+        onChange({ customMode: true });
+      })
       .finally(() => alive && setCitiesLoading(false));
     return () => {
       alive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Список вузов выбранного города (только когда город из справочника).
@@ -95,6 +110,46 @@ export default function StepCityUniversity({ value, onChange }: Props) {
     // Города нет в справочнике — сразу ручной ввод вуза.
     onChange({ city, universityId: "", customMode: true });
   };
+
+  // Справочник не загрузился — простой ручной ввод города + вуза.
+  if (directoryDown) {
+    return (
+      <div className="onb-step onb-step--stack">
+        <p className="onb-hint">
+          Справочник вузов сейчас недоступен — впишите город и вуз вручную,
+          позже их можно будет уточнить в профиле.
+        </p>
+        <div className="onb-step">
+          <label className="onb-label" htmlFor="onb-city">
+            Город
+          </label>
+          <input
+            id="onb-city"
+            className="field"
+            value={value.city}
+            onChange={(e) => onChange({ city: e.target.value })}
+            placeholder="Например, Москва"
+            autoComplete="off"
+          />
+        </div>
+        <div className="onb-step">
+          <label className="onb-label" htmlFor="onb-uni-custom">
+            Название вуза
+          </label>
+          <input
+            id="onb-uni-custom"
+            className="field"
+            value={value.universityCustom}
+            onChange={(e) =>
+              onChange({ universityCustom: e.target.value, universityId: "" })
+            }
+            placeholder="Впишите название вручную"
+            autoComplete="off"
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="onb-step onb-step--stack">

@@ -11,12 +11,16 @@
 import { pb } from "../lib/pocketbase";
 import type { University } from "../lib/types";
 import { FIELDS } from "../lib/types";
+import { withTimeout } from "../lib/withTimeout";
 
 /** Загрузить весь справочник (объём небольшой — десятки строк). */
 async function fetchAll(): Promise<University[]> {
-  return pb
-    .collection("universities")
-    .getFullList<University>({ sort: `${FIELDS.universityCity},${FIELDS.universityName}` });
+  return withTimeout(
+    pb
+      .collection("universities")
+      .getFullList<University>({ sort: `${FIELDS.universityCity},${FIELDS.universityName}` }),
+    "справочник вузов"
+  );
 }
 
 /** Уникальные города из справочника, отсортированные по алфавиту. */
@@ -34,8 +38,11 @@ export async function fetchCities(): Promise<string[]> {
 export async function fetchUniversitiesByCity(city: string): Promise<University[]> {
   const value = city.trim();
   if (!value) return [];
-  return pb.collection("universities").getFullList<University>({
-    filter: pb.filter(`${FIELDS.universityCity} = {:city}`, { city: value }),
-    sort: FIELDS.universityName,
-  });
+  return withTimeout(
+    pb.collection("universities").getFullList<University>({
+      filter: pb.filter(`${FIELDS.universityCity} = {:city}`, { city: value }),
+      sort: FIELDS.universityName,
+    }),
+    "список вузов города"
+  );
 }

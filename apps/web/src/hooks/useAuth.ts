@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { pb } from "../lib/pocketbase";
 import type { User } from "../lib/types";
+import { withTimeout } from "../lib/withTimeout";
 
 export interface UseAuthResult {
   /** The authenticated user record (null when signed out). */
@@ -75,17 +76,26 @@ export function useAuth(): UseAuthResult {
     // Drop any stale / foreign token before authenticating so a failed
     // request can never leave the app showing a previous user.
     pb.authStore.clear();
-    await pb.collection("users").authWithPassword(email, password);
+    await withTimeout(
+      pb.collection("users").authWithPassword(email, password),
+      "вход"
+    );
     assertSignedInAs(email);
   }, []);
 
   const register = useCallback(
     async (email: string, password: string, passwordConfirm: string) => {
       pb.authStore.clear();
-      await pb
-        .collection("users")
-        .create({ email, password, passwordConfirm, emailVisibility: true });
-      await pb.collection("users").authWithPassword(email, password);
+      await withTimeout(
+        pb
+          .collection("users")
+          .create({ email, password, passwordConfirm, emailVisibility: true }),
+        "регистрация"
+      );
+      await withTimeout(
+        pb.collection("users").authWithPassword(email, password),
+        "вход"
+      );
       assertSignedInAs(email);
     },
     []

@@ -13,6 +13,7 @@
 import { pb } from "../lib/pocketbase";
 import type { PeriodType, Semester } from "../lib/types";
 import { FIELDS, semesterOrder } from "../lib/types";
+import { withTimeout } from "../lib/withTimeout";
 
 /** Id текущего пользователя ("" — не залогинен). */
 function currentUserId(): string {
@@ -26,9 +27,12 @@ function currentUserId(): string {
  * @returns Resolves to an array of Semester records.
  */
 export async function fetchSemesters(): Promise<Semester[]> {
-  const records = await pb
-    .collection("semesters")
-    .getFullList<Semester>({ sort: FIELDS.periodOrder });
+  // Сортировку не отдаём в PB (поле `order` может отсутствовать на
+  // не-мигрированном бэкенде → 400); сортируем на клиенте.
+  const records = await withTimeout(
+    pb.collection("semesters").getFullList<Semester>(),
+    "список периодов"
+  );
 
   return [...records].sort((a, b) => semesterOrder(a) - semesterOrder(b));
 }

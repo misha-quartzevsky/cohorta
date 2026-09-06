@@ -149,7 +149,11 @@ export default function OnboardingWizard() {
       navigate("/", { replace: true });
     } catch (err) {
       console.error("Ошибка завершения онбординга:", err);
-      setError("Не удалось сохранить профиль. Попробуйте ещё раз.");
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : "Не удалось сохранить профиль. Попробуйте ещё раз."
+      );
       setSubmitting(false);
     }
   };
@@ -166,6 +170,8 @@ export default function OnboardingWizard() {
       } catch (err) {
         setSubmitting(false);
         if (err instanceof UsernameTakenError) {
+          setUsernameError(err.message);
+        } else if (err instanceof Error && err.message) {
           setUsernameError(err.message);
         } else {
           setUsernameError("Не удалось сохранить логин. Попробуйте ещё раз.");

@@ -14,6 +14,7 @@ import { ClientResponseError } from "pocketbase";
 import { pb } from "../lib/pocketbase";
 import type { DegreeLevel, User } from "../lib/types";
 import { FIELDS } from "../lib/types";
+import { withTimeout } from "../lib/withTimeout";
 
 /** Id текущего пользователя. Кидает, если сессии нет. */
 function requireUserId(): string {
@@ -47,9 +48,10 @@ function isNotUnique(err: unknown, field: string): boolean {
 export async function setUsername(username: string): Promise<void> {
   const value = username.trim();
   try {
-    await pb
-      .collection("users")
-      .update(requireUserId(), { [FIELDS.userUsername]: value });
+    await withTimeout(
+      pb.collection("users").update(requireUserId(), { [FIELDS.userUsername]: value }),
+      "сохранение логина"
+    );
   } catch (err) {
     if (isNotUnique(err, FIELDS.userUsername)) throw new UsernameTakenError();
     throw err;
@@ -78,22 +80,29 @@ export async function saveProfile(input: ProfileInput): Promise<void> {
   const hasUniversity = Boolean(input.university);
   const isOther = input.degreeLevel === "other";
 
-  await pb.collection("users").update(requireUserId(), {
-    [FIELDS.userDisplayName]: input.name.trim(),
-    [FIELDS.userCity]: input.city.trim(),
-    [FIELDS.userUniversity]: hasUniversity ? input.university : "",
-    [FIELDS.userUniversityCustom]: hasUniversity ? "" : input.universityCustom.trim(),
-    [FIELDS.userDegreeLevel]: input.degreeLevel,
-    [FIELDS.userDegreeLevelCustom]: isOther ? input.degreeLevelCustom.trim() : "",
-    [FIELDS.userCourse]: input.course ?? null,
-  });
+  await withTimeout(
+    pb.collection("users").update(requireUserId(), {
+      [FIELDS.userDisplayName]: input.name.trim(),
+      [FIELDS.userCity]: input.city.trim(),
+      [FIELDS.userUniversity]: hasUniversity ? input.university : "",
+      [FIELDS.userUniversityCustom]: hasUniversity ? "" : input.universityCustom.trim(),
+      [FIELDS.userDegreeLevel]: input.degreeLevel,
+      [FIELDS.userDegreeLevelCustom]: isOther ? input.degreeLevelCustom.trim() : "",
+      [FIELDS.userCourse]: input.course ?? null,
+    }),
+    "сохранение профиля"
+  );
 }
 
 /** Загрузить аватар (поле `avatar`, стандартный file-upload PocketBase). */
 export async function uploadAvatar(file: File): Promise<void> {
   const form = new FormData();
   form.append("avatar", file);
-  await pb.collection("users").update(requireUserId(), form);
+  await withTimeout(
+    pb.collection("users").update(requireUserId(), form),
+    "загрузка аватара",
+    30000
+  );
 }
 
 /**
@@ -102,9 +111,15 @@ export async function uploadAvatar(file: File): Promise<void> {
  * в приложение.
  */
 export async function completeOnboarding(): Promise<User> {
-  await pb
-    .collection("users")
-    .update(requireUserId(), { [FIELDS.userOnboardingCompleted]: true });
-  const { record } = await pb.collection("users").authRefresh<User>();
+  await withTimeout(
+    pb
+      .collection("users")
+      .update(requireUserId(), { [FIELDS.userOnboardingCompleted]: true }),
+    "завершение онбординга"
+  );
+  const { record } = await withTimeout(
+    pb.collection("users").authRefresh<User>(),
+    "обновление сессии"
+  );
   return record;
 }

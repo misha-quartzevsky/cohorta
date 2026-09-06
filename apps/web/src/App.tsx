@@ -35,6 +35,9 @@ import TicketEdit from "./pages/TicketEdit";
 import CheatsheetPage from "./pages/CheatsheetPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingState from "./components/LoadingState";
+import ErrorBanner from "./components/ErrorBanner";
+import Header from "./components/Header";
+import { useAuth } from "./hooks/useAuth";
 import Login from "./pages/Login";
 import PrivacyPage from "./pages/PrivacyPage";
 import OnboardingWizard from "./features/onboarding/OnboardingWizard";
@@ -57,14 +60,39 @@ import "./App.css";
  * Shows a hint when no semesters exist yet.
  */
 function HomeRedirect() {
-  const { semesters, loading } = useSemester();
+  const { semesters, loading, error, refetch } = useSemester();
+  const { user } = useAuth();
 
   if (loading) return <LoadingState />;
 
-  // Периодов нет — пользователь ещё не прошёл онбординг (или удалил все
-  // периоды). Уводим в мастер вместо технической заглушки.
   if (semesters.length === 0) {
-    return <Navigate to="/onboarding" replace />;
+    // Онбординг не пройден → в мастер.
+    if (user && user.onboarding_completed !== true) {
+      return <Navigate to="/onboarding" replace />;
+    }
+    // Онбординг пройден, но периодов нет: сбой загрузки или все удалены.
+    // НЕ уводим в /onboarding (его гейт вернёт сюда → бесконечный цикл) —
+    // показываем состояние с повтором.
+    return (
+      <>
+        <Header crumbs={[{ label: "Рабочий стол" }]} />
+        <div className="page">
+          {error ? (
+            <ErrorBanner message="Не удалось загрузить учебные периоды. Проверьте соединение." />
+          ) : (
+            <div className="empty">У вас пока нет учебных периодов.</div>
+          )}
+          <button
+            type="button"
+            className="btn btn-primary"
+            style={{ marginTop: "1rem" }}
+            onClick={() => void refetch()}
+          >
+            Обновить
+          </button>
+        </div>
+      </>
+    );
   }
 
   const last = localStorage.getItem(LAST_SEMESTER_KEY);
