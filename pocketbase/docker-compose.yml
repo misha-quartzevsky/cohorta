@@ -1,0 +1,46 @@
+# ============================================================
+#  docker-compose для голого VPS (reg.ru и т.п.)
+# ============================================================
+#
+#  Два контейнера:
+#    - pocketbase — сам бэкенд (Dockerfile рядом)
+#    - caddy      — реверс-прокси с АВТОМАТИЧЕСКИМ HTTPS
+#                   (Let's Encrypt, сам продлевает сертификат)
+#
+#  Перед запуском:
+#    1. Купить/привязать домен (или поддомен), например
+#       api.cohorta.ru, и направить его A-записью на IP VPS.
+#    2. Поправить домен в Caddyfile (сейчас там api.cohorta.ru).
+#    3. На сервере:
+#         docker compose up -d --build
+#
+#  Данные PocketBase переживают передеплой — лежат в именованном
+#  томе pb_data (не в контейнере).
+# ============================================================
+
+services:
+  pocketbase:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - pb_data:/data
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - pocketbase
+
+volumes:
+  pb_data:
+  caddy_data:
+  caddy_config:

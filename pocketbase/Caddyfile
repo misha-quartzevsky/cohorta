@@ -1,0 +1,5 @@
+# Поменяйте на свой домен/поддомен (A-запись должна указывать на IP VPS
+# ДО первого запуска — Caddy сам получает сертификат Let's Encrypt).
+api.cohorta.ru {
+	reverse_proxy pocketbase:8080
+}
