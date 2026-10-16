@@ -274,18 +274,22 @@ html::-webkit-scrollbar {
   background: rgba(88, 67, 246, 0.12);
 }
 
+/* Перенесено на дизайн-основу 1A (spec 1A.10): h1 по шкале 1A.4
+   (30/36, вес 500 вместо 600), подпись — body на ink-3. */
 .page-title {
   margin: 0 0 0.25rem;
-  font-size: 1.5rem; /* h1 по шкале DESIGN.md §2 */
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--ink);
+  font-family: var(--font-display, inherit);
+  font-size: var(--text-h1, 1.5rem);
+  line-height: var(--text-h1-lh, 1.2);
+  font-weight: 500;
+  letter-spacing: normal;
+  color: var(--color-ink, var(--ink));
 }
 
 .page-subtitle {
   margin: 0 0 var(--space-lg);
-  font-size: 0.875rem;
-  color: var(--ink-2);
+  font-size: var(--text-body, 0.875rem);
+  color: var(--color-ink-3, var(--ink-2));
 }
 
 /* ---------- бенто-сетка ---------- */
@@ -296,21 +300,21 @@ html::-webkit-scrollbar {
   grid-auto-flow: dense;
 }
 
+/* Карточка плитки: без тени (spec 1A.5 — карточки без теней,
+   --shadow-pop только для модалок/поповеров), токены --color-*. */
 .tile {
   position: relative;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl, var(--radius-lg));
   overflow: hidden;
-  background: var(--c-surface);
-  border: 1px solid var(--border);
-  box-shadow: 0 6px 18px rgba(54, 54, 54, 0.06);
+  background: var(--color-card, var(--c-surface));
+  border: 1px solid var(--color-line, var(--border));
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: border-color 0.18s ease;
   text-align: left;
 }
 
 .tile:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 24px rgba(54, 54, 54, 0.12);
+  border-color: var(--color-line-strong, var(--border));
 }
 
 /* бенто-паттерн: некоторые плитки крупнее */
@@ -328,21 +332,21 @@ html::-webkit-scrollbar {
 }
 
 .tile-title {
-  font-weight: 700;
-  font-size: 1rem;
-  color: var(--c-black);
+  font-weight: 500;
+  font-size: var(--text-h3, 1rem);
+  color: var(--color-ink, var(--c-black));
   margin: 0 0 0.25rem;
 }
 
 .tile-meta {
-  font-size: 0.875rem;
-  color: var(--c-muted);
+  font-size: var(--text-caption, 0.875rem);
+  color: var(--color-ink-3, var(--c-muted));
 }
 
 .tile-excerpt {
   margin: 0.5rem 0 0;
-  font-size: 0.875rem;
-  color: var(--ink-2);
+  font-size: var(--text-caption, 0.875rem);
+  color: var(--color-ink-2, var(--ink-2));
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -935,17 +939,19 @@ textarea.field {
   margin: 0;
 }
 
-/* ---------- плитка «+» (создание) ---------- */
+/* Перенесено на дизайн-основу 1A (spec 1A.10): нейтральный hover
+   (ink/subtle) вместо акцентного — accent зарезервирован под узкий
+   список случаев (spec 1A.3), не под общие интерактивные состояния. */
 .add-tile {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
   gap: 0.5rem;
-  border: 1.5px dashed var(--border);
-  border-radius: var(--radius-lg);
+  border: 1.5px dashed var(--color-line-strong, var(--border));
+  border-radius: var(--radius-xl, var(--radius-lg));
   background: transparent;
-  color: var(--c-muted);
+  color: var(--color-ink-3, var(--c-muted));
   cursor: pointer;
   min-height: 108px;
   transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
@@ -954,9 +960,9 @@ textarea.field {
 }
 
 .add-tile:hover {
-  border-color: var(--c-lilac);
-  color: var(--c-lilac);
-  background: rgba(88, 67, 246, 0.04);
+  border-color: var(--color-ink, var(--c-lilac));
+  color: var(--color-ink, var(--c-lilac));
+  background: var(--color-subtle, rgba(88, 67, 246, 0.04));
 }
 
 .add-tile span {
@@ -4737,24 +4743,25 @@ textarea.field {
    вопрос экрана «где пробелы», а не «что это за элемент».
    ============================================================ */
 
-/* --- Точка входа на странице курса --- */
+/* Перенесено на дизайн-основу 1A (spec 1A.10): без тени, без градиента
+   на иконке (spec 1A.6 — градиент только в SubjectCover), токены. */
 .exam-entry {
   display: flex; align-items: center; justify-content: space-between;
   gap: var(--space-md); margin: 0 0 var(--space-lg);
-  padding: var(--space-md); border-radius: var(--radius-lg);
-  background: var(--surface); border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm); text-decoration: none; color: inherit;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  padding: var(--space-md); border-radius: var(--radius-xl, var(--radius-lg));
+  background: var(--color-card, var(--surface)); border: 1px solid var(--color-line, var(--border));
+  text-decoration: none; color: inherit;
+  transition: border-color 0.15s ease;
 }
-.exam-entry:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.exam-entry:hover { border-color: var(--color-line-strong, var(--border)); }
 .exam-entry-icon {
   flex: none; width: 40px; height: 40px; border-radius: var(--radius-sm);
-  background: var(--brand-gradient); display: grid; place-items: center; color: #fff;
+  background: var(--color-ink, var(--ink)); display: grid; place-items: center; color: var(--color-card, #fff);
 }
 .exam-entry-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
-.exam-entry-title { font: 600 0.95rem/1.3 Inter, sans-serif; color: var(--ink); }
-.exam-entry-meta { font: 500 0.82rem/1.3 Inter, sans-serif; color: var(--ink-3); }
-.exam-entry-empty .exam-entry-icon { background: var(--brand-wash); color: var(--brand-1); }
+.exam-entry-title { font: 500 0.95rem/1.3 var(--font-ui, Inter), sans-serif; color: var(--color-ink, var(--ink)); }
+.exam-entry-meta { font: 400 0.82rem/1.3 var(--font-ui, Inter), sans-serif; color: var(--color-ink-3, var(--ink-3)); }
+.exam-entry-empty .exam-entry-icon { background: var(--color-accent-soft, var(--brand-wash)); color: var(--color-accent, var(--brand-1)); }
 
 /* --- Центр подготовки: hero --- */
 .exam-hero {
