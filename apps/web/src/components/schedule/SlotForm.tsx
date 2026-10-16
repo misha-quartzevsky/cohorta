@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, Button, Input } from "../ui";
 import { Select } from "../ui/Field";
 import type { Course, ScheduleSlot, PairTime } from "../../lib/types";
@@ -64,6 +64,24 @@ export default function SlotForm({
   const [teacher, setTeacher] = useState(slot?.teacher ?? "");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Форма не размонтируется между открытиями (Modal просто скрывает
+  // содержимое), поэтому useState-инициализация выше отрабатывает только
+  // на первый показ. При каждом новом открытии перечитываем поля из
+  // актуальных slot/preset — иначе второй клик по другой клетке подставляет
+  // значения из первого открытия.
+  useEffect(() => {
+    if (!open) return;
+    setSubject(slot?.subject ?? courses[0]?.id ?? "");
+    setWeekday(slot?.weekday ?? preset?.weekday ?? 1);
+    setPairNumber(slot?.pair_number ?? preset?.pair_number ?? pairTimes[0]?.n ?? 1);
+    setParity(slot?.week_parity ?? preset?.week_parity ?? "any");
+    setKind(slot?.kind ?? "lecture");
+    setRoom(slot?.room ?? "");
+    setTeacher(slot?.teacher ?? "");
+    setConfirmDelete(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, slot, preset]);
 
   if (courses.length === 0) {
     return (

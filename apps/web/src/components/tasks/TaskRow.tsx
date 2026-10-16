@@ -1,26 +1,38 @@
 import { useState, useRef, useEffect } from "react";
 import { Link2, Trash2, MoreHorizontal } from "lucide-react";
-import type { Task } from "../../lib/types";
+import type { Course, Task } from "../../lib/types";
 import { courseName } from "../../lib/types";
 import { Checkbox, SubjectCover, Menu } from "../ui";
 import { isOpen, isOverdue, dueLabel } from "../../lib/taskView";
 import { todayStr } from "../../lib/localDate";
+import { openSelect } from "../../lib/openSelect";
 
 interface Props {
   task: Task;
+  courses: Course[];
   onToggle: (done: boolean) => void;
   onRename: (title: string) => void;
   onDue: (due: string | null) => void;
+  onSubject: (subjectId: string | null) => void;
   onDelete: () => void;
 }
 
 /** Строка задачи (spec 5.1): чекбокс, название (inline), предмет, срок. */
-export default function TaskRow({ task, onToggle, onRename, onDue, onDelete }: Props) {
+export default function TaskRow({
+  task,
+  courses,
+  onToggle,
+  onRename,
+  onDue,
+  onSubject,
+  onDelete,
+}: Props) {
   const done = !isOpen(task);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
   const dueRef = useRef<HTMLInputElement>(null);
+  const subjectRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
     if (editing) inputRef.current?.focus();
@@ -66,14 +78,22 @@ export default function TaskRow({ task, onToggle, onRename, onDue, onDelete }: P
             {task.title}
           </button>
         )}
-        {(subject || lecture) && (
+        {(subject || lecture || courses.length > 0) && (
           <div className="ds-task__meta">
-            {subject && (
-              <>
-                <SubjectCover subjectId={subject.id} paletteKey={subject.color} size={16} />
-                <span>{courseName(subject)}</span>
-              </>
-            )}
+            <button
+              type="button"
+              className="ds-task__subject-btn"
+              onClick={() => openSelect(subjectRef.current)}
+            >
+              {subject ? (
+                <>
+                  <SubjectCover subjectId={subject.id} paletteKey={subject.color} size={16} />
+                  <span>{courseName(subject)}</span>
+                </>
+              ) : (
+                <span className="ds-subtle-text">+ Предмет</span>
+              )}
+            </button>
             {lecture && (
               <>
                 <Link2 size={13} aria-hidden="true" />
@@ -109,6 +129,31 @@ export default function TaskRow({ task, onToggle, onRename, onDue, onDelete }: P
           tabIndex={-1}
           aria-hidden="true"
         />
+        {/* Скрытый select открывается программно пунктом меню «Изменить
+            предмет» — тот же приём, что и для срока выше. */}
+        <select
+          ref={subjectRef}
+          value={task.subject ?? ""}
+          onChange={(e) => onSubject(e.target.value || null)}
+          aria-label="Предмет задачи"
+          style={{
+            position: "absolute",
+            opacity: 0,
+            width: 1,
+            height: 1,
+            bottom: 0,
+            right: 0,
+            pointerEvents: "none",
+          }}
+          tabIndex={-1}
+        >
+          <option value="">Без предмета</option>
+          {courses.map((c) => (
+            <option key={c.id} value={c.id}>
+              {courseName(c)}
+            </option>
+          ))}
+        </select>
       </div>
 
       <Menu
@@ -125,6 +170,7 @@ export default function TaskRow({ task, onToggle, onRename, onDue, onDelete }: P
           </button>
         )}
         items={[
+          { label: "Изменить предмет", onClick: () => openSelect(subjectRef.current) },
           ...(task.due
             ? [{ label: "Убрать срок", onClick: () => onDue(null) }]
             : []),

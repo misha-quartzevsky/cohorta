@@ -111,7 +111,11 @@ export default function SchedulePage() {
 
   function switchParity(target: "odd" | "even") {
     if (parity === target) return;
-    setRefDate((d) => addDays(d, 7));
+    // Переключатель должен быть обратимым: раньше всегда прибавляли +7
+    // независимо от направления, из-за чего повторные клики «нечётная →
+    // чётная → нечётная» не возвращали на исходную неделю, а уезжали
+    // на две недели вперёд каждый цикл. Теперь знак зависит от направления.
+    setRefDate((d) => addDays(d, target === "even" ? 7 : -7));
   }
 
   function rangeLabel() {

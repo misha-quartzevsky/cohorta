@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../components/Header";
 import ErrorBanner from "../components/ErrorBanner";
 import LoadingState from "../components/LoadingState";
@@ -20,6 +20,7 @@ import { lastSemesterSlug } from "../lib/lastSemester";
 import { todayStr, fromDateStr, addDays, toDateStr } from "../lib/localDate";
 import { isOpen, isOverdue } from "../lib/taskView";
 import { parseQuickTask, type SubjectRef } from "../lib/parseQuickTask";
+import { openSelect } from "../lib/openSelect";
 import { pluralRu } from "../lib/format";
 
 type Tab = "today" | "soon" | "all" | "done";
@@ -44,6 +45,11 @@ export default function TasksPage() {
   const [tab, setTab] = useState<Tab>("today");
   const [draft, setDraft] = useState("");
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
+  // undefined = следовать автоопределению из текста; string|null = ручной выбор.
+  const [manualSubjectId, setManualSubjectId] = useState<string | null | undefined>(
+    undefined
+  );
+  const quickSubjectRef = useRef<HTMLSelectElement>(null);
 
   const today = todayStr();
   const subjectRefs: SubjectRef[] = useMemo(
@@ -55,6 +61,15 @@ export default function TasksPage() {
     () => (draft.trim() ? parseQuickTask(draft, fromDateStr(today), subjectRefs) : null),
     [draft, today, subjectRefs]
   );
+
+  // Ручной выбор предмета живёт, пока пользователь печатает; очищаем его,
+  // когда поле снова пустое (начинаем новую задачу).
+  useEffect(() => {
+    if (!draft.trim()) setManualSubjectId(undefined);
+  }, [draft]);
+
+  const effectiveSubjectId =
+    manualSubjectId !== undefined ? manualSubjectId : (parsed?.subjectId ?? null);
 
   const open = tasks.filter(isOpen);
   const overdueCount = open.filter((t) => isOverdue(t, today)).length;
@@ -74,11 +89,13 @@ export default function TasksPage() {
     const text = draft.trim();
     if (!text) return;
     const p = parseQuickTask(text, fromDateStr(today), subjectRefs);
+    const subjectId = manualSubjectId !== undefined ? manualSubjectId : p.subjectId;
     setDraft("");
+    setManualSubjectId(undefined);
     const created = await createTask({
       title: p.title || text,
       due: p.due,
-      subject: p.subjectId,
+      subject: subjectId,
     });
     if (created) toast.show("Задача добавлена");
   }
@@ -130,19 +147,43 @@ export default function TasksPage() {
                     Добавить
                   </Button>
                 </div>
-                {parsed && (parsed.due || parsed.subjectId) && (
+                {draft.trim() && (
                   <div className="ds-quickadd__hint">
-                    {parsed.dueLabel && (
+                    {parsed?.dueLabel && (
                       <span className="ds-badge ds-badge--accent">
                         Срок: {parsed.dueLabel}
                       </span>
                     )}
-                    {parsed.subjectId && (
-                      <span className="ds-badge ds-badge--neutral">
-                        {courseName(
-                          courses.find((c) => c.id === parsed.subjectId) as Course
-                        )}
-                      </span>
+                    {courses.length > 0 && (
+                      <>
+                        <button
+                          type="button"
+                          className={`ds-badge ds-badge--neutral`}
+                          style={{ cursor: "pointer", border: "none" }}
+                          onClick={() => openSelect(quickSubjectRef.current)}
+                        >
+                          {effectiveSubjectId
+                            ? courseName(
+                                courses.find((c) => c.id === effectiveSubjectId) as Course
+                              )
+                            : "+ Предмет"}
+                        </button>
+                        <select
+                          ref={quickSubjectRef}
+                          value={effectiveSubjectId ?? ""}
+                          onChange={(e) => setManualSubjectId(e.target.value || null)}
+                          aria-label="Предмет новой задачи"
+                          style={{ opacity: 0, width: 1, height: 1, pointerEvents: "none" }}
+                          tabIndex={-1}
+                        >
+                          <option value="">Без предмета</option>
+                          {courses.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {courseName(c)}
+                            </option>
+                          ))}
+                        </select>
+                      </>
                     )}
                   </div>
                 )}
@@ -156,9 +197,11 @@ export default function TasksPage() {
                 tab={tab}
                 tasks={filtered}
                 today={today}
+                courses={courses}
                 onToggle={setDone}
                 onRename={(id, title) => void updateTask(id, { title })}
                 onDue={(id, due) => void updateTask(id, { due })}
+                onSubject={(id, subject) => void updateTask(id, { subject })}
                 onDelete={(id) => void deleteTask(id)}
                 onFocusInput={() => {
                   const el = document.querySelector<HTMLInputElement>(".ds-quickadd .ds-input");
@@ -215,9 +258,11 @@ interface ListProps {
   tab: Tab;
   tasks: Task[];
   today: string;
+  courses: Course[];
   onToggle: (id: string, done: boolean) => void;
   onRename: (id: string, title: string) => void;
   onDue: (id: string, due: string | null) => void;
+  onSubject: (id: string, subject: string | null) => void;
   onDelete: (id: string) => void;
   onFocusInput: () => void;
   onExample: (text: string) => void;
@@ -227,9 +272,11 @@ function TaskList({
   tab,
   tasks,
   today,
+  courses,
   onToggle,
   onRename,
   onDue,
+  onSubject,
   onDelete,
   onFocusInput,
   onExample,
@@ -241,9 +288,11 @@ function TaskList({
     <TaskRow
       key={t.id}
       task={t}
+      courses={courses}
       onToggle={(done) => onToggle(t.id, done)}
       onRename={(title) => onRename(t.id, title)}
       onDue={(due) => onDue(t.id, due)}
+      onSubject={(subject) => onSubject(t.id, subject)}
       onDelete={() => onDelete(t.id)}
     />
   );

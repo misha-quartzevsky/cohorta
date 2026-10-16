@@ -838,6 +838,22 @@
   font-size: var(--text-caption);
   color: var(--color-ink-2);
 }
+.ds-task__subject-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: none;
+  background: transparent;
+  padding: 2px var(--space-1);
+  margin: -2px calc(var(--space-1) * -1);
+  border-radius: var(--radius-sm);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.ds-task__subject-btn:hover {
+  background: var(--color-subtle);
+}
 .ds-task__due {
   font-variant-numeric: tabular-nums;
   background: none;
