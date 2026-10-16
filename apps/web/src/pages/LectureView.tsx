@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Trash2 } from "lucide-react";
+import { Trash2, ListChecks } from "lucide-react";
 
 import {
   courseName,
@@ -30,6 +30,8 @@ import {
 import { fetchTags } from "../services/tagService";
 import { createTaskFromLecture } from "../services/taskService";
 import { useToast } from "../components/ui";
+import ReadinessBadge from "../components/ReadinessBadge";
+import { useLectureReadiness } from "../hooks/useLectureReadiness";
 import { useLectureBySlug } from "../hooks/useLectureBySlug";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useAutosave } from "../hooks/useAutosave";
@@ -311,6 +313,37 @@ function LectureView() {
 
   const unassigned = lecture ? !lectureCourseId(lecture) : false;
   const isHtmlContent = !!(lecture && /<[a-z][\s\S]*>/i.test(content));
+  const { readiness } = useLectureReadiness(lecture?.id);
+
+  // «Показать в конспекте» из квиза (spec 6.3): подсветить цитату 3 секунды,
+  // если нашлась в статичном HTML; иначе просто открыть лекцию как есть.
+  const highlightQuote = (location.state as { highlightQuote?: string } | null)
+    ?.highlightQuote;
+  useEffect(() => {
+    if (!highlightQuote || mode !== "static" || !staticBodyRef.current) return;
+    const root = staticBodyRef.current;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const needle = highlightQuote.trim().toLowerCase();
+    let node: Node | null;
+    while ((node = walker.nextNode())) {
+      const text = node.textContent ?? "";
+      const idx = text.toLowerCase().indexOf(needle.slice(0, 60));
+      if (idx === -1) continue;
+      const el = node.parentElement;
+      if (!el) continue;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      const prevBg = el.style.backgroundColor;
+      el.style.backgroundColor = "var(--color-accent-soft, #FCE9DD)";
+      el.style.transition = "background-color 0.3s";
+      window.setTimeout(() => {
+        el.style.backgroundColor = prevBg;
+      }, 3000);
+      break;
+    }
+    // Очищаем state, чтобы повторный рендер/назад не подсвечивал снова.
+    navigate(location.pathname, { replace: true, state: {} });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightQuote, mode, content]);
 
   return (
     <>
@@ -339,6 +372,16 @@ function LectureView() {
               <TagEditor selectedIds={tags} onChange={updateTags} />
               <div className="lecture-card-actions">
                 <SaveIndicator state={saveState} text={saveText} />
+                <ReadinessBadge percent={readiness?.percent ?? null} />
+                <button
+                  className="icon-btn"
+                  type="button"
+                  onClick={() => navigate(`/quiz/${lecture.id}`)}
+                  title="Начать квиз по лекции"
+                  aria-label="Начать квиз по лекции"
+                >
+                  <ListChecks size={15} />
+                </button>
                 <ShareAccessButton lecture={lecture} />
                 <ShareToGroupButton lecture={lecture} onChanged={refetch} />
                 <button

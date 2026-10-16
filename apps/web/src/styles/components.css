@@ -1056,3 +1056,84 @@
 .ds-dot--danger {
   background: var(--color-danger);
 }
+
+/* ---------- Квиз (spec 6.3) ---------- */
+
+.ds-quiz-screen {
+  min-height: 100dvh;
+  background: var(--color-canvas);
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5);
+}
+.ds-quiz-loading {
+  margin: auto;
+  width: min(100%, 420px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+.ds-quiz-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.ds-quiz-topbar > :first-child {
+  flex: 1;
+}
+.ds-quiz-body {
+  width: min(100%, 640px);
+  margin: var(--space-6) auto 0;
+  flex: 1;
+}
+.ds-quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.ds-quiz-option {
+  min-height: 48px;
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-line-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+  font: inherit;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+.ds-quiz-option:disabled {
+  cursor: default;
+}
+.ds-quiz-option--correct {
+  background: var(--color-success-soft);
+  border-color: var(--color-success);
+  color: var(--color-success-strong);
+}
+.ds-quiz-option--wrong {
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger);
+  color: var(--color-danger-strong);
+}
+.ds-quiz-recall {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.ds-quiz-footer {
+  width: min(100%, 640px);
+  margin: var(--space-6) auto 0;
+}
+@media (max-width: 767px) {
+  .ds-quiz-screen {
+    padding: var(--space-4);
+  }
+  .ds-quiz-option {
+    min-height: 48px;
+  }
+}

@@ -111,6 +111,57 @@ export interface Task extends PbRecord {
   };
 }
 
+/** Одна генерация квиза по лекции. spec 2.5 */
+export interface Quiz extends PbRecord {
+  owner: string;
+  /** relation → lectures */
+  lecture: string;
+  /** sha256 нормализованного текста лекции на момент генерации */
+  source_hash?: string;
+  size?: number;
+  model?: string;
+}
+
+export type QuizQuestionType = "mcq" | "recall";
+
+/** Один вопрос квиза. spec 2.5 */
+export interface QuizQuestion extends PbRecord {
+  owner: string;
+  /** relation → quizzes */
+  quiz: string;
+  /** relation → lectures */
+  lecture: string;
+  position?: number;
+  type: QuizQuestionType;
+  topic?: string;
+  prompt?: string;
+  /** только type=mcq, ровно 4 строки */
+  options?: string[];
+  /** только type=mcq, 0..3 */
+  correct_index?: number;
+  /** только type=recall */
+  answer?: string;
+  explanation?: string;
+  quote?: string | null;
+  /** «плохой вопрос» — не показывать в будущих прохождениях */
+  flagged?: boolean;
+  hidden?: boolean;
+}
+
+/** Один ответ на вопрос квиза. spec 2.5 */
+export interface QuizAnswer extends PbRecord {
+  owner: string;
+  /** relation → quiz_questions */
+  question: string;
+  /** relation → lectures */
+  lecture: string;
+  correct?: boolean;
+  /** дата ответа (YYYY-MM-DD после нормализации) */
+  answered_at?: string;
+  /** uuid одного прохождения — общий для всех ответов внутри запуска */
+  attempt?: string;
+}
+
 /** Thumbnail чужой лекции для участников группы (ведёт серверный хук). */
 export interface LecturePreview extends PbRecord {
   /** PocketBase relation → lectures. */
@@ -354,6 +405,34 @@ export const FIELDS = {
   taskSource: "source",
   taskDedupeKey: "dedupe_key",
   taskDismissed: "dismissed",
+  // quizzes
+  quizOwner: "owner",
+  quizLecture: "lecture",
+  quizSourceHash: "source_hash",
+  quizSize: "size",
+  quizModel: "model",
+  // quiz_questions
+  qqOwner: "owner",
+  qqQuiz: "quiz",
+  qqLecture: "lecture",
+  qqPosition: "position",
+  qqType: "type",
+  qqTopic: "topic",
+  qqPrompt: "prompt",
+  qqOptions: "options",
+  qqCorrectIndex: "correct_index",
+  qqAnswer: "answer",
+  qqExplanation: "explanation",
+  qqQuote: "quote",
+  qqFlagged: "flagged",
+  qqHidden: "hidden",
+  // quiz_answers
+  qaOwner: "owner",
+  qaQuestion: "question",
+  qaLecture: "lecture",
+  qaCorrect: "correct",
+  qaAnsweredAt: "answered_at",
+  qaAttempt: "attempt",
   // URL-идентификаторы (slugs)
   courseSlug: "slug",
   lectureSlug: "slug",

@@ -50,6 +50,7 @@ import { UndoProvider } from "./lib/undoContext";
 import { ToastProvider } from "./components/ui";
 import SchedulePage from "./pages/SchedulePage";
 import TasksPage from "./pages/TasksPage";
+import QuizPage from "./pages/QuizPage";
 import DesignPage from "./pages/DesignPage";
 import {
   useSemester,
@@ -120,6 +121,8 @@ function App() {
           <Route element={<ProtectedRoute />}>
             {/* Мастер онбординга — фуллскрин, без сайдбара, вне AppLayout. */}
             <Route path="/onboarding" element={<OnboardingWizard />} />
+            {/* Квиз — фуллскрин, без сайдбара и нижней панели (spec 6.3). */}
+            <Route path="/quiz/:lectureId" element={<QuizPage />} />
             <Route element={<AppLayout />}>
               <Route path="/" element={<HomeRedirect />} />
               <Route path="/s/:semesterSlug" element={<Dashboard />} />
