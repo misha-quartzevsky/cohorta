@@ -1,0 +1,115 @@
+/**
+ * ============================================
+ *  tokens.css — дизайн-основа (spec 1A.2–1A.5)
+ * ============================================
+ *
+ * Токены новой дизайн-основы. Используются ТОЛЬКО новыми компонентами
+ * (src/components/ui/*) и новыми экранами (расписание, задачи, квиз,
+ * обновлённая главная). Старые экраны пока живут на токенах из App.css.
+ *
+ * Правило: в новых компонентах нет hex-цветов и px-размеров шрифта —
+ * только эти переменные (проверка grep, spec раздел 10, D1).
+ *
+ * Тёмная тема сейчас не делается, но токены держим переменными, чтобы
+ * добавить её переопределением в :root[data-theme="dark"].
+ */
+
+:root {
+  /* ---- Цвет (spec 1A.3) ---- */
+  --color-canvas: #f2eee8;
+  --color-surface: #faf8f5;
+  --color-card: #ffffff;
+  --color-subtle: #f6f3ee;
+  --color-neutral-soft: #ece7df;
+  --color-ink: #1b1916;
+  --color-ink-2: #5f5a53;
+  --color-ink-3: #6b655d;
+  --color-line: #e6e0d7;
+  --color-line-strong: #d3cbbf;
+  --color-accent: #e8601c;
+  --color-accent-soft: #fce9dd;
+  --color-success: #2e7a4d;
+  --color-success-strong: #276842;
+  --color-success-soft: #e3f1e8;
+  --color-danger: #bf3b2f;
+  --color-danger-strong: #a8322a;
+  --color-danger-soft: #f8e3e0;
+  /* Производные состояния (нажатие, затемнение фона, текст на тёмном) */
+  --color-ink-press: #000000;
+  --color-accent-soft-press: #f7ddcb;
+  --color-on-ink-dim: rgba(255, 255, 255, 0.65);
+  --color-scrim: rgba(27, 25, 22, 0.4);
+
+  /* ---- Шрифты (spec 1A.2) ----
+     В продукте один шрифт — Inter. Иерархия строится размером и весом;
+     все три роли указывают на Inter. */
+  --font-ui: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-display: var(--font-ui);
+  --font-editor: var(--font-ui);
+
+  /* ---- Типографика (spec 1A.4), px → rem (1rem = 16px) ---- */
+  --text-display: 2.375rem;      /* 38 */
+  --text-display-lh: 2.75rem;    /* 44 */
+  --text-h1: 1.875rem;           /* 30 */
+  --text-h1-lh: 2.25rem;         /* 36 */
+  --text-h2: 1.5rem;             /* 24 */
+  --text-h2-lh: 1.875rem;        /* 30 */
+  --text-h3: 1.25rem;            /* 20 */
+  --text-h3-lh: 1.625rem;        /* 26 */
+  --text-body-lg: 1rem;          /* 16 */
+  --text-body-lg-lh: 1.625rem;   /* 26 */
+  --text-body: 0.875rem;         /* 14 */
+  --text-body-lh: 1.25rem;       /* 20 */
+  --text-caption: 0.8125rem;     /* 13 */
+  --text-caption-lh: 1.125rem;   /* 18 */
+  --text-overline: 0.75rem;      /* 12 */
+  --text-overline-lh: 1rem;      /* 16 */
+  --text-numeric-xl: 3rem;       /* 48 */
+  --text-numeric-xl-lh: 3.25rem; /* 52 */
+  --text-tab: 0.6875rem;         /* 11 — подпись вкладки нижней панели */
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* ---- Отступы (spec 1A.5): 4,8,12,16,24,32,48 ---- */
+  --space-1: 0.25rem;  /* 4  */
+  --space-2: 0.5rem;   /* 8  */
+  --space-3: 0.75rem;  /* 12 */
+  --space-4: 1rem;     /* 16 */
+  --space-5: 1.5rem;   /* 24 */
+  --space-6: 2rem;     /* 32 */
+  --space-7: 3rem;     /* 48 */
+
+  /* ---- Радиусы (spec 1A.5) ---- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* ---- Границы и тени (spec 1A.5) ---- */
+  --border-width: 1px;
+  --shadow-pop: 0 8px 24px rgba(26, 20, 13, 0.1);
+
+  /* ---- Движение (spec 1A.5) ---- */
+  --motion-fast: 150ms;
+  --motion-modal: 200ms;
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /* ---- Фокус (spec 1A.7) ---- */
+  --focus-ring: 0 0 0 2px var(--color-card), 0 0 0 4px var(--color-ink);
+  --focus-ring-on-dark: 0 0 0 2px var(--color-ink), 0 0 0 4px #ffffff;
+
+  /* ---- Каркас (spec 1A.8) ---- */
+  --sidebar-width: 264px;
+  --sidebar-width-compact: 72px;
+  --rightpanel-width: 320px;
+  --content-max: 1280px;
+  --reading-max: 720px;
+  --bottombar-height: 56px;
+}
+
+:root[data-theme="dark"] {
+  /* Зарезервировано под тёмную тему. Не используется сейчас. */
+}

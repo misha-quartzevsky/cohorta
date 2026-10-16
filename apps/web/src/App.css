@@ -2051,6 +2051,10 @@ textarea.field {
 
 .app-main {
   flex: 1;
+  /* min-width: 0 — иначе flex-item по умолчанию не сжимается уже
+     контента (min-width: auto), и узкий контент распирает весь шелл
+     горизонтальной прокруткой на мобильных ширинах. */
+  min-width: 0;
   margin-left: 240px; /* width of GlobalSidebar */
   position: relative;
 }

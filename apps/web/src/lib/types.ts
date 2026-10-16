@@ -35,9 +35,79 @@ export interface Lecture extends PbRecord {
   owner?: string;
   /** PocketBase relation → groups. Заполняется действием «Показать группе». */
   group?: string;
+  /** PocketBase relation → schedule_slots. Пара, к которой привязан конспект. */
+  slot?: string;
+  /** Дата конкретной пары (YYYY-MM-DD). */
+  lecture_date?: string;
+  /** Порядковый номер лекции в предмете («Лекция 6»). */
+  number?: number;
   /** Expanded course data (when using expand:"field"). */
   expand?: {
     field?: Course;
+  };
+}
+
+/** Настройки расписания пользователя (одна строка). spec 2.1 */
+export interface ScheduleSettings extends PbRecord {
+  owner: string;
+  /** Массив { n, start:"HH:MM", end:"HH:MM" }. */
+  pair_times?: PairTime[];
+  /** Понедельник нечётной недели (YYYY-MM-DD) — якорь чётности. */
+  odd_week_anchor?: string;
+  show_saturday?: boolean;
+}
+
+export interface PairTime {
+  n: number;
+  start: string;
+  end: string;
+}
+
+export type WeekParity = "any" | "odd" | "even";
+export type SlotKind = "lecture" | "seminar" | "lab" | "other";
+
+/** Слот расписания — повторяющаяся пара. spec 2.2 */
+export interface ScheduleSlot extends PbRecord {
+  owner: string;
+  /** relation → semesters */
+  semester?: string;
+  /** relation → courses (предмет) */
+  subject: string;
+  /** 1..6, 1 = понедельник */
+  weekday: number;
+  /** 1..8 */
+  pair_number: number;
+  week_parity?: WeekParity;
+  kind?: SlotKind;
+  room?: string;
+  teacher?: string;
+  date_from?: string;
+  date_to?: string;
+  expand?: {
+    subject?: Course;
+  };
+}
+
+export type TaskSource = "manual" | "lecture" | "auto_review";
+
+/** Задача студента. spec 2.4 */
+export interface Task extends PbRecord {
+  owner: string;
+  title: string;
+  /** relation → courses */
+  subject?: string;
+  /** relation → lectures */
+  lecture?: string;
+  /** YYYY-MM-DD */
+  due?: string;
+  /** YYYY-MM-DD; пусто = открыта */
+  done_at?: string;
+  source?: TaskSource;
+  dedupe_key?: string;
+  dismissed?: boolean;
+  expand?: {
+    subject?: Course;
+    lecture?: Lecture;
   };
 }
 
@@ -254,6 +324,36 @@ export const FIELDS = {
   lectureCourse: "field",
   lectureOwner: "owner",
   lectureGroup: "group",
+  lectureSlot: "slot",
+  lectureDate: "lecture_date",
+  lectureNumber: "number",
+  // schedule_settings
+  scheduleOwner: "owner",
+  schedulePairTimes: "pair_times",
+  scheduleOddAnchor: "odd_week_anchor",
+  scheduleShowSaturday: "show_saturday",
+  // schedule_slots
+  slotOwner: "owner",
+  slotSemester: "semester",
+  slotSubject: "subject",
+  slotWeekday: "weekday",
+  slotPairNumber: "pair_number",
+  slotWeekParity: "week_parity",
+  slotKind: "kind",
+  slotRoom: "room",
+  slotTeacher: "teacher",
+  slotDateFrom: "date_from",
+  slotDateTo: "date_to",
+  // tasks
+  taskOwner: "owner",
+  taskTitle: "title",
+  taskSubject: "subject",
+  taskLecture: "lecture",
+  taskDue: "due",
+  taskDoneAt: "done_at",
+  taskSource: "source",
+  taskDedupeKey: "dedupe_key",
+  taskDismissed: "dismissed",
   // URL-идентификаторы (slugs)
   courseSlug: "slug",
   lectureSlug: "slug",

@@ -18,6 +18,7 @@ import SemesterGate from "../components/SemesterGate";
 import { CourseCreateSlot } from "../components/CourseFormTile";
 
 import HeroSection from "./dashboard/HeroSection";
+import TodayWidget from "./dashboard/TodayWidget";
 import QuickActionsBar from "./dashboard/QuickActionsBar";
 import PriorityHero from "./dashboard/PriorityHero";
 import CoursesWidget from "./dashboard/CoursesWidget";
@@ -93,6 +94,8 @@ function Dashboard() {
               semesterSlug={semSlug}
               lastVisited={lastVisited}
             />
+
+            <TodayWidget />
 
             <QuickActionsBar
               onNewNote={() => navigate("/note/new")}

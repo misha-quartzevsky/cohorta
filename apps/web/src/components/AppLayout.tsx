@@ -18,6 +18,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import GlobalSidebar from "./GlobalSidebar";
+import BottomTabBar from "./BottomTabBar";
 import DocumentScrollbar from "./scrollbar/DocumentScrollbar";
 import {
   LectureFrameContext,
@@ -88,6 +89,7 @@ export default function AppLayout() {
           <main className="app-main">
             <Outlet />
           </main>
+          <BottomTabBar />
           <DocumentScrollbar />
         </div>
       </UIShellContext.Provider>

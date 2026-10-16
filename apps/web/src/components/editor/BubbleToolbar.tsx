@@ -11,7 +11,7 @@
 import type { Editor as TiptapEditor } from "@tiptap/core";
 import { BubbleMenu } from "@tiptap/react/menus";
 import type { BubbleMenuPluginProps } from "@tiptap/extension-bubble-menu";
-import { Bold, Eraser, Italic, Link2, Mic, MicOff, MoreHorizontal } from "lucide-react";
+import { Bold, Eraser, Italic, Link2, ListChecks, Mic, MicOff, MoreHorizontal } from "lucide-react";
 import { HIGHLIGHT_COLORS, handleLink, toggleHighlight } from "./textCommands";
 
 interface Props {
@@ -23,6 +23,13 @@ interface Props {
   /** Диктовка/запись (для пульса иконки микрофона). */
   recording: boolean;
   onToggleMic: () => void;
+  /** Когда задан — показываем «Сделать задачей» с текстом выделения. */
+  onMakeTask?: (text: string) => void;
+}
+
+function selectedText(editor: TiptapEditor): string {
+  const { from, to } = editor.state.selection;
+  return editor.state.doc.textBetween(from, to, " ").trim();
 }
 
 export function BubbleToolbar({
@@ -32,6 +39,7 @@ export function BubbleToolbar({
   onOpenTextMenu,
   recording,
   onToggleMic,
+  onMakeTask,
 }: Props) {
   return (
     <BubbleMenu editor={editor} shouldShow={shouldShow} className="bubble-menu">
@@ -101,6 +109,23 @@ export function BubbleToolbar({
             title="Снять выделение"
           >
             <Eraser size={15} />
+          </button>
+        </>
+      )}
+      {onMakeTask && (
+        <>
+          <span className="bubble-sep" />
+          <button
+            type="button"
+            className="bubble-btn"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              const text = selectedText(editor);
+              if (text) onMakeTask(text);
+            }}
+            title="Сделать задачей"
+          >
+            <ListChecks size={15} />
           </button>
         </>
       )}

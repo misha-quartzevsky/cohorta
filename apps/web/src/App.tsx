@@ -47,6 +47,10 @@ import { SemesterProvider } from "./lib/SemesterProvider";
 import { SpeechProvider } from "./lib/SpeechProvider";
 import { ModeProvider } from "./lib/ModeProvider";
 import { UndoProvider } from "./lib/undoContext";
+import { ToastProvider } from "./components/ui";
+import SchedulePage from "./pages/SchedulePage";
+import TasksPage from "./pages/TasksPage";
+import DesignPage from "./pages/DesignPage";
 import {
   useSemester,
   LAST_SEMESTER_KEY,
@@ -109,6 +113,7 @@ function App() {
       <UndoProvider>
       <SpeechProvider>
         <SemesterProvider>
+        <ToastProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/privacy" element={<PrivacyPage />} />
@@ -182,10 +187,17 @@ function App() {
               <Route path="/decks/new" element={<DeckEditorPage />} />
               <Route path="/decks/:slug" element={<CardStudyPage />} />
               <Route path="/decks/:slug/edit" element={<DeckEditorPage />} />
+              {/* Расписание и задачи — глобальные, вне семестра. */}
+              <Route path="/schedule" element={<SchedulePage />} />
+              <Route path="/tasks" element={<TasksPage />} />
+              {import.meta.env.DEV && (
+                <Route path="/_design" element={<DesignPage />} />
+              )}
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </ToastProvider>
         </SemesterProvider>
       </SpeechProvider>
       </UndoProvider>

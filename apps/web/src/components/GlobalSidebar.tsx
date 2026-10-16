@@ -31,6 +31,8 @@ import {
   FileText,
   Layers,
   Calendar,
+  CalendarDays,
+  CheckSquare,
   GraduationCap,
   Users,
   Search,
@@ -221,6 +223,8 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
   const isNotesRoute = location.pathname === "/notes";
   const isDecksRoute = location.pathname.startsWith("/decks");
   const isExamsRoute = /^\/s\/[^/]+\/exams$/.test(location.pathname);
+  const isScheduleRoute = location.pathname === "/schedule";
+  const isTasksRoute = location.pathname === "/tasks";
   const isGroupRoute = /^\/s\/[^/]+\/group$/.test(location.pathname);
 
   const {
@@ -451,6 +455,26 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
                 >
                   <Home size={16} />
                   <span>Рабочий стол</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/tasks"
+                  className={`sidebar-nav-item${isTasksRoute ? " active" : ""}`}
+                >
+                  <CheckSquare size={16} />
+                  <span>Задачи</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/schedule"
+                  className={`sidebar-nav-item${
+                    isScheduleRoute ? " active" : ""
+                  }`}
+                >
+                  <CalendarDays size={16} />
+                  <span>Расписание</span>
                 </Link>
               </li>
               <li>

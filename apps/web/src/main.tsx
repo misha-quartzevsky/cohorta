@@ -18,6 +18,8 @@ if (typeof window !== "undefined") {
 }
 
 import "./index.css";
+import "./styles/tokens.css";
+import "./styles/components.css";
 import App from "./App.tsx";
 
 createRoot(document.getElementById("root")!).render(

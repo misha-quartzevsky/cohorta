@@ -28,6 +28,8 @@ import {
   uploadLectureImages,
 } from "../services/lectureService";
 import { fetchTags } from "../services/tagService";
+import { createTaskFromLecture } from "../services/taskService";
+import { useToast } from "../components/ui";
 import { useLectureBySlug } from "../hooks/useLectureBySlug";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useAutosave } from "../hooks/useAutosave";
@@ -67,6 +69,18 @@ function LectureView() {
     lectureSlugParam ?? ""
   );
   const isCourseContext = !!courseSlug;
+  const toast = useToast();
+
+  const handleMakeTask = useCallback(
+    (text: string) => {
+      if (!lecture) return;
+      const subjectId = lectureCourseId(lecture) || null;
+      void createTaskFromLecture(text, lecture.id, subjectId)
+        .then(() => toast.show("Задача добавлена", { label: "Открыть", onClick: () => navigate("/tasks") }))
+        .catch(() => toast.show("Не удалось добавить задачу"));
+    },
+    [lecture, toast, navigate]
+  );
 
   // `/…/edit` — рабочий алиас: та же страница, но сразу в режиме редактора.
   const startLive = location.pathname.endsWith("/edit");
@@ -362,6 +376,7 @@ function LectureView() {
                     className="editor-inline"
                     onUploadImages={handleUploadImages}
                     selectionCoords={clickCoords}
+                    onMakeTask={handleMakeTask}
                   />
                   {/* Речь + аудиозапись: регистрирует запись в SpeechProvider. */}
                   <SpeechToText lecture={lecture} onUpload={handleUploadImages} />

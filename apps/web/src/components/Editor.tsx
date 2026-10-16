@@ -72,6 +72,8 @@ interface EditorProps {
    * просмотра — каретка встаёт в эту точку. Читается один раз при mount.
    */
   selectionCoords?: { left: number; top: number } | null;
+  /** Когда задан — в bubble-меню выделения появляется «Сделать задачей». */
+  onMakeTask?: (text: string) => void;
 }
 
 export default function Editor({
@@ -82,6 +84,7 @@ export default function Editor({
   onUploadImages,
   autoFocus = true,
   selectionCoords,
+  onMakeTask,
 }: EditorProps) {
   // Захватываем координаты клика один раз — последующие изменения игнорируем.
   const selectionCoordsRef = useRef(selectionCoords);
@@ -402,6 +405,7 @@ export default function Editor({
         onOpenTextMenu={openTextMenu}
         recording={recording}
         onToggleMic={toggle}
+        onMakeTask={onMakeTask}
       />
 
       {textMenuOpen && textMenuPos && (
