@@ -5741,13 +5741,17 @@ button.group-roster-item:hover .group-roster-name {
    Онбординг (features/onboarding) — двухпанельный мастер.
    Переиспользует .field / .btn; собственные токены не заводит.
    ============================================================ */
+/* Перенесено на дизайн-основу 1A (spec 1A.10): canvas/card/ink токены,
+   без тени, без градиента на левой панели (spec 1A.6 — градиент только
+   в SubjectCover; заменён на сплошной ink, та же «чёрная» семья, что и
+   навигация/главная кнопка). */
 .onb-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: var(--bg);
+  background: var(--color-canvas, var(--bg));
 }
 
 .onb-shell {
@@ -5755,16 +5759,15 @@ button.group-roster-item:hover .group-roster-name {
   max-width: 920px;
   display: grid;
   grid-template-columns: 0.85fr 1.15fr;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  background: var(--color-card, var(--surface));
+  border: 1px solid var(--color-line, var(--border));
+  border-radius: var(--radius-xl, var(--radius-lg));
   overflow: hidden;
 }
 
 /* ---- Левая панель ---- */
 .onb-aside {
-  background: var(--brand-gradient);
+  background: var(--color-ink, var(--brand-1));
   color: #fff;
   padding: 2.25rem;
   display: flex;
@@ -5782,8 +5785,9 @@ button.group-roster-item:hover .group-roster-name {
 
 .onb-aside-title {
   margin: 0 0 0.6rem;
+  font-family: var(--font-display, inherit);
   font-size: 1.6rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.25;
 }
 
@@ -5823,7 +5827,7 @@ button.group-roster-item:hover .group-roster-name {
 
 .onb-progress {
   font-size: 0.8125rem;
-  color: var(--ink-3);
+  color: var(--color-ink-3, var(--ink-3));
   margin-bottom: 1.5rem;
 }
 
@@ -5841,14 +5845,14 @@ button.group-roster-item:hover .group-roster-name {
 
 .onb-label {
   font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--ink);
+  font-weight: 500;
+  color: var(--color-ink, var(--ink));
   margin-bottom: 0.5rem;
 }
 
 .onb-hint {
   font-size: 0.8125rem;
-  color: var(--ink-3);
+  color: var(--color-ink-3, var(--ink-3));
   margin: 0.25rem 0 0;
 }
 
@@ -5857,7 +5861,7 @@ button.group-roster-item:hover .group-roster-name {
 }
 
 .onb-error {
-  color: var(--danger-ink);
+  color: var(--color-danger-strong, var(--danger-ink));
   font-size: 0.875rem;
   margin: 0.5rem 0 0;
 }
@@ -5873,6 +5877,9 @@ button.group-roster-item:hover .group-roster-name {
   grid-template-columns: 1fr 1fr;
 }
 
+/* Выбранное состояние — ink (тот же канал, что у сегмент-контрола),
+   accent сюда не используем: он зарезервирован под узкий список
+   случаев (spec 1A.3). */
 .onb-option {
   display: flex;
   align-items: center;
@@ -5880,24 +5887,24 @@ button.group-roster-item:hover .group-roster-name {
   gap: 0.5rem;
   text-align: left;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--ink);
+  border: 1px solid var(--color-line-strong, var(--border));
+  border-radius: var(--radius-md, var(--radius));
+  background: var(--color-card, var(--surface));
+  color: var(--color-ink, var(--ink));
   font: inherit;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 .onb-option:hover {
-  background: var(--bg);
+  background: var(--color-subtle, var(--bg));
 }
 .onb-option--on {
-  border-color: var(--brand-1);
-  background: var(--brand-wash);
+  border-color: var(--color-ink, var(--brand-1));
+  background: var(--color-subtle, var(--brand-wash));
 }
 .onb-option--dashed {
   border-style: dashed;
-  color: var(--ink-3);
+  color: var(--color-ink-3, var(--ink-3));
   justify-content: flex-start;
 }
 
@@ -5911,20 +5918,20 @@ button.group-roster-item:hover .group-roster-name {
   width: 44px;
   height: 44px;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--ink);
+  border: 1px solid var(--color-line-strong, var(--border));
+  background: var(--color-card, var(--surface));
+  color: var(--color-ink, var(--ink));
   font: inherit;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .onb-pill:hover {
-  background: var(--bg);
+  background: var(--color-subtle, var(--bg));
 }
 .onb-pill--on {
-  background: var(--brand-1);
-  border-color: var(--brand-1);
+  background: var(--color-ink, var(--brand-1));
+  border-color: var(--color-ink, var(--brand-1));
   color: #fff;
 }
 
@@ -5938,10 +5945,10 @@ button.group-roster-item:hover .group-roster-name {
   left: 0;
   right: 0;
   margin-top: -0.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
+  background: var(--color-card, var(--surface));
+  border: 1px solid var(--color-line, var(--border));
+  border-radius: var(--radius-lg, var(--radius));
+  box-shadow: var(--shadow-pop, var(--shadow-md));
   overflow: hidden;
 }
 .onb-combo-item {
@@ -5951,16 +5958,16 @@ button.group-roster-item:hover .group-roster-name {
   padding: 0.625rem 1rem;
   border: 0;
   background: transparent;
-  color: var(--ink);
+  color: var(--color-ink, var(--ink));
   font: inherit;
   cursor: pointer;
 }
 .onb-combo-item:hover {
-  background: var(--bg);
+  background: var(--color-subtle, var(--bg));
 }
 .onb-combo-item--muted {
-  color: var(--ink-3);
-  border-top: 1px solid var(--border);
+  color: var(--color-ink-3, var(--ink-3));
+  border-top: 1px solid var(--color-line, var(--border));
 }
 
 /* ---- Список сгенерированных периодов ---- */
@@ -5986,8 +5993,8 @@ button.group-roster-item:hover .group-roster-name {
   align-items: center;
   gap: 0.5rem;
   padding: 0.4rem 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--color-line, var(--border));
+  border-radius: var(--radius-md, var(--radius));
 }
 .onb-period-current {
   display: inline-flex;
@@ -5996,15 +6003,15 @@ button.group-roster-item:hover .group-roster-name {
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
+  border: 1px solid var(--color-line-strong, var(--border-strong));
+  background: var(--color-card, var(--surface));
   color: transparent;
   cursor: pointer;
   flex-shrink: 0;
 }
 .onb-period-current--on {
-  background: var(--brand-1);
-  border-color: var(--brand-1);
+  background: var(--color-ink, var(--brand-1));
+  border-color: var(--color-ink, var(--brand-1));
   color: #fff;
 }
 .onb-period-input {
@@ -6012,18 +6019,18 @@ button.group-roster-item:hover .group-roster-name {
   border: 0;
   background: transparent;
   font: inherit;
-  color: var(--ink);
+  color: var(--color-ink, var(--ink));
   outline: none;
 }
 .onb-period-del {
   border: 0;
   background: transparent;
-  color: var(--ink-3);
+  color: var(--color-ink-3, var(--ink-3));
   cursor: pointer;
   display: inline-flex;
 }
 .onb-period-del:hover {
-  color: var(--danger-ink);
+  color: var(--color-danger-strong, var(--danger-ink));
 }
 
 /* ---- Аватар ---- */
@@ -6034,9 +6041,9 @@ button.group-roster-item:hover .group-roster-name {
   justify-content: center;
   gap: 0.5rem;
   padding: 2.5rem 1rem;
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius);
-  color: var(--ink-3);
+  border: 1px dashed var(--color-line-strong, var(--border-strong));
+  border-radius: var(--radius-md, var(--radius));
+  color: var(--color-ink-3, var(--ink-3));
   cursor: pointer;
 }
 .onb-avatar-preview {
@@ -6053,13 +6060,13 @@ button.group-roster-item:hover .group-roster-name {
   gap: 0.35rem;
   border: 0;
   background: transparent;
-  color: var(--ink-3);
+  color: var(--color-ink-3, var(--ink-3));
   font: inherit;
   cursor: pointer;
   padding: 0.35rem 0;
 }
 .onb-linkbtn:hover:not(:disabled) {
-  color: var(--ink);
+  color: var(--color-ink, var(--ink));
 }
 .onb-linkbtn:disabled {
   opacity: 0.5;
@@ -6118,12 +6125,12 @@ button.group-roster-item:hover .group-roster-name {
   display: inline-flex;
   align-items: center;
   padding: 0 0.9rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--color-line, var(--border));
   border-left: 0;
-  border-top-right-radius: var(--radius);
-  border-bottom-right-radius: var(--radius);
-  background: var(--bg);
-  color: var(--ink-3);
+  border-top-right-radius: var(--radius-md, var(--radius));
+  border-bottom-right-radius: var(--radius-md, var(--radius));
+  background: var(--color-subtle, var(--bg));
+  color: var(--color-ink-3, var(--ink-3));
   font-size: 0.95rem;
   white-space: nowrap;
 }
