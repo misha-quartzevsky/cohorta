@@ -3573,12 +3573,12 @@ textarea.field {
   box-shadow: 0 12px 34px rgba(27, 27, 27, 0.07);
 }
 
+/* Перенесено на дизайн-основу 1A (spec 1A.10): без тени, токены. */
 .widget {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  background: var(--color-card, var(--surface));
+  border: 1px solid var(--color-line, var(--border));
+  border-radius: var(--radius-xl, var(--radius-lg));
   padding: var(--space-md);
-  box-shadow: var(--shadow-md);
 }
 /* Шапка виджета: заголовок + ссылка «дальше» (виджет не должен быть тупиком) */
 .widget-head {
@@ -3590,26 +3590,26 @@ textarea.field {
 }
 .widget-title {
   margin: 0;
-  font-size: 1.125rem; /* h2 по шкале §2 */
-  font-weight: 600;
-  color: var(--ink);
+  font-size: var(--text-h3, 1.125rem);
+  font-weight: 500;
+  color: var(--color-ink, var(--ink));
 }
 .widget-link {
   flex: none;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.875rem;
+  font-size: var(--text-body, 0.875rem);
   font-weight: 500;
-  color: var(--ink-3);
+  color: var(--color-ink-3, var(--ink-3));
   text-decoration: none;
   transition: color 0.15s ease;
 }
-.widget-link:hover { color: var(--brand-1); }
+.widget-link:hover { color: var(--color-ink, var(--brand-1)); }
 .widget-empty {
   margin: 0;
-  color: var(--ink-3);
-  font-size: 0.875rem;
+  color: var(--color-ink-3, var(--ink-3));
+  font-size: var(--text-body, 0.875rem);
 }
 
 /* --- Список курсов на дашборде: строка вместо сетки карточек --- */
@@ -4763,26 +4763,28 @@ textarea.field {
 .exam-entry-meta { font: 400 0.82rem/1.3 var(--font-ui, Inter), sans-serif; color: var(--color-ink-3, var(--ink-3)); }
 .exam-entry-empty .exam-entry-icon { background: var(--color-accent-soft, var(--brand-wash)); color: var(--color-accent, var(--brand-1)); }
 
+/* Перенесено на дизайн-основу 1A (spec 1A.10). */
 /* --- Центр подготовки: hero --- */
 .exam-hero {
   display: flex; align-items: flex-end; justify-content: space-between;
   flex-wrap: wrap; gap: var(--space-md);
-  padding: 0.25rem 0 var(--space-lg); border-bottom: 1px solid var(--border);
+  padding: 0.25rem 0 var(--space-lg); border-bottom: 1px solid var(--color-line, var(--border));
 }
-.exam-hero-title { margin: 0 0 0.25rem; font: 600 1.5rem/1.2 "Golos UI", Inter, sans-serif; color: var(--ink); letter-spacing: -0.02em; }
-.exam-hero-meta { margin: 0; font: 500 0.9rem/1.4 Inter, sans-serif; color: var(--ink-2); }
+.exam-hero-title { margin: 0 0 0.25rem; font-family: var(--font-display, Inter), sans-serif; font: 500 var(--text-h1, 1.5rem)/1.2 var(--font-display, Inter), sans-serif; color: var(--color-ink, var(--ink)); letter-spacing: normal; }
+.exam-hero-meta { margin: 0; font: 400 var(--text-body, 0.9rem)/1.4 var(--font-ui, Inter), sans-serif; color: var(--color-ink-2, var(--ink-2)); }
 .exam-hero-progress { display: flex; flex-direction: column; gap: 0.5rem; min-width: 220px; }
 .exam-progress-bar {
-  display: block; width: 100%; height: 8px; border-radius: 999px; background: var(--bg);
-  border: 1px solid var(--border); overflow: hidden;
+  display: block; width: 100%; height: 8px; border-radius: 999px; background: var(--color-line, var(--bg));
+  overflow: hidden;
 }
 .exam-progress-fill {
-  display: block; height: 100%; border-radius: 999px; background: var(--success);
+  display: block; height: 100%; border-radius: 999px; background: var(--color-success, var(--success));
   transition: width 0.25s ease;
 }
-.exam-progress-text { font: 500 0.82rem/1.3 Inter, sans-serif; color: var(--ink-3); text-align: right; }
+.exam-progress-text { font: 500 var(--text-caption, 0.82rem)/1.3 var(--font-ui, Inter), sans-serif; color: var(--color-ink-3, var(--ink-3)); text-align: right; }
 
-/* --- Карта билетов (DESIGN.md §6 «Чип статуса») --- */
+/* --- Карта билетов. draft = нейтральный (спека не вводит «warning»-цвет,
+   только success/danger/accent/neutral), ready = success. --- */
 .exam-map-widget { margin: var(--space-lg) 0; }
 .exam-map-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
@@ -4790,37 +4792,34 @@ textarea.field {
 }
 .exam-chip {
   aspect-ratio: 1; border-radius: var(--radius-sm);
-  font: 500 13px/1 Inter, sans-serif;
+  font: 500 13px/1 var(--font-ui, Inter), sans-serif;
   display: grid; place-items: center; cursor: pointer;
-  border: 1px solid var(--border); background: var(--bg); color: var(--ink-3);
-  transition: transform 0.12s ease;
+  border: 1px solid var(--color-line, var(--border)); background: var(--color-subtle, var(--bg)); color: var(--color-ink-3, var(--ink-3));
+  transition: border-color 0.12s ease;
 }
-.exam-chip:hover { transform: translateY(-1px); }
-.exam-chip.draft { background: var(--warning-soft); color: var(--warning-ink); border-color: var(--warning); }
-.exam-chip.ready { background: var(--success-soft); color: var(--success-ink); border-color: var(--success); }
+.exam-chip:hover { border-color: var(--color-line-strong); }
+.exam-chip.draft { background: var(--color-neutral-soft, var(--warning-soft)); color: var(--color-ink-2, var(--warning-ink)); border-color: var(--color-line-strong, var(--warning)); }
+.exam-chip.ready { background: var(--color-success-soft, var(--success-soft)); color: var(--color-success-strong, var(--success-ink)); border-color: var(--color-success, var(--success)); }
 
-/* --- Билеты (список в .col-main) --- */
+/* --- Билеты (список в .col-main). Статус — только в номере-бейдже,
+   без цветной полосы слева на строке (spec 1A.1 — антипаттерн). --- */
 .exam-ticket-list { display: flex; flex-direction: column; gap: 0.5rem; }
 .exam-ticket-row {
   display: flex; align-items: center; gap: 0.75rem;
-  padding: 0.5rem 0.75rem; border-radius: var(--radius);
-  /* Status as a thin left stripe (DESIGN.md §6); transparent keeps rows aligned. */
-  border-left: 3px solid transparent;
-  background: var(--bg); text-decoration: none; color: var(--ink);
-  transition: background 0.15s ease, border-color 0.15s ease;
+  padding: 0.5rem 0.75rem; border-radius: var(--radius-md, var(--radius));
+  background: var(--color-subtle, var(--bg)); text-decoration: none; color: var(--color-ink, var(--ink));
+  transition: background 0.15s ease;
 }
-.exam-ticket-row:hover { background: var(--border); }
-.exam-ticket-row.draft { border-left-color: var(--warning); }
-.exam-ticket-row.ready { border-left-color: var(--success); }
+.exam-ticket-row:hover { background: var(--color-neutral-soft, var(--border)); }
 .exam-ticket-number {
   flex: none; width: 28px; height: 28px; border-radius: var(--radius-sm);
-  display: grid; place-items: center; font: 600 0.8rem/1 Inter, sans-serif;
-  background: var(--surface); color: var(--ink-3); border: 1px solid var(--border);
+  display: grid; place-items: center; font: 600 0.8rem/1 var(--font-ui, Inter), sans-serif;
+  background: var(--color-card, var(--surface)); color: var(--color-ink-3, var(--ink-3)); border: 1px solid var(--color-line, var(--border));
 }
-.exam-ticket-row.draft .exam-ticket-number { color: var(--warning-ink); border-color: var(--warning); }
-.exam-ticket-row.ready .exam-ticket-number { color: var(--success-ink); border-color: var(--success); }
+.exam-ticket-row.draft .exam-ticket-number { color: var(--color-ink-2, var(--warning-ink)); border-color: var(--color-line-strong, var(--warning)); }
+.exam-ticket-row.ready .exam-ticket-number { color: var(--color-success-strong, var(--success-ink)); border-color: var(--color-success, var(--success)); }
 .exam-ticket-question {
-  flex: 1; min-width: 0; font: 500 0.9rem/1.4 Inter, sans-serif;
+  flex: 1; min-width: 0; font: 400 var(--text-body, 0.9rem)/1.4 var(--font-ui, Inter), sans-serif;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
