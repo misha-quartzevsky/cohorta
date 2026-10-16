@@ -323,6 +323,20 @@ async function generateValidated(
   return null;
 }
 
+// TEMP-DEBUG: список моделей от Google, чтобы выбрать подходящую по лимитам.
+// Убрать целиком после диагностики (см. docs/decisions.md).
+export const onRequestGet: PagesFunction<Env> = async (context) => {
+  const res = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models",
+    { headers: { "x-goog-api-key": context.env.GEMINI_API_KEY } }
+  );
+  const data = await res.text();
+  return new Response(data, {
+    status: res.status,
+    headers: { "content-type": "application/json" },
+  });
+};
+
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
 
