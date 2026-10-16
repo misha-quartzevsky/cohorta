@@ -11,9 +11,14 @@
  * Переменные окружения (Cloudflare Pages → Settings → Variables and Secrets,
  * либо `.dev.vars` локально для `wrangler pages dev`):
  *   GEMINI_API_KEY   (secret, обязательно)
- *   GEMINI_MODEL     (по умолчанию gemini-2.5-flash)
+ *   GEMINI_MODEL     (по умолчанию gemini-flash-lite-latest)
  *   PB_URL           (адрес PocketBase, с https://)
  *   QUIZ_DAILY_LIMIT (по умолчанию 20)
+ *
+ * Модель: `gemini-2.5-flash` из черновика спеки на новых аккаунтах Google
+ * отдаёт 404 «no longer available to new users» — подтверждено живым
+ * запросом на проде 2026-10-16. `gemini-flash-lite-latest` (алиас на
+ * актуальную Flash-Lite) работает и имеет более высокий бесплатный лимит.
  */
 
 interface Env {
@@ -209,11 +214,7 @@ async function callGemini(
       }
     );
     if (!res.ok) {
-      // TEMP-DEBUG: детали ошибки Gemini в тексте исключения, чтобы увидеть
-      // причину 502 в проде без доступа к логам Cloudflare. Убрать после
-      // диагностики — see docs/decisions.md.
-      const bodyText = await res.text().catch(() => "");
-      throw new Error(`gemini_http_${res.status}: ${bodyText.slice(0, 500)}`);
+      throw new Error(`gemini_http_${res.status}`);
     }
     return await res.json();
   } finally {
@@ -300,42 +301,22 @@ async function generateValidated(
   title: string,
   text: string,
   size: number,
-  lectureTextNormalized: string,
-  debugOut?: { message?: string }
+  lectureTextNormalized: string
 ): Promise<ValidQuestion[] | null> {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       const geminiResponse = await callGemini(apiKey, model, title, text, size);
       const jsonText = extractGeminiJsonText(geminiResponse);
-      if (!jsonText) {
-        if (debugOut) debugOut.message = `no_text_in_response: ${JSON.stringify(geminiResponse).slice(0, 500)}`;
-        continue;
-      }
+      if (!jsonText) continue;
       const parsed = JSON.parse(jsonText) as unknown;
       const validated = validateQuestions(parsed, size, lectureTextNormalized);
       if (validated) return validated;
-      if (debugOut) debugOut.message = `schema_invalid: ${jsonText.slice(0, 500)}`;
-    } catch (e) {
-      // TEMP-DEBUG: see note above callGemini.
-      if (debugOut) debugOut.message = e instanceof Error ? e.message : String(e);
+    } catch {
+      // Невалидный JSON, таймаут, сетевая ошибка — пробуем ещё раз (один повтор).
     }
   }
   return null;
 }
-
-// TEMP-DEBUG: список моделей от Google, чтобы выбрать подходящую по лимитам.
-// Убрать целиком после диагностики (см. docs/decisions.md).
-export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const res = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models",
-    { headers: { "x-goog-api-key": context.env.GEMINI_API_KEY } }
-  );
-  const data = await res.text();
-  return new Response(data, {
-    status: res.status,
-    headers: { "content-type": "application/json" },
-  });
-};
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
@@ -384,26 +365,20 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return errorResponse("daily_limit", 429);
   }
 
-  // TEMP-DEBUG: игнорируем env.GEMINI_MODEL для проверки новой модели —
-  // в дашборде пока старое значение. Вернуть `env.GEMINI_MODEL || DEFAULT_MODEL`.
-  const model = DEFAULT_MODEL;
+  const model = env.GEMINI_MODEL || DEFAULT_MODEL;
   const lectureTextNormalized = normalizeForQuoteCheck(truncatedText);
 
-  const debugOut: { message?: string } = {};
   const questions = await generateValidated(
     env.GEMINI_API_KEY,
     model,
     title,
     truncatedText,
     size,
-    lectureTextNormalized,
-    debugOut
+    lectureTextNormalized
   );
 
   if (!questions) {
-    // TEMP-DEBUG: модель и причину отдаём в ответе, чтобы продиагностировать
-    // без доступа к логам Cloudflare. Убрать debug-поле после диагностики.
-    return json({ error: "generation_failed", debug: debugOut.message, model }, 502);
+    return errorResponse("generation_failed", 502);
   }
 
   return json({ model, questions }, 200);
