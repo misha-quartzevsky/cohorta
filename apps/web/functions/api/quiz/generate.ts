@@ -209,7 +209,11 @@ async function callGemini(
       }
     );
     if (!res.ok) {
-      throw new Error(`gemini_http_${res.status}`);
+      // TEMP-DEBUG: детали ошибки Gemini в тексте исключения, чтобы увидеть
+      // причину 502 в проде без доступа к логам Cloudflare. Убрать после
+      // диагностики — see docs/decisions.md.
+      const bodyText = await res.text().catch(() => "");
+      throw new Error(`gemini_http_${res.status}: ${bodyText.slice(0, 500)}`);
     }
     return await res.json();
   } finally {
@@ -296,18 +300,24 @@ async function generateValidated(
   title: string,
   text: string,
   size: number,
-  lectureTextNormalized: string
+  lectureTextNormalized: string,
+  debugOut?: { message?: string }
 ): Promise<ValidQuestion[] | null> {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       const geminiResponse = await callGemini(apiKey, model, title, text, size);
       const jsonText = extractGeminiJsonText(geminiResponse);
-      if (!jsonText) continue;
+      if (!jsonText) {
+        if (debugOut) debugOut.message = `no_text_in_response: ${JSON.stringify(geminiResponse).slice(0, 500)}`;
+        continue;
+      }
       const parsed = JSON.parse(jsonText) as unknown;
       const validated = validateQuestions(parsed, size, lectureTextNormalized);
       if (validated) return validated;
-    } catch {
-      // Невалидный JSON, таймаут, сетевая ошибка — пробуем ещё раз (один повтор).
+      if (debugOut) debugOut.message = `schema_invalid: ${jsonText.slice(0, 500)}`;
+    } catch (e) {
+      // TEMP-DEBUG: see note above callGemini.
+      if (debugOut) debugOut.message = e instanceof Error ? e.message : String(e);
     }
   }
   return null;
@@ -363,17 +373,21 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const model = env.GEMINI_MODEL || DEFAULT_MODEL;
   const lectureTextNormalized = normalizeForQuoteCheck(truncatedText);
 
+  const debugOut: { message?: string } = {};
   const questions = await generateValidated(
     env.GEMINI_API_KEY,
     model,
     title,
     truncatedText,
     size,
-    lectureTextNormalized
+    lectureTextNormalized,
+    debugOut
   );
 
   if (!questions) {
-    return errorResponse("generation_failed", 502);
+    // TEMP-DEBUG: модель и причину отдаём в ответе, чтобы продиагностировать
+    // без доступа к логам Cloudflare. Убрать debug-поле после диагностики.
+    return json({ error: "generation_failed", debug: debugOut.message, model }, 502);
   }
 
   return json({ model, questions }, 200);
