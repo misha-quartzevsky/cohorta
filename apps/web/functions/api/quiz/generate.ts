@@ -58,7 +58,7 @@ const ALLOWED_SIZES = [5, 8, 12];
 const MIN_TEXT_LENGTH = 400;
 const MAX_TEXT_LENGTH = 24000;
 const GEMINI_TIMEOUT_MS = 25000;
-const DEFAULT_MODEL = "gemini-3.8-flash";
+const DEFAULT_MODEL = "gemini-flash-lite-latest";
 const DEFAULT_DAILY_LIMIT = 20;
 
 const SYSTEM_INSTRUCTION_TEMPLATE = (size: number) =>
