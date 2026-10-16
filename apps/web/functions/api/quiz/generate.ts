@@ -58,7 +58,7 @@ const ALLOWED_SIZES = [5, 8, 12];
 const MIN_TEXT_LENGTH = 400;
 const MAX_TEXT_LENGTH = 24000;
 const GEMINI_TIMEOUT_MS = 25000;
-const DEFAULT_MODEL = "gemini-2.5-flash";
+const DEFAULT_MODEL = "gemini-3.8-flash";
 const DEFAULT_DAILY_LIMIT = 20;
 
 const SYSTEM_INSTRUCTION_TEMPLATE = (size: number) =>
@@ -370,7 +370,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return errorResponse("daily_limit", 429);
   }
 
-  const model = env.GEMINI_MODEL || DEFAULT_MODEL;
+  // TEMP-DEBUG: игнорируем env.GEMINI_MODEL для проверки новой модели —
+  // в дашборде пока старое значение. Вернуть `env.GEMINI_MODEL || DEFAULT_MODEL`.
+  const model = DEFAULT_MODEL;
   const lectureTextNormalized = normalizeForQuoteCheck(truncatedText);
 
   const debugOut: { message?: string } = {};
