@@ -1197,12 +1197,13 @@ textarea.field {
 }
 
 /* ---------- lecture card (white center column) ---------- */
+/* Перенесено на дизайн-основу 1A (spec 1A.10): токены --color-*, без
+   тени (spec 1A.5 — карточки без теней, --shadow-pop только для модалок),
+   заголовок весом 500 вместо 700 (иерархия размером, не жирностью). */
 .lecture-card {
-  background: var(--c-surface);
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(27, 27, 27, 0.05);
-  /* Light Craft: мягкая, глубоко «парящая» тень листа. */
-  box-shadow: 0 20px 50px rgba(27, 27, 27, 0.1), 0 2px 8px rgba(27, 27, 27, 0.04);
+  background: var(--color-card, var(--c-surface));
+  border-radius: var(--radius-xl, var(--radius-lg));
+  border: 1px solid var(--color-line, rgba(27, 27, 27, 0.05));
   padding: 2rem 2.5rem 2.5rem;
 }
 
@@ -1212,17 +1213,19 @@ textarea.field {
 
 .lecture-card-meta {
   margin: 0;
-  font-size: 0.875rem;
-  color: var(--c-muted);
+  font-size: var(--text-caption, 0.875rem);
+  color: var(--color-ink-3, var(--c-muted));
 }
 
 .lecture-card-title {
   margin: 0.5rem 0 0.75rem;
-  font-size: 1.875rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--c-black);
+  font-family: var(--font-display, inherit);
+  font-size: var(--text-display, 1.875rem);
+  font-weight: 500;
+  letter-spacing: normal;
+  color: var(--color-ink, var(--c-black));
   overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .lecture-card-actions {
@@ -1863,6 +1866,11 @@ textarea.field {
   .lecture-card-actions {
     position: static;
     margin-bottom: 0.75rem;
+  }
+  /* spec 1A.4: display 28/34 на мобильном вместо 38/44. */
+  .lecture-card-title {
+    font-size: 1.75rem;
+    line-height: 2.125rem;
   }
 }
 
