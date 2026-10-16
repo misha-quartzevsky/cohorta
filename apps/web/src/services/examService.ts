@@ -319,3 +319,18 @@ export async function uploadTicketImages(
     .filter((name) => !previous.has(name))
     .map((name) => ({ name, url: pb.files.getURL(updated, name) }));
 }
+
+/**
+ * Билеты, для ответа на которые используется эта лекция (spec раздел 8).
+ * Expand цепочкой exam.course — чтобы построить ссылку на билет без
+ * дополнительных запросов.
+ */
+export async function fetchTicketsForLecture(
+  lectureId: string
+): Promise<ExamTicket[]> {
+  return pb.collection("exam_tickets").getFullList<ExamTicket>({
+    filter: pb.filter(`${FIELDS.ticketSources} ~ {:id}`, { id: lectureId }),
+    expand: `${FIELDS.ticketExam}.${FIELDS.examCourse}`,
+    sort: FIELDS.ticketNumber,
+  });
+}

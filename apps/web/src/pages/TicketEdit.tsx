@@ -20,15 +20,18 @@ import { Check, Loader2 } from "lucide-react";
 import { useSemester } from "../lib/semesterContext";
 import { useCourseBySlug } from "../hooks/useCourseBySlug";
 import { useExam } from "../hooks/useExam";
+import { useLectures } from "../hooks/useLectures";
 import {
   courseName,
   semesterSlug,
   ticketAnswer,
   ticketNumber,
   ticketQuestion,
+  ticketSourceIds,
   ticketStatus,
 } from "../lib/types";
 import type { ExamTicket, TicketStatus } from "../lib/types";
+import LinkedLecturesField from "../components/LinkedLecturesField";
 import { resolveFileTokensFor, tokenizeFileUrlsFor } from "../lib/fileTokens";
 import {
   statusForAnswer,
@@ -59,8 +62,10 @@ function TicketEdit() {
     !!course
   );
   const ticket = tickets.find((t) => ticketNumber(t) === Number(numberParam));
+  const { lectures } = useLectures(courseSlugParam ?? "", !!courseSlugParam);
 
   const [content, setContent] = useState("");
+  const [sources, setSources] = useState<string[]>([]);
   const [status, setStatus] = useState<TicketStatus>("empty");
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [loaded, setLoaded] = useState(false);
@@ -75,6 +80,7 @@ function TicketEdit() {
     const c = resolveFileTokensFor(ticketAnswer(ticket), ticket);
     contentRef.current = c;
     setContent(c);
+    setSources(ticketSourceIds(ticket));
     statusRef.current = ticketStatus(ticket);
     setStatus(ticketStatus(ticket));
     ticketRef.current = ticket;
@@ -132,6 +138,13 @@ function TicketEdit() {
     return uploadTicketImages(t, files);
   }, []);
 
+  const handleSourcesChange = async (next: string[]) => {
+    setSources(next);
+    const t = ticketRef.current;
+    if (!t) return;
+    await updateTicket(t.id, { sources: next });
+  };
+
   const markReady = async () => {
     const t = ticketRef.current;
     if (!t) return;
@@ -179,6 +192,11 @@ function TicketEdit() {
               </span>
             </div>
             <h1 className="lecture-card-title">{ticketQuestion(ticket)}</h1>
+            <LinkedLecturesField
+              lectures={lectures}
+              selectedIds={sources}
+              onChange={(next) => void handleSourcesChange(next)}
+            />
             <Editor
               key={ticket.id}
               value={content}

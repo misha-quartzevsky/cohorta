@@ -297,6 +297,9 @@ export interface ExamTicket extends PbRecord {
   sources?: string[];
   /** PocketBase relation → users. Задел на Group Mode. */
   author?: string;
+  expand?: {
+    exam?: Exam & { expand?: { course?: Course } };
+  };
 }
 
 export interface User extends PbRecord {

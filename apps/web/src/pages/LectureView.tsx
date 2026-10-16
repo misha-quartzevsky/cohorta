@@ -31,7 +31,10 @@ import { fetchTags } from "../services/tagService";
 import { createTaskFromLecture } from "../services/taskService";
 import { useToast } from "../components/ui";
 import ReadinessBadge from "../components/ReadinessBadge";
+import LinkedTicketsPlaque from "../components/LinkedTicketsPlaque";
 import { useLectureReadiness } from "../hooks/useLectureReadiness";
+import { fetchTicketsForLecture } from "../services/examService";
+import type { ExamTicket } from "../lib/types";
 import { useLectureBySlug } from "../hooks/useLectureBySlug";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useAutosave } from "../hooks/useAutosave";
@@ -315,6 +318,27 @@ function LectureView() {
   const isHtmlContent = !!(lecture && /<[a-z][\s\S]*>/i.test(content));
   const { readiness } = useLectureReadiness(lecture?.id);
 
+  // Плашка «Нужна для N билетов» (spec раздел 8). Данные не влияют на
+  // готовность. Нет связей → плашки нет вообще (не пустое состояние).
+  const [linkedTickets, setLinkedTickets] = useState<ExamTicket[]>([]);
+  useEffect(() => {
+    if (!lecture?.id) {
+      setLinkedTickets([]);
+      return;
+    }
+    let cancelled = false;
+    fetchTicketsForLecture(lecture.id)
+      .then((ts) => {
+        if (!cancelled) setLinkedTickets(ts);
+      })
+      .catch(() => {
+        if (!cancelled) setLinkedTickets([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [lecture?.id]);
+
   // «Показать в конспекте» из квиза (spec 6.3): подсветить цитату 3 секунды,
   // если нашлась в статичном HTML; иначе просто открыть лекцию как есть.
   const highlightQuote = (location.state as { highlightQuote?: string } | null)
@@ -395,6 +419,8 @@ function LectureView() {
                 </button>
               </div>
             </header>
+
+            <LinkedTicketsPlaque tickets={linkedTickets} />
 
             <div ref={contentWrapRef} className="lecture-card-body">
               {mode === "static" ? (
