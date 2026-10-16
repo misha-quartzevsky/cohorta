@@ -4,6 +4,10 @@ dist/
 .env.local
 *.log
 
+# Cloudflare Pages Functions: локальные секреты (GEMINI_API_KEY и т.д.)
+.dev.vars
+.wrangler/
+
 # PocketBase local runtime
 pocketbase/pocketbase.exe
 pocketbase/pocketbase

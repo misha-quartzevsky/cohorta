@@ -1,0 +1,7 @@
+# Локальные переменные для `npx wrangler pages dev` (функция functions/api/quiz/generate.ts).
+# Скопируй в .dev.vars (в .gitignore, не коммитить) и подставь свой ключ.
+
+GEMINI_API_KEY=your-gemini-api-key-here
+GEMINI_MODEL=gemini-2.5-flash
+PB_URL=http://127.0.0.1:8090
+QUIZ_DAILY_LIMIT=20
