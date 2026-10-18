@@ -1631,16 +1631,12 @@ button.c-row.on:hover { background: var(--accent-soft); }
   background: var(--sunken);
   color: var(--ink-3);
   box-sizing: border-box;
-}
-.c-shell-search input {
   border: none;
-  background: none;
-  outline: none;
-  flex: 1;
   font: 400 14px/1 var(--font-sans);
-  color: var(--ink);
+  cursor: pointer;
+  justify-content: flex-start;
 }
-.c-shell-search input::placeholder { color: var(--ink-3); }
+.c-shell-search:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .c-shell-burger {
   display: none;
   width: 40px;
@@ -1909,4 +1905,185 @@ button.c-row.on:hover { background: var(--accent-soft); }
     transform: translateY(100%);
   }
   .c-shell-sidebar.sheet.open { transform: translateY(0); }
+}
+
+/* ============================================================
+ *  «Все лекции» — B2, 2026-10-19 (pages/LecturesAllPage.tsx).
+ *  Вёрстка 1:1 по docs/design/screens/Screen-lectures(-m).dc.html.
+ * ============================================================ */
+.c-lectures { display: flex; flex-direction: column; gap: var(--space-7); font-family: var(--font-sans); }
+
+.c-lectures-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); }
+.c-lectures-head-tx { display: flex; flex-direction: column; gap: 8px; }
+.c-lectures-head-tx h1 { margin: 0; font-size: 36px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; }
+.c-lectures-head-tx span { font-size: 14px; color: var(--ink-3); }
+
+.c-lectures-m-head { display: none; flex-direction: column; gap: 2px; }
+.c-lectures-m-head-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.c-lectures-m-head-row h1 { margin: 0; font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em; }
+.c-lectures-m-head-actions { display: flex; gap: 8px; }
+.c-lectures-m-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  cursor: pointer;
+}
+.c-lectures-m-icon:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.c-lectures-m-count { font-size: 14px; color: var(--ink-3); }
+
+.c-lectures-filters { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+.c-lectures-pills-subject { display: none; }
+
+.c-lectures-search {
+  height: var(--control-md);
+  width: 300px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--input-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  color: var(--ink-3);
+}
+.c-lectures-search input { border: none; background: none; outline: none; flex: 1; font: 400 14px/1 var(--font-sans); color: var(--ink); }
+.c-lectures-search input::placeholder { color: var(--ink-3); }
+
+.c-lectures-error { color: var(--danger-text); font-size: 14px; }
+
+.c-lectures-list .c-row { min-height: 64px; }
+.c-lectures-meta-mobile { display: none; }
+.c-lectures-row-chev { color: var(--ink-3); flex: none; }
+
+@media (max-width: 1023px) {
+  .c-lectures-head { display: none; }
+  .c-lectures-m-head { display: flex; }
+  .c-lectures-pills-status { display: none; }
+  .c-lectures-pills-subject { display: inline-flex; max-width: 100%; overflow-x: auto; }
+  .c-lectures-pills-subject button { flex: none; white-space: nowrap; }
+  .c-lectures-search { display: none; }
+  .c-lectures-filters { gap: var(--space-3); }
+  .c-lectures-list .c-row { min-height: 68px; }
+  .c-lectures-meta-desktop { display: none; }
+  .c-lectures-meta-mobile { display: inline; }
+}
+
+/* ============================================================
+ *  Поиск по продукту — B2, 2026-10-19 (components/SearchOverlay.tsx).
+ *  Десктоп: Screen-search.dc.html (оверлей над контентом справа от
+ *  сайдбара). Телефон: Screen-m-search.dc.html (полноэкранный).
+ * ============================================================ */
+.c-search-overlay { position: absolute; inset: 0; top: 64px; z-index: 30; }
+.c-search-backdrop { position: absolute; inset: 0; background: var(--color-scrim, rgba(28, 27, 25, .38)); }
+.c-search-panel {
+  position: relative;
+  width: 640px;
+  max-width: calc(100% - var(--space-8));
+  margin: 96px auto 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-pop);
+  box-sizing: border-box;
+  overflow: hidden;
+  max-height: calc(100vh - 160px);
+  display: flex;
+  flex-direction: column;
+}
+.c-search-field {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 60px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-3);
+  box-sizing: border-box;
+}
+.c-search-field input { flex: 1; border: none; background: none; outline: none; font: 400 16px/1 var(--font-sans); color: var(--ink); }
+.c-search-field input::placeholder { color: var(--ink-3); }
+.c-search-cancel { display: none; border: none; background: none; color: var(--ink-2); font: 500 15px/1 var(--font-sans); cursor: pointer; padding: 0; }
+.c-search-esc { font-size: 12px; color: var(--ink-3); flex: none; }
+
+.c-search-results { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 8px 4px; }
+.c-search-results section + section { margin-top: 4px; }
+.c-search-results h2 {
+  margin: 0;
+  padding: 8px 12px 4px;
+  font: 600 12px/18px var(--font-sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.c-search-results .c-list { border: none; border-radius: 0; background: none; }
+.c-search-results .c-row { min-height: 52px; padding: 6px 12px; border-bottom: none; border-radius: var(--radius-md); }
+.c-search-results button.c-row:hover { background: var(--bg); }
+.c-search-results .c-row .cv { width: 32px; height: 32px; }
+.c-search-results .c-empty { border: none; padding: 32px 20px; margin: auto 0; }
+
+.c-search-avatar, .c-search-preview-cover {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--sunken);
+  border: 1px solid var(--line);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 10px/1 var(--font-sans);
+  color: var(--ink-2);
+  flex: none;
+}
+.c-search-preview-cover { border-radius: var(--radius-sm); }
+
+.c-search-footnote {
+  flex: none;
+  padding: 10px 20px;
+  border-top: 1px solid var(--line);
+  background: var(--sunken);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+@media (max-width: 1023px) {
+  .c-search-overlay { position: fixed; inset: 0; top: 0; z-index: 70; background: var(--bg); }
+  .c-search-backdrop { display: none; }
+  .c-search-panel {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    max-height: none;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .c-search-field {
+    height: auto;
+    padding: 12px 16px;
+    border-bottom: none;
+    gap: 12px;
+  }
+  .c-search-field input {
+    height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--ink);
+    border-radius: var(--radius-md);
+    box-sizing: border-box;
+  }
+  .c-search-esc { display: none; }
+  .c-search-cancel { display: inline-flex; }
+  .c-search-results { padding: 0 16px 16px; }
+  .c-search-results .c-list { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); margin-bottom: 14px; }
+  .c-search-results .c-row { border-radius: 0; }
 }

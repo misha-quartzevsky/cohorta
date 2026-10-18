@@ -20,6 +20,15 @@ export interface UIShellApi {
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
   closeSidebar: () => void;
+  /**
+   * Поиск по продукту (B2): открывается из строки в шапке
+   * (components/AppShellNew.tsx) или из иконки поиска на странице
+   * «Все лекции» (pages/LecturesAllPage.tsx) — одно состояние на
+   * оба входа, вид (оверлей/полный экран) решает CSS по ширине.
+   */
+  searchOpen: boolean;
+  openSearch: () => void;
+  closeSearch: () => void;
 }
 
 const noop = () => {};
@@ -33,6 +42,9 @@ export const UIShellContext = createContext<UIShellApi>({
   setSidebarOpen: noop,
   toggleSidebar: noop,
   closeSidebar: noop,
+  searchOpen: false,
+  openSearch: noop,
+  closeSearch: noop,
 });
 
 export function useUiShell(): UIShellApi {

@@ -21,6 +21,7 @@ import Dashboard from "./pages/Dashboard";
 import DashboardNew from "./pages/DashboardNew";
 import CoursesPage from "./pages/CoursesPage";
 import LecturesPage from "./pages/LecturesPage";
+import LecturesAllPage from "./pages/LecturesAllPage";
 import LectureView from "./pages/LectureView";
 import NotesPage from "./pages/NotesPage";
 import NoteCreate from "./pages/NoteCreate";
@@ -132,10 +133,14 @@ function App() {
                 element={isNewUI() ? <DashboardNew /> : <Dashboard />}
               />
               <Route path="/s/:semesterSlug/courses" element={<CoursesPage />} />
-              {/* «Все лекции» (A4): отдельного экрана ещё нет (B2) — алиас
-                  на «Предметы», но свой адрес, чтобы оба пункта меню не
-                  подсвечивались одновременно. */}
-              <Route path="/s/:semesterSlug/lectures" element={<CoursesPage />} />
+              {/* «Все лекции» (B2, pages/LecturesAllPage.tsx) — свой адрес,
+                  чтобы не подсвечиваться одновременно с «Предметы». За
+                  флагом VITE_NEW_UI: старый интерфейс не знает этого
+                  экрана, остаётся на алиасе к «Предметы». */}
+              <Route
+                path="/s/:semesterSlug/lectures"
+                element={isNewUI() ? <LecturesAllPage /> : <CoursesPage />}
+              />
               {/* Сводка по всем экзаменам семестра — статический сегмент
                   "exams" (RESERVED_SLUGS), встаёт до :courseSlug ниже. */}
               <Route path="/s/:semesterSlug/exams" element={<ExamsPage />} />

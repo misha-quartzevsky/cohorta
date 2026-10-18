@@ -6,8 +6,9 @@
  * Левое меню 264px, контент до 1120px по центру, телефон — TabBar.
  * Переключатель Соло/Группа — в сайдбаре под логотипом (так на обоих
  * мокапах, Screen-dashboard.dc.html и Screen-editor.dc.html — в шапке
- * только поиск, пока только вид, раздел 4 инструкции, A4; сам поиск
- * продукта это волна B2).
+ * только поиск). Строка в шапке открывает поиск по продукту
+ * (components/SearchOverlay.tsx, B2) — сам ввод живёт в оверлее, не
+ * в самой шапке.
  *
  * За флагом VITE_NEW_UI (lib/featureFlags.ts): пока волны A/B1 не
  * закрыты, старый каркас (AppLayout → GlobalSidebar/Header) остаётся
@@ -17,6 +18,7 @@
 import { NavLink, Outlet, useNavigate, useParams } from "react-router-dom";
 
 import { useUiShell } from "../lib/uiShellContext";
+import SearchOverlay from "./SearchOverlay";
 import { useMode, type Mode } from "../lib/modeContext";
 import { useSemester } from "../lib/semesterContext";
 import { lastSemesterSlug } from "../lib/lastSemester";
@@ -94,8 +96,8 @@ function MobileTabBar() {
     { to: "/tasks", icon: "task" as const, label: "Задачи" },
     { to: "/schedule", icon: "cal" as const, label: "Расписание" },
     // «Предметы» на телефоне отдельной вкладки не имеет — открываются
-    // из «Лекции» (раздел 4 инструкции, A4).
-    { to: `/s/${semSlug}/courses`, icon: "doc" as const, label: "Лекции" },
+    // из «Лекции» (раздел 4 инструкции, A4; экран — B2, LecturesAllPage).
+    { to: `/s/${semSlug}/lectures`, icon: "doc" as const, label: "Лекции" },
     { to: "/decks", icon: "cards" as const, label: "Карточки" },
   ];
   return <TabBar items={items} />;
@@ -285,6 +287,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 function Topbar({ open, onBurger }: { open: boolean; onBurger: () => void }) {
   const { lectureSlug } = useParams();
   const inLecture = !!lectureSlug;
+  const { openSearch } = useUiShell();
   const label = inLecture
     ? open
       ? "Закрыть содержание"
@@ -307,10 +310,10 @@ function Topbar({ open, onBurger }: { open: boolean; onBurger: () => void }) {
             содержание нижней панелью (раздел B1 инструкции). */}
         <Icon name={open ? "x" : "toc"} size={20} />
       </button>
-      <div className="c-shell-search">
+      <button type="button" className="c-shell-search" onClick={openSearch}>
         <Icon name="search" size={16} />
-        <input type="search" placeholder="Поиск" aria-label="Поиск" disabled />
-      </div>
+        <span>Поиск</span>
+      </button>
     </header>
   );
 }
@@ -338,6 +341,7 @@ export default function AppShellNew() {
           <Outlet />
           {inLecture && <LectureAsideSlot />}
         </div>
+        <SearchOverlay />
       </div>
       <MobileTabBar />
     </div>

@@ -48,6 +48,11 @@ export default function AppLayout() {
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const toggleSidebar = useCallback(() => setSidebarOpen((open) => !open), []);
 
+  // Поиск по продукту (B2) — своё состояние, не завязано на sidebarOpen.
+  const [searchOpen, setSearchOpen] = useState(false);
+  const openSearch = useCallback(() => setSearchOpen(true), []);
+  const closeSearch = useCallback(() => setSearchOpen(false), []);
+
   const registerFlush = useCallback(
     (fn: (() => Promise<void>) | null) => {
       flushRef.current = fn;
@@ -75,8 +80,11 @@ export default function AppLayout() {
       setSidebarOpen,
       toggleSidebar,
       closeSidebar,
+      searchOpen,
+      openSearch,
+      closeSearch,
     }),
-    [sidebarOpen, toggleSidebar, closeSidebar]
+    [sidebarOpen, toggleSidebar, closeSidebar, searchOpen, openSearch, closeSearch]
   );
 
   if (needsOnboarding) {
