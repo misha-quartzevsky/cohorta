@@ -396,17 +396,7 @@ export default function Editor({
 
       {/* Кнопка записи на «листе» убрана: на длинном конспекте она уезжала от
           места набора. Диктовка запускается из микрофона в шапке приложения
-          и из bubble-меню выделения (см. BubbleToolbar / TextMenu ниже). */}
-
-      <BubbleToolbar
-        editor={editor}
-        shouldShow={shouldShowBubble}
-        textMenuOpen={textMenuOpen}
-        onOpenTextMenu={openTextMenu}
-        recording={recording}
-        onToggleMic={toggle}
-        onMakeTask={onMakeTask}
-      />
+          и из панели форматирования (см. BubbleToolbar / TextMenu ниже). */}
 
       {textMenuOpen && textMenuPos && (
         <TextMenu
@@ -452,6 +442,19 @@ export default function Editor({
       )}
 
       <EditorContent editor={editor} />
+
+      {/* Закреплена под текстом отдельной строкой (раздел B1 инструкции),
+          не всплывает по выделению — BubbleToolbar теперь обычный блок
+          в потоке документа (sticky снизу через CSS), не Tiptap BubbleMenu. */}
+      <BubbleToolbar
+        editor={editor}
+        shouldShow={shouldShowBubble}
+        textMenuOpen={textMenuOpen}
+        onOpenTextMenu={openTextMenu}
+        recording={recording}
+        onToggleMic={toggle}
+        onMakeTask={onMakeTask}
+      />
 
       {mathReq && (
         <MathEditorOverlay request={mathReq} onClose={() => mathBus.close()} />

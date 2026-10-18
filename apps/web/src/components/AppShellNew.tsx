@@ -133,17 +133,29 @@ function SidebarLectureToc({ courseSlug, onNavigate }: { courseSlug?: string; on
           }}
         >
           <Icon name="chev" size={16} style={{ transform: "rotate(180deg)" }} />
+          {course && <SubjectCover seed={course.cover_seed} size={18} />}
           {course ? courseName(course) : "Предмет"}
         </button>
       )}
-      <LectureToc
-        items={items}
-        activeId={activeId}
-        onSelect={(id) => {
-          scrollTo(scanned[Number(id)]);
-          onNavigate();
-        }}
-      />
+      <div className="c-shell-section">
+        <span>Содержание</span>
+        <span>{items.length}</span>
+      </div>
+      {items.length === 0 ? (
+        <p className="c-shell-toc-empty">
+          Добавь заголовок, и он появится здесь. Так удобно прыгать по
+          длинной лекции.
+        </p>
+      ) : (
+        <LectureToc
+          items={items}
+          activeId={activeId}
+          onSelect={(id) => {
+            scrollTo(scanned[Number(id)]);
+            onNavigate();
+          }}
+        />
+      )}
     </>
   );
 }
@@ -181,11 +193,21 @@ function SidebarCourses({ semSlug, onNavigate }: { semSlug: string; onNavigate: 
 
 /** Профиль внизу сайдбара (Screen-dashboard.dc.html). Ведёт в настройки —
  * страницы ещё нет (волна B6), поэтому пока не кликабелен. */
+/** «АК» из «Анастасия К.» — инициалы первых двух слов имени, если
+ * второе есть; иначе одна буква (Screen-dashboard.dc.html). */
+function profileInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return parts
+    .slice(0, 2)
+    .map((p) => p.charAt(0).toUpperCase())
+    .join("");
+}
+
 function SidebarProfile() {
   const { user } = useAuth();
   if (!user) return null;
   const name = userName(user);
-  const initial = name.charAt(0).toUpperCase();
+  const initial = profileInitials(name);
   return (
     <div className="c-shell-profile">
       <span className="avatar">{initial}</span>

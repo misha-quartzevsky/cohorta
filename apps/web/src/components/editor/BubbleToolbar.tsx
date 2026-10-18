@@ -1,22 +1,27 @@
 /**
  * ============================================
- *  editor/BubbleToolbar.tsx — selection bubble
+ *  editor/BubbleToolbar.tsx — закреплённая панель форматирования
  * ============================================
  *
- * The floating quick-formatting bar shown above a text selection:
+ * B1, 2026-10-19 (Screen-editor.dc.html): панель закреплена под текстом
+ * отдельной строкой (sticky к низу вьюпорта, см. .bubble-menu в App.css),
+ * не всплывает по выделению — обычный блок в потоке документа, не Tiptap
+ * BubbleMenu/tippy. Раньше показывалась только при непустом выделении
+ * (`shouldShow`); проп оставлен в сигнатуре (Editor.tsx его всё ещё
+ * вычисляет для другой логики), но здесь больше не используется.
+ *
  * bold / italic / link / highlight swatches / clear highlight / the «…»
  * button that opens the extended TextMenu.
  */
 
 import type { Editor as TiptapEditor } from "@tiptap/core";
-import { BubbleMenu } from "@tiptap/react/menus";
 import type { BubbleMenuPluginProps } from "@tiptap/extension-bubble-menu";
 import { Bold, Eraser, Italic, Link2, ListChecks, Mic, MicOff, MoreHorizontal } from "lucide-react";
 import { HIGHLIGHT_COLORS, handleLink, toggleHighlight } from "./textCommands";
 
 interface Props {
   editor: TiptapEditor;
-  shouldShow: NonNullable<BubbleMenuPluginProps["shouldShow"]>;
+  shouldShow?: NonNullable<BubbleMenuPluginProps["shouldShow"]>;
   /** Active state of the «…» popover (for the button highlight). */
   textMenuOpen: boolean;
   onOpenTextMenu: () => void;
@@ -34,7 +39,6 @@ function selectedText(editor: TiptapEditor): string {
 
 export function BubbleToolbar({
   editor,
-  shouldShow,
   textMenuOpen,
   onOpenTextMenu,
   recording,
@@ -42,7 +46,7 @@ export function BubbleToolbar({
   onMakeTask,
 }: Props) {
   return (
-    <BubbleMenu editor={editor} shouldShow={shouldShow} className="bubble-menu">
+    <div className="bubble-menu">
       <button
         type="button"
         className={`bubble-btn${recording ? " recording" : ""}`}
@@ -139,6 +143,6 @@ export function BubbleToolbar({
       >
         <MoreHorizontal size={15} />
       </button>
-    </BubbleMenu>
+    </div>
   );
 }

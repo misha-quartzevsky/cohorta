@@ -1207,10 +1207,14 @@ textarea.field {
 /* Перенесено на дизайн-основу 1A (spec 1A.10): токены --color-*, без
    тени (spec 1A.5 — карточки без теней, --shadow-pop только для модалок),
    заголовок весом 500 вместо 700 (иерархия размером, не жирностью). */
+/* Карточка лекции — B1, 2026-10-19, перенесена на новые токены
+   (раздел 2.1 инструкции). Типографика — буквально из tokens.json
+   (display/meta), как и в components/bundle.css: там тоже px без
+   отдельных CSS-переменных под шрифтовую шкалу. */
 .lecture-card {
-  background: var(--color-card, var(--c-surface));
+  background: var(--surface, var(--color-card, var(--c-surface)));
   border-radius: var(--radius-xl, var(--radius-lg));
-  border: 1px solid var(--color-line, rgba(27, 27, 27, 0.05));
+  border: 1px solid var(--line, var(--color-line, rgba(27, 27, 27, 0.05)));
   padding: 2rem 2.5rem 2.5rem;
 }
 
@@ -1220,17 +1224,18 @@ textarea.field {
 
 .lecture-card-meta {
   margin: 0;
-  font-size: var(--text-caption, 0.875rem);
-  color: var(--color-ink-3, var(--c-muted));
+  font-size: 13px;
+  color: var(--ink-3, var(--color-ink-3, var(--c-muted)));
 }
 
 .lecture-card-title {
   margin: 0.5rem 0 0.75rem;
-  font-family: var(--font-display, inherit);
-  font-size: var(--text-display, 1.875rem);
-  font-weight: 500;
-  letter-spacing: normal;
-  color: var(--color-ink, var(--c-black));
+  font-family: var(--font-sans, var(--font-display, inherit));
+  font-size: 36px;
+  line-height: 44px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink, var(--color-ink, var(--c-black)));
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
@@ -1244,11 +1249,11 @@ textarea.field {
 }
 
 .icon-btn.danger {
-  color: var(--danger-ink);
+  color: var(--danger-text, var(--danger-ink));
 }
 
 .icon-btn.danger:hover {
-  background: rgba(197, 66, 45, 0.08);
+  background: var(--danger-soft, rgba(197, 66, 45, 0.08));
 }
 
 .icon-btn:disabled {
@@ -1267,10 +1272,11 @@ textarea.field {
   outline: none;
   background: transparent;
   font-family: inherit;
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: var(--c-black);
-  letter-spacing: -0.01em;
+  font-size: 36px;
+  line-height: 44px;
+  font-weight: 600;
+  color: var(--ink, var(--c-black));
+  letter-spacing: -0.02em;
   margin: 0.5rem 0 0.75rem;
   padding: 0;
 }
@@ -1290,8 +1296,8 @@ textarea.field {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--c-muted);
+  font-size: 13px;
+  color: var(--ink-3, var(--c-muted));
   white-space: nowrap;
 }
 
@@ -1449,45 +1455,56 @@ textarea.field {
 }
 
 /* ---------- bubble menu (text selection) ---------- */
+/* Панель форматирования — B1, 2026-10-19 (Screen-editor.dc.html):
+   закреплена под текстом отдельной строкой, не всплывает по выделению
+   (ui-логика в editor/BubbleToolbar.tsx не изменена — только обёртка
+   и позиционирование; shouldShow/BubbleMenu от Tiptap больше не
+   используются для показа/скрытия). sticky к низу вьюпорта — на
+   невысоких экранах текст прокручивается над ней, не она над текстом. */
 .bubble-menu {
   display: flex;
   align-items: center;
-  gap: 0.1rem;
+  gap: 2px;
   background: var(--surface);
-  border: 1px solid rgba(27, 27, 27, 0.08);
-  border-radius: var(--radius);
-  padding: 0.25rem;
-  box-shadow: 0 10px 30px rgba(27, 27, 27, 0.16);
+  border: 1px solid var(--line, rgba(27, 27, 27, 0.08));
+  border-radius: var(--radius-lg, var(--radius));
+  padding: 6px;
+  box-shadow: var(--shadow-pop, 0 8px 24px rgba(28, 27, 25, .10));
+  position: sticky;
+  bottom: 20px;
+  width: fit-content;
+  margin: 12px auto 0;
+  z-index: 5;
 }
 
 .bubble-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md, var(--radius-sm));
   background: transparent;
-  color: var(--ink-2);
+  color: var(--ink, var(--ink-2));
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
 .bubble-btn:hover {
-  background: rgba(27, 27, 27, 0.06);
+  background: var(--sunken, rgba(27, 27, 27, 0.06));
 }
 
 .bubble-btn.active {
-  background: rgba(232, 104, 0, 0.12);
-  color: var(--c-lilac);
+  background: var(--accent-soft, rgba(232, 104, 0, 0.12));
+  color: var(--accent-strong, var(--c-lilac));
 }
 
 .bubble-sep {
   width: 1px;
-  height: 18px;
-  background: rgba(27, 27, 27, 0.12);
-  margin: 0 0.25rem;
+  height: 24px;
+  background: var(--line, rgba(27, 27, 27, 0.12));
+  margin: 0 4px;
 }
 
 .bubble-swatch {
