@@ -5,40 +5,35 @@
 > (например reg.ru) без зависимости от Amvera — см.
 > [DEPLOY-VPS.md](./DEPLOY-VPS.md). `Dockerfile` общий для обоих путей.
 
-## Диагноз текущей проблемы
+## Текущее состояние (2026-10-16)
 
-На `https://cohorta-cohorta.amvera.io/` PocketBase поднят и отвечает,
-CORS открыт, но **из коллекций есть только `users`** — ни `courses`,
-ни `lectures`, ни `semesters`, ни `groups`, ни `universities`.
-Значит, каталог `pb_migrations/` на инстанс Amvera не попал, и PB не
-создал схему. Сообщение «Справочник вузов сейчас недоступен» во фронте —
-это штатный фолбэк на пустой бэкенд, а не отдельный баг.
+Миграции накатились, PocketBase работает на:
+`https://cohorta-cohorta.msk1.amvera.tech/`
 
-## Что нужно сделать
+Все коллекции созданы, 43 университета засеяны. Суперюзер: `margart773@gmail.com`.
+
+## Воспроизведение деплоя (если нужен свежий инстанс)
 
 ### 1. Накатить миграции на PocketBase (Amvera)
 
 PocketBase сам применяет все pending-миграции из `pb_migrations/` при
-старте. Нужно лишь, чтобы эта папка (целиком, ~55 файлов) и `pb_hooks/`
+старте. Нужно лишь, чтобы эта папка (целиком) и `pb_hooks/`
 оказались рядом с бинарём на Amvera, и перезапустить процесс.
 
-**Вариант A — Docker (рекомендуется, воспроизводимо):**
+**Docker (рекомендуется):**
 
-1. В настройках Amvera-проекта для PocketBase указать путь сборки
-   `pocketbase/` этого репозитория (либо вынести каталог в отдельный
-   репозиторий и подключить его).
-2. Окружение — **Docker** (возьмётся `pocketbase/Dockerfile`).
-3. Персистентный диск смонтировать в **`/data`** (иначе БД будет
-   сбрасываться при каждом редеплое).
-4. Порт контейнера — **8080**.
+1. В настройках Amvera-проекта — окружение **Docker** (возьмётся `pocketbase/Dockerfile`).
+2. Персистентный диск смонтировать в **`/data`**.
+3. Порт контейнера — **8090**.
+4. Переменные окружения: `PB_ADMIN_EMAIL`, `PB_ADMIN_PASSWORD`.
 5. Redeploy. На старте PB накатит все миграции: создадутся все
    коллекции + прогонятся сиды (в т.ч. ~40 вузов в `universities`).
 
 Проверка после деплоя:
 ```
-curl https://cohorta-cohorta.amvera.io/api/collections/universities/records?perPage=3
-# ожидаем HTTP 200 и непустой items (нужен токен: listRule = authed);
-# без токена ждём 200/401, но НЕ 404
+curl https://cohorta-cohorta.msk1.amvera.tech/api/collections/universities/records?perPage=3
+# ожидаем HTTP 200 (нужен токен: listRule = authed);
+# без токена items пустой, но НЕ 404
 ```
 
 **Вариант B — вручную (если менять способ деплоя не хочется):**
@@ -60,7 +55,7 @@ Cloudflare Pages → проект → **Settings → Environment variables**
 (Production и Preview):
 
 ```
-VITE_PB_URL = https://cohorta-cohorta.amvera.io
+VITE_PB_URL = https://cohorta-cohorta.msk1.amvera.tech
 ```
 
 Затем **Retry deployment** (Vite подставляет `VITE_*` только на этапе
@@ -70,10 +65,10 @@ VITE_PB_URL = https://cohorta-cohorta.amvera.io
 
 ### 3. Суперпользователь и демо-данные
 
-- Админку создать: `https://cohorta-cohorta.amvera.io/_/` (первый вход
-  заведёт суперюзера) — либо `pocketbase superuser create` в контейнере.
+- Админка: `https://cohorta-cohorta.msk1.amvera.tech/_/`
+- Суперюзер создаётся автоматически через `PB_ADMIN_EMAIL`/`PB_ADMIN_PASSWORD` из env.
 - Демо-контент (курсы/лекции/колода/экзамен) — `npm run seed` с
-  `PB_URL=https://cohorta-cohorta.amvera.io` (нужен работающий
+  `PB_URL=https://cohorta-cohorta.msk1.amvera.tech` (нужен работающий
   суперюзер/демо-аккаунт). Для боевого пилота не обязателен —
   `universities` заполняется сид-миграцией автоматически.
 

@@ -6,10 +6,15 @@
  * Все обращения к коллекциям `groups` и `group_members`.
  *
  * Owner-scoped: создать группу может любой авторизованный
- * пользователь, `owner` проставляется на клиенте. Правила
- * чтения `groups` намеренно широкие — экран «Группа» обязан
- * находить УЖЕ существующие группы по названию (fuzzy-поиск
- * против фрагментации потока).
+ * пользователь, `owner` проставляется на клиенте.
+ *
+ * `groups.listRule`/`viewRule` ограничены участникам и владельцу
+ * (A0.5, 2026-10-18) — найти ЧУЖУЮ группу по названию или коду
+ * напрямую через API больше нельзя. Поиск похожих групп (защита
+ * от фрагментации потока), вступление по коду и ростер идут через
+ * серверные маршруты `pb_hooks/groups_access.pb.js`, которые
+ * отдают только name/id/slug и не раскрывают invite_code или
+ * профиль участника целиком.
  *
  * Этап A: создание, вступление по коду, ростер. Без превью
  * конспектов и точечного шеринга (это этап B+).
@@ -23,15 +28,6 @@ import { slugify } from "../lib/slugify";
 /** Id текущего пользователя ("" — не залогинен). */
 function currentUserId(): string {
   return String(pb.authStore.record?.id ?? "");
-}
-
-/**
- * Нормализованная форма названия для нечёткого сравнения:
- * транслит + lower-case + без пробелов/дефисов/цифровых разделителей.
- * «Медиаком МК-31» ~ «медиаком мк 31» ~ «mediakom mk31».
- */
-export function normalizeGroupName(name: string): string {
-  return slugify(name).replace(/-/g, "");
 }
 
 /** Случайный invite-код: 8 символов a-z0-9. */
@@ -80,9 +76,10 @@ export async function fetchMyGroups(): Promise<Group[]> {
 
 /**
  * Нечёткий поиск СУЩЕСТВУЮЩИХ групп по названию — обязательный шаг
- * перед созданием новой (защита от фрагментации потока). Серверный
- * `~`-матч плюс клиентское сравнение нормализованных форм (ловит
- * «МК 31» ↔ «МК-31» ↔ «мк31», которые сырой `~` пропускает).
+ * перед созданием новой (защита от фрагментации потока). Идёт через
+ * серверный маршрут `/api/groups/search` (A0.5, 2026-10-18):
+ * `groups.listRule` теперь ограничен участникам и владельцу, прямой
+ * запрос к коллекции чужие группы не находит.
  */
 export async function searchSimilarGroups(
   name: string,
@@ -90,37 +87,16 @@ export async function searchSimilarGroups(
 ): Promise<GroupCandidate[]> {
   const query = name.trim();
   if (query.length < 2) return [];
-  const norm = normalizeGroupName(query);
-
-  const found = new Map<string, Group>();
 
   try {
-    const contains = await pb.collection("groups").getFullList<Group>({
-      filter: `${FIELDS.groupName} ~ "${query.replace(/["\\]/g, "")}"`,
-      sort: FIELDS.groupName,
+    const results = await pb.send<GroupCandidate[]>("/api/groups/search", {
+      method: "GET",
+      query: { q: query },
     });
-    for (const g of contains) found.set(g.id, g);
+    return (results ?? []).slice(0, limit);
   } catch {
-    /* ignore — fall through to the normalised pass */
+    return [];
   }
-
-  if (found.size < limit && norm.length >= 2) {
-    try {
-      const all = await pb
-        .collection("groups")
-        .getFullList<Group>({ sort: FIELDS.groupName });
-      for (const g of all) {
-        const gn = normalizeGroupName(g.name);
-        if (gn.includes(norm) || norm.includes(gn)) found.set(g.id, g);
-      }
-    } catch {
-      /* keep what the contains-pass found */
-    }
-  }
-
-  return [...found.values()]
-    .slice(0, limit)
-    .map((g) => ({ id: g.id, name: g.name }));
 }
 
 /** Строку членства текущего пользователя в группе, либо null. */
@@ -169,37 +145,29 @@ export async function createGroup(name: string): Promise<Group> {
 
 /**
  * Вступить в группу по invite-коду. Идемпотентно: если уже
- * участник — просто возвращает группу.
+ * участник — просто возвращает группу. Идёт через серверный
+ * маршрут `/api/groups/join` (A0.5, 2026-10-18) — найти группу по
+ * коду через коллекцию напрямую больше нельзя (это раскрывало бы
+ * invite_code всех групп любому вошедшему), поиск и создание
+ * строки членства делает хук `pb_hooks/groups_access.pb.js`.
  *
  * @throws если код не найден
  */
-export async function joinByInviteCode(code: string): Promise<Group> {
+export async function joinByInviteCode(code: string): Promise<void> {
   const uid = currentUserId();
   if (!uid) throw new Error("Нужно войти, чтобы вступить в группу.");
 
   const trimmed = code.trim().toLowerCase();
   if (!trimmed) throw new Error("Введите код приглашения.");
 
-  let group: Group;
   try {
-    group = await pb
-      .collection("groups")
-      .getFirstListItem<Group>(
-        pb.filter(`${FIELDS.groupInviteCode} = {:code}`, { code: trimmed })
-      );
+    await pb.send("/api/groups/join", {
+      method: "POST",
+      body: { code: trimmed },
+    });
   } catch {
     throw new Error("Группа с таким кодом не найдена.");
   }
-
-  const existing = await myMembership(group.id);
-  if (!existing) {
-    await pb.collection("group_members").create<GroupMember>({
-      [FIELDS.memberGroup]: group.id,
-      [FIELDS.memberUser]: uid,
-    });
-  }
-
-  return group;
 }
 
 /**
@@ -218,14 +186,39 @@ export async function joinGroupById(groupId: string): Promise<void> {
   });
 }
 
-/** Ростер группы: строки членства с раскрытым пользователем, по дате вступления. */
+interface RosterEntry {
+  id: string;
+  user: { id: string; name?: string; email?: string } | null;
+  joined_at?: string;
+  preview_enabled: boolean;
+}
+
+/**
+ * Ростер группы: строки членства с раскрытым пользователем, по дате
+ * вступления. Идёт через `/api/groups/:id/roster` (A0.5, 2026-10-18):
+ * `users.viewRule` теперь "только свой профиль", поэтому `expand`
+ * на `group_members.user` для чужих строк больше ничего не отдаёт —
+ * хук берёт только name/email, которые нужны экрану «Группа».
+ */
 export async function fetchRoster(groupId: string): Promise<GroupMember[]> {
   if (!groupId) return [];
-  return pb.collection("group_members").getFullList<GroupMember>({
-    filter: pb.filter(`${FIELDS.memberGroup} = {:g}`, { g: groupId }),
-    expand: FIELDS.memberUser,
-    sort: "joined_at",
+  const entries = await pb.send<RosterEntry[]>(`/api/groups/${groupId}/roster`, {
+    method: "GET",
   });
+  return (entries ?? []).map((entry) => ({
+    id: entry.id,
+    created: "",
+    updated: "",
+    collectionId: "",
+    collectionName: "group_members",
+    [FIELDS.memberGroup]: groupId,
+    [FIELDS.memberUser]: entry.user?.id ?? "",
+    joined_at: entry.joined_at,
+    preview_enabled: entry.preview_enabled,
+    expand: entry.user
+      ? { user: { id: entry.user.id, name: entry.user.name, email: entry.user.email } }
+      : undefined,
+  })) as unknown as GroupMember[];
 }
 
 /** Покинуть группу (удалить свою строку членства). */
