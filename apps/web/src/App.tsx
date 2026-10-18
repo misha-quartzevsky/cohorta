@@ -51,7 +51,10 @@ import { ModeProvider } from "./lib/ModeProvider";
 import { UndoProvider } from "./lib/undoContext";
 import { ToastProvider } from "./components/ui";
 import SchedulePage from "./pages/SchedulePage";
+import SchedulePageNew from "./pages/SchedulePageNew";
 import TasksPage from "./pages/TasksPage";
+import TasksPageNew from "./pages/TasksPageNew";
+import SubjectPairsPage from "./pages/SubjectPairsPage";
 import QuizPage from "./pages/QuizPage";
 import DesignPage from "./pages/DesignPage";
 import {
@@ -148,6 +151,14 @@ function App() {
                   (RESERVED_SLUGS), тоже до :courseSlug. */}
               <Route path="/s/:semesterSlug/group" element={<GroupPage />} />
               <Route path="/s/:semesterSlug/:courseSlug" element={<LecturesPage />} />
+              {/* «Пары предмета» (B3, pages/SubjectPairsPage.tsx) — новый
+                  экран, статический сегмент "pairs" (RESERVED_SLUGS), до
+                  :lectureSlug ниже. Вход — из меню пары на /schedule
+                  («Пары предмета»), подробности в docs/decisions.md. */}
+              <Route
+                path="/s/:semesterSlug/:courseSlug/pairs"
+                element={<SubjectPairsPage />}
+              />
               <Route path="/notes" element={<NotesPage />} />
               <Route path="/note/new" element={<NoteCreate />} />
               {/* Lecture view + edit are ONE surface (Notion-style inline
@@ -204,9 +215,17 @@ function App() {
               <Route path="/decks/new" element={<DeckEditorPage />} />
               <Route path="/decks/:slug" element={<CardStudyPage />} />
               <Route path="/decks/:slug/edit" element={<DeckEditorPage />} />
-              {/* Расписание и задачи — глобальные, вне семестра. */}
-              <Route path="/schedule" element={<SchedulePage />} />
-              <Route path="/tasks" element={<TasksPage />} />
+              {/* Расписание и задачи — глобальные, вне семестра. Новая
+                  дизайн-основа (B3) — за флагом VITE_NEW_UI, как и
+                  остальные перенесённые экраны волны B. */}
+              <Route
+                path="/schedule"
+                element={isNewUI() ? <SchedulePageNew /> : <SchedulePage />}
+              />
+              <Route
+                path="/tasks"
+                element={isNewUI() ? <TasksPageNew /> : <TasksPage />}
+              />
               {import.meta.env.DEV && (
                 <Route path="/_design" element={<DesignPage />} />
               )}
