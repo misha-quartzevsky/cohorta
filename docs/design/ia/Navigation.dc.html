@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Навигация</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:#1C1B19}
+.c{background:#FFFFFF;border:1px solid #E5E5E1;border-radius:16px;padding:24px;box-sizing:border-box}
+.c h2{margin:0 0 4px;font-size:18px;line-height:26px;font-weight:600}
+.c p{margin:0;font-size:14px;line-height:22px;color:#5A5A56}
+.sb{width:236px;box-sizing:border-box;background:#F7F7F5;border:1px solid #E5E5E1;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.sb .i{height:36px;border-radius:10px;padding:0 10px;display:flex;align-items:center;justify-content:space-between;color:#5A5A56;font-weight:500}
+.sb .i.on{background:#FFFFFF;border:1px solid #E5E5E1;color:#1C1B19}
+.sb .i small{font-size:12px;color:#6A6A65}
+.sb .cap{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6A6A65;padding:10px 10px 4px}
+.tg{display:flex;background:#EEEEEB;border-radius:10px;padding:3px;gap:2px;font-size:13px;font-weight:500;margin-bottom:6px}
+.tg span{flex:1;text-align:center;padding:6px 0;border-radius:8px;color:#5A5A56}
+.tg span.on{background:#FFFFFF;border:1px solid #E5E5E1;color:#1C1B19}
+.tb{width:340px;box-sizing:border-box;background:#FFFFFF;border:1px solid #D2D2CD;border-radius:16px;display:flex;justify-content:space-around;padding:10px 6px;font-size:12px;font-weight:500;color:#5A5A56}
+.tb span{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:56px}
+.tb span i{width:20px;height:20px;border-radius:6px;border:1.5px solid #6A6A65;box-sizing:border-box}
+.tb span.on{color:#1C1B19}
+.tb span.on i{background:#1C1B19;border-color:#1C1B19}
+.row{display:grid;grid-template-columns:200px 1fr 1fr;gap:16px;padding:12px 0;border-top:1px solid #E5E5E1;font-size:14px;line-height:21px}
+.row b{font-weight:600}
+.row.hd{border-top:0;padding-top:0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6A6A65}
+.rl{display:flex;gap:12px;font-size:14px;line-height:21px;color:#5A5A56}
+.rl i{flex:none;width:6px;height:6px;border-radius:50%;background:#1C1B19;margin-top:8px}
+</style>
+</helmet>
+<div style="width:1440px;height:1560px;box-sizing:border-box;padding:64px;background:#F7F7F5;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<h1 style="margin:0;font-size:36px;line-height:44px;font-weight:600;letter-spacing:-0.02em">Навигация</h1>
+<span style="font-size:15px;line-height:24px;color:#5A5A56;max-width:860px">Четыре уровня: главное меню, меню внутри предмета или группы, ссылки внутри содержимого и служебные кнопки. Режим «Соло» и «Группа» переключается в самом верху меню и запоминается.</span>
+</div>
+
+<div style="display:flex;gap:24px;align-items:stretch">
+<div class="c" style="flex:1;display:flex;flex-direction:column;gap:16px">
+<div><h2>Меню на компьютере</h2><p>Слева, всегда на виду. Пять постоянных пунктов в «Соло», три в «Группе».</p></div>
+<div style="display:flex;gap:16px;align-items:flex-start">
+<div class="sb">
+<div class="tg"><span class="on">Соло</span><span>Группа</span></div>
+<div class="i on">Главная</div><div class="i">Задачи</div><div class="i">Расписание</div><div class="i">Все лекции<small>41</small></div><div class="i">Карточки</div>
+<div class="cap">Предметы</div>
+<div class="i">Гражданское право<small>14</small></div><div class="i">Маркетинг<small>9</small></div><div class="i">Статистика<small>11</small></div>
+<div class="i" style="margin-top:12px;border-top:1px solid #E5E5E1;border-radius:0;padding-top:8px">Профиль</div>
+</div>
+<div class="sb">
+<div class="tg"><span>Соло</span><span class="on">Группа</span></div>
+<div class="i on">МК-31<small>2 группы ▾</small></div>
+<div class="cap">Раздел группы</div>
+<div class="i">Одногруппники</div><div class="i">Мой доступ<small>2</small></div><div class="i">Экзамены группы</div>
+<div class="i" style="margin-top:12px;border-top:1px solid #E5E5E1;border-radius:0;padding-top:8px">Профиль</div>
+</div>
+</div>
+</div>
+<div class="c" style="width:440px;flex:none;display:flex;flex-direction:column;gap:16px">
+<div><h2>Панель внизу на телефоне</h2><p>Три-пять пунктов с подписями. «Соло» и «Группа» переключаются сегментом под заголовком главного экрана.</p></div>
+<div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6A6A65">Соло</div>
+<div class="tb"><span class="on"><i></i>Главная</span><span><i></i>Задачи</span><span><i></i>Расписание</span><span><i></i>Лекции</span><span><i></i>Карточки</span></div>
+<div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6A6A65">Группа</div>
+<div class="tb"><span class="on"><i></i>Люди</span><span><i></i>Доступ</span><span><i></i>Экзамены</span><span><i></i>Профиль</span></div>
+<p style="font-size:13px;line-height:20px">У «Карточек» своя вкладка. Предметы на телефоне открываются из вкладки «Лекции»: сверху ряд предметов, ниже лекции. В «Группе» название группы в верхней полосе, по нажатию открывается переключатель групп.</p>
+</div>
+</div>
+
+<div class="c">
+<h2 style="margin-bottom:12px">Куда можно попасть и откуда</h2>
+<div class="row hd"><span>Экран</span><span>Главный путь</span><span>Короткие пути изнутри содержимого</span></div>
+<div class="row"><b>Лекция</b><span>Предмет, затем строка лекции</span><span>«Продолжить» на главной, пара в расписании, задача со ссылкой, билет, поиск</span></div>
+<div class="row"><b>Квиз</b><span>Кнопка «Проверить себя» в лекции</span><span>Задача «Квиз по вчерашней лекции», блок «Что повторить» на главной</span></div>
+<div class="row"><b>Экзамен предмета</b><span>Предмет, затем «Экзамен»</span><span>Блок «Экзамен» на главной</span></div>
+<div class="row"><b>Билет</b><span>Экзамен, строка билета</span><span>Плашка «Нужна для билетов» в лекции, кнопка «Продолжить» на экзамене</span></div>
+<div class="row"><b>Новая лекция</b><span>Кнопка «Новая лекция» на главной и в предмете</span><span>«Начать конспект» на паре в расписании и на главной</span></div>
+<div class="row"><b>Профиль одногруппника</b><span>«Одногруппники»</span><span>Аватар в подгруппе, запрос доступа</span></div>
+<div class="row"><b>Доступ к лекции</b><span>«Мой доступ»</span><span>Меню лекции, запрос от одногруппника</span></div>
+<div class="row"><b>Поиск</b><span>Строка в шапке на каждом экране</span><span>Ищет по лекциям, предметам и одногруппникам</span></div>
+<div class="row"><b>Другая группа</b><span>Переключатель в меню «Группы»</span><span>Вступить в ещё одну группу: код из того же переключателя</span></div>
+<div class="row"><b>Профиль и настройки</b><span>Аватар внизу меню</span><span>Нет. Опасные действия только здесь</span></div>
+</div>
+
+<div class="c" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 48px">
+<div style="grid-column:1 / span 2"><h2>Правила, которым следуем</h2></div>
+<div class="rl"><i></i><span>В главном меню не больше пяти пунктов. Всё остальное внутри предмета или группы.</span></div>
+<div class="rl"><i></i><span>До любого экрана не больше трёх нажатий от главной. Самый глубокий путь: предмет, лекция, квиз.</span></div>
+<div class="rl"><i></i><span>Хлебные крошки от второго уровня на компьютере. На телефоне кнопка «Назад» и заголовок.</span></div>
+<div class="rl"><i></i><span>Текущее место видно: активный пункт меню, активная вкладка, заголовок страницы.</span></div>
+<div class="rl"><i></i><span>Режим помнится. Открыл «Группу», закрыл, вернулся: снова «Группа».</span></div>
+<div class="rl"><i></i><span>Опасные и редкие действия живут в настройках и меню «···», а не в главном меню.</span></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1560}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

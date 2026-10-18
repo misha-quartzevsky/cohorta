@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Объекты и связи</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:#1C1B19}
+.o{background:#FFFFFF;border:1px solid #E5E5E1;border-radius:16px;padding:18px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px}
+.o h3{margin:0;font-size:16px;line-height:22px;font-weight:600}
+.o .h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.o p{margin:0;font-size:13px;line-height:19px;color:#5A5A56}
+.o b{display:block;font-size:12px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6A6A65;margin-top:4px}
+.o span.v{font-size:13px;line-height:19px}
+.t{font-size:12px;font-weight:500;padding:2px 8px;border-radius:999px;background:#EEEEEB;color:#5A5A56;white-space:nowrap}
+.t.g{background:#FDEBDB;color:#A84A00}
+</style>
+</helmet>
+<div style="width:1440px;height:1560px;box-sizing:border-box;padding:64px;background:#F7F7F5;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<h1 style="margin:0;font-size:36px;line-height:44px;font-weight:600;letter-spacing:-0.02em">Объекты и связи</h1>
+<span style="font-size:15px;line-height:24px;color:#5A5A56;max-width:820px">Из каких «вещей» состоит продукт, что у каждой есть и кто её видит. Экраны строятся вокруг этих объектов: один объект, один способ показать его в списке, одна карточка, одни и те же действия везде.</span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px">
+
+<div class="o"><div class="h"><h3>Пользователь</h3><span class="t">Соло</span></div>
+<p>Студент с аккаунтом. Владелец всего личного.</p>
+<b>Что хранит</b><span class="v">Имя, вуз, курс, аватар, настройки</span>
+<b>Связи</b><span class="v">Семестры, группы (необязательно, можно несколько)</span>
+<b>Кто видит</b><span class="v">Только он. Группе виден только профиль</span></div>
+
+<div class="o"><div class="h"><h3>Семестр</h3><span class="t">Соло</span></div>
+<p>Период учёбы. Держит предметы и расписание.</p>
+<b>Что хранит</b><span class="v">Название, даты, начало нечётной недели</span>
+<b>Связи</b><span class="v">Предметы, пары</span>
+<b>Кто видит</b><span class="v">Только он</span></div>
+
+<div class="o"><div class="h"><h3>Предмет</h3><span class="t">Соло</span></div>
+<p>Дисциплина семестра. Корень для лекций и экзамена.</p>
+<b>Что хранит</b><span class="v">Название, обложка, преподаватель</span>
+<b>Связи</b><span class="v">Лекции, пары, экзамен</span>
+<b>Кто видит</b><span class="v">Он. Группа видит название, если открыт предпросмотр</span></div>
+
+<div class="o"><div class="h"><h3>Пара</h3><span class="t">Соло</span></div>
+<p>Занятие в расписании: когда и где.</p>
+<b>Что хранит</b><span class="v">День, номер пары, чётность недели, тип, аудитория</span>
+<b>Связи</b><span class="v">Предмет. Лекция находится по паре и дате</span>
+<b>Кто видит</b><span class="v">Только он</span></div>
+
+<div class="o"><div class="h"><h3>Лекция</h3><span class="t">Соло</span></div>
+<p>Главный объект продукта: конспект занятия.</p>
+<b>Что хранит</b><span class="v">Название, текст, дата, номер, готовность</span>
+<b>Связи</b><span class="v">Предмет, пара, вопросы, задачи, билеты</span>
+<b>Кто видит</b><span class="v">Он. Группа: название, если открыт предпросмотр. Текст только по доступу</span></div>
+
+<div class="o"><div class="h"><h3>Квиз и вопрос</h3><span class="t">Соло</span></div>
+<p>Проверка себя по тексту лекции.</p>
+<b>Что хранит</b><span class="v">Размер, вопросы, темы, ответы, пометки «плохой вопрос»</span>
+<b>Связи</b><span class="v">Лекция (обязательно)</span>
+<b>Кто видит</b><span class="v">Только он</span></div>
+
+<div class="o"><div class="h"><h3>Готовность лекции</h3><span class="t">Соло</span></div>
+<p>Считается по правилам из ответов и давности, не хранится как отдельный текст.</p>
+<b>Что показывает</b><span class="v">Процент, слабые темы, статус «Новая / Повторить / Готово»</span>
+<b>Связи</b><span class="v">Лекция. Билеты в расчёт не входят</span>
+<b>Кто видит</b><span class="v">Только он</span></div>
+
+<div class="o"><div class="h"><h3>Задача</h3><span class="t">Соло</span></div>
+<p>Дело со сроком или без. Своё или предложенное повторение.</p>
+<b>Что хранит</b><span class="v">Название, срок, статус, источник</span>
+<b>Связи</b><span class="v">Предмет и лекция (необязательно)</span>
+<b>Кто видит</b><span class="v">Только он</span></div>
+
+<div class="o"><div class="h"><h3>Экзамен предмета</h3><span class="t">Соло</span></div>
+<p>Подготовка к одному экзамену: дата и набор билетов.</p>
+<b>Что хранит</b><span class="v">Дата, список билетов, общая готовность</span>
+<b>Связи</b><span class="v">Предмет, билеты</span>
+<b>Кто видит</b><span class="v">Только он. В группе есть свой, групповой</span></div>
+
+<div class="o"><div class="h"><h3>Билет</h3><span class="t">Соло</span></div>
+<p>Вопрос экзамена и ответ на него.</p>
+<b>Что хранит</b><span class="v">Номер, название, ответ, статус «Готов / В работе / Не начат»</span>
+<b>Связи</b><span class="v">Экзамен. Лекции привязываются со стороны билета</span>
+<b>Кто видит</b><span class="v">Он. В подгруппе: её участники</span></div>
+
+<div class="o"><div class="h"><h3>Колода и карточка</h3><span class="t">Соло</span></div>
+<p>Повторение по карточкам: список колод, страница колоды, повторение.</p>
+<b>Что хранит</b><span class="v">Колода, карточки, дата следующего повторения</span>
+<b>Связи</b><span class="v">Предмет или лекция</span>
+<b>Кто видит</b><span class="v">Только он</span></div>
+
+<div class="o"><div class="h"><h3>Группа</h3><span class="t g">Группа</span></div>
+<p>Общее пространство одногруппников, например МК-31.</p>
+<b>Что хранит</b><span class="v">Название, код приглашения, участников</span>
+<b>Связи</b><span class="v">Участники, групповые экзамены</span>
+<b>Кто видит</b><span class="v">Участники группы</span></div>
+
+<div class="o"><div class="h"><h3>Участник</h3><span class="t g">Группа</span></div>
+<p>Членство человека в группе и его настройки приватности.</p>
+<b>Что хранит</b><span class="v">Предпросмотр для этой группы включён или выключен, дата вступления</span>
+<b>Связи</b><span class="v">Пользователь, группа. Групп может быть несколько, настройки у каждой свои</span>
+<b>Кто видит</b><span class="v">Участники группы. Предпросмотр по умолчанию закрыт</span></div>
+
+<div class="o"><div class="h"><h3>Доступ</h3><span class="t g">Группа</span></div>
+<p>Право читать одну лекцию. Выдаётся и снимается автором.</p>
+<b>Что хранит</b><span class="v">Лекция, кому (человек или подгруппа), статус «запрос / выдан»</span>
+<b>Связи</b><span class="v">Лекция, участник или подгруппа</span>
+<b>Кто видит</b><span class="v">Автор и тот, кому выдан</span></div>
+
+<div class="o"><div class="h"><h3>Групповой экзамен и подгруппа</h3><span class="t g">Группа</span></div>
+<p>Один экзамен на группу, а готовятся в разных кругах.</p>
+<b>Что хранит</b><span class="v">Предмет, дата. Подгруппа: участники и свои билеты</span>
+<b>Связи</b><span class="v">Группа, участники</span>
+<b>Кто видит</b><span class="v">Подгруппу видят только её участники</span></div>
+
+<div class="o" style="background:#EEEEEB;border-color:#E5E5E1"><h3>Как это связано</h3>
+<span class="v" style="line-height:22px"><b style="margin:0">Личное</b>Пользователь → Семестр → Предмет → Лекция → Вопрос → Ответ</span>
+<span class="v" style="line-height:22px">Предмет → Пара. Лекция встаёт на пару по дате</span>
+<span class="v" style="line-height:22px">Предмет → Экзамен → Билет. Билет ссылается на лекции, лекция билеты не хранит</span>
+<span class="v" style="line-height:22px"><b style="margin:0">Общее</b>Группа → Участник → Доступ → Лекция</span>
+<span class="v" style="line-height:22px">Группа → Экзамен группы → Подгруппа → Билеты подгруппы</span></div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1560}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

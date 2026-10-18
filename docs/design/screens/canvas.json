@@ -1,0 +1,580 @@
+{
+ "v": 3,
+ "attachments": {},
+ "boards": {
+  "Foundation-colors.dc.html": {
+   "x": 0,
+   "y": 240,
+   "w": 1440,
+   "h": 3620,
+   "title": "Основа: цвета, шрифт, отступы"
+  },
+  "Foundation-components.dc.html": {
+   "x": 1520,
+   "y": 240,
+   "w": 1440,
+   "h": 3044,
+   "title": "Основа: компоненты и состояния"
+  },
+  "Foundation-shell.dc.html": {
+   "x": 3040,
+   "y": 240,
+   "w": 1440,
+   "h": 1450,
+   "title": "Основа: каркас страницы, список лекций"
+  },
+  "Foundation-mobile.dc.html": {
+   "x": 4560,
+   "y": 240,
+   "w": 390,
+   "h": 844,
+   "title": "Основа: мобильный список"
+  },
+  "Foundation-sheet.dc.html": {
+   "x": 5030,
+   "y": 240,
+   "w": 390,
+   "h": 844,
+   "title": "Основа: мобильное меню"
+  },
+  "Screen-dashboard.dc.html": {
+   "x": 0,
+   "y": 4360,
+   "w": 1440,
+   "h": 920,
+   "title": "Главная, на новой основе"
+  },
+  "Screen-dashboard-mobile.dc.html": {
+   "x": 1520,
+   "y": 4360,
+   "w": 390,
+   "h": 844,
+   "title": "Главная, мобильный"
+  },
+  "Screen-editor.dc.html": {
+   "x": 1990,
+   "y": 4360,
+   "w": 1440,
+   "h": 1000,
+   "title": "Редактор лекции, на новой основе"
+  },
+  "Screen-editor-slash.dc.html": {
+   "x": 3510,
+   "y": 4360,
+   "w": 1440,
+   "h": 1300,
+   "title": "Редактор: меню «/»"
+  },
+  "Screen-editor-toc.dc.html": {
+   "x": 5030,
+   "y": 4360,
+   "w": 1440,
+   "h": 980,
+   "title": "Содержание лекции: состояния"
+  },
+  "Screen-m-editor.dc.html": {
+   "x": 0,
+   "y": 5740,
+   "w": 390,
+   "h": 844,
+   "title": "Редактор, телефон"
+  },
+  "Screen-m-editor-toc.dc.html": {
+   "x": 470,
+   "y": 5740,
+   "w": 390,
+   "h": 844,
+   "title": "Содержание, телефон"
+  },
+  "Screen-lectures.dc.html": {
+   "x": 0,
+   "y": 7084,
+   "w": 1440,
+   "h": 1000,
+   "title": "Все лекции"
+  },
+  "Screen-m-lectures.dc.html": {
+   "x": 1520,
+   "y": 7084,
+   "w": 390,
+   "h": 844,
+   "title": "Лекции, телефон"
+  },
+  "Screen-search.dc.html": {
+   "x": 1990,
+   "y": 7084,
+   "w": 1440,
+   "h": 1000,
+   "title": "Поиск"
+  },
+  "Screen-m-search.dc.html": {
+   "x": 3510,
+   "y": 7084,
+   "w": 390,
+   "h": 844,
+   "title": "Поиск, телефон"
+  },
+  "Screen-schedule.dc.html": {
+   "x": 0,
+   "y": 8584,
+   "w": 1440,
+   "h": 1000,
+   "title": "Расписание"
+  },
+  "Screen-m-schedule.dc.html": {
+   "x": 1520,
+   "y": 8584,
+   "w": 390,
+   "h": 844,
+   "title": "Расписание, телефон"
+  },
+  "Screen-tasks.dc.html": {
+   "x": 1990,
+   "y": 8584,
+   "w": 1440,
+   "h": 1000,
+   "title": "Задачи"
+  },
+  "Screen-m-tasks.dc.html": {
+   "x": 3510,
+   "y": 8584,
+   "w": 390,
+   "h": 844,
+   "title": "Задачи, телефон"
+  },
+  "Screen-subject-pairs.dc.html": {
+   "x": 3980,
+   "y": 8584,
+   "w": 1440,
+   "h": 1000,
+   "title": "Пары предмета"
+  },
+  "Screen-m-subject-pairs.dc.html": {
+   "x": 5500,
+   "y": 8584,
+   "w": 390,
+   "h": 844,
+   "title": "Пары предмета, телефон"
+  },
+  "Screen-exam.dc.html": {
+   "x": 0,
+   "y": 10084,
+   "w": 1440,
+   "h": 1000,
+   "title": "Экзамен"
+  },
+  "Screen-m-exam.dc.html": {
+   "x": 1520,
+   "y": 10084,
+   "w": 390,
+   "h": 844,
+   "title": "Экзамен, телефон"
+  },
+  "Screen-ticket.dc.html": {
+   "x": 1990,
+   "y": 10084,
+   "w": 1440,
+   "h": 1000,
+   "title": "Билет"
+  },
+  "Screen-ticket-import.dc.html": {
+   "x": 3510,
+   "y": 10084,
+   "w": 1440,
+   "h": 1000,
+   "title": "Импорт билетов"
+  },
+  "Screen-cheatsheet.dc.html": {
+   "x": 5030,
+   "y": 10084,
+   "w": 1440,
+   "h": 1000,
+   "title": "Шпаргалка"
+  },
+  "Screen-quiz-question.dc.html": {
+   "x": 0,
+   "y": 11584,
+   "w": 1440,
+   "h": 900,
+   "title": "Квиз, вопрос"
+  },
+  "Screen-quiz-answered.dc.html": {
+   "x": 1520,
+   "y": 11584,
+   "w": 1440,
+   "h": 900,
+   "title": "Квиз, ответ"
+  },
+  "Screen-quiz-summary.dc.html": {
+   "x": 3040,
+   "y": 11584,
+   "w": 1440,
+   "h": 900,
+   "title": "Квиз, итог"
+  },
+  "Screen-m-quiz.dc.html": {
+   "x": 4560,
+   "y": 11584,
+   "w": 390,
+   "h": 844,
+   "title": "Квиз, телефон"
+  },
+  "Screen-cards.dc.html": {
+   "x": 5030,
+   "y": 11584,
+   "w": 1440,
+   "h": 1000,
+   "title": "Карточки"
+  },
+  "Screen-cards-review.dc.html": {
+   "x": 0,
+   "y": 12664,
+   "w": 1440,
+   "h": 1000,
+   "title": "Повторение карточек"
+  },
+  "Screen-deck.dc.html": {
+   "x": 1520,
+   "y": 12664,
+   "w": 1440,
+   "h": 1000,
+   "title": "Колода"
+  },
+  "Screen-m-deck.dc.html": {
+   "x": 3040,
+   "y": 12664,
+   "w": 390,
+   "h": 844,
+   "title": "Колода, телефон"
+  },
+  "Screen-m-cards.dc.html": {
+   "x": 3510,
+   "y": 12664,
+   "w": 390,
+   "h": 844,
+   "title": "Карточки, телефон"
+  },
+  "Screen-login.dc.html": {
+   "x": 0,
+   "y": 14164,
+   "w": 1440,
+   "h": 1000,
+   "title": "Вход"
+  },
+  "Screen-policy.dc.html": {
+   "x": 1520,
+   "y": 14164,
+   "w": 1440,
+   "h": 900,
+   "title": "Политика данных"
+  },
+  "Screen-onboarding-1.dc.html": {
+   "x": 3040,
+   "y": 14164,
+   "w": 1440,
+   "h": 900,
+   "title": "Онбординг"
+  },
+  "Screen-onboarding-2.dc.html": {
+   "x": 4560,
+   "y": 14164,
+   "w": 1440,
+   "h": 900,
+   "title": "Онбординг, шаг 5"
+  },
+  "Screen-onboarding-3.dc.html": {
+   "x": 0,
+   "y": 15244,
+   "w": 1440,
+   "h": 900,
+   "title": "Онбординг"
+  },
+  "Screen-settings.dc.html": {
+   "x": 1520,
+   "y": 15244,
+   "w": 1440,
+   "h": 1260,
+   "title": "Профиль и настройки"
+  },
+  "Screen-group-join.dc.html": {
+   "x": 0,
+   "y": 17004,
+   "w": 1440,
+   "h": 1000,
+   "title": "Вступление: ввод кода"
+  },
+  "Screen-group-join-confirm.dc.html": {
+   "x": 1520,
+   "y": 17004,
+   "w": 1440,
+   "h": 1000,
+   "title": "Вступление: подтверждение"
+  },
+  "Screen-group-create.dc.html": {
+   "x": 3040,
+   "y": 17004,
+   "w": 1440,
+   "h": 1000,
+   "title": "Создание группы"
+  },
+  "Screen-group-home.dc.html": {
+   "x": 4560,
+   "y": 17004,
+   "w": 1440,
+   "h": 1000,
+   "title": "Группа МК-31"
+  },
+  "Screen-group-switcher.dc.html": {
+   "x": 0,
+   "y": 18084,
+   "w": 1440,
+   "h": 1000,
+   "title": "Переключатель групп"
+  },
+  "Screen-group-member.dc.html": {
+   "x": 1520,
+   "y": 18084,
+   "w": 1440,
+   "h": 1000,
+   "title": "Одногруппник"
+  },
+  "Screen-group-thumbnails.dc.html": {
+   "x": 3040,
+   "y": 18084,
+   "w": 1440,
+   "h": 1000,
+   "title": "Предмет одногруппника, список"
+  },
+  "Screen-group-access.dc.html": {
+   "x": 0,
+   "y": 19584,
+   "w": 1440,
+   "h": 1000,
+   "title": "Доступ к лекции"
+  },
+  "Screen-group-access-my.dc.html": {
+   "x": 1520,
+   "y": 19584,
+   "w": 1440,
+   "h": 1240,
+   "title": "Мой доступ"
+  },
+  "Screen-group-exams.dc.html": {
+   "x": 3040,
+   "y": 19584,
+   "w": 1440,
+   "h": 1000,
+   "title": "Экзамены группы"
+  },
+  "Screen-group-exam.dc.html": {
+   "x": 4560,
+   "y": 19584,
+   "w": 1440,
+   "h": 1240,
+   "title": "Коллективный экзамен"
+  },
+  "Screen-m-group-people.dc.html": {
+   "x": 0,
+   "y": 21324,
+   "w": 390,
+   "h": 844,
+   "title": "Люди, телефон"
+  },
+  "Screen-m-group-switcher.dc.html": {
+   "x": 470,
+   "y": 21324,
+   "w": 390,
+   "h": 844,
+   "title": "Переключатель групп, телефон"
+  },
+  "Screen-m-group-access.dc.html": {
+   "x": 940,
+   "y": 21324,
+   "w": 390,
+   "h": 844,
+   "title": "Мой доступ, телефон"
+  },
+  "Screen-m-group-exams.dc.html": {
+   "x": 1410,
+   "y": 21324,
+   "w": 390,
+   "h": 844,
+   "title": "Экзамены группы, телефон"
+  },
+  "States-empty.dc.html": {
+   "x": 0,
+   "y": 22668,
+   "w": 1440,
+   "h": 1120,
+   "title": "Пустые состояния"
+  },
+  "States-system.dc.html": {
+   "x": 1520,
+   "y": 22668,
+   "w": 1440,
+   "h": 1150,
+   "title": "Системные состояния"
+  }
+ },
+ "createdOnFiles": {
+  "at": "2026-10-16T07:55:00Z",
+  "v": 1
+ },
+ "designSystems": [],
+ "launch": {
+  "view": "canvas"
+ },
+ "notes": {
+  "t0": {
+   "kind": "title1",
+   "maxW": 3200,
+   "text": "Основа: цвета, шрифт, компоненты, каркас",
+   "w": 240,
+   "x": 0,
+   "y": 0
+  },
+  "t1": {
+   "kind": "title1",
+   "maxW": 3200,
+   "text": "Главная и редактор",
+   "w": 240,
+   "x": 0,
+   "y": 4120
+  },
+  "t2": {
+   "kind": "title1",
+   "maxW": 3200,
+   "text": "Лекции и поиск",
+   "w": 240,
+   "x": 0,
+   "y": 6844
+  },
+  "t3": {
+   "kind": "title1",
+   "maxW": 3200,
+   "text": "Расписание и задачи",
+   "w": 240,
+   "x": 0,
+   "y": 8344
+  },
+  "t4": {
+   "kind": "title1",
+   "maxW": 3200,
+   "text": "Экзамен (соло)",
+   "w": 240,
+   "x": 0,
+   "y": 9844
+  },
+  "t5": {
+   "kind": "title1",
+   "maxW": 3200,
+   "text": "Квиз и карточки",
+   "w": 240,
+   "x": 0,
+   "y": 11344
+  },
+  "t6": {
+   "kind": "title1",
+   "maxW": 3200,
+   "text": "Вход, онбординг, настройки",
+   "w": 240,
+   "x": 0,
+   "y": 13924
+  },
+  "t7": {
+   "kind": "title1",
+   "maxW": 3200,
+   "text": "Группа: вступление и люди",
+   "w": 240,
+   "x": 0,
+   "y": 16764
+  },
+  "t8": {
+   "kind": "title1",
+   "maxW": 3200,
+   "text": "Группа: доступ и экзамены",
+   "w": 240,
+   "x": 0,
+   "y": 19344
+  },
+  "t9": {
+   "kind": "title1",
+   "maxW": 3200,
+   "text": "Группа на телефоне",
+   "w": 240,
+   "x": 0,
+   "y": 21084
+  },
+  "t10": {
+   "kind": "title1",
+   "maxW": 3200,
+   "text": "Состояния: пустые, загрузка, ошибки, нет доступа",
+   "w": 240,
+   "x": 0,
+   "y": 22428
+  }
+ },
+ "order": [
+  "States-system.dc.html",
+  "States-empty.dc.html",
+  "Screen-m-group-exams.dc.html",
+  "Screen-m-group-access.dc.html",
+  "Screen-m-group-switcher.dc.html",
+  "Screen-m-group-people.dc.html",
+  "Screen-group-exam.dc.html",
+  "Screen-group-exams.dc.html",
+  "Screen-group-access-my.dc.html",
+  "Screen-group-access.dc.html",
+  "Screen-group-thumbnails.dc.html",
+  "Screen-group-member.dc.html",
+  "Screen-group-switcher.dc.html",
+  "Screen-group-home.dc.html",
+  "Screen-group-create.dc.html",
+  "Screen-group-join-confirm.dc.html",
+  "Screen-group-join.dc.html",
+  "Screen-settings.dc.html",
+  "Screen-onboarding-3.dc.html",
+  "Screen-onboarding-2.dc.html",
+  "Screen-onboarding-1.dc.html",
+  "Screen-policy.dc.html",
+  "Screen-login.dc.html",
+  "Screen-m-cards.dc.html",
+  "Screen-m-deck.dc.html",
+  "Screen-deck.dc.html",
+  "Screen-cards-review.dc.html",
+  "Screen-cards.dc.html",
+  "Screen-m-quiz.dc.html",
+  "Screen-quiz-summary.dc.html",
+  "Screen-quiz-answered.dc.html",
+  "Screen-quiz-question.dc.html",
+  "Screen-cheatsheet.dc.html",
+  "Screen-ticket-import.dc.html",
+  "Screen-ticket.dc.html",
+  "Screen-m-exam.dc.html",
+  "Screen-exam.dc.html",
+  "Screen-m-subject-pairs.dc.html",
+  "Screen-subject-pairs.dc.html",
+  "Screen-m-tasks.dc.html",
+  "Screen-tasks.dc.html",
+  "Screen-m-schedule.dc.html",
+  "Screen-schedule.dc.html",
+  "Screen-m-search.dc.html",
+  "Screen-search.dc.html",
+  "Screen-m-lectures.dc.html",
+  "Screen-lectures.dc.html",
+  "Screen-m-editor-toc.dc.html",
+  "Screen-m-editor.dc.html",
+  "Screen-editor-toc.dc.html",
+  "Screen-editor-slash.dc.html",
+  "Screen-editor.dc.html",
+  "Screen-dashboard-mobile.dc.html",
+  "Screen-dashboard.dc.html",
+  "Foundation-sheet.dc.html",
+  "Foundation-mobile.dc.html",
+  "Foundation-shell.dc.html",
+  "Foundation-components.dc.html",
+  "Foundation-colors.dc.html"
+ ],
+ "pages": [],
+ "title": "Cohorta Editor"
+}

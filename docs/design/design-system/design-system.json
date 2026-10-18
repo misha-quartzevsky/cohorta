@@ -1,0 +1,106 @@
+{
+ "v": 3,
+ "layout": "files",
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-10-18T00:45:00Z"
+ },
+ "title": "Cohorta",
+ "namespace": "Cohorta",
+ "libraries": [],
+ "sections": {},
+ "groups": [
+  "Logos"
+ ],
+ "assetGroups": {
+  "Logos": {
+   "name": "Logos",
+   "tile": "l",
+   "order": [
+    "cohorta-logo-primary.svg",
+    "cohorta-logo-inverse.svg",
+    "cohorta-logo-mono-ink.svg",
+    "cohorta-logo-mono-cream.svg",
+    "cohorta-mark-orange.svg",
+    "cohorta-mark-ink.svg",
+    "cohorta-mark-cream.svg",
+    "cohorta-app-icon.svg",
+    "cohorta-app-icon-maskable.svg",
+    "cohorta-splash-mark.svg"
+   ],
+   "files": {
+    "cohorta-logo-primary.svg": {
+     "name": "cohorta-logo-primary.svg",
+     "blob": "ba88fbd45dc63dbf204f04f2c1c6e866",
+     "size": 3495,
+     "type": "image/svg+xml"
+    },
+    "cohorta-logo-inverse.svg": {
+     "name": "cohorta-logo-inverse.svg",
+     "blob": "7f67486d0d97ea47018600d4f3dd7f4a",
+     "size": 3495,
+     "type": "image/svg+xml"
+    },
+    "cohorta-logo-mono-ink.svg": {
+     "name": "cohorta-logo-mono-ink.svg",
+     "blob": "1e83ff2b9429f2a4c19e0bb08929f9a5",
+     "size": 3495,
+     "type": "image/svg+xml"
+    },
+    "cohorta-logo-mono-cream.svg": {
+     "name": "cohorta-logo-mono-cream.svg",
+     "blob": "631c9fe60b48fdaccfaae9d0bd4b269b",
+     "size": 3495,
+     "type": "image/svg+xml"
+    },
+    "cohorta-mark-orange.svg": {
+     "name": "cohorta-mark-orange.svg",
+     "blob": "4be1e09dfae23a553066a28b7b2d6d6f",
+     "size": 659,
+     "type": "image/svg+xml"
+    },
+    "cohorta-mark-ink.svg": {
+     "name": "cohorta-mark-ink.svg",
+     "blob": "7d165a8d1bd17e10916269e30dce2499",
+     "size": 659,
+     "type": "image/svg+xml"
+    },
+    "cohorta-mark-cream.svg": {
+     "name": "cohorta-mark-cream.svg",
+     "blob": "cbbf863ee607cb8778da14f6b6cdca6e",
+     "size": 659,
+     "type": "image/svg+xml"
+    },
+    "cohorta-app-icon.svg": {
+     "name": "cohorta-app-icon.svg",
+     "blob": "a68a98adb6adbbc26e0b416e78810f37",
+     "size": 758,
+     "type": "image/svg+xml"
+    },
+    "cohorta-app-icon-maskable.svg": {
+     "name": "cohorta-app-icon-maskable.svg",
+     "blob": "f34f0b25b52fed44772b3b1cc8242b15",
+     "size": 760,
+     "type": "image/svg+xml"
+    },
+    "cohorta-splash-mark.svg": {
+     "name": "cohorta-splash-mark.svg",
+     "blob": "b4b59168652f9fb5d2c488d096fa008d",
+     "size": 760,
+     "type": "image/svg+xml"
+    }
+   }
+  }
+ },
+ "blobs": {},
+ "docs": {
+  "readme": "project/README.md",
+  "sections": []
+ },
+ "lastChange": {
+  "by": "Маргарита",
+  "at": "2026-10-18T11:15:00Z",
+  "via": "Claude",
+  "note": "Фон интерфейса нейтральный светлый вместо тёплого бежевого"
+ }
+}

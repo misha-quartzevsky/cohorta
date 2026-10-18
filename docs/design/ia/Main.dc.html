@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Карта продукта</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:#1C1B19}
+.sec{align-self:flex-start;background:#1C1B19;color:#fff;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;letter-spacing:.02em}
+.n{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px;padding:0 14px;border-radius:12px;font-size:15px;font-weight:500;background:#FFFFFF;border:1px solid #E5E5E1;box-sizing:border-box}
+.n small{font-size:12px;color:#6A6A65;font-weight:400;white-space:nowrap}
+.l{display:flex;align-items:center;gap:10px}
+.d{display:inline-block;width:10px;height:10px;border-radius:50%;border:1.5px solid #6A6A65;box-sizing:border-box;flex:none}
+.d.on{background:#1C1B19;border-color:#1C1B19}
+.k{margin-left:18px;border-left:1px solid #D2D2CD;padding-left:12px;display:flex;flex-direction:column;gap:6px}
+.p{display:flex;align-items:center;gap:10px;min-height:32px;padding:0 10px;font-size:14px;color:#5A5A56}
+.p small{font-size:12px;color:#6A6A65;margin-left:auto;white-space:nowrap}
+.w{display:flex;align-items:center;gap:10px;min-height:32px;padding:0 10px;font-size:14px;color:#5A5A56;border:1px dashed #8C8C86;border-radius:10px;box-sizing:border-box}
+.col{display:flex;flex-direction:column;gap:8px}
+</style>
+</helmet>
+<div style="width:1440px;height:1560px;box-sizing:border-box;padding:64px;background:#F7F7F5;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:48px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<h1 style="margin:0;font-size:36px;line-height:44px;font-weight:600;letter-spacing:-0.02em">Карта продукта</h1>
+<span style="font-size:15px;line-height:24px;color:#5A5A56;max-width:760px">Все экраны cohorta и режим, в котором каждый живёт. Закрашенная точка: экран уже нарисован на макетах. Пустая точка: экрана ещё нет. Пунктир: окно поверх экрана, не отдельная страница.</span>
+</div>
+<div style="display:flex;gap:20px;font-size:13px;color:#5A5A56;align-items:center">
+<span class="l"><i class="d on"></i>Нарисован</span>
+<span class="l"><i class="d"></i>Ещё нет</span>
+<span class="w" style="min-height:28px">Окно</span>
+</div>
+</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+
+<div class="col" style="width:264px;flex:none">
+<span class="sec">Вход и общее</span>
+<div class="n"><span class="l"><i class="d on"></i>Вход и регистрация</span><small>/login</small></div>
+<div class="n"><span class="l"><i class="d on"></i>Политика данных</span><small>/policy</small></div>
+<div class="n"><span class="l"><i class="d on"></i>Онбординг</span><small>/start</small></div>
+<div class="k">
+<div class="p">Имя</div>
+<div class="p">Город и вуз</div>
+<div class="p">Уровень и курс</div>
+<div class="p">Семестры</div>
+<div class="p">Аватар</div>
+<div class="p">Код группы<small>можно пропустить</small></div>
+</div>
+<div style="height:12px"></div>
+<div class="n"><span class="l"><i class="d on"></i>Профиль и настройки</span><small>/settings</small></div>
+<div class="k">
+<div class="p">Профиль</div>
+<div class="p">Учёба</div>
+<div class="p">Данные и безопасность</div>
+<div class="k" style="margin-left:6px">
+<div class="p">Экспорт данных</div>
+<div class="p">Удаление аккаунта<small>с подтверждением</small></div>
+</div>
+</div>
+<div style="height:12px"></div>
+<div class="n"><span class="l"><i class="d on"></i>Поиск по продукту</span><small>строка в шапке</small></div>
+</div>
+
+<div class="col" style="width:560px;flex:none">
+<span class="sec" style="background:#1C1B19;color:#fff">Соло · личное пространство</span>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="col" style="width:268px;flex:none">
+<div class="n"><span class="l"><i class="d on"></i>Главная</span><small>/</small></div>
+<div class="n"><span class="l"><i class="d on"></i>Задачи</span><small>/tasks</small></div>
+<div class="n"><span class="l"><i class="d on"></i>Расписание</span><small>/schedule</small></div>
+<div class="k">
+<div class="w">Форма пары</div>
+</div>
+<div class="n"><span class="l"><i class="d on"></i>Все лекции</span><small>/lectures</small></div>
+<div class="n"><span class="l"><i class="d on"></i>Карточки</span><small>/decks</small></div>
+<div class="k">
+<div class="p"><i class="d on"></i>Колода</div>
+<div class="p"><i class="d on"></i>Повторение</div>
+</div>
+</div>
+<div class="col" style="width:268px;flex:none">
+<div class="n"><span class="l"><i class="d on"></i>Предмет</span><small>/s/:id</small></div>
+<div class="k">
+<div class="n"><span class="l"><i class="d on"></i>Список лекций</span></div>
+<div class="k">
+<div class="n"><span class="l"><i class="d on"></i>Лекция (редактор)</span></div>
+<div class="k">
+<div class="p"><i class="d on"></i>Квиз<small>/quiz</small></div>
+<div class="p"><i class="d on"></i>Итог квиза</div>
+<div class="w">Меню «/»</div>
+</div>
+</div>
+<div class="p"><i class="d on"></i>Пары предмета</div>
+</div>
+<div class="n"><span class="l"><i class="d on"></i>Экзамен предмета</span><small>/s/:id/exam</small></div>
+<div class="k">
+<div class="p"><i class="d on"></i>Карта билетов</div>
+<div class="p"><i class="d on"></i>Билет</div>
+<div class="p"><i class="d on"></i>Шпаргалка</div>
+<div class="p"><i class="d on"></i>Импорт билетов</div>
+<div class="w">Привязка лекции</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="col" style="width:440px;flex:none">
+<span class="sec">Группа · общее пространство</span>
+<div class="n"><span class="l"><i class="d on"></i>Вступить в группу</span><small>/g/join</small></div>
+<div class="k">
+<div class="p"><i class="d on"></i>Подтверждение группы</div>
+<div class="p"><i class="d on"></i>Создать свою группу</div>
+</div>
+<div class="n"><span class="l"><i class="d on"></i>Переключатель групп</span><small>в меню</small></div>
+<div class="k">
+<div class="p">Можно быть в нескольких группах сразу</div>
+<div class="w">Вступить в ещё одну</div>
+</div>
+<div class="n"><span class="l"><i class="d on"></i>Одногруппники</span><small>/g</small></div>
+<div class="k">
+<div class="n"><span class="l"><i class="d on"></i>Профиль одногруппника</span></div>
+<div class="k">
+<div class="n"><span class="l"><i class="d on"></i>Предмет одногруппника: список</span></div>
+<div class="k">
+<div class="p">Лекция, если открыта тебе</div>
+<div class="w">Запрос доступа</div>
+</div>
+</div>
+<div class="w">Пригласить в группу</div>
+</div>
+<div class="n"><span class="l"><i class="d on"></i>Мой доступ</span><small>/g/access</small></div>
+<div class="k">
+<div class="p">Предпросмотр для группы</div>
+<div class="p">Кому открыты лекции</div>
+<div class="p">Входящие запросы</div>
+<div class="w">Доступ к лекции</div>
+</div>
+<div class="n"><span class="l"><i class="d on"></i>Экзамены группы</span><small>/g/exams</small></div>
+<div class="k">
+<div class="n"><span class="l"><i class="d on"></i>Экзамен группы</span></div>
+<div class="k">
+<div class="p"><i class="d on"></i>Подгруппа и её билеты</div>
+<div class="w">Новая подгруппа</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1560}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

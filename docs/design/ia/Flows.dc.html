@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Сценарии</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:#1C1B19}
+.f{display:grid;grid-template-columns:260px 1fr;gap:24px;background:#FFFFFF;border:1px solid #E5E5E1;border-radius:16px;padding:20px 24px;box-sizing:border-box}
+.f h2{margin:0;font-size:17px;line-height:24px;font-weight:600}
+.f p{margin:4px 0 0;font-size:13px;line-height:19px;color:#5A5A56}
+.st{display:flex;align-items:center;flex-wrap:wrap;gap:8px 6px}
+.s{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 12px;border-radius:10px;background:#F7F7F5;border:1px solid #E5E5E1;font-size:14px;font-weight:500;box-sizing:border-box}
+.s em{font-style:normal;width:20px;height:20px;border-radius:50%;background:#1C1B19;color:#fff;font-size:12px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.s.g{background:#FDEBDB;border-color:#F2C7AC;color:#A84A00}
+.a{color:#6A6A65;font-size:16px}
+.r{margin-top:10px;font-size:13px;line-height:19px;color:#5A5A56;display:flex;gap:8px}
+.r b{font-weight:600;color:#B00008;white-space:nowrap}
+</style>
+</helmet>
+<div style="width:1440px;height:1560px;box-sizing:border-box;padding:64px;background:#F7F7F5;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
+<h1 style="margin:0;font-size:36px;line-height:44px;font-weight:600;letter-spacing:-0.02em">Ключевые сценарии</h1>
+<span style="font-size:15px;line-height:24px;color:#5A5A56;max-width:860px">Семь путей, по которым студент идёт чаще всего. Оранжевый шаг: момент, где продукт даёт пользу. Красная подпись: где легче всего потеряться, на это смотрим при проверке макетов.</span>
+</div>
+
+<div class="f"><div><h2>1. Первый запуск</h2><p>От регистрации до первой записи. Цель: не больше трёх экранов до текста.</p></div>
+<div><div class="st"><span class="s"><em>1</em>Регистрация</span><span class="a">›</span><span class="s"><em>2</em>Онбординг, 6 шагов</span><span class="a">›</span><span class="s"><em>3</em>Главная «С чего начать»</span><span class="a">›</span><span class="s"><em>4</em>Добавить предмет</span><span class="a">›</span><span class="s"><em>5</em>Добавить пары</span><span class="a">›</span><span class="s g"><em>6</em>Новая лекция, писать</span></div>
+<div class="r"><b>Риск</b><span>Шесть шагов онбординга и три на главной до первой строки. Пары и группу можно пропустить без потерь.</span></div></div></div>
+
+<div class="f"><div><h2>2. Пара → конспект</h2><p>Лекция рождается из расписания и сразу привязана к дате.</p></div>
+<div><div class="st"><span class="s"><em>1</em>«Пары сегодня» или Расписание</span><span class="a">›</span><span class="s"><em>2</em>«Начать конспект»</span><span class="a">›</span><span class="s g"><em>3</em>Лекция уже на своей паре</span><span class="a">›</span><span class="s"><em>4</em>Писать, автосохранение</span></div>
+<div class="r"><b>Риск</b><span>Повторное нажатие не должно создавать вторую лекцию: открывается та же.</span></div></div></div>
+
+<div class="f"><div><h2>3. Лекция → повторение</h2><p>Как запись превращается в знание.</p></div>
+<div><div class="st"><span class="s"><em>1</em>Лекция</span><span class="a">›</span><span class="s"><em>2</em>«Проверить себя»</span><span class="a">›</span><span class="s"><em>3</em>Размер квиза</span><span class="a">›</span><span class="s"><em>4</em>Вопросы</span><span class="a">›</span><span class="s g"><em>5</em>Итог и слабые темы</span><span class="a">›</span><span class="s"><em>6</em>Готовность лекции</span><span class="a">›</span><span class="s"><em>7</em>Задача «Повторить»</span></div>
+<div class="r"><b>Риск</b><span>Два входа в квиз в редакторе: кнопка в панели и «+ Квиз» в плавающей панели. Оставить один главный.</span></div></div></div>
+
+<div class="f"><div><h2>4. Подготовка к экзамену</h2><p>Личная, без группы.</p></div>
+<div><div class="st"><span class="s"><em>1</em>Предмет</span><span class="a">›</span><span class="s"><em>2</em>Экзамен</span><span class="a">›</span><span class="s"><em>3</em>Карта билетов</span><span class="a">›</span><span class="s"><em>4</em>Билет</span><span class="a">›</span><span class="s"><em>5</em>Привязать лекции</span><span class="a">›</span><span class="s g"><em>6</em>Ответ готов</span><span class="a">›</span><span class="s"><em>7</em>Рост готовности</span></div>
+<div class="r"><b>Риск</b><span>Не путать готовность билета и готовность лекции: это разные числа, подписи должны это объяснять.</span></div></div></div>
+
+<div class="f"><div><h2>5. Вступить в группу</h2><p>Три входа: режим «Группа», шаг онбординга, ссылка-приглашение.</p></div>
+<div><div class="st"><span class="s"><em>1</em>Режим «Группа» или ссылка</span><span class="a">›</span><span class="s"><em>2</em>Ввести код</span><span class="a">›</span><span class="s"><em>3</em>Увидеть, что за группа</span><span class="a">›</span><span class="s"><em>4</em>«Вступить»</span><span class="a">›</span><span class="s g"><em>5</em>Одногруппники</span><span class="a">›</span><span class="s"><em>6</em>Открыть предпросмотр, если хочется</span></div>
+<div class="r"><b>Риск</b><span>Человек должен понять заранее: вступление ничего не открывает. Предпросмотр закрыт, пока он сам не включит.</span></div></div></div>
+
+<div class="f"><div><h2>6. Дать и убрать доступ</h2><p>Один человек, одна лекция, одно нажатие в обе стороны.</p></div>
+<div><div class="st"><span class="s"><em>1</em>Лекция «···» → Доступ</span><span class="a">›</span><span class="s"><em>2</em>Добавить человека или подгруппу</span><span class="a">›</span><span class="s g"><em>3</em>Читает</span><span class="a">›</span><span class="s"><em>4</em>«Мой доступ»</span><span class="a">›</span><span class="s"><em>5</em>«Убрать» у одного</span></div>
+<div class="r"><b>Риск</b><span>Запрос от одногруппника приходит со счётчиком у «Мой доступ». Без уведомления про него забудут.</span></div></div></div>
+
+<div class="f"><div><h2>7. Коллективный экзамен</h2><p>Один экзамен на группу, несколько кругов подготовки.</p></div>
+<div><div class="st"><span class="s"><em>1</em>Экзамены группы</span><span class="a">›</span><span class="s"><em>2</em>Создать экзамен</span><span class="a">›</span><span class="s"><em>3</em>Выбрать или создать подгруппу</span><span class="a">›</span><span class="s"><em>4</em>Пригласить</span><span class="a">›</span><span class="s"><em>5</em>Распределить билеты</span><span class="a">›</span><span class="s g"><em>6</em>Готовность подгруппы</span></div>
+<div class="r"><b>Риск</b><span>Решено: на один экзамен человек состоит только в одной подгруппе. Сменить подгруппу можно, выйдя из прежней.</span></div></div></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1560}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

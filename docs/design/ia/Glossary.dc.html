@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Словарь и адреса</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:#1C1B19}
+.c{background:#FFFFFF;border:1px solid #E5E5E1;border-radius:16px;padding:24px;box-sizing:border-box}
+.c h2{margin:0 0 12px;font-size:18px;line-height:26px;font-weight:600}
+.t{display:grid;grid-template-columns:150px 1fr 190px;gap:16px;padding:10px 0;border-top:1px solid #E5E5E1;font-size:14px;line-height:20px}
+.t.hd{border-top:0;padding-top:0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6A6A65}
+.t b{font-weight:600}
+.t s{color:#B00008;text-decoration:none}
+.rt{display:grid;grid-template-columns:230px 1fr;gap:16px;padding:8px 0;border-top:1px solid #E5E5E1;font-size:14px;line-height:20px;font-variant-numeric:tabular-nums}
+.rt.hd{border-top:0;padding-top:0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6A6A65}
+.rt b{font-weight:600}
+.q{display:flex;gap:12px;font-size:14px;line-height:21px;color:#5A5A56}
+.q i{flex:none;width:22px;height:22px;border-radius:50%;background:#1C1B19;color:#fff;font-style:normal;font-size:12px;font-weight:600;display:inline-flex;align-items:center;justify-content:center}
+</style>
+</helmet>
+<div style="width:1440px;height:1560px;box-sizing:border-box;padding:64px;background:#F7F7F5;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<h1 style="margin:0;font-size:36px;line-height:44px;font-weight:600;letter-spacing:-0.02em">Словарь и адреса</h1>
+<span style="font-size:15px;line-height:24px;color:#5A5A56;max-width:860px">Одно слово на одну вещь во всём интерфейсе и в коде. Красным слова, которые лучше не использовать.</span>
+</div>
+
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="c" style="flex:1">
+<h2>Словарь</h2>
+<div class="t hd"><span>Слово</span><span>Что значит</span><span>Не говорим</span></div>
+<div class="t"><b>Соло</b><span>Личное пространство: записи, задачи, расписание, экзамены.</span><s>личный режим</s></div>
+<div class="t"><b>Группа</b><span>Общее пространство одногруппников, например МК-31.</span><s>когорта, класс</s></div>
+<div class="t"><b>Предмет</b><span>Дисциплина семестра. В группе тоже «предметы», не «курсы».</span><s>курс (курс = год обучения)</s></div>
+<div class="t"><b>Лекция</b><span>Запись занятия: название, номер, дата. Строка в списках.</span><s>заметка, страница</s></div>
+<div class="t"><b>Конспект</b><span>Текст внутри лекции. «Конспект есть» значит, что текст написан.</span><s>записи</s></div>
+<div class="t"><b>Квиз</b><span>Вопросы по тексту одной лекции для проверки себя.</span><s>тест, опрос</s></div>
+<div class="t"><b>Готовность лекции</b><span>Процент по ответам квиза и давности. Билеты не входят.</span><s>прогресс, уровень</s></div>
+<div class="t"><b>Готовность к экзамену</b><span>Сколько билетов предмета готово.</span><s>просто «готовность»</s></div>
+<div class="t"><b>Билет</b><span>Один вопрос экзамена и ответ на него.</span><s>вопрос, карточка</s></div>
+<div class="t"><b>Предпросмотр</b><span>Группа видит названия твоих предметов и лекций, но не текст.</span><s>превью, обзор</s></div>
+<div class="t"><b>Доступ</b><span>Право читать текст конкретной лекции. Выдаётся человеку или подгруппе.</span><s>шеринг, разрешение</s></div>
+<div class="t"><b>Подгруппа</b><span>Круг подготовки к одному экзамену внутри группы.</span><s>команда, отряд</s></div>
+<div class="t"><b>Карточки</b><span>Раздел повторения. Один набор называется «колода».</span><s>флешкарты</s></div>
+</div>
+
+<div style="width:480px;flex:none;display:flex;flex-direction:column;gap:24px">
+<div class="c">
+<h2>Адреса страниц</h2>
+<div class="rt hd"><span>Адрес</span><span>Экран</span></div>
+<div class="rt"><b>/</b><span>Главная</span></div>
+<div class="rt"><b>/tasks</b><span>Задачи</span></div>
+<div class="rt"><b>/schedule</b><span>Расписание</span></div>
+<div class="rt"><b>/lectures</b><span>Все лекции</span></div>
+<div class="rt"><b>/decks</b><span>Карточки</span></div>
+<div class="rt"><b>/s/:предмет</b><span>Предмет, список лекций</span></div>
+<div class="rt"><b>/s/:предмет/exam</b><span>Экзамен предмета</span></div>
+<div class="rt"><b>/s/:предмет/exam/:номер</b><span>Билет</span></div>
+<div class="rt"><b>/l/:лекция</b><span>Лекция</span></div>
+<div class="rt"><b>/l/:лекция/quiz</b><span>Квиз</span></div>
+<div class="rt"><b>/g, /g/join</b><span>Одногруппники, вступление</span></div>
+<div class="rt"><b>/g/u/:человек</b><span>Профиль одногруппника</span></div>
+<div class="rt"><b>/g/access</b><span>Мой доступ</span></div>
+<div class="rt"><b>/g/exams, /g/exams/:id</b><span>Экзамены группы, экзамен</span></div>
+<div class="rt"><b>/settings</b><span>Профиль и настройки</span></div>
+</div>
+</div>
+</div>
+
+<div class="c" style="display:flex;flex-direction:column;gap:12px">
+<h2 style="margin:0">Решения владельца продукта</h2>
+<div class="q"><i>1</i><span>«Курс» в группе заменён на «предмет»: курс остаётся только годом обучения. Правка внесена в макеты.</span></div>
+<div class="q"><i>2</i><span>У «Карточек» своя вкладка на телефоне. Предметы на телефоне открываются из вкладки «Лекции».</span></div>
+<div class="q"><i>3</i><span>Поиск по продукту нужен к первому запуску: строка в шапке, ищет по лекциям, предметам и одногруппникам.</span></div>
+<div class="q"><i>4</i><span>На один экзамен человек состоит только в одной подгруппе.</span></div>
+<div class="q"><i>5</i><span>В двух группах можно состоять одновременно, обе активные. В меню есть переключатель групп, предпросмотр и доступы у каждой группы свои.</span></div>
+<div class="q"><i>6</i><span>Вступление по коду без одобрения: да. Всё закрыто по умолчанию.</span></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1560}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
