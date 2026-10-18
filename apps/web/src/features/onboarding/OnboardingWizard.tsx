@@ -27,7 +27,7 @@ import StepAvatar from "./steps/StepAvatar";
 const STEP_COPY = [
   {
     title: "Давай познакомимся",
-    subtitle: "Как тебя зовут — так мы будем обращаться к тебе внутри Cohorta",
+    subtitle: "Как тебя зовут — так мы будем обращаться к тебе внутри cohorta",
   },
   {
     title: "Придумай адрес профиля",
@@ -204,7 +204,7 @@ export default function OnboardingWizard() {
       <div className="onb-shell">
         <aside className="onb-aside">
           <div className="onb-brand">
-            <img src="/cohorta-black.svg" alt="Cohorta" className="onb-logo" />
+            <img src="/brand/cohorta-logo-inverse.svg" alt="cohorta" className="onb-logo" />
           </div>
           <div className="onb-aside-copy">
             <h1 className="onb-aside-title">{copy.title}</h1>

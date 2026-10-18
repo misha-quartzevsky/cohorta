@@ -19,7 +19,7 @@ export default function PrivacyPage() {
         </Link>
         <h1 className="privacy-title">Политика данных</h1>
         <p className="privacy-text">
-          Cohorta хранит только то, что вы создаёте сами: курсы, конспекты,
+          cohorta хранит только то, что вы создаёте сами: курсы, конспекты,
           карточки и билеты. Мы не передаём эти данные третьим лицам.
         </p>
         <p className="privacy-text">

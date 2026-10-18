@@ -20,7 +20,7 @@ export default function StepName({ value, onChange }: Props) {
         autoComplete="given-name"
         maxLength={80}
       />
-      <p className="onb-hint">Так к тебе будут обращаться внутри Cohorta.</p>
+      <p className="onb-hint">Так к тебе будут обращаться внутри cohorta.</p>
     </div>
   );
 }

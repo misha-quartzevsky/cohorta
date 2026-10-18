@@ -338,8 +338,8 @@ export default function GlobalSidebar({ open = false, onClose }: Props) {
         <div className="sidebar-logo">
           <img
             className="sidebar-logo-img"
-            src="/cohorta-black.svg"
-            alt="Cohorta"
+            src="/brand/cohorta-logo-primary.svg"
+            alt="cohorta"
           />
         </div>
 

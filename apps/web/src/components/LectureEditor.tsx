@@ -102,7 +102,7 @@ function LectureEditor({ courseId, lecture, isNote, onSaved, onCancel }: Props) 
           <button className="back-link" onClick={onCancel} type="button">
             <X size={18} /> Отмена
           </button>
-          <img src="/cohorta-black.svg" alt="Cohorta" />
+          <img src="/brand/cohorta-logo-primary.svg" alt="cohorta" />
         </div>
       </header>
 

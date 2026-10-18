@@ -123,10 +123,10 @@ function Login() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <img className="login-logo" src="/cohorta-black.svg" alt="Cohorta" />
+        <img className="login-logo" src="/brand/cohorta-logo-primary.svg" alt="cohorta" />
 
         <h1 className="login-title">
-          {isRegister ? "Регистрация в Cohorta" : "Вход в Cohorta"}
+          {isRegister ? "Регистрация в cohorta" : "Вход в cohorta"}
         </h1>
         <p className="login-subtitle">
           Конспекты, курсы и заметки — всё в одном месте
