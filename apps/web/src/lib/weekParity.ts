@@ -1,4 +1,4 @@
-import type { Lecture, ScheduleSlot, WeekParity } from "./types";
+import type { Lecture, ScheduleSlot, ScheduleSlotLecture, WeekParity } from "./types";
 import { mondayOf, daysBetween, fromDateStr, toDateStr } from "./localDate";
 
 /**
@@ -27,18 +27,24 @@ export function slotMatchesParity(
 
 /**
  * Найти лекцию для конкретной пары (слот + дата): spec 4.2.
- * lectures.slot = slot.id && lectures.lecture_date = date (YYYY-MM-DD).
+ * Сначала «родная» лекция пары (lectures.slot = slot.id &&
+ * lectures.lecture_date = date, создана через «Начать конспект»), иначе —
+ * лекция, прикреплённая постфактум через `schedule_slot_lectures` на эту
+ * же дату («Добавить конспект», B3). Одна и та же лекция может быть
+ * прикреплена одновременно к нескольким разным парам/датам.
  */
 export function findLectureForOccurrence(
   slot: ScheduleSlot,
   dateStr: string,
-  lectures: Lecture[]
+  lectures: Lecture[],
+  links: ScheduleSlotLecture[] = []
 ): Lecture | null {
-  return (
-    lectures.find(
-      (l) => l.slot === slot.id && l.lecture_date === dateStr
-    ) ?? null
+  const direct = lectures.find(
+    (l) => l.slot === slot.id && l.lecture_date === dateStr
   );
+  if (direct) return direct;
+  const link = links.find((l) => l.slot === slot.id && l.date === dateStr);
+  return link?.expand?.lecture ?? null;
 }
 
 /** Дата (YYYY-MM-DD) дня weekday (1..7) в неделе, содержащей `ref`. */

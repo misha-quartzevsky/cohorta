@@ -5,7 +5,7 @@ import {
   findLectureForOccurrence,
   slotActiveOn,
 } from "./weekParity";
-import type { Lecture, ScheduleSlot } from "./types";
+import type { Lecture, ScheduleSlot, ScheduleSlotLecture } from "./types";
 
 // Якорь — понедельник нечётной недели: 2026-10-12 (пн).
 const anchor = new Date(2026, 9, 12, 12);
@@ -66,6 +66,43 @@ describe("findLectureForOccurrence", () => {
   });
   it("не путает слоты в одну дату", () => {
     expect(findLectureForOccurrence(slot, "2026-10-16", lectures)?.id).not.toBe("l3");
+  });
+
+  it("лекция, прикреплённая постфактум (schedule_slot_lectures), находится по ссылке", () => {
+    const attached = { id: "l9", title: "Чужая лекция" } as Lecture;
+    const links = [
+      { id: "link1", slot: "slot1", date: "2026-10-17", expand: { lecture: attached } },
+    ] as ScheduleSlotLecture[];
+    expect(findLectureForOccurrence(slot, "2026-10-17", lectures, links)?.id).toBe("l9");
+  });
+
+  it("родная лекция пары (slot+lecture_date) важнее прикреплённой ссылки на ту же дату", () => {
+    const attached = { id: "l9" } as Lecture;
+    const links = [
+      { id: "link1", slot: "slot1", date: "2026-10-16", expand: { lecture: attached } },
+    ] as ScheduleSlotLecture[];
+    // На 2026-10-16 у slot1 уже есть родная лекция l1 — она и побеждает.
+    expect(findLectureForOccurrence(slot, "2026-10-16", lectures, links)?.id).toBe("l1");
+  });
+
+  it("одна и та же лекция прикреплена к двум разным парам/датам одновременно", () => {
+    const sharedLecture = { id: "shared-lecture", title: "Общая лекция" } as Lecture;
+    const slotTue = { id: "slot-tue" } as ScheduleSlot; // Философия, вторник, 4 пара
+    const slotThu = { id: "slot-thu" } as ScheduleSlot; // Философия, четверг, 2 пара
+    const links = [
+      { id: "link1", slot: "slot-tue", date: "2026-10-20", expand: { lecture: sharedLecture } },
+      { id: "link2", slot: "slot-thu", date: "2026-10-15", expand: { lecture: sharedLecture } },
+    ] as ScheduleSlotLecture[];
+    expect(findLectureForOccurrence(slotTue, "2026-10-20", [], links)?.id).toBe("shared-lecture");
+    expect(findLectureForOccurrence(slotThu, "2026-10-15", [], links)?.id).toBe("shared-lecture");
+  });
+
+  it("ссылка на другую дату того же слота не подходит", () => {
+    const attached = { id: "l9" } as Lecture;
+    const links = [
+      { id: "link1", slot: "slot1", date: "2026-10-17", expand: { lecture: attached } },
+    ] as ScheduleSlotLecture[];
+    expect(findLectureForOccurrence(slot, "2026-10-24", [], links)).toBeNull();
   });
 });
 
