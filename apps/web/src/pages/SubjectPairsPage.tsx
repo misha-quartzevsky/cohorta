@@ -20,16 +20,19 @@ import { ChevronLeft, MoreHorizontal } from "lucide-react";
 
 import { Button, Icon, Pills, StatusChip, Menu } from "../ui";
 import SlotFormNew from "../components/schedule/SlotFormNew";
+import AttachLectureModal from "../components/schedule/AttachLectureModal";
 import { useCourseBySlug } from "../hooks/useCourseBySlug";
 import { useSchedule } from "../hooks/useSchedule";
 import { useSemester } from "../lib/semesterContext";
 import {
   fetchLecturesOfSubject,
+  fetchSlotLectureLinks,
+  createSlotLectureLink,
   startNoteForSlot,
   type SlotInput,
 } from "../services/scheduleService";
 import { courseName, courseSlug, semesterSlug } from "../lib/types";
-import type { Lecture, ScheduleSlot } from "../lib/types";
+import type { Lecture, ScheduleSlot, ScheduleSlotLecture } from "../lib/types";
 import { pickActiveSemester } from "../lib/activeSemester";
 import { mondayOf, fromDateStr, toDateStr, addDays, todayStr } from "../lib/localDate";
 import { getWeekParity, slotMatchesParity, dateForWeekday, findLectureForOccurrence } from "../lib/weekParity";
@@ -60,6 +63,8 @@ export default function SubjectPairsPage() {
   const { settings, slots, createSlot, updateSlot, deleteSlot } = useSchedule(activeSemester?.id);
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [lectureCount, setLectureCount] = useState(0);
+  const [links, setLinks] = useState<ScheduleSlotLecture[]>([]);
+  const reloadLinks = () => fetchSlotLectureLinks().then(setLinks).catch(() => {});
 
   useEffect(() => {
     if (!course) return;
@@ -67,7 +72,19 @@ export default function SubjectPairsPage() {
       setLectures(ls);
       setLectureCount(ls.length);
     });
+    void reloadLinks();
   }, [course]);
+
+  // «Добавить конспект»: прикрепить существующую лекцию предмета к пустой
+  // паре на её ближайшую дату (см. pages/SchedulePageNew.tsx).
+  const [attachTarget, setAttachTarget] = useState<{ slot: ScheduleSlot; dateStr: string } | null>(
+    null
+  );
+  async function handleAttach(lectureId: string) {
+    if (!attachTarget) return;
+    await createSlotLectureLink(attachTarget.slot.id, lectureId, attachTarget.dateStr);
+    await reloadLinks();
+  }
 
   const subjectSlots = slots
     .filter((s) => s.subject === course?.id)
@@ -106,7 +123,7 @@ export default function SubjectPairsPage() {
   }
 
   function openExistingNote(slot: ScheduleSlot, dateStr: string) {
-    const lecture = findLectureForOccurrence(slot, dateStr, lectures);
+    const lecture = findLectureForOccurrence(slot, dateStr, lectures, links);
     if (lecture && course) {
       navigate(`/s/${semSlug}/${courseSlug(course)}/${lecture.slug ?? lecture.id}`);
     }
@@ -196,7 +213,7 @@ export default function SubjectPairsPage() {
           <div className="c-pairs-list">
             {subjectSlots.map((slot) => {
               const dateStr = nextOccurrenceDate(slot);
-              const hasNote = !!findLectureForOccurrence(slot, dateStr, lectures);
+              const hasNote = !!findLectureForOccurrence(slot, dateStr, lectures, links);
               const start = settings?.pair_times?.find((p) => p.n === slot.pair_number)?.start ?? "";
               return (
                 <div key={slot.id} className="c-pairs-row">
@@ -222,6 +239,7 @@ export default function SubjectPairsPage() {
                     hasNote={hasNote}
                     onOpen={() => openExistingNote(slot, dateStr)}
                     onStart={() => void handleStartNote(slot)}
+                    onAttach={() => setAttachTarget({ slot, dateStr })}
                     onEdit={() => {
                       setEditSlot(slot);
                       setFormOpen(true);
@@ -238,7 +256,7 @@ export default function SubjectPairsPage() {
           <div className="c-pairs-m-list">
             {subjectSlots.map((slot) => {
               const dateStr = nextOccurrenceDate(slot);
-              const hasNote = !!findLectureForOccurrence(slot, dateStr, lectures);
+              const hasNote = !!findLectureForOccurrence(slot, dateStr, lectures, links);
               const start = settings?.pair_times?.find((p) => p.n === slot.pair_number)?.start ?? "";
               return (
                 <div key={slot.id} className="c-pairs-m-row">
@@ -260,6 +278,7 @@ export default function SubjectPairsPage() {
                     hasNote={hasNote}
                     onOpen={() => openExistingNote(slot, dateStr)}
                     onStart={() => void handleStartNote(slot)}
+                    onAttach={() => setAttachTarget({ slot, dateStr })}
                     onEdit={() => {
                       setEditSlot(slot);
                       setFormOpen(true);
@@ -293,6 +312,13 @@ export default function SubjectPairsPage() {
         onSave={handleSave}
         onDelete={editSlot ? () => deleteSlot(editSlot.id) : undefined}
       />
+
+      <AttachLectureModal
+        open={!!attachTarget}
+        onClose={() => setAttachTarget(null)}
+        lectures={lectures}
+        onAttach={handleAttach}
+      />
     </div>
   );
 }
@@ -301,12 +327,14 @@ function PairRowMenu({
   hasNote,
   onOpen,
   onStart,
+  onAttach,
   onEdit,
   onDelete,
 }: {
   hasNote: boolean;
   onOpen: () => void;
   onStart: () => void;
+  onAttach: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -328,6 +356,7 @@ function PairRowMenu({
         hasNote
           ? { label: "Открыть конспект", onClick: onOpen }
           : { label: "Начать конспект", onClick: onStart },
+        ...(hasNote ? [] : [{ label: "Добавить конспект", onClick: onAttach }]),
         { label: "Изменить пару", onClick: onEdit },
         { label: "Удалить пару", onClick: onDelete, danger: true },
       ]}

@@ -26,16 +26,19 @@ import { ChevronRight } from "lucide-react";
 
 import { Button, Icon, Pills, StatusChip, SubjectCover, EmptyState, Menu } from "../ui";
 import SlotFormNew from "../components/schedule/SlotFormNew";
+import AttachLectureModal from "../components/schedule/AttachLectureModal";
 import { useSchedule } from "../hooks/useSchedule";
 import { useSemester } from "../lib/semesterContext";
 import {
   startNoteForSlot,
   fetchLecturesOfSubject,
   fetchScheduledLectures,
+  fetchSlotLectureLinks,
+  createSlotLectureLink,
   type SlotInput,
 } from "../services/scheduleService";
 import { fetchCourses } from "../services/courseService";
-import type { Course, Lecture, ScheduleSlot } from "../lib/types";
+import type { Course, Lecture, ScheduleSlot, ScheduleSlotLecture } from "../lib/types";
 import { courseName, courseSlug, semesterSlug } from "../lib/types";
 import { pickActiveSemester } from "../lib/activeSemester";
 import { lastSemesterSlug } from "../lib/lastSemester";
@@ -75,12 +78,33 @@ export default function SchedulePageNew() {
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [scheduled, setScheduled] = useState<Lecture[]>([]);
+  const [links, setLinks] = useState<ScheduleSlotLecture[]>([]);
   const reloadScheduled = () =>
     fetchScheduledLectures().then(setScheduled).catch(() => {});
+  const reloadLinks = () => fetchSlotLectureLinks().then(setLinks).catch(() => {});
   useEffect(() => {
     void fetchCourses().then(setCourses).catch(() => setCourses([]));
     void reloadScheduled();
+    void reloadLinks();
   }, []);
+
+  // «Добавить конспект» (B3): прикрепить уже существующую лекцию предмета
+  // к пустой паре на конкретную дату — не создаёт новую лекцию.
+  const [attachTarget, setAttachTarget] = useState<{ slot: ScheduleSlot; dateStr: string } | null>(
+    null
+  );
+  const [attachLectures, setAttachLectures] = useState<Lecture[]>([]);
+
+  function openAttachModal(slot: ScheduleSlot, dateStr: string) {
+    setAttachTarget({ slot, dateStr });
+    void fetchLecturesOfSubject(slot.subject).then(setAttachLectures).catch(() => setAttachLectures([]));
+  }
+
+  async function handleAttach(lectureId: string) {
+    if (!attachTarget) return;
+    await createSlotLectureLink(attachTarget.slot.id, lectureId, attachTarget.dateStr);
+    await reloadLinks();
+  }
 
   const anchor = settings?.odd_week_anchor
     ? fromDateStr(settings.odd_week_anchor)
@@ -235,6 +259,7 @@ export default function SchedulePageNew() {
                 monday={monday}
                 weekSlots={weekSlots}
                 scheduled={scheduled}
+                links={links}
                 todayWd={todayWd}
                 today={today}
                 courses={courses}
@@ -250,6 +275,7 @@ export default function SchedulePageNew() {
                 }}
                 onOpen={openLecture}
                 onStart={handleStartNote}
+                onAttach={openAttachModal}
                 onDelete={(id) => void deleteSlot(id)}
               />
 
@@ -278,10 +304,12 @@ export default function SchedulePageNew() {
                   pairTimes={pairTimes}
                   weekSlots={weekSlots}
                   scheduled={scheduled}
+                  links={links}
                   today={today}
                   courses={courses}
                   onOpen={openLecture}
                   onStart={handleStartNote}
+                  onAttach={openAttachModal}
                 />
               </div>
             </div>
@@ -291,6 +319,7 @@ export default function SchedulePageNew() {
               anchor={anchor}
               pairTimes={pairTimes}
               scheduled={scheduled}
+              links={links}
               courses={courses}
               onStart={handleStartNote}
             />
@@ -312,6 +341,13 @@ export default function SchedulePageNew() {
         onSave={handleSave}
         onDelete={editSlot ? () => deleteSlot(editSlot.id) : undefined}
       />
+
+      <AttachLectureModal
+        open={!!attachTarget}
+        onClose={() => setAttachTarget(null)}
+        lectures={attachLectures}
+        onAttach={handleAttach}
+      />
     </div>
   );
 }
@@ -324,6 +360,7 @@ interface GridProps {
   monday: Date;
   weekSlots: ScheduleSlot[];
   scheduled: Lecture[];
+  links: ScheduleSlotLecture[];
   todayWd: number;
   today: string;
   courses: Course[];
@@ -332,6 +369,7 @@ interface GridProps {
   onEdit: (slot: ScheduleSlot) => void;
   onOpen: (lec: Lecture, slot: ScheduleSlot) => void;
   onStart: (slot: ScheduleSlot, dateStr: string) => void;
+  onAttach: (slot: ScheduleSlot, dateStr: string) => void;
   onDelete: (id: string) => void;
 }
 
@@ -341,6 +379,7 @@ function WeekGrid({
   monday,
   weekSlots,
   scheduled,
+  links,
   todayWd,
   today,
   courses,
@@ -349,6 +388,7 @@ function WeekGrid({
   onEdit,
   onOpen,
   onStart,
+  onAttach,
   onDelete,
 }: GridProps) {
   const template = `56px repeat(${dayCount}, minmax(0, 1fr))`;
@@ -375,6 +415,7 @@ function WeekGrid({
           monday={monday}
           weekSlots={weekSlots}
           scheduled={scheduled}
+          links={links}
           todayWd={todayWd}
           today={today}
           courses={courses}
@@ -383,6 +424,7 @@ function WeekGrid({
           onEdit={onEdit}
           onOpen={onOpen}
           onStart={onStart}
+          onAttach={onAttach}
           onDelete={onDelete}
         />
       ))}
@@ -396,6 +438,7 @@ function GridRow({
   monday,
   weekSlots,
   scheduled,
+  links,
   todayWd,
   today,
   courses,
@@ -404,6 +447,7 @@ function GridRow({
   onEdit,
   onOpen,
   onStart,
+  onAttach,
   onDelete,
 }: {
   pt: { n: number; start: string; end: string };
@@ -411,6 +455,7 @@ function GridRow({
   monday: Date;
   weekSlots: ScheduleSlot[];
   scheduled: Lecture[];
+  links: ScheduleSlotLecture[];
   todayWd: number;
   today: string;
   courses: Course[];
@@ -419,6 +464,7 @@ function GridRow({
   onEdit: (slot: ScheduleSlot) => void;
   onOpen: (lec: Lecture, slot: ScheduleSlot) => void;
   onStart: (slot: ScheduleSlot, dateStr: string) => void;
+  onAttach: (slot: ScheduleSlot, dateStr: string) => void;
   onDelete: (id: string) => void;
 }) {
   return (
@@ -440,11 +486,13 @@ function GridRow({
                 dateStr={dateStr}
                 today={today}
                 scheduled={scheduled}
+                links={links}
                 courses={courses}
                 semSlug={semSlug}
                 onEdit={onEdit}
                 onOpen={onOpen}
                 onStart={onStart}
+                onAttach={onAttach}
                 onDelete={onDelete}
               />
             ) : (
@@ -469,28 +517,32 @@ function SlotCard({
   dateStr,
   today,
   scheduled,
+  links,
   courses,
   semSlug,
   onEdit,
   onOpen,
   onStart,
+  onAttach,
   onDelete,
 }: {
   slot: ScheduleSlot;
   dateStr: string;
   today: string;
   scheduled: Lecture[];
+  links: ScheduleSlotLecture[];
   courses: Course[];
   semSlug: string;
   onEdit: (slot: ScheduleSlot) => void;
   onOpen: (lec: Lecture, slot: ScheduleSlot) => void;
   onStart: (slot: ScheduleSlot, dateStr: string) => void;
+  onAttach: (slot: ScheduleSlot, dateStr: string) => void;
   onDelete: (id: string) => void;
 }) {
   const navigate = useNavigate();
   const subject = slot.expand?.subject ?? courses.find((c) => c.id === slot.subject);
   const name = subject ? courseName(subject) : "Предмет";
-  const lecture = findLectureForOccurrence(slot, dateStr, scheduled);
+  const lecture = findLectureForOccurrence(slot, dateStr, scheduled, links);
   const kindLabel =
     slot.kind === "seminar" ? "Семинар" : slot.kind === "lab" ? "Лаб." : slot.kind === "other" ? "Пара" : "Лекция";
 
@@ -527,6 +579,7 @@ function SlotCard({
       )}
       items={[
         { label: "Начать конспект", onClick: () => onStart(slot, dateStr) },
+        { label: "Добавить конспект", onClick: () => onAttach(slot, dateStr) },
         { label: "Изменить пару", onClick: () => onEdit(slot) },
         ...(subject
           ? [
@@ -550,20 +603,24 @@ function MobileDayPairs({
   pairTimes,
   weekSlots,
   scheduled,
+  links,
   today,
   courses,
   onOpen,
   onStart,
+  onAttach,
 }: {
   weekday: number;
   dateStr: string;
   pairTimes: { n: number; start: string; end: string }[];
   weekSlots: ScheduleSlot[];
   scheduled: Lecture[];
+  links: ScheduleSlotLecture[];
   today: string;
   courses: Course[];
   onOpen: (lec: Lecture, slot: ScheduleSlot) => void;
   onStart: (slot: ScheduleSlot, dateStr: string) => void;
+  onAttach: (slot: ScheduleSlot, dateStr: string) => void;
 }) {
   const daySlots = weekSlots
     .filter((s) => s.weekday === weekday)
@@ -579,7 +636,7 @@ function MobileDayPairs({
         const pt = pairTimes.find((p) => p.n === slot.pair_number);
         const subject = slot.expand?.subject ?? courses.find((c) => c.id === slot.subject);
         const name = subject ? courseName(subject) : "Предмет";
-        const lecture = findLectureForOccurrence(slot, dateStr, scheduled);
+        const lecture = findLectureForOccurrence(slot, dateStr, scheduled, links);
         const kindLabel =
           slot.kind === "seminar" ? "Семинар" : slot.kind === "lab" ? "Лаб." : slot.kind === "other" ? "Пара" : "Лекция";
         const canStart = dateStr >= today;
@@ -607,11 +664,33 @@ function MobileDayPairs({
               <div className="c-schedule-m-card no-note">
                 <span className="t">{name}</span>
                 <span className="m">{slot.room ? `${kindLabel} · ауд. ${slot.room}` : kindLabel}</span>
-                {canStart && (
-                  <Button size="sm" onClick={() => onStart(slot, dateStr)} className="c-schedule-m-start">
-                    Начать конспект
-                  </Button>
-                )}
+                <div className="c-schedule-m-start-row">
+                  {canStart && (
+                    <Button size="sm" onClick={() => onStart(slot, dateStr)} className="c-schedule-m-start">
+                      Начать конспект
+                    </Button>
+                  )}
+                  <Menu
+                    trigger={({ ref, onClick, ...aria }) => (
+                      <button
+                        ref={ref}
+                        type="button"
+                        className="c-task-row-menu-btn"
+                        aria-label="Действия с парой"
+                        onClick={onClick}
+                        {...aria}
+                      >
+                        <Icon name="dots" size={18} />
+                      </button>
+                    )}
+                    items={[
+                      ...(canStart
+                        ? [{ label: "Начать конспект", onClick: () => onStart(slot, dateStr) }]
+                        : []),
+                      { label: "Добавить конспект", onClick: () => onAttach(slot, dateStr) },
+                    ]}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -628,6 +707,7 @@ function SchedulePanel({
   anchor,
   pairTimes,
   scheduled,
+  links,
   courses,
   onStart,
 }: {
@@ -635,6 +715,7 @@ function SchedulePanel({
   anchor: Date;
   pairTimes: { n: number; start: string; end: string }[];
   scheduled: Lecture[];
+  links: ScheduleSlotLecture[];
   courses: Course[];
   onStart: (slot: ScheduleSlot, dateStr: string) => void;
 }) {
@@ -665,7 +746,7 @@ function SchedulePanel({
     const started = dateStr <= today;
     if (started) {
       weekTotal += 1;
-      const lec = findLectureForOccurrence(slot, dateStr, scheduled);
+      const lec = findLectureForOccurrence(slot, dateStr, scheduled, links);
       if (lec) weekWithNote += 1;
       else if (dateStr < today) pastWithoutNote.push({ slot, dateStr });
     }
@@ -701,7 +782,7 @@ function SchedulePanel({
               </div>
             </div>
           </div>
-          {findLectureForOccurrence(upcoming.slot, upcoming.dateStr, scheduled) ? (
+          {findLectureForOccurrence(upcoming.slot, upcoming.dateStr, scheduled, links) ? (
             <Button variant="soft" onClick={() => onStart(upcoming.slot, upcoming.dateStr)}>
               Открыть конспект
             </Button>

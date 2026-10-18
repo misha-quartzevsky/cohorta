@@ -2275,7 +2275,8 @@ button.c-row.on:hover { background: var(--accent-soft); }
   .c-schedule-m-card.no-note { background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); cursor: default; }
   .c-schedule-m-card .t { font-size: 15px; font-weight: 600; line-height: 20px; }
   .c-schedule-m-card .m { font-size: 13px; color: var(--ink-2); }
-  .c-schedule-m-start { margin-top: 6px; align-self: flex-start; }
+  .c-schedule-m-start-row { margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+  .c-schedule-m-start { align-self: flex-start; }
 }
 
 /* ============================================================
@@ -2409,3 +2410,9 @@ button.c-row.on:hover { background: var(--accent-soft); }
   .c-pairs-m-row-tx .t { font-size: 15px; line-height: 22px; font-weight: 600; }
   .c-pairs-m-row-tx .m { font-size: 13px; line-height: 18px; color: var(--ink-3); }
 }
+
+/* ============================================================
+ *  «Добавить конспект» — B3, 2026-10-19
+ *  (components/schedule/AttachLectureModal.tsx).
+ * ============================================================ */
+.c-attach-lecture-status { font-size: 13px; color: var(--ink-3); }
