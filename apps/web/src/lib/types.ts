@@ -14,7 +14,11 @@ export interface PbRecord {
 
 export interface Course extends PbRecord {
   name: string;
+  /** Легаси-поле старой системы цвета (courseGradient.ts). Не использовать
+   * в новых экранах — обложка строится из `cover_seed` (раздел 2.3). */
   color?: string;
+  /** Вход генератора обложки предмета (SubjectCover), 0–359. */
+  cover_seed?: number | null;
   slug?: string;
   /** PocketBase relation → semesters (single). */
   semesters?: string;
@@ -368,6 +372,7 @@ export interface GroupMember extends PbRecord {
 // `as const` — ключи становятся литеральными типами (без `string`-размытия).
 export const FIELDS = {
   courseName: "name",
+  courseCoverSeed: "cover_seed",
   courseColor: "color",
   courseOwner: "owner",
   lectureTitle: "title",
