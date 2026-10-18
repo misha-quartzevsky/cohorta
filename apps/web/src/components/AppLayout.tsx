@@ -19,12 +19,14 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import GlobalSidebar from "./GlobalSidebar";
 import BottomTabBar from "./BottomTabBar";
+import AppShellNew from "./AppShellNew";
 import DocumentScrollbar from "./scrollbar/DocumentScrollbar";
 import {
   LectureFrameContext,
   type LectureFrameApi,
 } from "../lib/lectureFrame";
 import { UIShellContext, type UIShellApi } from "../lib/uiShellContext";
+import { isNewUI } from "../lib/featureFlags";
 
 export default function AppLayout() {
   // Онбординг-гейт: пока профиль не пройден — не пускаем в приложение.
@@ -79,6 +81,20 @@ export default function AppLayout() {
 
   if (needsOnboarding) {
     return <Navigate to="/onboarding" replace />;
+  }
+
+  // Новый каркас (A4, components/AppShellNew.tsx) — за флагом VITE_NEW_UI,
+  // пока волны A и B1 не закрыты (раздел 3 инструкции). Старые экраны,
+  // ещё не перенесённые по волнам B, рендерятся внутри него как есть —
+  // это ожидаемое промежуточное состояние предпросмотра, не баг.
+  if (isNewUI()) {
+    return (
+      <LectureFrameContext.Provider value={api}>
+        <UIShellContext.Provider value={uiShell}>
+          <AppShellNew />
+        </UIShellContext.Provider>
+      </LectureFrameContext.Provider>
+    );
   }
 
   return (

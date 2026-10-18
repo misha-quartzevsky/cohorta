@@ -17,6 +17,7 @@ import { AudioLines, Menu, Mic, MicOff, X } from "lucide-react";
 
 import { useSpeech } from "../lib/speechContext";
 import { useUiShell } from "../lib/uiShellContext";
+import { isNewUI } from "../lib/featureFlags";
 
 export interface Crumb {
   label: string;
@@ -45,6 +46,14 @@ function Header({ crumbs = [], crumbsLoading = false }: Props) {
   const { supported, audioOnly, recording, toggle, interimText, notice, error } =
     useSpeech();
   const canCapture = supported || audioOnly;
+
+  // Новый каркас (A4, AppShellNew.tsx) уже даёт бургер, поиск и место под
+  // хлебные крошки — старая .app-header (burger + крошки + микрофон)
+  // поверх него только задваивает высоту шапки пустым местом. Пока эта
+  // конкретная страница не перенесена на новый каркас по волнам B,
+  // просто не рендерим старую панель целиком (микрофон временно
+  // недоступен на непеределанных страницах в режиме предпросмотра).
+  if (isNewUI()) return null;
 
   return (
     <header className="app-header">
