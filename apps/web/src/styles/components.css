@@ -1872,18 +1872,21 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .c-shell-content.with-aside > .page { flex: 1; min-width: 0; }
 .c-lecture-aside { width: 320px; flex: none; }
 
-.c-readiness { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.c-readiness { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
 .c-readiness .label { font: 600 12px/18px var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
 .c-readiness .headline { display: flex; align-items: baseline; gap: 8px; }
 .c-readiness .pct { font-size: 36px; line-height: 40px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .c-readiness .pct.dash { color: var(--ink-3); }
+.c-readiness .body-text { margin: 0; font-size: 14px; line-height: 22px; color: var(--ink-2); }
 .c-readiness .hint { margin: 0; font-size: 13px; line-height: 20px; color: var(--ink-3); }
+.c-readiness .track { height: 6px; border-radius: 3px; background: var(--sunken); }
 .c-readiness hr { border: none; height: 1px; background: var(--line); margin: 0; }
 .c-readiness .topics { display: flex; flex-direction: column; gap: 10px; }
 .c-readiness .topic { display: flex; flex-direction: column; gap: 6px; }
 .c-readiness .topic .row { display: flex; justify-content: space-between; font-size: 14px; font-variant-numeric: tabular-nums; }
 .c-readiness .topic .bar { height: 4px; border-radius: 2px; background: var(--sunken); }
 .c-readiness .topic .bar .fill { height: 4px; border-radius: 2px; }
+.c-readiness .plaque { padding: 12px 14px; border-radius: 12px; background: var(--sunken); font-size: 13px; line-height: 20px; color: var(--ink-2); }
 
 @media (max-width: 1023px) {
   .c-shell-content.with-aside { flex-direction: column; }

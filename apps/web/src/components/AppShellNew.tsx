@@ -251,30 +251,32 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
           value={mode}
           onChange={setMode}
         />
+        {/* Основная навигация остаётся всегда — на странице лекции меняется
+            только раздел «Предметы» ниже (Screen-editor.png: Главная/Задачи/
+            Расписание/Все лекции/Карточки видны и там тоже). Раньше весь
+            сайдбар подменялся оглавлением — расхождение с макетом. */}
+        <nav className="c-shell-nav" aria-label="Основная навигация">
+          {items.map((item) => (
+            <NavLink
+              key={item.label}
+              to={item.to}
+              end={item.end}
+              onClick={onClose}
+              className={({ isActive }) => (isActive ? "on" : "")}
+            >
+              <Icon name={item.icon} size={20} />
+              <span className="label">{item.label}</span>
+              {item.count !== undefined && <span className="count">{item.count}</span>}
+            </NavLink>
+          ))}
+        </nav>
         {inLecture ? (
           <SidebarLectureToc courseSlug={courseSlug} onNavigate={onClose} />
         ) : (
-          <>
-            <nav className="c-shell-nav" aria-label="Основная навигация">
-              {items.map((item) => (
-                <NavLink
-                  key={item.label}
-                  to={item.to}
-                  end={item.end}
-                  onClick={onClose}
-                  className={({ isActive }) => (isActive ? "on" : "")}
-                >
-                  <Icon name={item.icon} size={20} />
-                  <span className="label">{item.label}</span>
-                  {item.count !== undefined && <span className="count">{item.count}</span>}
-                </NavLink>
-              ))}
-            </nav>
-            <SidebarCourses semSlug={semSlug} onNavigate={onClose} />
-            <div className="c-shell-spacer" />
-            <SidebarProfile />
-          </>
+          <SidebarCourses semSlug={semSlug} onNavigate={onClose} />
         )}
+        <div className="c-shell-spacer" />
+        <SidebarProfile />
       </aside>
     </>
   );
@@ -318,7 +320,7 @@ function LectureAsideSlot() {
   const { lectureSlug } = useParams();
   const { lecture } = useLectureBySlug(lectureSlug ?? "");
   if (!lecture) return null;
-  return <LectureReadinessAside lectureId={lecture.id} />;
+  return <LectureReadinessAside lecture={lecture} />;
 }
 
 export default function AppShellNew() {

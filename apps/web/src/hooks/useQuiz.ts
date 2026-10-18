@@ -97,7 +97,7 @@ export function useQuiz(lecture: Lecture) {
   );
 
   const start = useCallback(
-    (size: QuizSize = 8) => void run(size, false),
+    (size: QuizSize = 8, forceNew = false) => void run(size, forceNew),
     [run]
   );
 

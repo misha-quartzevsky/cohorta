@@ -71,7 +71,9 @@ function QuizRunner({
   const [selected, setSelected] = useState<number | null>(null);
 
   useEffect(() => {
-    quiz.start(size);
+    // ?new=1 — «Собрать другой» из панели «Твоё понимание темы» (B1):
+    // та же генерация, что и кнопка «Новый квиз» в итоге, но до старта.
+    quiz.start(size, searchParams.get("new") === "1");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

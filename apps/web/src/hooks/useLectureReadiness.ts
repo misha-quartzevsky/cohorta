@@ -8,11 +8,13 @@ import { fetchReadinessQuestions, fetchReadinessAnswers } from "../services/quiz
 /** Готовность лекции (spec 6.4), с перезагрузкой по изменению lectureId/version. */
 export function useLectureReadiness(lectureId: string | undefined, version = 0) {
   const [readiness, setReadiness] = useState<ReadinessResult | null>(null);
+  const [hasQuiz, setHasQuiz] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!lectureId) {
       setReadiness(null);
+      setHasQuiz(false);
       setLoading(false);
       return;
     }
@@ -25,6 +27,7 @@ export function useLectureReadiness(lectureId: string | undefined, version = 0) 
           fetchReadinessAnswers(lectureId),
         ]);
         if (cancelled) return;
+        setHasQuiz(qs.length > 0);
         setReadiness(computeLectureReadiness(qs, ans, new Date()));
       } finally {
         if (!cancelled) setLoading(false);
@@ -35,5 +38,5 @@ export function useLectureReadiness(lectureId: string | undefined, version = 0) 
     };
   }, [lectureId, version]);
 
-  return { readiness, loading };
+  return { readiness, hasQuiz, loading };
 }
