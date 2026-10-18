@@ -27,20 +27,22 @@ import { uniqueSlug } from "../lib/slugify";
  * @param collection — PocketBase collection name (e.g. "lectures")
  * @param slug       — the record's slug (or legacy id)
  * @param slugField  — physical field name holding the slug
+ * @param expand     — optional PocketBase `expand` relation list (e.g. "field")
  * @returns Resolves to the record.
  */
 export async function fetchBySlug<T extends PbRecord>(
   collection: string,
   slug: string,
-  slugField: string
+  slugField: string,
+  expand?: string
 ): Promise<T> {
   try {
     return await pb
       .collection(collection)
-      .getFirstListItem<T>(`${slugField}="${slug}"`);
+      .getFirstListItem<T>(`${slugField}="${slug}"`, expand ? { expand } : undefined);
   } catch {
     // Legacy fallback: URL contains the record id.
-    return pb.collection(collection).getOne<T>(slug);
+    return pb.collection(collection).getOne<T>(slug, expand ? { expand } : undefined);
   }
 }
 

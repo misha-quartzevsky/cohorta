@@ -229,6 +229,7 @@ function LectureView() {
       to: target,
       title: lectureTitle(lecture),
       courseName: course ? courseName(course) : undefined,
+      courseCoverSeed: course?.cover_seed,
       excerpt: lectureExcerpt(lecture, 140),
       savedAt: lecture.updated,
     });

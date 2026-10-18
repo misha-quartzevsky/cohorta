@@ -14,6 +14,8 @@ export interface LastVisitedEntry {
   title: string;
   /** Название курса (для независимых заметок — отсутствует). */
   courseName?: string;
+  /** `courses.cover_seed` того же курса — для обложки карточки «Продолжить». */
+  courseCoverSeed?: number | null;
   /** Plain-text выдержка контента. */
   excerpt: string;
   /** ISO-метка времени визита. */

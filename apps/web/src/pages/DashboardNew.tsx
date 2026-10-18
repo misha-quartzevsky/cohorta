@@ -159,7 +159,7 @@ export default function DashboardNew() {
           <div className="c-dash-main">
             {lastVisited ? (
               <div className="c-dash-card c-dash-continue">
-                <SubjectCover seed={null} size={48} />
+                <SubjectCover seed={lastVisited.courseCoverSeed} size={48} />
                 <div className="c-dash-continue-tx">
                   <span className="label">Продолжить</span>
                   <span className="t">{lastVisited.title}</span>

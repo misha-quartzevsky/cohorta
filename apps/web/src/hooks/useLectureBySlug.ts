@@ -32,7 +32,7 @@ export interface UseLectureBySlugResult {
 export function useLectureBySlug(slug: string): UseLectureBySlugResult {
   const fetcher = useCallback(async (): Promise<Lecture> => {
     try {
-      return await fetchBySlug<Lecture>("lectures", slug, FIELDS.lectureSlug);
+      return await fetchBySlug<Lecture>("lectures", slug, FIELDS.lectureSlug, "field");
     } catch (e) {
       console.error("Ошибка загрузки записи:", e);
       throw new Error("Не удалось загрузить запись: " + errorMessage(e));

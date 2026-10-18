@@ -1296,6 +1296,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .cover-stat,
 .cover-phil {
   --h: 20;
+  border-radius: var(--radius-sm);
   background:
     radial-gradient(circle at 25% 80%, hsla(var(--h), 52%, 64%, .6), transparent 60%),
     radial-gradient(circle at 80% 20%, hsla(calc(var(--h) + 42), 62%, 72%, .8), transparent 55%),
@@ -1657,7 +1658,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
 
 .c-shell-content {
   max-width: var(--content-max);
-  margin: 0 auto;
+  margin: 0 auto 0 0;
   padding: var(--space-10);
   box-sizing: border-box;
 }
