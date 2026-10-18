@@ -2,8 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   computeLectureReadiness,
   lectureStatus,
+  lectureListStatus,
   type ReadinessQuestion,
   type ReadinessAnswer,
+  type ReadinessResult,
 } from "./computeLectureReadiness";
 
 const quizDate = new Date(2026, 9, 1, 10, 0);
@@ -160,5 +162,39 @@ describe("lectureStatus", () => {
   it(">= 75 -> done", () => {
     expect(lectureStatus(75)).toBe("done");
     expect(lectureStatus(100)).toBe("done");
+  });
+});
+
+function mkReadiness(partial: Partial<ReadinessResult>): ReadinessResult {
+  return {
+    percent: null,
+    topics: [],
+    lastActivityAt: null,
+    weakTopics: [],
+    ...partial,
+  };
+}
+
+describe("lectureListStatus (Screen-lectures.dc.html)", () => {
+  it("percent null -> Не начато", () => {
+    expect(lectureListStatus(mkReadiness({ percent: null })).key).toBe("not_started");
+  });
+
+  it("есть слабая тема -> Слабо, даже при высоком percent", () => {
+    const r = mkReadiness({
+      percent: 90,
+      weakTopics: [{ topic: "деликты", accuracy: 0.3, correct: 1, total: 3, status: "danger" }],
+    });
+    expect(lectureListStatus(r).key).toBe("weak");
+  });
+
+  it("percent < 75 без слабых тем -> Повторить", () => {
+    const r = mkReadiness({ percent: 60, weakTopics: [] });
+    expect(lectureListStatus(r).key).toBe("review");
+  });
+
+  it("percent >= 75 без слабых тем -> Выучено", () => {
+    const r = mkReadiness({ percent: 80, weakTopics: [] });
+    expect(lectureListStatus(r).key).toBe("learned");
   });
 });

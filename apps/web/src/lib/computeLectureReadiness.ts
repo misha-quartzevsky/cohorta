@@ -183,3 +183,31 @@ export function computeLectureReadiness(
 
   return { percent, topics, lastActivityAt, weakTopics };
 }
+
+export type LectureListStatusKey = "not_started" | "weak" | "review" | "learned";
+
+export interface LectureListStatus {
+  key: LectureListStatusKey;
+  label: string;
+  tone: "neutral" | "danger" | "warn" | "ok";
+}
+
+const LECTURE_LIST_STATUS: Record<LectureListStatusKey, LectureListStatus> = {
+  not_started: { key: "not_started", label: "Не начато", tone: "neutral" },
+  weak: { key: "weak", label: "Слабо", tone: "danger" },
+  review: { key: "review", label: "Повторить", tone: "warn" },
+  learned: { key: "learned", label: "Выучено", tone: "ok" },
+};
+
+/**
+ * Статус лекции для списка «Все лекции» (Screen-lectures.dc.html): четыре
+ * бейджа, не из спеки §6.4 (там только 2 порога на percent) — «Слабо»
+ * первым, если у лекции есть слабая тема (как в панели понимания),
+ * иначе по percent. Решение владелицы, 2026-10-19.
+ */
+export function lectureListStatus(readiness: ReadinessResult): LectureListStatus {
+  if (readiness.percent === null) return LECTURE_LIST_STATUS.not_started;
+  if (readiness.weakTopics.length > 0) return LECTURE_LIST_STATUS.weak;
+  if (readiness.percent < READINESS_THRESHOLDS.done) return LECTURE_LIST_STATUS.review;
+  return LECTURE_LIST_STATUS.learned;
+}

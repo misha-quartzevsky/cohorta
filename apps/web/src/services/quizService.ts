@@ -237,3 +237,72 @@ export async function fetchReadinessAnswers(
     answeredAt: parsePbDate(a.answered_at ?? a.created) ?? new Date(),
   }));
 }
+
+/**
+ * Готовность ВСЕХ лекций текущего пользователя одним заходом (3 запроса
+ * вместо N+1) — для списка «Все лекции» (B2, Screen-lectures.dc.html),
+ * где считать готовность по одной лекции за раз было бы слишком дорого.
+ */
+export async function fetchReadinessQuestionsByLecture(): Promise<
+  Map<string, ReadinessQuestion[]>
+> {
+  const owner = currentUserId();
+  if (!owner) return new Map();
+
+  const [questions, quizzes] = await Promise.all([
+    pb.collection("quiz_questions").getFullList<QuizQuestion>({
+      filter: `${FIELDS.qqOwner}="${owner}" && ${FIELDS.qqHidden}=false && ${FIELDS.qqFlagged}=false`,
+    }),
+    pb.collection("quizzes").getFullList<Quiz>({
+      filter: `${FIELDS.quizOwner}="${owner}"`,
+    }),
+  ]);
+
+  const quizCreatedById = new Map<string, Date>();
+  for (const q of quizzes) {
+    const created = parsePbDate(q.created);
+    if (created) quizCreatedById.set(q.id, created);
+  }
+
+  const byLecture = new Map<string, ReadinessQuestion[]>();
+  for (const q of questions) {
+    const quizCreatedAt = quizCreatedById.get(q.quiz);
+    if (!quizCreatedAt) continue;
+    const list = byLecture.get(q.lecture) ?? [];
+    list.push({
+      id: q.id,
+      quiz: q.quiz,
+      quizCreatedAt,
+      topic: q.topic ?? "",
+      hidden: q.hidden,
+      flagged: q.flagged,
+    });
+    byLecture.set(q.lecture, list);
+  }
+  return byLecture;
+}
+
+/** Ответы ВСЕХ лекций текущего пользователя, сгруппированные по лекции. */
+export async function fetchReadinessAnswersByLecture(): Promise<
+  Map<string, ReadinessAnswer[]>
+> {
+  const owner = currentUserId();
+  if (!owner) return new Map();
+
+  const answers = await pb.collection("quiz_answers").getFullList<QuizAnswer>({
+    filter: `${FIELDS.qaOwner}="${owner}"`,
+    sort: FIELDS.qaAnsweredAt,
+  });
+
+  const byLecture = new Map<string, ReadinessAnswer[]>();
+  for (const a of answers) {
+    const list = byLecture.get(a.lecture) ?? [];
+    list.push({
+      questionId: a.question,
+      correct: !!a.correct,
+      answeredAt: parsePbDate(a.answered_at ?? a.created) ?? new Date(),
+    });
+    byLecture.set(a.lecture, list);
+  }
+  return byLecture;
+}

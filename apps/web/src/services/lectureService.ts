@@ -62,6 +62,19 @@ export async function fetchRecentLectures(
 }
 
 /**
+ * Все лекции пользователя (B2, «Все лекции») — то же, что
+ * `fetchRecentLectures`, но без отреза по лимиту и с сортировкой по
+ * дате пары/создания (новые выше), а не по последней правке.
+ */
+export async function fetchAllLectures(): Promise<Lecture[]> {
+  return pb.collection("lectures").getFullList<Lecture>({
+    sort: "-lecture_date,-created",
+    filter: "",
+    expand: "field",
+  });
+}
+
+/**
  * Create a brand-new lecture inside a course.
  *
  * @param title    — lecture heading
