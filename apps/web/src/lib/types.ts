@@ -92,6 +92,25 @@ export interface ScheduleSlot extends PbRecord {
   };
 }
 
+/**
+ * Лекция, прикреплённая к паре постфактум («Добавить конспект» в меню
+ * пустой пары на /schedule), на одну конкретную дату — не на все
+ * повторения слота (решение владелицы, 2026-10-19). Одна и та же лекция
+ * может быть прикреплена к разным парам/датам одновременно.
+ */
+export interface ScheduleSlotLecture extends PbRecord {
+  owner: string;
+  /** relation → schedule_slots */
+  slot: string;
+  /** relation → lectures */
+  lecture: string;
+  /** YYYY-MM-DD, дата конкретного проведения пары */
+  date: string;
+  expand?: {
+    lecture?: Lecture;
+  };
+}
+
 export type TaskSource = "manual" | "lecture" | "auto_review";
 
 /** Задача студента. spec 2.4 */
@@ -403,6 +422,11 @@ export const FIELDS = {
   slotTeacher: "teacher",
   slotDateFrom: "date_from",
   slotDateTo: "date_to",
+  // schedule_slot_lectures
+  slotLectureOwner: "owner",
+  slotLectureSlot: "slot",
+  slotLectureLecture: "lecture",
+  slotLectureDate: "date",
   // tasks
   taskOwner: "owner",
   taskTitle: "title",

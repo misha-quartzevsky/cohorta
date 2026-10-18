@@ -10,6 +10,7 @@ import { pb } from "../lib/pocketbase";
 import type {
   ScheduleSettings,
   ScheduleSlot,
+  ScheduleSlotLecture,
   Lecture,
   PairTime,
 } from "../lib/types";
@@ -213,4 +214,40 @@ export async function fetchScheduledLectures(): Promise<Lecture[]> {
     sort: "-lecture_date",
   });
   return items.map(normalizeLecture);
+}
+
+/**
+ * Лекции, прикреплённые к парам постфактум («Добавить конспект»,
+ * schedule_slot_lectures) — отдельно от lectures.slot/lecture_date
+ * (это «родная» пара лекции, создаётся через «Начать конспект»).
+ * Одна лекция может быть в нескольких строках (разные слот+дата).
+ */
+export async function fetchSlotLectureLinks(): Promise<ScheduleSlotLecture[]> {
+  const items = await pb.collection("schedule_slot_lectures").getFullList<ScheduleSlotLecture>({
+    expand: FIELDS.slotLectureLecture,
+    sort: "-created",
+  });
+  return items.map((l) => ({ ...l, date: pbDateOnly(l.date) }));
+}
+
+/** Прикрепить существующую лекцию к паре на конкретную дату. */
+export async function createSlotLectureLink(
+  slotId: string,
+  lectureId: string,
+  dateStr: string
+): Promise<ScheduleSlotLecture> {
+  const created = await pb.collection("schedule_slot_lectures").create<ScheduleSlotLecture>(
+    {
+      [FIELDS.slotLectureOwner]: currentUserId(),
+      [FIELDS.slotLectureSlot]: slotId,
+      [FIELDS.slotLectureLecture]: lectureId,
+      [FIELDS.slotLectureDate]: dateStr,
+    },
+    { expand: FIELDS.slotLectureLecture }
+  );
+  return { ...created, date: pbDateOnly(created.date) };
+}
+
+export async function deleteSlotLectureLink(id: string): Promise<void> {
+  await pb.collection("schedule_slot_lectures").delete(id);
 }
