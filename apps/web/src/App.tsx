@@ -18,6 +18,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
+import DashboardNew from "./pages/DashboardNew";
 import CoursesPage from "./pages/CoursesPage";
 import LecturesPage from "./pages/LecturesPage";
 import LectureView from "./pages/LectureView";
@@ -57,6 +58,7 @@ import {
   LAST_SEMESTER_KEY,
 } from "./lib/semesterContext";
 import { semesterSlug } from "./lib/types";
+import { isNewUI } from "./lib/featureFlags";
 import "./App.css";
 
 /**
@@ -125,8 +127,15 @@ function App() {
             <Route path="/quiz/:lectureId" element={<QuizPage />} />
             <Route element={<AppLayout />}>
               <Route path="/" element={<HomeRedirect />} />
-              <Route path="/s/:semesterSlug" element={<Dashboard />} />
+              <Route
+                path="/s/:semesterSlug"
+                element={isNewUI() ? <DashboardNew /> : <Dashboard />}
+              />
               <Route path="/s/:semesterSlug/courses" element={<CoursesPage />} />
+              {/* «Все лекции» (A4): отдельного экрана ещё нет (B2) — алиас
+                  на «Предметы», но свой адрес, чтобы оба пункта меню не
+                  подсвечивались одновременно. */}
+              <Route path="/s/:semesterSlug/lectures" element={<CoursesPage />} />
               {/* Сводка по всем экзаменам семестра — статический сегмент
                   "exams" (RESERVED_SLUGS), встаёт до :courseSlug ниже. */}
               <Route path="/s/:semesterSlug/exams" element={<ExamsPage />} />

@@ -1686,3 +1686,150 @@ button.c-row.on:hover { background: var(--accent-soft); }
   .c-shell .c-tabbar { display: none; }
 }
 
+/* ============================================================
+ *  Главная — B1, 2026-10-18 (pages/DashboardNew.tsx).
+ *  Вёрстка 1:1 по docs/design/screens/Screen-dashboard(-mobile).dc.html.
+ * ============================================================ */
+.c-dash { display: flex; flex-direction: column; gap: var(--space-8); font-family: var(--font-sans); }
+.c-dash-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); }
+.c-dash-head .meta { display: block; font-size: 13px; color: var(--ink-3); }
+.c-dash-head h1 { margin: 6px 0 0; font-size: 36px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; }
+
+.c-dash-cols { display: flex; gap: var(--space-8); align-items: flex-start; }
+.c-dash-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-6); }
+.c-dash-aside { width: 360px; flex: none; display: flex; flex-direction: column; gap: var(--space-6); }
+
+.c-dash-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.c-dash-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 8px;
+}
+.c-dash-card-head h2 { margin: 0; font-size: 18px; line-height: 26px; font-weight: 600; }
+.c-dash-card-head a { font-size: 14px; font-weight: 500; color: var(--accent-strong); }
+
+.c-dash-continue {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 20px;
+}
+.c-dash-continue-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.c-dash-continue-tx .label { font: 600 12px/18px var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.c-dash-continue-tx .t { font-size: 18px; line-height: 26px; font-weight: 600; }
+.c-dash-continue-tx .m { font-size: 13px; color: var(--ink-3); }
+
+.c-dash-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: 64px;
+  padding: 12px 20px;
+  box-sizing: border-box;
+  border-top: 1px solid var(--line);
+}
+.c-dash-row .time { width: 56px; flex: none; font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.c-dash-row .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.c-dash-row .t { font-size: 15px; line-height: 22px; font-weight: 500; }
+.c-dash-row .m { font-size: 13px; line-height: 18px; color: var(--ink-3); }
+
+.c-dash-task-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  border-top: 1px solid var(--line);
+}
+.c-dash-task-row .check {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-strong);
+  background: var(--surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  box-sizing: border-box;
+  padding: 0;
+  cursor: pointer;
+  color: #fff;
+}
+.c-dash-task-row .check.on { border-color: var(--ink); background: var(--ink); }
+.c-dash-task-row .check:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.c-dash-task-row .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.c-dash-task-row .t { font-size: 15px; font-weight: 500; }
+.c-dash-task-row .t.done { text-decoration: line-through; color: var(--ink-3); }
+.c-dash-task-row .m { font-size: 13px; color: var(--ink-3); }
+.c-dash-task-row .due { font-size: 13px; color: var(--ink-3); }
+
+.c-dash-review-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 20px;
+  box-sizing: border-box;
+  border-top: 1px solid var(--line);
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.c-dash-review-row:hover { background: var(--bg); }
+.c-dash-review-row:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.c-dash-review-row .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.c-dash-review-row .t { font-size: 15px; line-height: 22px; font-weight: 500; }
+.c-dash-review-row .m { font-size: 13px; line-height: 18px; color: var(--ink-3); }
+
+.c-dash-week .grid { display: flex; gap: 4px; padding: 8px 16px 16px; }
+.c-dash-week .day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.c-dash-week .wd { font-size: 12px; color: var(--ink-3); }
+.c-dash-week .num {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.c-dash-week .num.on { background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
+.c-dash-week .dots { height: 4px; display: flex; gap: 3px; }
+.c-dash-week .dots i { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); display: block; }
+.c-dash-week .legend { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 0 16px 16px; font-size: 13px; line-height: 18px; color: var(--ink-2); }
+.c-dash-week .legend i { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); flex: none; margin-top: 7px; display: block; }
+
+.c-dash-exam { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.c-dash-exam .c-dash-card-head { padding: 0; }
+.c-dash-exam > .meta { font-size: 13px; color: var(--ink-3); }
+.c-dash-exam .progress { display: flex; flex-direction: column; gap: 8px; }
+.c-dash-exam .progress-head { display: flex; justify-content: space-between; font-size: 13px; }
+.c-dash-exam .progress-head span:first-child { color: var(--ink-2); }
+.c-dash-exam .progress-head .pct { font-weight: 600; font-variant-numeric: tabular-nums; }
+.c-dash-exam .bar { height: 6px; border-radius: 3px; background: var(--sunken); }
+.c-dash-exam .bar .fill { height: 6px; border-radius: 3px; background: var(--ink); }
+
+@media (max-width: 1023px) {
+  .c-dash-cols { flex-direction: column; }
+  .c-dash-aside { width: 100%; }
+  .c-dash-head h1 { font-size: 28px; line-height: 36px; letter-spacing: -0.015em; }
+  .c-dash-continue-tx .t { font-size: 15px; line-height: 20px; }
+}
+
