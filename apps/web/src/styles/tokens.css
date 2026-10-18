@@ -113,3 +113,105 @@
 :root[data-theme="dark"] {
   /* Зарезервировано под тёмную тему. Не используется сейчас. */
 }
+
+/* ============================================================
+ *  Дизайн-основа v3 — A1, 2026-10-18 (миграция на бренд cohorta).
+ *
+ *  Источник: docs/design/design-system/tokens.css, значения не
+ *  менять (копия без изменений, раздел 2.1 инструкции). Заменяет
+ *  ОБЕ старые системы (блок выше в этом файле — v2 «дизайн-основа»,
+ *  #E8601C; и v1 в App.css — «Light Craft», фиолетовый #5843F6) —
+ *  решение 0.1.4 инструкции. Блок v2 выше пока не удалён: его
+ *  --color-N / --text-N / --space-1..7 всё ещё читают живые экраны
+ *  (расписание, задачи, квиз — components.css, SchedulePage,
+ *  TasksPage, QuizPage и др.), которые переносятся по волнам
+ *  B3/B5. Удалить блок v2 и легаси-алиасы ниже после того, как
+ *  все экраны, что на них ссылаются, перенесены (волна D).
+ *
+ *  main.tsx теперь явно импортирует App.css ДО этого файла, чтобы
+ *  :root здесь (загружается последним) побеждал в каскаде на общих
+ *  именах (--ink, --bg, --surface, --danger…) — иначе App.css,
+ *  попадая в бандл позже через App.tsx, перекрывал бы эти токены.
+ * ============================================================ */
+:root {
+  --bg: #F7F7F5;
+  --surface: #FFFFFF;
+  --sunken: #EEEEEB;
+  --line: #E5E5E1;
+  --line-strong: #D2D2CD;
+  --input-border: #8C8C86;
+  --ink: #1C1B19;
+  --ink-hover: #34312D;
+  --ink-2: #5A5A56;
+  --ink-3: #6A6A65;
+  --on-ink: #FFFFFF;
+  --accent: #E86800;
+  --accent-hover: #CF5C00;
+  --on-accent: #FFFFFF;
+  --accent-strong: #A84A00;
+  --accent-soft: #FDEBDB;
+  --ok: #2E7A4D;
+  --ok-soft: #E4F0E8;
+  --ok-text: #256440;
+  --warn: #8A5A00;
+  --warn-soft: #FAEFD2;
+  --danger: #E6000B;
+  --danger-soft: #FDE3E3;
+  --danger-text: #B00008;
+
+  /* space-1..4 совпадают по px с v2 (4/8/12/16) — без разницы.
+     space-5/-6 здесь НЕ объявлены: у v2 это 24px/32px и их живым
+     экранам (см. выше) нельзя молча сменить на 20px/24px до их
+     переноса. space-8/10/12 новые, без коллизии с v2. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+  --touch-min: 44px;
+  --control-sm: 36px;
+  --control-md: 44px;
+  --control-lg: 52px;
+  --sidebar-width: 264px;
+  --content-max: 1120px;
+  --row-min: 64px;
+  --shadow-pop: 0 8px 24px rgba(28, 27, 25, .10);
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* ---- Легаси-алиасы App.css (v1, «Light Craft», фиолетовый) ----
+ * Старые экраны (ещё не перенесённые по волнам B) продолжают
+ * обращаться к этим именам — здесь они указывают на новые токены
+ * вместо старых фиолетовых значений, поэтому индиго/фиолетовый
+ * выше исчезает сразу везде, без правок самого App.css построчно.
+ * Градиентные токены схлопнуты в плоский цвет (баннер «Продолжить»
+ * становится плоским без правок PriorityHero.tsx/App.css).
+ * Удалить вместе с App.css в волне D. */
+:root {
+  --brand-1: var(--accent);
+  --brand-1-hover: var(--accent-hover);
+  --brand-2: var(--accent-soft);
+  --brand-gradient: var(--accent);
+  --brand-wash: var(--accent-soft);
+  --brand-ring: var(--accent-soft);
+  --border: var(--line);
+  --border-strong: var(--line-strong);
+  --success: var(--ok);
+  --success-ink: var(--ok-text);
+  --success-soft: var(--ok-soft);
+  --danger-ink: var(--danger-text);
+  --danger-border: var(--danger-soft);
+  --warning: var(--warn);
+  --warning-ink: var(--warn);
+  --warning-soft: var(--warn-soft);
+  --highlight: var(--accent-soft);
+  --shadow-brand: var(--shadow-pop);
+}

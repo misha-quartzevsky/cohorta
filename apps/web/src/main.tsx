@@ -17,7 +17,26 @@ if (typeof window !== "undefined") {
   (window as unknown as { EXCALIDRAW_ASSET_PATH?: string }).EXCALIDRAW_ASSET_PATH = "/excalidraw-fonts/";
 }
 
+// Inter локально через @fontsource (A1, 2026-10-18) — без внешнего
+// Google Fonts CDN (раздел 3 инструкции). Дизайн-система нужна
+// только в 400/500/600, но старый App.css (живые экраны, волна B)
+// местами ставит font-weight:700 — без него браузер синтезировал
+// бы псевдо-жирный. 700 убрать вместе с App.css в волне D.
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
+import "@fontsource/inter/600.css";
+import "@fontsource/inter/700.css";
+import "@fontsource/inter/cyrillic-400.css";
+import "@fontsource/inter/cyrillic-500.css";
+import "@fontsource/inter/cyrillic-600.css";
+import "@fontsource/inter/cyrillic-700.css";
+
 import "./index.css";
+// App.css (легась, волна B) импортируется здесь явно, ДО tokens.css —
+// иначе отложенный `import "./App.css"` внутри App.tsx грузится позже
+// в графе модулей и его :root переопределяет новые токены по общим
+// именам (--ink, --bg, --danger…). Новые токены должны побеждать.
+import "./App.css";
 import "./styles/tokens.css";
 import "./styles/components.css";
 import App from "./App.tsx";
