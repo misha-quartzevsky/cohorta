@@ -1361,24 +1361,100 @@ button.c-row.on:hover { background: var(--accent-soft); }
   color: var(--ink);
 }
 .c-menu { width: 240px; padding: 6px; }
-.c-menu div {
+.c-menu div,
+.c-menu button {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
   height: 44px;
   padding: 0 12px;
   border-radius: 10px;
   font: 400 14px/1 var(--font-sans);
+  background: none;
+  border: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
 }
+.c-menu button:hover { background: var(--bg); }
+.c-menu button:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
 .c-menu hr { border: 0; height: 1px; background: var(--line); margin: 4px 6px; }
 .c-menu .bad { color: var(--danger-text); }
 .c-dialog {
   width: 420px;
+  max-width: calc(100vw - 32px);
   padding: 28px;
   border-radius: var(--radius-xl);
   display: flex;
   flex-direction: column;
   gap: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  box-sizing: border-box;
+  font-family: var(--font-sans);
+  color: var(--ink);
+}
+.c-overlay {
+  position: fixed;
+  inset: 0;
+  /* Тот же приём, что у .c-shell-backdrop/.c-search-backdrop: токен
+     --color-scrim с запасным значением, если он не объявлен. */
+  background: var(--color-scrim, rgba(28, 27, 25, 0.4));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  z-index: 1300;
+}
+.c-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.c-dialog-head h2 { margin: 0; font-size: 20px; line-height: 26px; font-weight: 500; }
+.c-dialog-close {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: none;
+  color: var(--ink-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+}
+.c-dialog-close:hover { background: var(--sunken); }
+.c-dialog-close:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.c-dialog-body { display: flex; flex-direction: column; gap: var(--space-3); max-height: 60vh; overflow-y: auto; }
+.c-dialog-foot { display: flex; align-items: center; gap: 12px; justify-content: flex-end; }
+
+.c-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-strong);
+  background: var(--surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  box-sizing: border-box;
+  padding: 0;
+  cursor: pointer;
+  color: var(--on-ink);
+}
+.c-check.on { border-color: var(--ink); background: var(--ink); }
+.c-check:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+@media (max-width: 639px) {
+  .c-overlay { align-items: flex-end; padding: 0; }
+  .c-dialog {
+    width: 100%;
+    max-width: none;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    max-height: 85vh;
+  }
 }
 .c-toast {
   display: inline-flex;
@@ -2086,4 +2162,250 @@ button.c-row.on:hover { background: var(--accent-soft); }
   .c-search-results { padding: 0 16px 16px; }
   .c-search-results .c-list { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); margin-bottom: 14px; }
   .c-search-results .c-row { border-radius: 0; }
+}
+
+/* ============================================================
+ *  «Расписание» — B3, 2026-10-20 (pages/SchedulePageNew.tsx).
+ *  Вёрстка 1:1 по docs/design/screens/Screen-schedule(-m).dc.html.
+ * ============================================================ */
+.c-schedule { display: flex; flex-direction: column; gap: var(--space-7); font-family: var(--font-sans); }
+
+.c-schedule-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); }
+.c-schedule-head-tx { display: flex; flex-direction: column; gap: 8px; }
+.c-schedule-head-tx h1 { margin: 0; font-size: 36px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; }
+.c-schedule-head-tx span { font-size: 14px; color: var(--ink-3); }
+
+.c-schedule-m-head { display: none; flex-direction: column; gap: 2px; }
+.c-schedule-m-head h1 { margin: 0; font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em; }
+.c-schedule-m-head span { font-size: 14px; color: var(--ink-3); }
+
+.c-schedule-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+.c-schedule-weeknav { display: flex; align-items: center; gap: var(--space-2); }
+.c-schedule-weeknav span { font-size: 14px; font-weight: 500; min-width: 110px; text-align: center; }
+.c-schedule-weeknav-btn {
+  width: 36px; height: 36px; border-radius: var(--radius-md); border: 1px solid var(--line-strong);
+  background: var(--surface); color: var(--ink); display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.c-schedule-weeknav-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.c-schedule-legend { display: flex; gap: var(--space-5); align-items: center; font-size: 13px; color: var(--ink-2); }
+.c-schedule-legend-item { display: inline-flex; align-items: center; gap: 8px; }
+.c-schedule-legend-swatch { width: 20px; height: 20px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line-strong); }
+
+.c-schedule-cols { display: flex; gap: var(--space-8); align-items: flex-start; }
+.c-schedule-grid-wrap { flex: 1; min-width: 0; }
+.c-schedule-aside { width: 300px; flex: none; display: flex; flex-direction: column; gap: var(--space-4); }
+
+.c-schedule-grid { display: grid; gap: 4px 8px; align-items: stretch; }
+.c-schedule-dayhead { padding: 0 4px 8px; font-size: 13px; font-weight: 600; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
+.c-schedule-dayhead.today { color: var(--accent-strong); }
+.c-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.c-dot-accent { background: var(--accent); }
+.c-dot-danger { background: var(--danger); }
+.c-schedule-time { display: flex; flex-direction: column; justify-content: center; font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; line-height: 16px; }
+.c-schedule-time strong { font-size: 13px; color: var(--ink-2); }
+.c-schedule-cell { padding: 2px; min-height: 84px; }
+.c-schedule-cell.today { background: var(--accent-soft); border-radius: var(--radius-md); }
+.c-schedule-empty-cell {
+  width: 100%; height: 100%; min-height: 80px; box-sizing: border-box; border-radius: 14px;
+  border: 1.5px dashed var(--line-strong); background: none; cursor: pointer;
+}
+.c-schedule-empty-cell:hover { border-color: var(--ink-3); }
+.c-schedule-empty-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.c-schedule-slot {
+  position: relative; width: 100%; height: 100%; min-height: 80px; box-sizing: border-box; border-radius: 14px;
+  overflow: hidden; display: flex; align-items: flex-start; text-align: left; cursor: pointer; border: none; padding: 0;
+  font: inherit; color: inherit;
+}
+.c-schedule-slot:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.c-schedule-slot.has-note { border: 1px solid color-mix(in srgb, var(--ink) 6%, transparent); }
+.c-schedule-slot.no-note { background: var(--surface); border: 1px solid var(--line-strong); flex-direction: column; }
+.c-schedule-slot-cover { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; border-radius: 0 !important; }
+.c-schedule-slot-body { position: relative; z-index: 1; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; width: 100%; box-sizing: border-box; }
+.c-schedule-slot-body .t { font-size: 13px; line-height: 18px; font-weight: 600; color: var(--ink); }
+.c-schedule-slot-body .m { font-size: 12px; color: var(--ink-2); }
+.c-schedule-slot.has-note .c-schedule-slot-body .m { color: var(--ink); }
+.c-schedule-start-badge { margin-top: 4px; }
+
+.c-schedule-m-days { display: none; }
+.c-schedule-m-list { display: none; }
+.c-schedule-m-empty { font-size: 14px; color: var(--ink-3); }
+
+.c-schedule-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; }
+.c-schedule-card-label { font-size: 12px; line-height: 18px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.c-schedule-card-sub { font-size: 13px; color: var(--ink-3); }
+.c-schedule-next { display: flex; gap: 12px; align-items: center; }
+.c-schedule-next .t { font-size: 15px; font-weight: 600; }
+.c-schedule-next .m { font-size: 13px; color: var(--ink-3); }
+.c-schedule-week-count { font-size: 15px; font-weight: 600; }
+.c-schedule-divider { height: 1px; background: var(--line); }
+.c-schedule-missing-list { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.c-schedule-missing-row { display: flex; justify-content: space-between; background: none; border: none; padding: 0; cursor: pointer; font: inherit; color: var(--ink); }
+.c-schedule-missing-action { color: var(--accent-strong); }
+
+.c-progress { height: 6px; border-radius: 3px; background: var(--sunken); overflow: hidden; }
+.c-progress-fill { height: 100%; border-radius: 3px; background: var(--ink); }
+
+@media (max-width: 1023px) {
+  .c-schedule-head { display: none; }
+  .c-schedule-m-head { display: flex; }
+  .c-schedule-toolbar { display: none; }
+  .c-schedule-grid { display: none; }
+  .c-schedule-aside { display: none; }
+  .c-schedule-m-days { display: flex; gap: 6px; margin-bottom: var(--space-4); }
+  .c-schedule-m-day {
+    flex: 1; height: 60px; border-radius: 14px; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 2px; background: var(--surface); border: 1px solid var(--line); color: var(--ink-2);
+    cursor: pointer; font-family: var(--font-sans);
+  }
+  .c-schedule-m-day span { font-size: 12px; }
+  .c-schedule-m-day strong { font-size: 16px; font-weight: 600; }
+  .c-schedule-m-day.on { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+  .c-schedule-m-day:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .c-schedule-m-list { display: flex; flex-direction: column; gap: 14px; }
+  .c-schedule-m-row { display: flex; gap: 12px; align-items: stretch; }
+  .c-schedule-m-time { width: 44px; flex: none; display: flex; flex-direction: column; justify-content: center; font-size: 12px; color: var(--ink-3); line-height: 16px; }
+  .c-schedule-m-time strong { font-size: 13px; color: var(--ink-2); }
+  .c-schedule-m-card {
+    position: relative; flex: 1; min-width: 0; border-radius: 14px; padding: 12px 14px; display: flex;
+    flex-direction: column; gap: 2px; box-sizing: border-box; text-align: left; border: none; font: inherit; cursor: pointer;
+  }
+  .c-schedule-m-card.has-note { color: var(--ink); overflow: hidden; }
+  .c-schedule-m-card.no-note { background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); cursor: default; }
+  .c-schedule-m-card .t { font-size: 15px; font-weight: 600; line-height: 20px; }
+  .c-schedule-m-card .m { font-size: 13px; color: var(--ink-2); }
+  .c-schedule-m-start { margin-top: 6px; align-self: flex-start; }
+}
+
+/* ============================================================
+ *  «Задачи» — B3, 2026-10-20 (pages/TasksPageNew.tsx).
+ *  Вёрстка 1:1 по docs/design/screens/Screen-tasks(-m).dc.html.
+ * ============================================================ */
+.c-tasks { display: flex; flex-direction: column; gap: var(--space-7); font-family: var(--font-sans); }
+
+.c-tasks-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); }
+.c-tasks-head-tx { display: flex; flex-direction: column; gap: 8px; }
+.c-tasks-head-tx h1 { margin: 0; font-size: 36px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; }
+.c-tasks-head-tx span { font-size: 14px; color: var(--ink-3); }
+
+.c-tasks-m-head { display: none; flex-direction: column; gap: 2px; }
+.c-tasks-m-head h1 { margin: 0; font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em; }
+.c-tasks-m-head span { font-size: 14px; color: var(--ink-3); }
+
+.c-tasks-quickadd { display: flex; gap: var(--space-3); }
+.c-tasks-quickadd input {
+  flex: 1; height: var(--control-md); border-radius: var(--radius-md); background: var(--surface);
+  border: 1px solid var(--input-border); padding: 0 14px; box-sizing: border-box; font: 400 14px/1 var(--font-sans);
+  color: var(--ink);
+}
+.c-tasks-quickadd input::placeholder { color: var(--ink-3); }
+.c-tasks-quickadd-hint { display: flex; gap: var(--space-2); align-items: center; margin-top: var(--space-2); flex-wrap: wrap; }
+.c-tasks-quickadd-subject {
+  height: 24px; padding: 0 10px; border-radius: var(--radius-pill); background: var(--sunken); color: var(--ink-2);
+  font: 500 13px/1 var(--font-sans); border: none; cursor: pointer;
+}
+
+.c-tasks-cols { display: flex; gap: var(--space-8); align-items: flex-start; }
+.c-tasks-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-6); }
+.c-tasks-aside { width: 300px; flex: none; display: flex; flex-direction: column; gap: var(--space-4); }
+
+.c-task-group { display: flex; flex-direction: column; gap: 10px; }
+.c-task-group-title { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); padding: 0 4px; }
+.c-task-group-title.danger { color: var(--danger-text); }
+.c-task-list { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; }
+
+.c-task-row { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 12px 20px; box-sizing: border-box; border-top: 1px solid var(--line); }
+.c-task-list .c-task-row:first-child { border-top: 0; }
+.c-task-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.c-task-row-title, .c-task-row-title-input { font-size: 15px; line-height: 22px; font-weight: 500; text-align: left; background: none; border: none; padding: 0; color: var(--ink); cursor: text; font-family: var(--font-sans); }
+.c-task-row-title.done { text-decoration: line-through; color: var(--ink-3); }
+.c-task-row-title-input { width: 100%; outline: none; }
+.c-task-row-meta { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-3); }
+.c-task-row-subject { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; padding: 0; cursor: pointer; font: inherit; color: var(--ink-3); }
+.c-task-row-subject .muted { color: var(--ink-3); }
+.c-task-row-lecture { display: inline-flex; align-items: center; gap: 4px; }
+.c-task-row-due { background: none; border: none; font: 400 13px/1 var(--font-sans); color: var(--ink-3); cursor: pointer; padding: 0 8px; height: 36px; border-radius: var(--radius-md); }
+.c-task-row-due:hover { background: var(--sunken); }
+.c-task-row-due.overdue { color: var(--danger-text); font-weight: 500; }
+.c-task-row-hidden-input { position: absolute; opacity: 0; width: 1px; height: 1px; bottom: 0; right: 0; pointer-events: none; }
+.c-task-row-menu-btn { width: 36px; height: 36px; border-radius: var(--radius-md); border: none; background: none; color: var(--ink-3); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none; }
+.c-task-row-menu-btn:hover { background: var(--sunken); }
+.c-task-row-menu-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.c-task-suggested-row { display: flex; align-items: center; gap: 8px; min-height: 64px; padding: 0 12px 0 20px; box-sizing: border-box; border-top: 1px solid var(--line); }
+.c-task-list .c-task-suggested-row:first-child { border-top: 0; }
+.c-task-suggested-row:hover { background: var(--bg); }
+.c-task-suggested-main { flex: 1; min-width: 0; display: flex; flex-direction: column; text-align: left; background: none; border: none; padding: 12px 0; cursor: pointer; font: inherit; color: inherit; }
+.c-task-suggested-label { font-size: 12px; color: var(--ink-3); display: block; margin-bottom: 2px; }
+.c-task-suggested-title { font-size: 15px; font-weight: 500; }
+
+.c-tasks-subjects { display: flex; flex-direction: column; gap: 2px; }
+.c-tasks-subject-row { display: flex; align-items: center; justify-content: space-between; height: 44px; font-size: 14px; background: none; border: none; cursor: pointer; padding: 0 4px; border-radius: var(--radius-md); color: var(--ink); }
+.c-tasks-subject-row:hover { background: var(--bg); }
+.c-tasks-subject-row.on { background: var(--accent-soft); color: var(--accent-strong); }
+.c-tasks-subject-row-name { display: flex; align-items: center; gap: 10px; }
+.c-tasks-subject-row-count { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+.c-tasks-m-pills { display: none; }
+
+@media (max-width: 1023px) {
+  .c-tasks-head { display: none; }
+  .c-tasks-m-head { display: flex; }
+  .c-tasks-aside { display: none; }
+  .c-tasks-cols { flex-direction: column; }
+  .c-tasks-m-pills { display: flex; }
+}
+
+/* ============================================================
+ *  «Пары предмета» — B3, 2026-10-20 (pages/SubjectPairsPage.tsx).
+ *  Вёрстка 1:1 по docs/design/screens/Screen-subject-pairs(-m).dc.html.
+ * ============================================================ */
+.c-pairs { display: flex; flex-direction: column; gap: var(--space-5); font-family: var(--font-sans); }
+
+.c-pairs-crumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-3); }
+.c-pairs-crumb .current { color: var(--ink-2); }
+.c-pairs-m-crumb { display: none; }
+.c-pairs-m-crumb button { display: inline-flex; align-items: center; gap: 4px; background: none; border: none; font: 500 14px/1 var(--font-sans); color: var(--ink-2); padding: 0; cursor: pointer; height: 32px; }
+
+.c-pairs-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); }
+.c-pairs-head-tx { display: flex; flex-direction: column; gap: 8px; }
+.c-pairs-head-tx h1 { margin: 0; font-size: 36px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; }
+.c-pairs-head-tx span { font-size: 14px; color: var(--ink-3); }
+
+.c-pairs-m-head { display: none; flex-direction: column; gap: 2px; }
+.c-pairs-m-head h1 { margin: 0; font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em; }
+.c-pairs-m-head span { font-size: 14px; color: var(--ink-3); }
+.c-pairs-m-add { display: none; width: 100%; justify-content: center; }
+
+.c-pairs-empty { font-size: 14px; color: var(--ink-3); }
+.c-pairs-list { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; background: var(--surface); }
+.c-pairs-row { display: flex; align-items: center; gap: 16px; min-height: 64px; padding: 12px 20px; box-sizing: border-box; border-top: 1px solid var(--line); }
+.c-pairs-list .c-pairs-row:first-child { border-top: 0; }
+.c-pairs-row-day { width: 110px; flex: none; display: flex; flex-direction: column; }
+.c-pairs-row-day .t { font-size: 15px; font-weight: 600; }
+.c-pairs-row-day .m { font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.c-pairs-row-kind { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.c-pairs-row-kind .t { font-size: 15px; font-weight: 500; }
+.c-pairs-row-kind .m { font-size: 13px; color: var(--ink-3); }
+
+.c-pairs-m-list { display: none; }
+
+.c-pairs-note { display: flex; flex-direction: column; gap: 2px; padding: 16px 20px; border-radius: var(--radius-lg); background: var(--sunken); }
+.c-pairs-note strong { font-size: 14px; font-weight: 600; }
+.c-pairs-note p { margin: 0; font-size: 13px; line-height: 19px; color: var(--ink-2); }
+
+@media (max-width: 1023px) {
+  .c-pairs-crumb { display: none; }
+  .c-pairs-m-crumb { display: block; }
+  .c-pairs-head { display: none; }
+  .c-pairs-m-head { display: flex; }
+  .c-pairs-m-add { display: inline-flex; }
+  .c-pairs-list { display: none; }
+  .c-pairs-m-list { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; background: var(--surface); }
+  .c-pairs-m-row { display: flex; align-items: center; gap: 12px; padding: 12px 8px 12px 16px; box-sizing: border-box; border-top: 1px solid var(--line); }
+  .c-pairs-m-list .c-pairs-m-row:first-child { border-top: 0; }
+  .c-pairs-m-row-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .c-pairs-m-row-tx .t { font-size: 15px; line-height: 22px; font-weight: 600; }
+  .c-pairs-m-row-tx .m { font-size: 13px; line-height: 18px; color: var(--ink-3); }
 }
