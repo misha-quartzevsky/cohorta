@@ -101,7 +101,7 @@
    "area": "learn",
    "mock": "States-empty",
    "mobile": null,
-   "note": "Блок «С чего начать»",
+   "note": "Блок «С чего начать»: три шага, выполненные исчезают.",
    "entry": false,
    "terminal": false,
    "virtual": false
@@ -111,8 +111,8 @@
    "title": "Все лекции",
    "area": "learn",
    "mock": "Screen-lectures",
-   "mobile": "Screen-m-lectures",
-   "note": "",
+   "mobile": "Screen-m-lectures-all; Screen-m-lectures-subjects; Screen-m-lectures-period",
+   "note": "Телефон: две внутренние вкладки «Все лекции» / «Предметы», период и фильтр внизу над панелью.",
    "entry": false,
    "terminal": false,
    "virtual": false
@@ -121,9 +121,9 @@
    "id": "subject",
    "title": "Предмет: вкладка «Лекции»",
    "area": "learn",
-   "mock": null,
-   "mobile": null,
-   "note": "Не нарисована. Нужна как цель клика по предмету в меню и по ряду предметов на телефоне",
+   "mock": "Screen-subject-lectures",
+   "mobile": "Screen-m-subject-lectures",
+   "note": "Нарисована (19.10). Вкладки «Лекции / Пары / Экзамен»; на телефоне «Лекции / Пары и экзамен».",
    "entry": false,
    "terminal": false,
    "virtual": false
