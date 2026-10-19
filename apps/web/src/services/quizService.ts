@@ -11,18 +11,37 @@ import { FIELDS } from "../lib/types";
 import type { Quiz, QuizQuestion, QuizAnswer, QuizQuestionType } from "../lib/types";
 import { extractText, normalizeText } from "../lib/extractText";
 import { sha256Hex } from "../lib/sha256";
-import { todayStr } from "../lib/localDate";
 import { parsePbDate } from "../lib/format";
 import type { ReadinessQuestion, ReadinessAnswer } from "../lib/computeLectureReadiness";
+import type { QuizSize } from "../lib/quizLimits";
+import { fetchLecture } from "./lectureService";
 
-export type QuizSize = 5 | 8 | 12;
+export type { QuizSize };
+
+/** Подробности ошибки от сервера: порог текста, лимит и сколько уже создано сегодня. */
+export interface QuizErrorDetails {
+  min?: number;
+  limit?: number;
+  used?: number;
+}
 
 export class QuizError extends Error {
   code: string;
-  constructor(code: string) {
+  details: QuizErrorDetails;
+  constructor(code: string, details: QuizErrorDetails = {}) {
     super(code);
     this.code = code;
+    this.details = details;
   }
+}
+
+async function errorFrom(res: Response): Promise<QuizError> {
+  const data = await res.json().catch(() => ({ error: "generation_failed" }));
+  return new QuizError(data.error ?? "generation_failed", {
+    min: typeof data.min === "number" ? data.min : undefined,
+    limit: typeof data.limit === "number" ? data.limit : undefined,
+    used: typeof data.used === "number" ? data.used : undefined,
+  });
 }
 
 function currentUserId(): string {
@@ -57,7 +76,7 @@ export async function findCachedQuiz(
 /** Вопросы конкретного квиза, по порядку. */
 export async function fetchQuizQuestions(quizId: string): Promise<QuizQuestion[]> {
   return pb.collection("quiz_questions").getFullList<QuizQuestion>({
-    filter: `${FIELDS.qqQuiz}="${quizId}" && ${FIELDS.qqHidden}=false`,
+    filter: `${FIELDS.qqQuiz}="${quizId}" && ${FIELDS.qqHidden}=false && ${FIELDS.qqFlagged}=false`,
     sort: FIELDS.qqPosition,
   });
 }
@@ -81,7 +100,8 @@ export async function requestGeneration(
   lectureId: string,
   title: string,
   text: string,
-  size: QuizSize
+  size: QuizSize,
+  signal?: AbortSignal
 ): Promise<{ model: string; questions: GeneratedQuestion[] }> {
   const token = pb.authStore.token;
   let res: Response;
@@ -93,8 +113,10 @@ export async function requestGeneration(
         Authorization: token,
       },
       body: JSON.stringify({ lectureId, title, text, size }),
+      signal,
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") throw new QuizError("aborted");
     throw new QuizError("network");
   }
 
@@ -112,18 +134,16 @@ export async function requestGeneration(
         Authorization: pb.authStore.token,
       },
       body: JSON.stringify({ lectureId, title, text, size }),
+      signal,
+    }).catch((e: unknown) => {
+      if (e instanceof DOMException && e.name === "AbortError") throw new QuizError("aborted");
+      throw new QuizError("network");
     });
-    if (!retryRes.ok) {
-      const data = await retryRes.json().catch(() => ({ error: "generation_failed" }));
-      throw new QuizError(data.error ?? "generation_failed");
-    }
+    if (!retryRes.ok) throw await errorFrom(retryRes);
     return retryRes.json();
   }
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({ error: "generation_failed" }));
-    throw new QuizError(data.error ?? "generation_failed");
-  }
+  if (!res.ok) throw await errorFrom(res);
 
   return res.json();
 }
@@ -167,6 +187,44 @@ export async function saveQuiz(
   return { quiz, questions: created.sort((a, b) => (a.position ?? 0) - (b.position ?? 0)) };
 }
 
+/** Самый свежий квиз лекции (по дате создания) или null. */
+export async function fetchLatestQuiz(lectureId: string): Promise<Quiz | null> {
+  try {
+    return await pb
+      .collection("quizzes")
+      .getFirstListItem<Quiz>(`${FIELDS.quizLecture}="${lectureId}"`, { sort: "-created" });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Создать квиз по тексту лекции (окно «Создать квиз»): готовый квиз с тем же
+ * текстом и размером берётся из кэша без обращения к ИИ (и без траты лимита,
+ * лимит считается по созданным квизам), иначе вызывается серверная функция
+ * и результат сохраняется. `forceNew` («Собрать другой») кэш игнорирует.
+ */
+export async function createQuiz(
+  lectureId: string,
+  size: QuizSize,
+  forceNew: boolean,
+  signal?: AbortSignal
+): Promise<Quiz> {
+  // Текст берём из базы в момент создания, а не из того, что открыто на экране:
+  // экран мог прочитать лекцию раньше, чем её дописали.
+  const lecture = await fetchLecture(lectureId);
+  const { text, hash } = await lectureTextAndHash(lecture.content ?? "");
+  if (!forceNew) {
+    const cached = await findCachedQuiz(lecture.id, hash, size);
+    if (cached) return cached;
+  }
+  const { model, questions } = await requestGeneration(lecture.id, lecture.title, text, size, signal);
+  // Отменили, пока шёл ответ ИИ: ничего не сохраняем, попытка не списывается.
+  if (signal?.aborted) throw new QuizError("aborted");
+  const saved = await saveQuiz(lecture.id, hash, size, model, questions);
+  return saved.quiz;
+}
+
 /** Записать ответ на вопрос (spec 6.3: каждый ответ сразу пишется). */
 export async function submitAnswer(
   questionId: string,
@@ -179,7 +237,9 @@ export async function submitAnswer(
     [FIELDS.qaQuestion]: questionId,
     [FIELDS.qaLecture]: lectureId,
     [FIELDS.qaCorrect]: correct,
-    [FIELDS.qaAnsweredAt]: todayStr(),
+    // Точное время, а не только дата: иначе два ответа за один день не отличить,
+    // а «последний ответ» нужен и формуле понимания, и продолжению квиза.
+    [FIELDS.qaAnsweredAt]: new Date().toISOString(),
     [FIELDS.qaAttempt]: attempt,
   });
 }
@@ -229,12 +289,13 @@ export async function fetchReadinessAnswers(
 ): Promise<ReadinessAnswer[]> {
   const answers = await pb.collection("quiz_answers").getFullList<QuizAnswer>({
     filter: `${FIELDS.qaLecture}="${lectureId}"`,
-    sort: FIELDS.qaAnsweredAt,
+    sort: "created",
   });
   return answers.map((a) => ({
     questionId: a.question,
     correct: !!a.correct,
-    answeredAt: parsePbDate(a.answered_at ?? a.created) ?? new Date(),
+    answeredAt: parsePbDate(a.answered_at || a.created) ?? new Date(),
+    attempt: a.attempt ?? "",
   }));
 }
 
@@ -300,7 +361,7 @@ export async function fetchReadinessAnswersByLecture(): Promise<
     list.push({
       questionId: a.question,
       correct: !!a.correct,
-      answeredAt: parsePbDate(a.answered_at ?? a.created) ?? new Date(),
+      answeredAt: parsePbDate(a.answered_at || a.created) ?? new Date(),
     });
     byLecture.set(a.lecture, list);
   }

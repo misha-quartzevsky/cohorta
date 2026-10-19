@@ -18,6 +18,8 @@ export interface ReadinessAnswer {
   questionId: string;
   correct: boolean;
   answeredAt: Date;
+  /** uuid прохождения; нужен продолжению квиза, формуле безразличен. */
+  attempt?: string;
 }
 
 export type TopicStatus = "danger" | "neutral" | "success";

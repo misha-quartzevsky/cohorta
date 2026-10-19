@@ -34,7 +34,11 @@ import { useTocScan } from "../hooks/useTocScan";
 import { userName, nameInitials } from "../lib/format";
 import { Icon, Segmented, TabBar, LectureToc, SubjectCover } from "../ui";
 import type { IconName, TocItem, TabBarItem } from "../ui";
-import LectureReadinessAside from "./LectureReadinessAside";
+import {
+  UnderstandingScope,
+  UnderstandingAside,
+  UnderstandingButton,
+} from "./quiz/UnderstandingScope";
 
 const MODE_OPTIONS: { value: Mode; label: string }[] = [
   { value: "solo", label: "Соло" },
@@ -325,35 +329,35 @@ function Topbar({ open, onBurger }: { open: boolean; onBurger: () => void }) {
         <Icon name="search" size={16} />
         <span>Поиск</span>
       </button>
+      {/* Только на телефоне и только на странице лекции: правая колонка там
+          скрыта, панель «Твоё понимание темы» открывается нижней шторкой. */}
+      <UnderstandingButton />
     </header>
   );
-}
-
-/** Готовность лекции (правая колонка) — только на странице лекции. */
-function LectureAsideSlot() {
-  const { lectureSlug } = useParams();
-  const { lecture } = useLectureBySlug(lectureSlug ?? "");
-  if (!lecture) return null;
-  return <LectureReadinessAside lecture={lecture} />;
 }
 
 export default function AppShellNew() {
   const { sidebarOpen, toggleSidebar, closeSidebar } = useUiShell();
   const { lectureSlug } = useParams();
   const inLecture = !!lectureSlug;
+  const { lecture } = useLectureBySlug(lectureSlug ?? "");
 
   return (
     <div className="c-shell">
       <Sidebar open={sidebarOpen} onClose={closeSidebar} />
-      <div className="c-shell-main">
-        <Topbar open={sidebarOpen} onBurger={toggleSidebar} />
-        {/* Контент: поля 40px на десктопе, до 1120px по центру. */}
-        <div className={`c-shell-content${inLecture ? " with-aside" : ""}`}>
-          <Outlet />
-          {inLecture && <LectureAsideSlot />}
+      {/* Один набор данных «Твоё понимание темы» на колонку справа (компьютер)
+          и шторку (телефон); вне страницы лекции scope пустой. */}
+      <UnderstandingScope lecture={inLecture ? lecture : null}>
+        <div className="c-shell-main">
+          <Topbar open={sidebarOpen} onBurger={toggleSidebar} />
+          {/* Контент: поля 40px на десктопе, до 1120px по центру. */}
+          <div className={`c-shell-content${inLecture ? " with-aside" : ""}`}>
+            <Outlet />
+            {inLecture && <UnderstandingAside />}
+          </div>
+          <SearchOverlay />
         </div>
-        <SearchOverlay />
-      </div>
+      </UnderstandingScope>
       <MobileTabBar />
     </div>
   );

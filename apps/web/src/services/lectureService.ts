@@ -25,8 +25,8 @@ function currentUserId(): string {
  * @param lectureId — PocketBase record ID
  * @returns Resolves to the Lecture record.
  */
-export async function fetchLecture(lectureId: string): Promise<Lecture> {
-  return pb.collection("lectures").getOne<Lecture>(lectureId);
+export async function fetchLecture(lectureId: string, expand?: string): Promise<Lecture> {
+  return pb.collection("lectures").getOne<Lecture>(lectureId, expand ? { expand } : undefined);
 }
 
 /**

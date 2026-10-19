@@ -13,7 +13,8 @@
  *   GEMINI_API_KEY   (secret, обязательно)
  *   GEMINI_MODEL     (по умолчанию gemini-flash-lite-latest)
  *   PB_URL           (адрес PocketBase, с https://)
- *   QUIZ_DAILY_LIMIT (по умолчанию 20)
+ *   QUIZ_DAILY_LIMIT (по умолчанию 5; решение владелицы, B5)
+ *   QUIZ_TZ          (часовой пояс «суток» лимита, по умолчанию Europe/Moscow)
  *
  * Модель: `gemini-2.5-flash` из черновика спеки на новых аккаунтах Google
  * отдаёт 404 «no longer available to new users» — подтверждено живым
@@ -26,6 +27,7 @@ interface Env {
   GEMINI_MODEL?: string;
   PB_URL: string;
   QUIZ_DAILY_LIMIT?: string;
+  QUIZ_TZ?: string;
 }
 
 interface GenerateRequestBody {
@@ -60,11 +62,13 @@ interface ValidQuestion {
 }
 
 const ALLOWED_SIZES = [5, 8, 12];
-const MIN_TEXT_LENGTH = 400;
+/** Минимум знаков в конспекте — тот же порог в src/lib/quizLimits.ts (решение владелицы, B5). */
+const MIN_TEXT_LENGTH = 300;
 const MAX_TEXT_LENGTH = 24000;
 const GEMINI_TIMEOUT_MS = 25000;
 const DEFAULT_MODEL = "gemini-flash-lite-latest";
-const DEFAULT_DAILY_LIMIT = 20;
+const DEFAULT_DAILY_LIMIT = 5;
+const DEFAULT_TZ = "Europe/Moscow";
 
 const SYSTEM_INSTRUCTION_TEMPLATE = (size: number) =>
   `Ты помогаешь студенту проверить себя по его собственному конспекту. Составь ровно ${size} вопросов строго по тексту ниже. Не используй факты, которых нет в тексте. Не придумывай даты, номера статей и имена, если их нет в тексте. Примерно 70% вопросов типа \`mcq\` (4 варианта, один верный, неверные варианты правдоподобные и взяты из соседних понятий текста), остальные типа \`recall\` (вопрос «объясни своими словами», в \`answer\` краткий эталонный ответ из текста). Каждому вопросу дай \`topic\`: короткое название темы (до 5 слов), по возможности как заголовок раздела в тексте; одинаковые темы пиши одинаково. В \`explanation\` одним-двумя предложениями объясни верный ответ по тексту. В \`quote\` поставь дословную цитату из текста (до 200 символов), на которой основан вопрос. Вопросы не должны повторяться и должны покрывать разные части текста. Пиши по-русски.`;
@@ -99,8 +103,34 @@ function json(data: unknown, status: number): Response {
   });
 }
 
-function errorResponse(error: string, status: number): Response {
-  return json({ error }, status);
+function errorResponse(error: string, status: number, extra: Record<string, unknown> = {}): Response {
+  return json({ error, ...extra }, status);
+}
+
+/**
+ * Начало текущих суток в часовом поясе `tz`, как строка UTC для фильтра PocketBase
+ * («2026-10-19 21:00:00» для полуночи по Москве). Лимит сбрасывается в 00:00 по
+ * местному времени — так сказано на экране «Лимит исчерпан».
+ */
+export function startOfDayUtc(now: Date, tz: string): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
+  // Сколько времени прошло с местной полуночи.
+  const sinceMidnight = ((get("hour") * 60 + get("minute")) * 60 + get("second")) * 1000;
+  const start = new Date(now.getTime() - sinceMidnight - now.getUTCMilliseconds());
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${start.getUTCFullYear()}-${pad(start.getUTCMonth() + 1)}-${pad(start.getUTCDate())} ${pad(
+    start.getUTCHours()
+  )}:${pad(start.getUTCMinutes())}:${pad(start.getUTCSeconds())}`;
 }
 
 /** Обрезать текст по границе абзаца, не разрывая слово/предложение. */
@@ -159,13 +189,10 @@ async function pbLectureBelongsToUser(
 
 async function pbQuizzesToday(
   pbUrl: string,
-  token: string
+  token: string,
+  tz: string
 ): Promise<number> {
-  const today = new Date();
-  const y = today.getUTCFullYear();
-  const m = String(today.getUTCMonth() + 1).padStart(2, "0");
-  const d = String(today.getUTCDate()).padStart(2, "0");
-  const filter = encodeURIComponent(`created>="${y}-${m}-${d} 00:00:00"`);
+  const filter = encodeURIComponent(`created>="${startOfDayUtc(new Date(), tz)}"`);
   const res = await fetch(
     `${pbUrl}/api/collections/quizzes/records?filter=${filter}&perPage=1`,
     { headers: { Authorization: token } }
@@ -353,16 +380,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return errorResponse("invalid_size", 422);
   }
   if (text.length < MIN_TEXT_LENGTH) {
-    return errorResponse("not_enough_text", 422);
+    return errorResponse("not_enough_text", 422, { min: MIN_TEXT_LENGTH });
   }
   const truncatedText = truncateAtParagraph(text, MAX_TEXT_LENGTH);
 
   const dailyLimit = env.QUIZ_DAILY_LIMIT
     ? parseInt(env.QUIZ_DAILY_LIMIT, 10)
     : DEFAULT_DAILY_LIMIT;
-  const todayCount = await pbQuizzesToday(pbUrl, authHeader);
+  const todayCount = await pbQuizzesToday(pbUrl, authHeader, env.QUIZ_TZ || DEFAULT_TZ);
   if (todayCount >= dailyLimit) {
-    return errorResponse("daily_limit", 429);
+    return errorResponse("daily_limit", 429, { limit: dailyLimit, used: todayCount });
   }
 
   const model = env.GEMINI_MODEL || DEFAULT_MODEL;

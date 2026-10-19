@@ -4,4 +4,4 @@
 GEMINI_API_KEY=your-gemini-api-key-here
 GEMINI_MODEL=gemini-flash-lite-latest
 PB_URL=http://127.0.0.1:8090
-QUIZ_DAILY_LIMIT=20
+QUIZ_DAILY_LIMIT=5

@@ -2672,3 +2672,112 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .c-profile-head .mail { font-size: 13px; color: var(--ink-3); }
 .c-profile .c-seg { display: flex; }
 .c-profile .c-seg span { flex: 1; justify-content: center; height: 36px; }
+
+/* ============================================================
+ *  «Твоё понимание темы» (4 состояния) и окна создания квиза — B5.
+ *  Вёрстка по Screen-understanding(-m), Screen-quiz-states, Screen-m-quiz-1/2/3.
+ * ============================================================ */
+.c-readiness .track > .fill { height: 6px; border-radius: 3px; background: var(--ink); }
+.c-readiness.in-sheet { padding: 4px 8px 0; }
+
+.c-shell-underst {
+  display: none;
+  flex: none;
+  height: var(--control-md);
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  font: 500 14px/1 var(--font-sans);
+  cursor: pointer;
+}
+.c-shell-underst:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+@media (max-width: 1023px) {
+  .c-shell-underst { display: inline-flex; align-items: center; }
+}
+
+/* Шторка с панелью на телефоне (Screen-m-understanding). */
+.c-sheet-dialog .c-dialog-body { max-height: 75vh; }
+@media (max-width: 639px) {
+  .c-dialog.c-sheet-dialog { padding: 12px 16px 36px; }
+  .c-dialog.c-sheet-dialog::before,
+  .c-dialog.c-quiz-dialog::before {
+    content: "";
+    align-self: center;
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--line-strong);
+    margin-bottom: 4px;
+  }
+}
+
+/* Окна «Создать квиз» (Screen-quiz-states, блоки 1–5). */
+.c-dialog.c-quiz-dialog { width: 380px; }
+.c-quiz-dialog .c-dialog-body { gap: 14px; max-height: none; overflow: visible; }
+.c-qd-title { margin: 0; font-size: 20px; line-height: 28px; font-weight: 600; }
+.c-qd-text { margin: 0; font-size: 14px; line-height: 22px; color: var(--ink-2); }
+.c-qd-label { font: 600 12px/18px var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.c-qd-hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.c-qd-sizes { display: flex; gap: 10px; }
+.c-qd-size {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+.c-qd-size b { font-size: 22px; font-weight: 600; }
+.c-qd-size span { font-size: 12px; color: var(--ink-3); }
+.c-qd-size.on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.c-qd-size:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.c-qd-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px; }
+.c-qd-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--sunken);
+  color: var(--ink-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.c-qd-progress { height: 6px; border-radius: 3px; background: var(--sunken); overflow: hidden; }
+.c-qd-progress > div { height: 6px; background: var(--ink); width: 62%; animation: c-qd-fill 28s cubic-bezier(0.22, 0.61, 0.36, 1) forwards; }
+@keyframes c-qd-fill { from { width: 6%; } to { width: 92%; } }
+@media (prefers-reduced-motion: reduce) { .c-qd-progress > div { animation: none; } }
+.c-qd-skel { display: flex; flex-direction: column; gap: 14px; }
+.c-qd-skel > div { display: flex; gap: 12px; align-items: center; }
+.c-qd-skel span { width: 20px; height: 20px; border-radius: 50%; background: var(--sunken); }
+.c-qd-skel i { flex: 1; height: 12px; border-radius: 6px; background: var(--sunken); }
+.c-qd-scale { display: flex; flex-direction: column; gap: 6px; }
+.c-qd-scale > div:first-child { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-3); }
+.c-qd-scale .bar { height: 6px; border-radius: 3px; background: var(--sunken); }
+.c-qd-scale .bar > div { height: 6px; border-radius: 3px; background: var(--accent); }
+.c-qd-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--sunken);
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.c-show-phone { display: none !important; }
+@media (max-width: 639px) {
+  .c-dialog.c-quiz-dialog { width: 100%; padding: 12px 20px 40px; }
+  .c-hide-phone { display: none !important; }
+  .c-show-phone { display: inline-flex !important; }
+  p.c-show-phone { display: block !important; }
+  .c-qd-actions { flex-direction: column-reverse; margin-top: 0; }
+  .c-qd-actions .c-btn { width: 100%; justify-content: center; height: var(--control-lg); padding: 0 24px; font-size: 15px; }
+}

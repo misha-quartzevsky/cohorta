@@ -22,5 +22,7 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  /* src/server — тест функции из functions/, которая типизируется своим tsconfig (workers-types). */
+  "exclude": ["src/server"]
 }

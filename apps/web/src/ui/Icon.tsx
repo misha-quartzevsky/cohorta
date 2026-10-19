@@ -38,7 +38,10 @@ const PATHS: Record<string, string> = {
   toc: '<path d="M3 6h18M3 12h12M3 18h8"/>',
   // Нарисованы в Screen-m-profile-draft.dc.html, в icons.md пока нет —
   // предложить добавить в дизайн-систему.
-  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  // Треугольник «ошибка» из Screen-quiz-states (окно «Не получилось собрать квиз»).
+  alert:
+    '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
   logout:
     '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
 };

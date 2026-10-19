@@ -8,6 +8,10 @@ interface Props {
   title?: string;
   children: ReactNode;
   footer?: ReactNode;
+  /** Дополнительный класс окна (.c-dialog) — для окон со своей вёрсткой. */
+  className?: string;
+  /** Без заголовка с крестиком: `title` остаётся только как подпись для скринридера. */
+  bare?: boolean;
 }
 
 /**
@@ -16,7 +20,7 @@ interface Props {
  * фокус захватывается, клик по фону закрывает. Без window.confirm —
  * подтверждения живут внутри (см. components/schedule/SlotFormNew.tsx).
  */
-export default function Modal({ open, onClose, title, children, footer }: Props) {
+export default function Modal({ open, onClose, title, children, footer, className, bare }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
   const prevFocus = useRef<HTMLElement | null>(null);
 
@@ -71,8 +75,14 @@ export default function Modal({ open, onClose, title, children, footer }: Props)
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div ref={panelRef} className="c-dialog" role="dialog" aria-modal="true" aria-label={title}>
-        {title && (
+      <div
+        ref={panelRef}
+        className={`c-dialog${className ? ` ${className}` : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
+        {title && !bare && (
           <div className="c-dialog-head">
             <h2>{title}</h2>
             <button type="button" className="c-dialog-close" aria-label="Закрыть" onClick={onClose}>
