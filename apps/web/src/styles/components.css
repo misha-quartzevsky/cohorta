@@ -1917,7 +1917,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .c-dash-exam .bar .fill { height: 6px; border-radius: 3px; background: var(--ink); }
 
 @media (max-width: 1023px) {
-  .c-dash-cols { flex-direction: column; }
+  .c-dash-cols { flex-direction: column; align-items: stretch; }
   /* Screen-dashboard-mobile.dc.html: на телефоне нет ни «Что повторить»,
      ни «Эта неделя», ни карточки экзамена — только «Продолжить», «Пары
      сегодня», «На сегодня». Сверено по сверке с мокапом 2026-10-19. */
@@ -1979,7 +1979,8 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .c-readiness .plaque { padding: 12px 14px; border-radius: 12px; background: var(--sunken); font-size: 13px; line-height: 20px; color: var(--ink-2); }
 
 @media (max-width: 1023px) {
-  .c-shell-content.with-aside { flex-direction: column; }
+  .c-shell-content.with-aside { flex-direction: column; align-items: stretch; }
+  .c-shell-content.with-aside > .page { width: 100%; }
   .c-lecture-aside { display: none; }
 
   /* Содержание лекции открывается нижней панелью, не боковым дрейнером
@@ -2371,7 +2372,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
   .c-tasks-head { display: none; }
   .c-tasks-m-head { display: flex; }
   .c-tasks-aside { display: none; }
-  .c-tasks-cols { flex-direction: column; }
+  .c-tasks-cols { flex-direction: column; align-items: stretch; }
   .c-tasks-m-pills { display: flex; }
 }
 

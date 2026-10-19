@@ -3224,6 +3224,8 @@ textarea.field {
 
 .workspace-main {
   animation: content-in 0.22s ease both;
+  /* Ячейка grid с min-width:auto не сжимается ниже содержимого: на телефоне страница становилась шире экрана. */
+  min-width: 0;
 }
 
 /* Confirm dialog: proper fixed overlay (rendered via portal to <body>). */
