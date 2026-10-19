@@ -2433,7 +2433,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .c-exam-card-head .actions { display: flex; gap: 8px; }
 .c-exam-card-pad { padding: 24px; }
 
-.c-exam { display: flex; flex-direction: column; gap: var(--space-7); font-family: var(--font-sans); }
+.c-exam { display: flex; flex-direction: column; gap: 28px; font-family: var(--font-sans); }
 
 .c-exam-crumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-3); }
 .c-exam-crumb .current { color: var(--ink-2); }
@@ -2479,12 +2479,6 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .c-exam-legend-swatch.draft { background: var(--accent-soft); border: 1px solid var(--accent-strong); }
 .c-exam-legend-swatch.todo { border: 1px solid var(--line-strong); }
 
-.c-exam-cols { display: flex; gap: var(--space-8); align-items: flex-start; }
-.c-exam-main { flex: 1; min-width: 0; }
-.c-exam-aside { width: 320px; flex: none; display: flex; flex-direction: column; gap: var(--space-5); }
-.c-exam-aside-link { display: flex; align-items: center; gap: 6px; padding: 0 20px 20px; font-size: 14px; font-weight: 500; color: var(--accent-strong); text-decoration: none; }
-.c-exam-aside-empty { margin: 0; padding: 0 20px 16px; font-size: 13px; color: var(--ink-3); }
-
 .c-exam-ticket-row { display: flex; align-items: center; gap: 16px; min-height: 64px; padding: 12px 20px; box-sizing: border-box; border-top: 1px solid var(--line); color: inherit; text-decoration: none; }
 .c-exam-ticket-row:hover { background: var(--bg); }
 .c-exam-card .c-exam-ticket-row:first-child { border-top: 0; }
@@ -2500,7 +2494,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .c-exam-m-row .t { flex: 1; min-width: 0; font-size: 15px; font-weight: 500; line-height: 20px; }
 
 @media (max-width: 1023px) {
-  .c-exam-crumb, .c-exam-head, .c-exam-continue, .c-exam-map-grid-wrap, .c-exam-cols { display: none; }
+  .c-exam-crumb, .c-exam-head, .c-exam-continue, .c-exam-map-card, .c-exam-tickets-card { display: none; }
   .c-exam-m-crumb { display: block; }
   .c-exam-m-head { display: flex; }
   .c-exam-m-actions { display: flex; }
@@ -2510,7 +2504,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
 /* Билет: pages/TicketPageNew.tsx, Screen-ticket.dc.html (своей телефонной
    версии в макете нет — тот же экран, у/без строки «Изменить» неважно на
    ширине экрана, спецсайдбар уходит под текст). */
-.c-ticket { display: flex; flex-direction: column; gap: var(--space-7); font-family: var(--font-sans); }
+.c-ticket { display: flex; flex-direction: column; gap: 28px; font-family: var(--font-sans); }
 .c-ticket-crumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-3); flex-wrap: wrap; }
 .c-ticket-crumb .current { color: var(--ink-2); }
 .c-ticket-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-5); flex-wrap: wrap; }
@@ -2547,7 +2541,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
 }
 
 /* Шпаргалка: pages/CheatsheetPageNew.tsx, Screen-cheatsheet.dc.html. */
-.c-cheatsheet { display: flex; flex-direction: column; gap: var(--space-7); font-family: var(--font-sans); }
+.c-cheatsheet { display: flex; flex-direction: column; gap: 28px; font-family: var(--font-sans); }
 .c-cheatsheet-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-5); flex-wrap: wrap; }
 .c-cheatsheet-head h1 { margin: 0; font-size: 36px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; }
 .c-cheatsheet-head span { font-size: 14px; color: var(--ink-3); }
@@ -2561,7 +2555,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .c-cheatsheet-item .tx .body { font-size: 15px; line-height: 24px; color: var(--ink-2); }
 
 /* Импорт билетов: pages/ExamImportPageNew.tsx, Screen-ticket-import.dc.html. */
-.c-import { display: flex; flex-direction: column; gap: var(--space-7); font-family: var(--font-sans); }
+.c-import { display: flex; flex-direction: column; gap: 28px; font-family: var(--font-sans); }
 .c-import-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-5); flex-wrap: wrap; }
 .c-import-head h1 { margin: 0; font-size: 36px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; }
 .c-import-head span { font-size: 14px; color: var(--ink-3); }

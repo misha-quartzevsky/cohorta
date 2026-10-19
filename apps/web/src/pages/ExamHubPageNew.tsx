@@ -208,7 +208,7 @@ export default function ExamHubPageNew() {
         </div>
       )}
 
-      <div className="c-exam-card">
+      <div className="c-exam-card c-exam-map-card">
         <div className="c-exam-card-head">
           <h2>Карта билетов</h2>
           <span className="meta">
@@ -244,88 +244,45 @@ export default function ExamHubPageNew() {
         </div>
       </div>
 
-      <div className="c-exam-cols">
-        <div className="c-exam-main">
-          <div className="c-exam-card">
-            <div className="c-exam-card-head">
-              <h2>Билеты</h2>
-              <div className="actions">
-                <Button variant="ghost" onClick={() => navigate(base)}>
-                  Конспекты предмета
-                </Button>
-                <Button variant="ghost" onClick={() => navigate(`${base}/exam/cheatsheet`)}>
-                  Шпаргалка
-                </Button>
-                <Button variant="secondary" onClick={() => setAddOpen(true)}>
-                  <Icon name="plus" size={18} />
-                  Добавить билет
-                </Button>
-              </div>
-            </div>
-            <div>
-              {tickets.map((t) => {
-                const status = ticketStatus(t);
-                const n = ticketNumber(t);
-                const sourceCount = ticketSourceIds(t).length;
-                return (
-                  <Link key={t.id} to={ticketHref(n, status)} className="c-exam-ticket-row">
-                    <span className="c-exam-ticket-num">{n}</span>
-                    <span className="c-exam-ticket-tx">
-                      <span className="t">{ticketQuestion(t)}</span>
-                      {sourceCount > 0 ? (
-                        <span className="m">
-                          <Icon name="link" size={13} />
-                          {sourceCount} {pluralRu(sourceCount, ["лекция", "лекции", "лекций"])}
-                        </span>
-                      ) : (
-                        <span className="m">Без привязки к лекциям</span>
-                      )}
-                    </span>
-                    <StatusChip tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</StatusChip>
-                  </Link>
-                );
-              })}
-            </div>
+      <div className="c-exam-card c-exam-tickets-card">
+        <div className="c-exam-card-head">
+          <h2>Билеты</h2>
+          <div className="actions">
+            <Button variant="ghost" onClick={() => navigate(base)}>
+              Конспекты предмета
+            </Button>
+            <Button variant="ghost" onClick={() => navigate(`${base}/exam/cheatsheet`)}>
+              Шпаргалка
+            </Button>
+            <Button variant="secondary" onClick={() => setAddOpen(true)}>
+              <Icon name="plus" size={18} />
+              Добавить билет
+            </Button>
           </div>
         </div>
-        <div className="c-exam-aside">
-          <div className="c-exam-card">
-            <div className="c-exam-card-head">
-              <h2>Продолжить</h2>
-            </div>
-            {nextToFill ? (
-              <Link
-                to={ticketHref(ticketNumber(nextToFill), ticketStatus(nextToFill))}
-                className="c-exam-aside-link"
-              >
-                Билет {ticketNumber(nextToFill)}
-                <Icon name="chev" size={14} />
+        <div>
+          {tickets.map((t) => {
+            const status = ticketStatus(t);
+            const n = ticketNumber(t);
+            const sourceCount = ticketSourceIds(t).length;
+            return (
+              <Link key={t.id} to={ticketHref(n, status)} className="c-exam-ticket-row">
+                <span className="c-exam-ticket-num">{n}</span>
+                <span className="c-exam-ticket-tx">
+                  <span className="t">{ticketQuestion(t)}</span>
+                  {sourceCount > 0 ? (
+                    <span className="m">
+                      <Icon name="link" size={13} />
+                      {sourceCount} {pluralRu(sourceCount, ["лекция", "лекции", "лекций"])}
+                    </span>
+                  ) : (
+                    <span className="m">Без привязки к лекциям</span>
+                  )}
+                </span>
+                <StatusChip tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</StatusChip>
               </Link>
-            ) : (
-              <p className="c-exam-aside-empty">Все билеты готовы.</p>
-            )}
-          </div>
-          <div className="c-exam-card">
-            <div className="c-exam-card-head">
-              <h2>Источники</h2>
-            </div>
-            <p className="c-exam-aside-empty">Конспекты предмета рядом — свериться, пока пишешь билет.</p>
-            <Link to={base} className="c-exam-aside-link">
-              Все конспекты предмета
-              <Icon name="chev" size={14} />
-            </Link>
-          </div>
-          {readyCount > 0 && (
-            <div className="c-exam-card">
-              <div className="c-exam-card-head">
-                <h2>Шпаргалка</h2>
-              </div>
-              <Link to={`${base}/exam/cheatsheet`} className="c-exam-aside-link">
-                <Icon name="doc" size={14} />
-                Читать готовые билеты
-              </Link>
-            </div>
-          )}
+            );
+          })}
         </div>
       </div>
 
