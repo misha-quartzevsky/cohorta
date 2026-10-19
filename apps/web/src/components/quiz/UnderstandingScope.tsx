@@ -1,17 +1,16 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button, Modal, StatusChip } from "../../ui";
 import { useLectureReadiness } from "../../hooks/useLectureReadiness";
 import { extractText } from "../../lib/extractText";
 import { lectureStatus, type LectureStatus, type TopicStatus } from "../../lib/computeLectureReadiness";
-import type { ReadinessResult } from "../../lib/computeLectureReadiness";
-import type { QuizPanelState } from "../../lib/quizPanelState";
 import { closeDialog, openCreate, useCreation } from "../../lib/quizCreation";
 import { QUIZ_DEFAULT_SIZE } from "../../lib/quizLimits";
 import { pluralRu } from "../../lib/format";
 import { fetchLecture } from "../../services/lectureService";
 import type { Lecture } from "../../lib/types";
 import QuizCreateDialog from "./QuizCreateDialog";
+import { Ctx, useUnderstanding, type Value } from "./understandingContext";
 
 /**
  * Панель «Твоё понимание темы» (Screen-understanding, Screen-m-understanding,
@@ -21,24 +20,6 @@ import QuizCreateDialog from "./QuizCreateDialog";
  * lib/quizPanelState.ts. Один набор данных на сайдбар-панель на компьютере и
  * на шторку на телефоне: поэтому есть общий контекст.
  */
-
-interface Value {
-  lecture: Lecture;
-  readiness: ReadinessResult | null;
-  panel: QuizPanelState;
-  hasQuiz: boolean;
-  loading: boolean;
-  sheetOpen: boolean;
-  setSheetOpen: (v: boolean) => void;
-  /** «Создать квиз» / «Собрать другой». Свежую длину текста берём из базы, а не с экрана. */
-  create: (forceNew: boolean) => Promise<void>;
-}
-
-const Ctx = createContext<Value | null>(null);
-
-export function useUnderstanding(): Value | null {
-  return useContext(Ctx);
-}
 
 export function UnderstandingScope({ lecture, children }: { lecture: Lecture | null; children: ReactNode }) {
   const lectureId = lecture?.id ?? "";

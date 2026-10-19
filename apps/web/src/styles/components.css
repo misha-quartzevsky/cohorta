@@ -2781,3 +2781,134 @@ button.c-row.on:hover { background: var(--accent-soft); }
   .c-qd-actions { flex-direction: column-reverse; margin-top: 0; }
   .c-qd-actions .c-btn { width: 100%; justify-content: center; height: var(--control-lg); padding: 0 24px; font-size: 15px; }
 }
+
+/* ============================================================
+ *  Квиз — B5 (pages/QuizPage.tsx). Вёрстка по Screen-quiz-question,
+ *  Screen-quiz-answered, Screen-quiz-summary; телефон — Screen-m-quiz
+ *  (ответ и итог на телефоне не нарисованы: те же экраны одной колонкой).
+ * ============================================================ */
+.c-quiz { min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--font-sans); }
+.c-quiz-center { margin: auto; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 24px; text-align: center; }
+.c-quiz-note { margin: 0; font-size: 16px; line-height: 24px; color: var(--ink-2); max-width: 420px; }
+.c-quiz-actions-row { display: flex; gap: 12px; }
+
+.c-quiz-head { flex: none; padding: 20px 32px 0; display: flex; flex-direction: column; gap: 16px; }
+.c-quiz-head.summary { gap: 0; }
+.c-quiz-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.c-quiz-count { font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.c-quiz-count-m { display: none; font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.c-quiz-exit {
+  width: var(--touch-min);
+  height: var(--touch-min);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.c-quiz-exit:hover { background: var(--sunken); }
+.c-quiz-exit:focus-visible, .c-quiz-exit-text:focus-visible, .c-quiz-opt:focus-visible, .c-quiz-link:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.c-quiz-exit-text { display: none; align-items: center; gap: 4px; min-height: var(--touch-min); padding: 0; border: 0; background: none; font: 400 14px/1 var(--font-sans); color: var(--ink-2); cursor: pointer; }
+.c-quiz-track { height: 6px; border-radius: 3px; background: var(--sunken); }
+.c-quiz-track > div { height: 6px; border-radius: 3px; background: var(--ink); }
+
+.c-quiz-main { flex: 1; display: flex; justify-content: center; padding: 56px 24px; }
+.c-quiz-col { width: 100%; max-width: 680px; display: flex; flex-direction: column; gap: 24px; }
+.c-quiz-topic { font: 600 12px/18px var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.c-quiz-q { margin: 0; font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.015em; }
+
+.c-quiz-options { display: flex; flex-direction: column; gap: 12px; }
+.c-quiz-opt {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 60px;
+  padding: 12px 20px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  font: 400 16px/24px var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+.c-quiz-opt:disabled { cursor: default; opacity: 1; }
+.c-quiz-opt .letter {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--sunken);
+  color: var(--ink-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex: none;
+}
+.c-quiz-opt .radio { display: none; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--line-strong); align-items: center; justify-content: center; flex: none; box-sizing: border-box; }
+.c-quiz-opt .radio i { width: 12px; height: 12px; border-radius: 50%; background: var(--ink); }
+.c-quiz-opt .tx { flex: 1; }
+.c-quiz-opt.on { border: 1.5px solid var(--ink); box-shadow: 0 0 0 3px var(--accent-soft); }
+.c-quiz-opt.on .letter { background: var(--ink); color: var(--on-ink); }
+.c-quiz-opt.ok { background: var(--ok-soft); border: 1.5px solid var(--ok); }
+.c-quiz-opt.ok .letter { background: var(--ok); color: var(--on-ink); }
+.c-quiz-opt.ok .mark { color: var(--ok); }
+.c-quiz-opt.bad { background: var(--danger-soft); border: 1.5px solid var(--danger); }
+.c-quiz-opt.bad .letter { background: var(--danger); color: var(--on-ink); }
+.c-quiz-opt.bad .mark { color: var(--danger-text); }
+
+.c-quiz-card { padding: 16px 20px; border-radius: 14px; background: var(--sunken); display: flex; flex-direction: column; gap: 6px; }
+.c-quiz-card-label { font: 600 12px/18px var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.c-quiz-card-text { font-size: 15px; line-height: 24px; }
+.c-quiz-link { align-self: flex-start; padding: 0; border: 0; background: none; font: 500 14px/20px var(--font-sans); color: var(--accent-strong); text-align: left; cursor: pointer; }
+.c-quiz-link:hover { text-decoration: underline; }
+.c-quiz-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+
+.c-quiz-sum-head { display: flex; flex-direction: column; gap: 8px; }
+.c-quiz-sum-sub { font-size: 14px; color: var(--ink-3); }
+.c-quiz-sum-row { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.c-quiz-sum-row h1 { margin: 0; font-size: 56px; line-height: 60px; font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.c-quiz-sum-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; }
+.c-quiz-sum-card .topic { display: flex; flex-direction: column; gap: 8px; }
+.c-quiz-sum-card .row { display: flex; justify-content: space-between; gap: 12px; font-size: 15px; }
+.c-quiz-sum-card .row span:last-child { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.c-quiz-sum-card .row span.weak { color: var(--danger-text); font-weight: 500; }
+.c-quiz-sum-card .bar { height: 6px; border-radius: 3px; background: var(--sunken); }
+.c-quiz-sum-card .bar > div { height: 6px; border-radius: 3px; background: var(--ink); }
+.c-quiz-sum-card .bar > div.weak { background: var(--danger); }
+.c-quiz-sum-card hr { border: 0; height: 1px; background: var(--line); margin: 0; }
+.c-quiz-sum-weak { font-size: 14px; line-height: 22px; color: var(--ink-2); }
+.c-quiz-sum-weak b { color: var(--ink); }
+.c-quiz-sum-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+@media (max-width: 639px) {
+  .c-quiz-head:not(.summary) { flex-direction: row; align-items: center; gap: 14px; padding: 16px 16px 0; }
+  .c-quiz-head:not(.summary) .c-quiz-bar { display: contents; }
+  .c-quiz-head:not(.summary) .c-quiz-count, .c-quiz-head:not(.summary) .c-quiz-exit { display: none; }
+  .c-quiz-head:not(.summary) .c-quiz-track { flex: 1; }
+  .c-quiz-exit-text, .c-quiz-count-m { display: inline-flex; }
+  .c-quiz-head.summary { padding: 16px 16px 0; }
+  .c-quiz-main { padding: 16px 16px 0; }
+  .c-quiz-col { gap: 14px; flex: 1; }
+  .c-quiz-topic { padding-top: 12px; font-size: 13px; line-height: 18px; font-weight: 400; letter-spacing: 0; text-transform: none; }
+  .c-quiz-q { font-size: 22px; line-height: 30px; letter-spacing: -0.01em; }
+  .c-quiz-options { gap: 10px; padding-top: 8px; }
+  .c-quiz-opt { padding: 12px 16px; font-size: 15px; line-height: 22px; gap: 12px; }
+  .c-quiz-opt .letter { display: none; }
+  .c-quiz-opt .radio { display: inline-flex; }
+  .c-quiz-opt.on { border-width: 2px; box-shadow: none; }
+  .c-quiz-opt.on .radio { border-color: var(--ink); }
+  .c-quiz-opt.ok .radio, .c-quiz-opt.bad .radio { display: none; }
+  .c-quiz-actions { margin-top: auto; padding-bottom: 36px; flex-direction: column-reverse; align-items: stretch; }
+  .c-quiz-actions span:empty { display: none; }
+  .c-quiz-actions .c-btn { width: 100%; justify-content: center; height: var(--control-lg); font-size: 15px; }
+  .c-quiz-sum-row h1 { font-size: 44px; line-height: 48px; }
+  .c-quiz-sum-card { padding: 20px; }
+  .c-quiz-sum-actions { flex-direction: column; padding-bottom: 36px; }
+  .c-quiz-sum-actions .c-btn { width: 100%; justify-content: center; height: var(--control-lg); font-size: 15px; }
+}

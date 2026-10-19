@@ -1,116 +1,86 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { X, Check, MoreHorizontal } from "lucide-react";
-import { useQuiz } from "../hooks/useQuiz";
+import { useQuiz, type QuizMode, type UseQuizResult } from "../hooks/useQuiz";
 import { fetchLecture } from "../services/lectureService";
 import type { Lecture } from "../lib/types";
-import { lectureHref } from "../lib/types";
+import { courseName, lectureCourseId, lectureHref } from "../lib/types";
 import { lastSemesterSlug } from "../lib/lastSemester";
-import { Button, ProgressBar, Menu, Badge } from "../components/ui";
+import { attemptStats, understandingBeforeAfter, understandingLabel } from "../lib/quizSummary";
+import { Button, Icon, StatusChip } from "../ui";
 import LoadingState from "../components/LoadingState";
-import type { QuizSize } from "../services/quizService";
-import { computeLectureReadiness } from "../lib/computeLectureReadiness";
-import { fetchReadinessQuestions, fetchReadinessAnswers } from "../services/quizService";
 
-const ERROR_MESSAGES: Record<string, string> = {
-  not_enough_text:
-    "В лекции пока мало текста. Допиши конспект, и мы соберём вопросы.",
-  daily_limit: "На сегодня квизы закончились. Завтра будут снова.",
-  generation_failed: "Не получилось собрать вопросы. Попробуй ещё раз.",
-  unauthorized: "Сессия истекла. Обнови страницу и попробуй снова.",
-  network: "Не получилось собрать вопросы. Попробуй ещё раз.",
-};
+const LETTERS = ["A", "B", "C", "D"];
 
-/** Квиз по лекции (spec 6.2–6.3). Полноэкранный, без панелей каркаса. */
+function upperFirst(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function parseMode(v: string | null): QuizMode {
+  return v === "continue" || v === "restart" || v === "again" ? v : "auto";
+}
+
+/**
+ * Квиз по лекции (Screen-quiz-question / -answered / -summary, телефон —
+ * Screen-m-quiz). Полноэкранный, вне каркаса. Создание квиза — не здесь:
+ * оно в панели «Твоё понимание темы» (components/quiz/).
+ * Вход: `/quiz/:lectureId[?mode=continue|restart|again]`.
+ */
 export default function QuizPage() {
   const { lectureId } = useParams<{ lectureId: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [lecture, setLecture] = useState<Lecture | null>(null);
-  const [loadError, setLoadError] = useState("");
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!lectureId) return;
-    fetchLecture(lectureId)
+    fetchLecture(lectureId, "field")
       .then(setLecture)
-      .catch(() => setLoadError("Не удалось загрузить лекцию."));
+      .catch(() => setLoadError(true));
   }, [lectureId]);
 
   if (loadError) {
     return (
-      <div className="ds-root" style={{ padding: "var(--space-6)" }}>
-        <p className="ds-body">{loadError}</p>
-        <Button onClick={() => navigate(-1)}>Назад</Button>
-      </div>
-    );
-  }
-  if (!lecture) return <LoadingState />;
-
-  return <QuizRunner lecture={lecture} onExit={() => navigate(-1)} />;
-}
-
-function backToLecture(lecture: Lecture, navigate: ReturnType<typeof useNavigate>) {
-  const semSlug = lastSemesterSlug();
-  navigate(lectureHref(lecture, semSlug));
-}
-
-function QuizRunner({
-  lecture,
-  onExit,
-}: {
-  lecture: Lecture;
-  onExit: () => void;
-}) {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const quiz = useQuiz(lecture);
-  const requestedSize = parseInt(searchParams.get("size") ?? "8", 10);
-  const size: QuizSize = [5, 8, 12].includes(requestedSize)
-    ? (requestedSize as QuizSize)
-    : 8;
-  const [revealed, setRevealed] = useState(false);
-  const [selected, setSelected] = useState<number | null>(null);
-
-  useEffect(() => {
-    // ?new=1 — «Собрать другой» из панели «Твоё понимание темы» (B1):
-    // та же генерация, что и кнопка «Новый квиз» в итоге, но до старта.
-    quiz.start(size, searchParams.get("new") === "1");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    setRevealed(false);
-    setSelected(null);
-  }, [quiz.index]);
-
-  if (quiz.phase === "loading") {
-    return (
-      <div className="ds-root ds-quiz-screen">
-        <div className="ds-quiz-loading">
-          <div className="ds-skeleton" style={{ height: 16, width: "60%", marginBottom: 12 }} />
-          <div className="ds-skeleton" style={{ height: 16, width: "80%", marginBottom: 12 }} />
-          <div className="ds-skeleton" style={{ height: 16, width: "40%" }} />
-          <p className="ds-body" style={{ marginTop: "var(--space-5)" }}>
-            Собираю вопросы по твоему конспекту…
-          </p>
-          <Button variant="secondary" onClick={onExit}>
-            Отмена
+      <div className="c-quiz">
+        <div className="c-quiz-center">
+          <p className="c-quiz-note">Не получилось открыть лекцию. Вернись назад и попробуй ещё раз.</p>
+          <Button variant="primary" onClick={() => navigate(-1)}>
+            Назад
           </Button>
         </div>
       </div>
     );
   }
+  if (!lecture) return <LoadingState />;
+
+  return <QuizRunner lecture={lecture} mode={parseMode(searchParams.get("mode"))} />;
+}
+
+function QuizRunner({ lecture, mode }: { lecture: Lecture; mode: QuizMode }) {
+  const navigate = useNavigate();
+  const quiz = useQuiz(lecture.id, mode);
+  const toLecture = (state?: unknown) => navigate(lectureHref(lecture, lastSemesterSlug()), state ? { state } : undefined);
+
+  // Квиза ещё нет (например, пришли по задаче): возвращаем к лекции, где его можно создать.
+  useEffect(() => {
+    if (quiz.phase === "empty") {
+      navigate(lectureHref(lecture, lastSemesterSlug()), { replace: true, state: { openQuizCreate: true } });
+    }
+  }, [quiz.phase, lecture, navigate]);
+
+  if (quiz.phase === "loading" || quiz.phase === "empty") return <LoadingState />;
 
   if (quiz.phase === "error") {
     return (
-      <div className="ds-root ds-quiz-screen">
-        <div className="ds-quiz-loading">
-          <p className="ds-body">{ERROR_MESSAGES[quiz.error ?? "generation_failed"]}</p>
-          <div style={{ display: "flex", gap: "var(--space-2)" }}>
-            {quiz.error !== "not_enough_text" && quiz.error !== "daily_limit" && (
-              <Button onClick={quiz.retry}>Повторить</Button>
-            )}
-            <Button variant="secondary" onClick={onExit}>
-              Назад
+      <div className="c-quiz">
+        <div className="c-quiz-center">
+          <p className="c-quiz-note">Не получилось загрузить квиз. Попробуй ещё раз.</p>
+          <div className="c-quiz-actions-row">
+            <Button variant="primary" onClick={() => window.location.reload()}>
+              Повторить
+            </Button>
+            <Button variant="ghost" onClick={() => toLecture()}>
+              К лекции
             </Button>
           </div>
         </div>
@@ -118,131 +88,209 @@ function QuizRunner({
     );
   }
 
-  if (quiz.phase === "done") {
-    return <QuizSummary lecture={lecture} quiz={quiz} onExit={() => backToLecture(lecture, navigate)} />;
-  }
+  if (quiz.phase === "done") return <QuizSummary lecture={lecture} quiz={quiz} onExit={() => toLecture()} />;
 
-  const q = quiz.current;
-  if (!q) return <LoadingState />;
+  return <QuizQuestionView lecture={lecture} quiz={quiz} onExit={() => toLecture()} />;
+}
 
-  const total = quiz.questions.length;
-  const answered = quiz.answers.find((a) => a.questionId === q.id);
-  const showResult = revealed || !!answered;
+function QuizQuestionView({
+  lecture,
+  quiz,
+  onExit,
+}: {
+  lecture: Lecture;
+  quiz: UseQuizResult;
+  onExit: () => void;
+}) {
+  const navigate = useNavigate();
+  const q = quiz.current!;
+  const [selected, setSelected] = useState<number | null>(null);
+  const [revealed, setRevealed] = useState(false);
+  const [skipped, setSkipped] = useState(false);
+  const [answerShown, setAnswerShown] = useState(false);
 
-  async function handleMcqSelect(i: number) {
-    if (showResult) return;
-    setSelected(i);
+  const course = lectureCourseId(lecture) ? lecture.expand?.field : undefined;
+  const courseLabel = course ? courseName(course) : "";
+  const isMcq = q.type === "mcq";
+
+  // Новый вопрос — чистое состояние.
+  useEffect(() => {
+    setSelected(null);
+    setRevealed(false);
+    setSkipped(false);
+    setAnswerShown(false);
+  }, [q.id]);
+
+  async function submitMcq() {
+    if (revealed || selected === null) return;
     setRevealed(true);
-    await quiz.answerCurrent(i === q.correct_index);
+    await quiz.answerCurrent(selected === q.correct_index);
   }
-
-  async function handleRecall(remembered: boolean) {
-    if (showResult) return;
+  async function dontRemember() {
+    if (revealed) return;
+    setSkipped(true);
+    setRevealed(true);
+    await quiz.answerCurrent(false);
+  }
+  async function recall(remembered: boolean) {
+    if (revealed) return;
+    setRevealed(true);
     await quiz.answerCurrent(remembered);
   }
 
+  // Клавиатура: 1–4 выбирают вариант, Enter отвечает / идёт дальше (spec 6.3).
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.target as HTMLElement | null)?.closest("button, a, input, textarea")) {
+        if (e.key !== "Enter") return;
+        return; // Enter на кнопке сработает как клик
+      }
+      if (isMcq && !revealed && e.key >= "1" && e.key <= "4") {
+        setSelected(Number(e.key) - 1);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (revealed) quiz.next();
+        else if (isMcq) void submitMcq();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+  const wrongText =
+    isMcq && revealed && !skipped && selected !== null && selected !== q.correct_index
+      ? ` Твой ответ: «${(q.options ?? [])[selected]}».`
+      : "";
+
+  const progress = (quiz.position / quiz.total) * 100;
+
   return (
-    <div className="ds-root ds-quiz-screen">
-      <div className="ds-quiz-topbar">
-        <span className="ds-caption ds-subtle-text">
-          Вопрос {quiz.index + 1} из {total}
+    <div className="c-quiz">
+      <header className="c-quiz-head">
+        <div className="c-quiz-bar">
+          <button type="button" className="c-quiz-exit-text" onClick={onExit}>
+            <Icon name="x" size={18} />
+            Выйти
+          </button>
+          <span className="c-quiz-count">
+            Вопрос {quiz.position} из {quiz.total}
+            {courseLabel ? ` · ${courseLabel}` : ""}
+          </span>
+          <button type="button" className="c-quiz-exit" aria-label="Выйти из квиза" onClick={onExit}>
+            <Icon name="x" size={18} />
+          </button>
+        </div>
+        <div className="c-quiz-track" role="progressbar" aria-valuemin={0} aria-valuemax={quiz.total} aria-valuenow={quiz.position}>
+          <div style={{ width: `${progress}%` }} />
+        </div>
+        <span className="c-quiz-count-m">
+          {quiz.position} из {quiz.total}
         </span>
-        <Menu
-          trigger={({ ref, onClick, ...aria }) => (
-            <button ref={ref} type="button" className="ds-icon-btn" aria-label="Действия" onClick={onClick} {...aria}>
-              <MoreHorizontal size={18} />
-            </button>
+      </header>
+
+      <main className="c-quiz-main">
+        <div className="c-quiz-col">
+          {q.topic && <span className="c-quiz-topic">{q.topic}</span>}
+          <h1 className="c-quiz-q">{q.prompt}</h1>
+
+          {isMcq && (
+            <div className="c-quiz-options" role="radiogroup" aria-label="Варианты ответа">
+              {(q.options ?? []).map((opt, i) => {
+                let state = "";
+                if (revealed) {
+                  if (i === q.correct_index) state = " ok";
+                  else if (i === selected && !skipped) state = " bad";
+                } else if (i === selected) state = " on";
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    role="radio"
+                    aria-checked={i === selected}
+                    className={`c-quiz-opt${state}`}
+                    disabled={revealed}
+                    onClick={() => setSelected(i)}
+                  >
+                    <span className="letter">{LETTERS[i]}</span>
+                    <span className="radio">{i === selected && !revealed && <i />}</span>
+                    <span className="tx">{opt}</span>
+                    {revealed && i === q.correct_index && <Icon name="check" size={20} className="mark" />}
+                    {revealed && i === selected && !skipped && i !== q.correct_index && (
+                      <Icon name="x" size={20} className="mark" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           )}
-          items={[
-            { label: "Плохой вопрос", onClick: () => void quiz.flagCurrent() },
-            { label: "Скрыть вопрос", onClick: () => void quiz.hideCurrent() },
-          ]}
-        />
-        <button type="button" className="ds-icon-btn" aria-label="Выйти" onClick={onExit}>
-          <X size={18} />
-        </button>
-      </div>
-      <ProgressBar value={((quiz.index + (showResult ? 1 : 0)) / total) * 100} thin />
 
-      <div className="ds-quiz-body">
-        {q.topic && <div className="ds-overline ds-subtle-text">{q.topic}</div>}
-        <h2 className="ds-h2" style={{ margin: "var(--space-2) 0 var(--space-5)" }}>
-          {q.prompt}
-        </h2>
+          {!isMcq && answerShown && (
+            <div className="c-quiz-card">
+              <span className="c-quiz-card-label">Ответ</span>
+              <span className="c-quiz-card-text">{q.answer}</span>
+            </div>
+          )}
 
-        {q.type === "mcq" ? (
-          <div className="ds-quiz-options">
-            {(q.options ?? []).map((opt, i) => {
-              let cls = "ds-quiz-option";
-              if (showResult) {
-                if (i === q.correct_index) cls += " ds-quiz-option--correct";
-                else if (i === selected) cls += " ds-quiz-option--wrong";
-              }
-              return (
+          {revealed && (
+            <div className="c-quiz-card">
+              <span className="c-quiz-card-label">Объяснение</span>
+              <span className="c-quiz-card-text">
+                {q.explanation}
+                {wrongText}
+              </span>
+              {q.quote && (
                 <button
-                  key={i}
                   type="button"
-                  className={cls}
-                  onClick={() => void handleMcqSelect(i)}
-                  disabled={showResult}
+                  className="c-quiz-link"
+                  onClick={() =>
+                    navigate(lectureHref(lecture, lastSemesterSlug()), { state: { highlightQuote: q.quote } })
+                  }
                 >
-                  {opt}
-                  {showResult && i === q.correct_index && <Check size={16} />}
-                  {showResult && i === selected && i !== q.correct_index && <X size={16} />}
+                  Показать в лекции, абзац «{q.topic || lecture.title}»
                 </button>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="ds-quiz-recall">
-            {!revealed ? (
-              <Button onClick={() => setRevealed(true)}>Показать ответ</Button>
+              )}
+            </div>
+          )}
+
+          <div className="c-quiz-actions">
+            {revealed ? (
+              <>
+                <Button variant="ghost" onClick={() => void quiz.flagCurrent()}>
+                  Плохой вопрос
+                </Button>
+                <Button variant="primary" onClick={quiz.next}>
+                  Дальше
+                </Button>
+              </>
+            ) : isMcq ? (
+              <>
+                <Button variant="ghost" onClick={() => void dontRemember()}>
+                  Не помню
+                </Button>
+                <Button variant="primary" disabled={selected === null} onClick={() => void submitMcq()}>
+                  Ответить
+                </Button>
+              </>
+            ) : answerShown ? (
+              <>
+                <Button variant="ghost" onClick={() => void recall(false)}>
+                  Не помню
+                </Button>
+                <Button variant="primary" onClick={() => void recall(true)}>
+                  Помню
+                </Button>
+              </>
             ) : (
               <>
-                <p className="ds-body" style={{ marginBottom: "var(--space-4)" }}>
-                  {q.answer}
-                </p>
-                {!answered && (
-                  <div style={{ display: "flex", gap: "var(--space-2)" }}>
-                    <Button onClick={() => void handleRecall(true)}>Помню</Button>
-                    <Button variant="secondary" onClick={() => void handleRecall(false)}>
-                      Не помню
-                    </Button>
-                  </div>
-                )}
+                <span />
+                <Button variant="primary" onClick={() => setAnswerShown(true)}>
+                  Показать ответ
+                </Button>
               </>
             )}
           </div>
-        )}
-
-        {showResult && (
-          <div className="ds-callout" style={{ marginTop: "var(--space-5)" }}>
-            <p className="ds-body">{q.explanation}</p>
-            {q.quote && (
-              <button
-                type="button"
-                className="ds-btn ds-btn--ghost"
-                style={{ marginTop: "var(--space-2)", paddingLeft: 0 }}
-                onClick={() =>
-                  navigate(lectureHref(lecture, lastSemesterSlug()), {
-                    state: { highlightQuote: q.quote },
-                  })
-                }
-              >
-                Показать в конспекте
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {showResult && (
-        <div className="ds-quiz-footer">
-          <Button onClick={quiz.next} block>
-            Далее
-          </Button>
         </div>
-      )}
+      </main>
     </div>
   );
 }
@@ -253,69 +301,84 @@ function QuizSummary({
   onExit,
 }: {
   lecture: Lecture;
-  quiz: ReturnType<typeof useQuiz>;
+  quiz: UseQuizResult;
   onExit: () => void;
 }) {
-  const [readiness, setReadiness] = useState<ReturnType<
-    typeof computeLectureReadiness
-  > | null>(null);
-
-  useEffect(() => {
-    void (async () => {
-      const [qs, ans] = await Promise.all([
-        fetchReadinessQuestions(lecture.id),
-        fetchReadinessAnswers(lecture.id),
-      ]);
-      setReadiness(computeLectureReadiness(qs, ans, new Date()));
-    })();
-  }, [lecture.id]);
-
-  const total = quiz.questions.length;
+  const stats = attemptStats(quiz.questions, quiz.answers);
+  const { before, after } = understandingBeforeAfter(quiz.readinessQuestions, quiz.allAnswers, quiz.attempt, new Date());
+  const chip = understandingLabel(before, after);
+  const weak = stats.weak;
+  const canRepeat = weak.length > 0;
 
   return (
-    <div className="ds-root ds-quiz-screen">
-      <div className="ds-quiz-body" style={{ textAlign: "center" }}>
-        <p className="ds-numeric" style={{ fontSize: "var(--text-numeric-xl)", fontWeight: 500 }}>
-          {quiz.correctCount} из {total}
-        </p>
-        {readiness && readiness.topics.length > 0 && (
-          <div style={{ textAlign: "left", marginTop: "var(--space-5)" }}>
-            {readiness.topics.map((t) => (
-              <div
-                key={t.topic}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  padding: "var(--space-2) 0",
-                  borderBottom: "1px solid var(--color-line)",
-                }}
-              >
-                <span className="ds-body" style={{ textTransform: "capitalize" }}>{t.topic}</span>
-                <Badge tone={t.status === "success" ? "success" : t.status === "danger" ? "danger" : "neutral"}>
-                  {t.correct} из {t.total}
-                </Badge>
-              </div>
-            ))}
-            {readiness.weakTopics.length > 0 && (
-              <p className="ds-caption ds-subtle-text" style={{ marginTop: "var(--space-3)" }}>
-                Слабее всего: {readiness.weakTopics.map((t) => t.topic).join(", ")}
-              </p>
-            )}
-          </div>
-        )}
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", marginTop: "var(--space-6)" }}>
-          <Button onClick={onExit} block>
-            Вернуться к лекции
-          </Button>
-          <Button variant="secondary" onClick={quiz.restartSame} block>
-            Ещё раз
-          </Button>
-          <Button variant="ghost" onClick={quiz.restartNew} block>
-            Новый квиз
-          </Button>
+    <div className="c-quiz">
+      <header className="c-quiz-head summary">
+        <div className="c-quiz-bar">
+          <span />
+          <button type="button" className="c-quiz-exit" aria-label="Закрыть" onClick={onExit}>
+            <Icon name="x" size={18} />
+          </button>
         </div>
-      </div>
+      </header>
+
+      <main className="c-quiz-main">
+        <div className="c-quiz-col">
+          <div className="c-quiz-sum-head">
+            <span className="c-quiz-sum-sub">Квиз по лекции «{lecture.title}»</span>
+            <div className="c-quiz-sum-row">
+              <h1>
+                {stats.correct} из {stats.total}
+              </h1>
+              {chip && <StatusChip tone={before !== null && after !== null && after > before ? "ok" : "neutral"}>{chip}</StatusChip>}
+            </div>
+          </div>
+
+          {stats.topics.length > 0 && (
+            <div className="c-quiz-sum-card">
+              <span className="c-quiz-card-label">По темам лекции</span>
+              {stats.topics.map((t) => {
+                const isWeak = t.accuracy < 0.6;
+                return (
+                  <div key={t.key} className="topic">
+                    <div className="row">
+                      <span>{upperFirst(t.label)}</span>
+                      <span className={isWeak ? "weak" : ""}>
+                        {t.correct} из {t.total}
+                      </span>
+                    </div>
+                    <div className="bar">
+                      <div className={isWeak ? "weak" : ""} style={{ width: `${t.accuracy * 100}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+              {canRepeat && (
+                <>
+                  <hr />
+                  <span className="c-quiz-sum-weak">
+                    Слабее всего: <b>{weak.map((t) => t.label.toLowerCase()).join(", ")}</b>. Перечитай абзац и вернись
+                    к квизу через день, так лучше запоминается.
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+
+          <div className="c-quiz-sum-actions">
+            {canRepeat && (
+              <Button variant="primary" onClick={() => quiz.startWeak(weak.map((t) => t.key))}>
+                Повторить слабые темы
+              </Button>
+            )}
+            <Button variant={canRepeat ? "secondary" : "primary"} onClick={onExit}>
+              К лекции
+            </Button>
+            <Button variant="ghost" onClick={onExit}>
+              Закрыть
+            </Button>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
