@@ -13,6 +13,8 @@ export interface TabBarItem {
   /** Дополнительные начала путей, на которых пункт тоже активен
    * (например «Ещё» на `/tasks` и `/decks`, куда ведёт сам экран «Ещё»). */
   alsoActive?: string[];
+  /** Пункт активен и на путях, подходящих под выражение (страница предмета и всё внутри неё). */
+  activeWhen?: RegExp;
   /** Места, у которых ещё нет экрана: пункт виден, но не нажимается. */
   disabled?: boolean;
 }
@@ -41,7 +43,9 @@ export default function TabBar({ items, className }: Props) {
             </a>
           );
         }
-        const extra = item.alsoActive?.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+        const extra =
+          item.alsoActive?.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ||
+          item.activeWhen?.test(pathname);
         return (
           <NavLink
             key={item.label}

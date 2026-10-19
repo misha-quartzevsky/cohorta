@@ -1310,7 +1310,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
 /* Модификаторы SubjectCover (A3, 2026-10-18): широкая полоса (баннер
    предмета) и заглушка без сида (конспекта ещё нет — не градиент). */
 .c-cover--wide { width: 100%; }
-.c-cover-empty { background: var(--sunken); }
+.c-cover-empty { background: var(--sunken); border-radius: var(--radius-sm); }
 
 .c-seg {
   display: inline-flex;
@@ -1675,6 +1675,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
 }
 .c-shell-courses a:hover { background: var(--bg); color: var(--ink); }
 .c-shell-courses a.on { background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
+.c-shell-courses a.c-shell-courses-empty { color: var(--ink-2); }
 .c-shell-courses a:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
 .c-shell-courses a .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .c-shell-courses a .count { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
@@ -1814,6 +1815,38 @@ button.c-row.on:hover { background: var(--accent-soft); }
 }
 .c-dash-card-head h2 { margin: 0; font-size: 18px; line-height: 26px; font-weight: 600; }
 .c-dash-card-head a { font-size: 14px; font-weight: 500; color: var(--accent-strong); }
+
+/* «С чего начать» (States-empty, «Главная, новый пользователь»). */
+.c-start { display: flex; flex-direction: column; gap: 14px; }
+.c-start-head { display: flex; flex-direction: column; gap: 2px; }
+.c-start-head h2 { margin: 0; font-size: 22px; line-height: 30px; font-weight: 600; letter-spacing: -0.01em; }
+.c-start-head span { font-size: 13px; color: var(--ink-3); }
+.c-start-step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-sizing: border-box;
+}
+.c-start-step .n {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font: 600 13px/1 var(--font-sans);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.c-start-step .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.c-start-step .t { font-size: 14px; font-weight: 500; }
+.c-start-step .m { font-size: 12px; color: var(--ink-3); }
 
 .c-dash-continue {
   display: flex;
@@ -2018,40 +2051,35 @@ button.c-row.on:hover { background: var(--accent-soft); }
 }
 
 /* ============================================================
- *  «Все лекции» — B2, 2026-10-19 (pages/LecturesAllPage.tsx).
- *  Вёрстка 1:1 по docs/design/screens/Screen-lectures(-m).dc.html.
+ *  Лекции — B2 (перенос по макетам 19.10): «Все лекции»
+ *  (pages/LecturesAllPage.tsx) и вкладка «Лекции» предмета
+ *  (pages/SubjectLecturesPage.tsx). Макеты: Screen-lectures,
+ *  Screen-subject-lectures, Screen-m-lectures-all/-subjects/-period,
+ *  Screen-m-subject-lectures. Отступ 28 px считается от токена (--space-1).
  * ============================================================ */
-.c-lectures { display: flex; flex-direction: column; gap: var(--space-7); font-family: var(--font-sans); }
-
-.c-lectures-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); }
-.c-lectures-head-tx { display: flex; flex-direction: column; gap: 8px; }
-.c-lectures-head-tx h1 { margin: 0; font-size: 36px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; }
-.c-lectures-head-tx span { font-size: 14px; color: var(--ink-3); }
-
-.c-lectures-m-head { display: none; flex-direction: column; gap: 2px; }
-.c-lectures-m-head-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
-.c-lectures-m-head-row h1 { margin: 0; font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em; }
-.c-lectures-m-head-actions { display: flex; gap: 8px; }
-.c-lectures-m-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--line-strong);
-  background: var(--surface);
-  color: var(--ink);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  cursor: pointer;
+.c-lec {
+  --lec-gap: calc(var(--space-1) * 7);
+  display: flex;
+  flex-direction: column;
+  gap: var(--lec-gap);
+  font-family: var(--font-sans);
 }
-.c-lectures-m-icon:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-.c-lectures-m-count { font-size: 14px; color: var(--ink-3); }
 
-.c-lectures-filters { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
-.c-lectures-pills-subject { display: none; }
+.c-lec-crumbs { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-3); }
+.c-lec-crumbs a { color: var(--ink-3); text-decoration: none; }
+.c-lec-crumbs a:hover { color: var(--ink); }
+.c-lec-crumbs .cur { color: var(--ink-2); }
 
-.c-lectures-search {
+.c-lec-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); }
+.c-lec-head-tx { display: flex; flex-direction: column; gap: 8px; }
+.c-lec-head-tx h1 { margin: 0; font-size: 36px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; }
+.c-lec-head-tx span { font-size: 14px; color: var(--ink-3); }
+
+.c-lec-filters { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+.c-lec-filters-end { display: flex; align-items: center; gap: var(--space-3); }
+.c-lec-search.c-lec-search-narrow { width: 260px; }
+
+.c-lec-search {
   height: var(--control-md);
   width: 300px;
   border-radius: var(--radius-md);
@@ -2064,40 +2092,152 @@ button.c-row.on:hover { background: var(--accent-soft); }
   box-sizing: border-box;
   color: var(--ink-3);
 }
-.c-lectures-search input { border: none; background: none; outline: none; flex: 1; font: 400 14px/1 var(--font-sans); color: var(--ink); }
-.c-lectures-search input::placeholder { color: var(--ink-3); }
+.c-lec-search input { border: none; background: none; outline: none; flex: 1; min-width: 0; font: 400 14px/1 var(--font-sans); color: var(--ink); }
+.c-lec-search input::placeholder { color: var(--ink-3); }
 
-.c-lectures-error { color: var(--danger-text); font-size: 14px; }
-
-.c-lectures-list .c-row { min-height: 64px; }
-.c-lectures-meta-mobile { display: none; }
-.c-lectures-row-chev { color: var(--ink-3); flex: none; }
-
-@media (max-width: 1023px) {
-  .c-lectures-head { display: none; }
-  .c-lectures-m-head { display: flex; }
-  .c-lectures-pills-status { display: none; }
-  .c-lectures-pills-subject { display: inline-flex; max-width: 100%; overflow-x: auto; }
-  .c-lectures-pills-subject button { flex: none; white-space: nowrap; }
-  .c-lectures-search { display: none; }
-  .c-lectures-filters { gap: var(--space-3); }
-  .c-lectures-list .c-row { min-height: 68px; }
-  .c-lectures-meta-desktop { display: none; }
-  .c-lectures-meta-mobile { display: inline; }
+.c-lec-period {
+  flex: none;
+  height: var(--control-sm);
+  padding: 0 12px 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  font: 500 14px/1 var(--font-sans);
+  cursor: pointer;
+  box-sizing: border-box;
 }
+.c-lec-period:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.c-lec-period.static { cursor: default; padding: 0 14px; }
+.c-lec-period-check { color: var(--accent); flex: none; }
+.c-sheet-dialog .c-pick-list { max-height: 60vh; overflow-y: auto; }
+
+.c-lec-error { margin: 0; color: var(--danger-text); font-size: 14px; }
+
+.c-lec-groups { display: flex; flex-direction: column; gap: var(--lec-gap); }
+.c-lec-group { display: flex; flex-direction: column; gap: var(--lec-gap); }
+.c-lec-group-title {
+  margin: 0;
+  padding: 20px 4px 10px;
+  font: 600 12px/18px var(--font-sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.c-lec-list .c-row { min-height: 64px; }
+.c-lec-list .c-row .t { overflow-wrap: anywhere; }
+.c-lec-list .c-row .c-chip { flex: none; }
+.c-lec-meta-narrow { display: none; }
+.c-lec-chev { color: var(--ink-3); flex: none; }
+
+/* Телефон: заголовок с иконками, список сверху, панель управления внизу
+   над нижней панелью (решение владелицы: переключатели и фильтры внизу). */
+.c-lec-m-head { display: flex; flex-direction: column; gap: 2px; }
+.c-lec-m-head-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.c-lec-m-head-row h1 { margin: 0; font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em; }
+.c-lec-m-head-row .sub-back { display: inline-flex; }
+.c-lec-m-head-actions { display: flex; gap: 8px; }
+.c-lec-m-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  cursor: pointer;
+}
+.c-lec-m-icon:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.c-lec-m-count { font-size: 14px; color: var(--ink-3); }
+.c-lec-m-back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font: 400 14px/20px var(--font-sans);
+  cursor: pointer;
+}
+
+.c-lec-m { gap: 0; }
+.c-lec-m-body { padding-top: var(--space-4); padding-bottom: calc(var(--space-1) * 27); display: flex; flex-direction: column; gap: 14px; }
+.c-lec-m .c-lec-groups, .c-lec-m .c-lec-group { gap: 14px; }
+.c-lec-m .c-lec-group-title { padding: 0; }
+.c-lec-m .c-lec-list .c-row { min-height: 68px; padding: 12px var(--space-4); gap: 12px; }
+.c-lec-m .c-lec-meta-wide { display: none; }
+.c-lec-m .c-lec-meta-narrow { display: inline; }
+
+.c-lec-m-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 84px;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 var(--space-4) 12px;
+  background: var(--bg);
+}
+.c-lec-m-tabs.c-seg { display: flex; width: 100%; box-sizing: border-box; border-radius: var(--radius-md); }
+.c-lec-m-tabs.c-seg span { flex: 1; justify-content: center; height: var(--control-sm); border-radius: calc(var(--radius-md) - 2px); }
+.c-lec-m-filters { display: flex; align-items: center; gap: 8px; }
+.c-lec-m-pills { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+.c-lec-m-pills::-webkit-scrollbar { display: none; }
+.c-lec-m-pills button {
+  flex: none;
+  height: var(--control-sm);
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--sunken);
+  color: var(--ink-2);
+  font: 500 14px/1 var(--font-sans);
+  cursor: pointer;
+}
+.c-lec-m-pills button.on { background: var(--ink); color: var(--on-ink); }
+.c-lec-m-pills button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.c-lec-subject-count { font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.c-lec-add-subject {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 52px;
+  padding: 0 var(--space-4);
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font: 400 14px/1 var(--font-sans);
+  cursor: pointer;
+  text-align: left;
+}
+.c-lec-add-subject:hover { background: var(--bg); }
+.c-lec-add-subject:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
 
 /* ============================================================
  *  Поиск по продукту — B2, 2026-10-19 (components/SearchOverlay.tsx).
  *  Десктоп: Screen-search.dc.html (оверлей над контентом справа от
  *  сайдбара). Телефон: Screen-m-search.dc.html (полноэкранный).
  * ============================================================ */
-.c-search-overlay { position: absolute; inset: 0; top: 64px; z-index: 30; }
+/* Над контентом справа от сайдбара и под верхней строкой; не привязан к прокрутке страницы. */
+.c-search-overlay { position: fixed; top: 64px; right: 0; bottom: 0; left: var(--sidebar-width); z-index: 30; }
 .c-search-backdrop { position: absolute; inset: 0; background: var(--color-scrim, rgba(28, 27, 25, .38)); }
 .c-search-panel {
   position: relative;
   width: 640px;
   max-width: calc(100% - var(--space-8));
-  margin: 96px auto 0;
+  margin: var(--space-8) auto 0;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
@@ -2121,7 +2261,10 @@ button.c-row.on:hover { background: var(--accent-soft); }
 }
 .c-search-field input { flex: 1; border: none; background: none; outline: none; font: 400 16px/1 var(--font-sans); color: var(--ink); }
 .c-search-field input::placeholder { color: var(--ink-3); }
+.c-search-field input::-webkit-search-cancel-button { display: none; }
 .c-search-cancel { display: none; border: none; background: none; color: var(--ink-2); font: 500 15px/1 var(--font-sans); cursor: pointer; padding: 0; }
+.c-search-box { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
+.c-search-box input { flex: 1; min-width: 0; }
 .c-search-esc { font-size: 12px; color: var(--ink-3); flex: none; }
 
 .c-search-results { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 8px 4px; }
@@ -2136,8 +2279,12 @@ button.c-row.on:hover { background: var(--accent-soft); }
 }
 .c-search-results .c-list { border: none; border-radius: 0; background: none; }
 .c-search-results .c-row { min-height: 52px; padding: 6px 12px; border-bottom: none; border-radius: var(--radius-md); }
+.c-search-results .c-row .t { font: 500 14px/20px var(--font-sans); }
+.c-search-results .c-row .t b { font-weight: 600; }
+.c-search-results .c-row .m { font: 400 12px/16px var(--font-sans); }
 .c-search-results button.c-row:hover { background: var(--bg); }
-.c-search-results .c-row .cv { width: 32px; height: 32px; }
+.c-search-results .c-row .cv { width: 32px; height: 32px; border-radius: var(--radius-md); overflow: hidden; }
+.c-search-results .c-row .cv > * { width: 100%; height: 100%; }
 .c-search-results .c-empty { border: none; padding: 32px 20px; margin: auto 0; }
 
 .c-search-avatar, .c-search-preview-cover {
@@ -2184,13 +2331,25 @@ button.c-row.on:hover { background: var(--accent-soft); }
     border-bottom: none;
     gap: 12px;
   }
-  .c-search-field input {
+  .c-search-field { color: var(--ink); }
+  .c-search-field .c-search-box {
+    flex: 1;
+    min-width: 0;
     height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     padding: 0 14px;
     border: 1px solid var(--ink);
     border-radius: var(--radius-md);
+    background: var(--surface);
     box-sizing: border-box;
   }
+  .c-search-field .c-search-box input { height: 100%; font-size: 15px; }
+  .c-search-results h2 .n, .c-search-footnote { display: none; }
+  .c-search-results .c-row .t { font: 500 15px/20px var(--font-sans); }
+  .c-search-results .c-row .m { font: 400 13px/18px var(--font-sans); }
+  .c-search-results .c-row .cv { width: 40px; height: 40px; }
   .c-search-esc { display: none; }
   .c-search-cancel { display: inline-flex; }
   .c-search-results { padding: 0 16px 16px; }

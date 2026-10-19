@@ -22,6 +22,7 @@ import DashboardNew from "./pages/DashboardNew";
 import CoursesPage from "./pages/CoursesPage";
 import LecturesPage from "./pages/LecturesPage";
 import LecturesAllPage from "./pages/LecturesAllPage";
+import SubjectLecturesPage from "./pages/SubjectLecturesPage";
 import LectureView from "./pages/LectureView";
 import NotesPage from "./pages/NotesPage";
 import NoteCreate from "./pages/NoteCreate";
@@ -190,7 +191,10 @@ function App() {
               {/* Экран «Моя группа» — статический сегмент "group"
                   (RESERVED_SLUGS), тоже до :courseSlug. */}
               <Route path="/s/:semesterSlug/group" element={<GroupPage />} />
-              <Route path="/s/:semesterSlug/:courseSlug" element={<LecturesPage />} />
+              <Route
+                path="/s/:semesterSlug/:courseSlug"
+                element={isNewUI() ? <SubjectLecturesPage /> : <LecturesPage />}
+              />
               {/* «Пары предмета» (B3, pages/SubjectPairsPage.tsx) — новый
                   экран, статический сегмент "pairs" (RESERVED_SLUGS), до
                   :lectureSlug ниже. Вход — из меню пары на /schedule

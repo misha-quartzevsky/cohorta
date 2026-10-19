@@ -15,6 +15,7 @@
  * дефолтным. Этот компонент не трогает их код.
  */
 
+import { hidesMobileTopbar } from "../lib/lectureListRules";
 import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { useUiShell } from "../lib/uiShellContext";
@@ -66,7 +67,7 @@ function useSemSlug(): string {
 function useCourseList() {
   const { current, semesters } = useSemester();
   const activeSemester = current ?? pickActiveSemester(semesters);
-  const { courses } = useCourses(activeSemester?.id ?? "");
+  const { courses, loading: coursesLoading } = useCourses(activeSemester?.id ?? "");
   const { lectures } = useRecentLectures(100);
 
   const countByCourse = new Map<string, number>();
@@ -76,7 +77,7 @@ function useCourseList() {
     countByCourse.set(cid, (countByCourse.get(cid) ?? 0) + 1);
   }
 
-  return { courses, countByCourse, totalLectures: lectures.length };
+  return { courses, coursesLoading, countByCourse, totalLectures: lectures.length };
 }
 
 function useSoloNavItems(): NavItem[] {
@@ -86,9 +87,13 @@ function useSoloNavItems(): NavItem[] {
     { to: `/s/${semSlug}`, icon: "home", label: "Главная", end: true },
     { to: "/tasks", icon: "task", label: "Задачи" },
     { to: "/schedule", icon: "cal", label: "Расписание" },
-    // TODO (B2): своя страница «Все лекции» — пока алиас на /courses (App.tsx),
-    // но свой адрес, чтобы не подсвечиваться вместе с «Предметы».
-    { to: `/s/${semSlug}/lectures`, icon: "doc", label: "Все лекции", count: totalLectures },
+    {
+      to: `/s/${semSlug}/lectures`,
+      icon: "doc",
+      label: "Все лекции",
+      // Счётчик «0» не показываем (пустой аккаунт, States-empty).
+      count: totalLectures > 0 ? totalLectures : undefined,
+    },
     { to: "/decks", icon: "cards", label: "Карточки" },
   ];
 }
@@ -121,7 +126,13 @@ function MobileTabBar() {
         { to: "/schedule", icon: "cal", label: "Расписание" },
         // «Предметы» на телефоне отдельной вкладки не имеют — открываются
         // из «Лекции» (раздел 4 инструкции, A4; экран — B2, LecturesAllPage).
-        { to: `/s/${semSlug}/lectures`, icon: "doc", label: "Лекции" },
+        {
+          to: `/s/${semSlug}/lectures`,
+          icon: "doc",
+          label: "Лекции",
+          // Страница предмета, его лекции, пары и экзамен — тоже раздел «Лекции».
+          activeWhen: /^\/s\/[^/]+\/(?!courses$|exams$|group$)[^/]+(\/.*)?$/,
+        },
         { to: "/more", icon: "dots", label: "Ещё", alsoActive: ["/tasks", "/decks"] },
         profile,
       ];
@@ -191,16 +202,23 @@ function SidebarLectureToc({ courseSlug, onNavigate }: { courseSlug?: string; on
  * семестра с обложкой и числом лекций, «+» ведёт на страницу курсов —
  * создание прямо из сайдбара пока не делаю (форма живёт на странице). */
 function SidebarCourses({ semSlug, onNavigate }: { semSlug: string; onNavigate: () => void }) {
-  const { courses, countByCourse } = useCourseList();
+  const { courses, coursesLoading, countByCourse } = useCourseList();
+  const addHref = `/s/${semSlug}/courses`;
   return (
     <>
       <div className="c-shell-section">
         <span>Предметы</span>
-        <NavLink to={`/s/${semSlug}/courses`} onClick={onNavigate} aria-label="Добавить предмет">
+        <NavLink to={addHref} onClick={onNavigate} aria-label="Добавить предмет">
           <Icon name="plus" size={16} />
         </NavLink>
       </div>
       <nav className="c-shell-courses" aria-label="Предметы семестра">
+        {/* Пустой аккаунт: вместо пустого поля — строка с тем же действием, что у «+». */}
+        {courses.length === 0 && !coursesLoading && (
+          <NavLink to={addHref} onClick={onNavigate} className="c-shell-courses-empty">
+            Добавь первый предмет
+          </NavLink>
+        )}
         {courses.map((c) => (
           <NavLink
             key={c.id}
@@ -303,8 +321,6 @@ function Topbar({ open, onBurger }: { open: boolean; onBurger: () => void }) {
   const { lectureSlug } = useParams();
   const inLecture = !!lectureSlug;
   const { openSearch } = useUiShell();
-  // На экране «Профиль» (телефон) верхней строки нет (Screen-m-profile):
-  // иначе она закрывает аватар.
   const { pathname } = useLocation();
   const label = inLecture
     ? open
@@ -314,7 +330,7 @@ function Topbar({ open, onBurger }: { open: boolean; onBurger: () => void }) {
       ? "Закрыть меню"
       : "Открыть меню";
   return (
-    <header className={`c-shell-topbar${pathname === "/profile" ? " hide-mobile" : ""}`}>
+    <header className={`c-shell-topbar${hidesMobileTopbar(pathname) ? " hide-mobile" : ""}`}>
       <button
         type="button"
         className="c-shell-burger"
