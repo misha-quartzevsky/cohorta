@@ -258,7 +258,7 @@
    "title": "Профиль и настройки",
    "area": "learn",
    "mock": "Screen-settings",
-   "mobile": null,
+   "mobile": "Screen-m-profile-draft",
    "note": "Аватар внизу меню, из любого экрана",
    "entry": true,
    "terminal": false,
@@ -701,6 +701,17 @@
    "mobile": null,
    "note": "Не нарисовано: возврат на вход и возврат на прежний экран",
    "entry": true,
+   "terminal": false,
+   "virtual": false
+  },
+  "more": {
+   "id": "more",
+   "title": "Ещё",
+   "area": "learn",
+   "mock": null,
+   "mobile": "Screen-m-profile-draft",
+   "note": "Только телефон: Задачи, Карточки, Поиск",
+   "entry": false,
    "terminal": false,
    "virtual": false
   }
@@ -1539,6 +1550,24 @@
    "to": "login",
    "how": "«Войти снова»",
    "note": "после входа вернуть на прежний экран"
+  },
+  {
+   "from_": "more",
+   "to": "tasks",
+   "how": "«Задачи»",
+   "note": ""
+  },
+  {
+   "from_": "more",
+   "to": "cards",
+   "how": "«Карточки»",
+   "note": ""
+  },
+  {
+   "from_": "more",
+   "to": "search",
+   "how": "«Поиск»",
+   "note": ""
   }
  ],
  "gaps": [

@@ -31,9 +31,9 @@ import { useRecentLectures } from "../hooks/useRecentLectures";
 import { useCourses } from "../hooks/useCourses";
 import { useAuth } from "../hooks/useAuth";
 import { useTocScan } from "../hooks/useTocScan";
-import { userName } from "../lib/format";
+import { userName, nameInitials } from "../lib/format";
 import { Icon, Segmented, TabBar, LectureToc, SubjectCover } from "../ui";
-import type { IconName, TocItem } from "../ui";
+import type { IconName, TocItem, TabBarItem } from "../ui";
 import LectureReadinessAside from "./LectureReadinessAside";
 
 const MODE_OPTIONS: { value: Mode; label: string }[] = [
@@ -89,17 +89,38 @@ function useSoloNavItems(): NavItem[] {
   ];
 }
 
+/**
+ * Нижняя панель телефона (Screen-m-profile-draft, CHANGES-2026-10-19).
+ * Соло: Главная, Расписание, Лекции, Ещё, Профиль (кружок с аватаром).
+ * Группа: Люди, Доступ, Экзамены, Профиль. «Задачи» и «Карточки» живут
+ * на экране «Ещё» (pages/MorePage.tsx), а не в панели.
+ */
 function MobileTabBar() {
   const semSlug = useSemSlug();
-  const items = [
-    { to: `/s/${semSlug}`, icon: "home" as const, label: "Главная", end: true },
-    { to: "/tasks", icon: "task" as const, label: "Задачи" },
-    { to: "/schedule", icon: "cal" as const, label: "Расписание" },
-    // «Предметы» на телефоне отдельной вкладки не имеет — открываются
-    // из «Лекции» (раздел 4 инструкции, A4; экран — B2, LecturesAllPage).
-    { to: `/s/${semSlug}/lectures`, icon: "doc" as const, label: "Лекции" },
-    { to: "/decks", icon: "cards" as const, label: "Карточки" },
-  ];
+  const { isGroup } = useMode();
+  const { user } = useAuth();
+  const profile: TabBarItem = {
+    to: "/profile",
+    label: "Профиль",
+    avatar: user ? nameInitials(userName(user)) : "",
+  };
+  const items: TabBarItem[] = isGroup
+    ? [
+        { to: `/s/${semSlug}/group`, icon: "people", label: "Люди" },
+        // Экрана «Мой доступ» ещё нет (волна C, g_myaccess) — пункт виден, но не нажимается.
+        { to: "/", icon: "lock", label: "Доступ", disabled: true },
+        { to: `/s/${semSlug}/exams`, icon: "exam", label: "Экзамены" },
+        profile,
+      ]
+    : [
+        { to: `/s/${semSlug}`, icon: "home", label: "Главная", end: true },
+        { to: "/schedule", icon: "cal", label: "Расписание" },
+        // «Предметы» на телефоне отдельной вкладки не имеют — открываются
+        // из «Лекции» (раздел 4 инструкции, A4; экран — B2, LecturesAllPage).
+        { to: `/s/${semSlug}/lectures`, icon: "doc", label: "Лекции" },
+        { to: "/more", icon: "dots", label: "Ещё", alsoActive: ["/tasks", "/decks"] },
+        profile,
+      ];
   return <TabBar items={items} />;
 }
 
@@ -195,21 +216,11 @@ function SidebarCourses({ semSlug, onNavigate }: { semSlug: string; onNavigate: 
 
 /** Профиль внизу сайдбара (Screen-dashboard.dc.html). Ведёт в настройки —
  * страницы ещё нет (волна B6), поэтому пока не кликабелен. */
-/** «АК» из «Анастасия К.» — инициалы первых двух слов имени, если
- * второе есть; иначе одна буква (Screen-dashboard.dc.html). */
-function profileInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  return parts
-    .slice(0, 2)
-    .map((p) => p.charAt(0).toUpperCase())
-    .join("");
-}
-
 function SidebarProfile() {
   const { user } = useAuth();
   if (!user) return null;
   const name = userName(user);
-  const initial = profileInitials(name);
+  const initial = nameInitials(name);
   return (
     <div className="c-shell-profile">
       <span className="avatar">{initial}</span>

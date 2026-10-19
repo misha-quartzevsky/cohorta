@@ -12,6 +12,17 @@ export function userName(user: User): string {
   return name || user.email || "Пользователь";
 }
 
+/** «АК» из «Анастасия К.» — первые буквы первых двух слов имени. */
+export function nameInitials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p.charAt(0).toUpperCase())
+    .join("");
+}
+
 /**
  * Имя участника для ростера группы / списка участников экзамена:
  * `name` → часть email до «@» → «Участник». Отличается от userName() тем,

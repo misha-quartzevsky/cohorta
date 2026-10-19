@@ -40,6 +40,8 @@ import TicketPageNew from "./pages/TicketPageNew";
 import CheatsheetPage from "./pages/CheatsheetPage";
 import CheatsheetPageNew from "./pages/CheatsheetPageNew";
 import ProtectedRoute from "./components/ProtectedRoute";
+import MorePage from "./pages/MorePage";
+import ProfilePage from "./pages/ProfilePage";
 import LoadingState from "./components/LoadingState";
 import ErrorBanner from "./components/ErrorBanner";
 import Header from "./components/Header";
@@ -163,6 +165,8 @@ function App() {
                 path="/s/:semesterSlug/:courseSlug/pairs"
                 element={<SubjectPairsPage />}
               />
+              <Route path="/more" element={<MorePage />} />
+              <Route path="/profile" element={<ProfilePage />} />
               <Route path="/notes" element={<NotesPage />} />
               <Route path="/note/new" element={<NoteCreate />} />
               {/* Lecture view + edit are ONE surface (Notion-style inline
