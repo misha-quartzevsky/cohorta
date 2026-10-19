@@ -2416,3 +2416,174 @@ button.c-row.on:hover { background: var(--accent-soft); }
  *  (components/schedule/AttachLectureModal.tsx).
  * ============================================================ */
 .c-attach-lecture-status { font-size: 13px; color: var(--ink-3); }
+
+/* ============================================================
+ *  Экзамен соло — B4, 2026-10-20.
+ *  Вёрстка 1:1 по docs/design/screens/Screen-exam(-m).dc.html,
+ *  Screen-ticket.dc.html, Screen-cheatsheet.dc.html,
+ *  Screen-ticket-import.dc.html (pages/ExamHubPageNew.tsx,
+ *  TicketPageNew.tsx, CheatsheetPageNew.tsx, ExamImportPageNew.tsx).
+ * ============================================================ */
+
+/* Карточка-контейнер, общая для всех виджетов волны (как .c-dash-card). */
+.c-exam-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-sizing: border-box; }
+.c-exam-card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: 20px 20px 12px; }
+.c-exam-card-head h2 { margin: 0; font-size: 18px; line-height: 26px; font-weight: 600; }
+.c-exam-card-head .meta { font-size: 13px; color: var(--ink-3); }
+.c-exam-card-head .actions { display: flex; gap: 8px; }
+.c-exam-card-pad { padding: 24px; }
+
+.c-exam { display: flex; flex-direction: column; gap: var(--space-7); font-family: var(--font-sans); }
+
+.c-exam-crumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-3); }
+.c-exam-crumb .current { color: var(--ink-2); }
+.c-exam-crumb a { color: inherit; text-decoration: none; }
+.c-exam-m-crumb { display: none; }
+.c-exam-m-crumb a { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; color: var(--ink-2); font: 500 14px/1 var(--font-sans); height: 32px; }
+
+.c-exam-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); }
+.c-exam-head-tx { display: flex; flex-direction: column; gap: 8px; }
+.c-exam-head-tx h1 { margin: 0; font-size: 36px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; }
+.c-exam-head-tx span { font-size: 14px; color: var(--ink-3); }
+.c-exam-head-side { display: flex; gap: 12px; align-items: flex-end; }
+
+.c-exam-readiness { width: 260px; display: flex; flex-direction: column; gap: 8px; }
+.c-exam-readiness .row { display: flex; justify-content: space-between; font-size: 13px; }
+.c-exam-readiness .row span { color: var(--ink-2); }
+.c-exam-readiness .row b { font-variant-numeric: tabular-nums; }
+.c-exam-readiness .meta { font-size: 13px; color: var(--ink-3); }
+
+.c-exam-m-head { display: none; flex-direction: column; gap: 2px; }
+.c-exam-m-head h1 { margin: 0; font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em; }
+.c-exam-m-head .meta { font-size: 14px; color: var(--ink-3); }
+.c-exam-m-readiness { margin-top: 10px; }
+.c-exam-m-readiness .row { display: flex; justify-content: space-between; font-size: 14px; }
+.c-exam-m-readiness .row span { color: var(--ink-2); }
+.c-exam-m-readiness .meta { margin-top: 10px; display: block; font-size: 13px; color: var(--ink-3); }
+.c-exam-m-actions { display: none; gap: 8px; }
+
+.c-exam-continue { display: flex; align-items: center; gap: var(--space-4); padding: 16px; }
+.c-exam-continue .ico { width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--accent-soft); color: var(--accent-strong); flex: none; display: inline-flex; align-items: center; justify-content: center; }
+.c-exam-continue .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.c-exam-continue .tx .label { font: 600 12px/18px var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.c-exam-continue .tx .t { font-size: 15px; font-weight: 500; }
+
+.c-exam-map-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+.c-exam-chip { width: 44px; height: 44px; border-radius: var(--radius-md); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-2); display: inline-flex; align-items: center; justify-content: center; font: 600 14px/1 var(--font-sans); font-variant-numeric: tabular-nums; box-sizing: border-box; text-decoration: none; }
+.c-exam-chip.ready { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+.c-exam-chip.draft { background: var(--accent-soft); color: var(--accent-strong); border-color: var(--accent-soft); }
+.c-exam-legend { display: flex; gap: 20px; font-size: 13px; color: var(--ink-2); }
+.c-exam-legend-item { display: inline-flex; gap: 8px; align-items: center; }
+.c-exam-legend-swatch { width: 12px; height: 12px; border-radius: 4px; }
+.c-exam-legend-swatch.ready { background: var(--ink); }
+.c-exam-legend-swatch.draft { background: var(--accent-soft); border: 1px solid var(--accent-strong); }
+.c-exam-legend-swatch.todo { border: 1px solid var(--line-strong); }
+
+.c-exam-cols { display: flex; gap: var(--space-8); align-items: flex-start; }
+.c-exam-main { flex: 1; min-width: 0; }
+.c-exam-aside { width: 320px; flex: none; display: flex; flex-direction: column; gap: var(--space-5); }
+.c-exam-aside-link { display: flex; align-items: center; gap: 6px; padding: 0 20px 20px; font-size: 14px; font-weight: 500; color: var(--accent-strong); text-decoration: none; }
+.c-exam-aside-empty { margin: 0; padding: 0 20px 16px; font-size: 13px; color: var(--ink-3); }
+
+.c-exam-ticket-row { display: flex; align-items: center; gap: 16px; min-height: 64px; padding: 12px 20px; box-sizing: border-box; border-top: 1px solid var(--line); color: inherit; text-decoration: none; }
+.c-exam-ticket-row:hover { background: var(--bg); }
+.c-exam-card .c-exam-ticket-row:first-child { border-top: 0; }
+.c-exam-ticket-num { width: 32px; flex: none; font-size: 15px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.c-exam-ticket-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.c-exam-ticket-tx .t { font-size: 15px; line-height: 22px; font-weight: 500; }
+.c-exam-ticket-tx .m { font-size: 13px; color: var(--ink-3); display: inline-flex; align-items: center; gap: 4px; }
+
+.c-exam-m-list { display: none; }
+.c-exam-m-row { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 16px; box-sizing: border-box; border-top: 1px solid var(--line); color: inherit; text-decoration: none; }
+.c-exam-m-list .c-exam-m-row:first-child { border-top: 0; }
+.c-exam-m-row .num { width: 24px; flex: none; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.c-exam-m-row .t { flex: 1; min-width: 0; font-size: 15px; font-weight: 500; line-height: 20px; }
+
+@media (max-width: 1023px) {
+  .c-exam-crumb, .c-exam-head, .c-exam-continue, .c-exam-map-grid-wrap, .c-exam-cols { display: none; }
+  .c-exam-m-crumb { display: block; }
+  .c-exam-m-head { display: flex; }
+  .c-exam-m-actions { display: flex; }
+  .c-exam-m-list { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; background: var(--surface); }
+}
+
+/* Билет: pages/TicketPageNew.tsx, Screen-ticket.dc.html (своей телефонной
+   версии в макете нет — тот же экран, у/без строки «Изменить» неважно на
+   ширине экрана, спецсайдбар уходит под текст). */
+.c-ticket { display: flex; flex-direction: column; gap: var(--space-7); font-family: var(--font-sans); }
+.c-ticket-crumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-3); flex-wrap: wrap; }
+.c-ticket-crumb .current { color: var(--ink-2); }
+.c-ticket-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-5); flex-wrap: wrap; }
+.c-ticket-head h1 { margin: 0; font-size: 36px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; }
+.c-ticket-head .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+.c-ticket-cols { display: flex; gap: var(--space-8); align-items: flex-start; }
+.c-ticket-main { flex: 1; min-width: 0; }
+.c-ticket-card { padding: 32px; box-sizing: border-box; }
+.c-ticket-meta-row { display: flex; align-items: center; gap: 12px; margin-bottom: var(--space-4); flex-wrap: wrap; }
+.c-ticket-meta-row .m { font-size: 13px; color: var(--ink-3); }
+.c-ticket-card h2 { margin: 0 0 var(--space-4); font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.015em; }
+.c-ticket-card .body { font-size: 16px; line-height: 26px; max-width: 680px; }
+.c-ticket-card .body p:first-child { margin-top: 0; }
+.c-ticket-card .body p:last-child { margin-bottom: 0; }
+
+.c-ticket-aside { width: 320px; flex: none; }
+.c-ticket-aside h2 { margin: 0; font-size: 16px; line-height: 24px; font-weight: 600; }
+.c-ticket-source-row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 0; border-top: 1px solid var(--line); }
+.c-ticket-aside .list > .c-ticket-source-row:first-child { border-top: 0; }
+.c-ticket-source-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.c-ticket-source-tx .t { font-size: 14px; font-weight: 500; }
+.c-ticket-source-tx .m { font-size: 12px; color: var(--ink-3); }
+.c-ticket-source-remove { flex: none; background: none; border: none; color: var(--ink-3); cursor: pointer; display: inline-flex; padding: 4px; border-radius: var(--radius-sm); }
+.c-ticket-source-remove:hover { background: var(--sunken); color: var(--ink); }
+.c-ticket-source-pick { position: relative; margin-top: var(--space-2); }
+.c-ticket-source-pick-input { width: 100%; height: var(--control-md); border: 1px solid var(--line-strong); border-radius: var(--radius-md); padding: 0 12px; font: 400 14px/1 var(--font-sans); box-sizing: border-box; background: var(--surface); color: var(--ink); }
+.c-ticket-source-pick-input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.c-ticket-source-pick-menu.c-menu { position: absolute; top: calc(100% + 4px); left: 0; right: 0; width: auto; z-index: 10; max-height: 240px; overflow-y: auto; }
+
+@media (max-width: 1023px) {
+  .c-ticket-cols { flex-direction: column; }
+  .c-ticket-aside { width: 100%; }
+}
+
+/* Шпаргалка: pages/CheatsheetPageNew.tsx, Screen-cheatsheet.dc.html. */
+.c-cheatsheet { display: flex; flex-direction: column; gap: var(--space-7); font-family: var(--font-sans); }
+.c-cheatsheet-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-5); flex-wrap: wrap; }
+.c-cheatsheet-head h1 { margin: 0; font-size: 36px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; }
+.c-cheatsheet-head span { font-size: 14px; color: var(--ink-3); }
+.c-cheatsheet-card { padding: 28px; box-sizing: border-box; }
+.c-cheatsheet-intro { padding-bottom: 16px; font-size: 14px; color: var(--ink-2); }
+.c-cheatsheet-item { display: flex; gap: 20px; padding: 20px 0; border-top: 1px solid var(--line); }
+.c-cheatsheet-card .c-cheatsheet-item:first-child { border-top: 0; }
+.c-cheatsheet-item .num { width: 32px; flex: none; font-size: 15px; font-weight: 600; color: var(--ink-2); }
+.c-cheatsheet-item .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.c-cheatsheet-item .tx h2 { margin: 0; font-size: 16px; font-weight: 600; }
+.c-cheatsheet-item .tx .body { font-size: 15px; line-height: 24px; color: var(--ink-2); }
+
+/* Импорт билетов: pages/ExamImportPageNew.tsx, Screen-ticket-import.dc.html. */
+.c-import { display: flex; flex-direction: column; gap: var(--space-7); font-family: var(--font-sans); }
+.c-import-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-5); flex-wrap: wrap; }
+.c-import-head h1 { margin: 0; font-size: 36px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; }
+.c-import-head span { font-size: 14px; color: var(--ink-3); }
+.c-import-cols { display: flex; gap: var(--space-8); align-items: flex-start; }
+.c-import-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.c-import-col > span.label { font-size: 14px; font-weight: 500; }
+.c-import-col .hint { font-size: 13px; color: var(--ink-3); }
+.c-import-textarea textarea { min-height: 200px; resize: vertical; }
+.c-import-preview { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; background: var(--surface); }
+.c-import-preview-row { display: flex; gap: 16px; align-items: center; min-height: 48px; padding: 8px 20px; border-top: 1px solid var(--line); }
+.c-import-preview .c-import-preview-row:first-child { border-top: 0; }
+.c-import-preview-row .num { width: 28px; flex: none; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.c-import-preview-row .q { flex: 1; min-width: 0; font-size: 14px; }
+
+@media (max-width: 1023px) {
+  .c-import-cols { flex-direction: column; }
+}
+
+/* Плашка «Нужна для N билетов» (spec §8) — components/LinkedTicketsPlaque.tsx,
+   уже подключена к данным в B1; здесь только перенос на токены c-*. */
+.c-ticket-plaque { display: flex; flex-direction: column; gap: var(--space-2); background: var(--sunken); border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: var(--space-4); box-sizing: border-box; }
+.c-ticket-plaque-head { display: flex; align-items: center; gap: var(--space-2); font-size: 14px; color: var(--ink-2); }
+.c-ticket-plaque-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.c-ticket-plaque-chip { height: 28px; padding: 0 10px; border-radius: var(--radius-pill); background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); font: 500 13px/1 var(--font-sans); cursor: pointer; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.c-ticket-plaque-chip.more { cursor: default; background: var(--sunken); border-style: dashed; }

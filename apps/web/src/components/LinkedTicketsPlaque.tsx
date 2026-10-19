@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Link2 } from "lucide-react";
+import { Icon } from "../ui";
 import type { ExamTicket } from "../lib/types";
 import { ticketQuestion, courseSlug } from "../lib/types";
 import { pluralRu } from "../lib/format";
@@ -7,7 +7,11 @@ import { lastSemesterSlug } from "../lib/lastSemester";
 
 const MAX_CHIPS = 3;
 
-/** Плашка «Нужна для N билетов» над тулбаром редактора (spec раздел 8). */
+/**
+ * Плашка «Нужна для N билетов» над тулбаром редактора (spec раздел 8).
+ * Данные уже подключены (B1): запрос и показ/скрытие по наличию связей —
+ * здесь только перенос вёрстки на токены c-* (B4).
+ */
 export default function LinkedTicketsPlaque({ tickets }: { tickets: ExamTicket[] }) {
   const navigate = useNavigate();
   if (tickets.length === 0) return null;
@@ -23,27 +27,26 @@ export default function LinkedTicketsPlaque({ tickets }: { tickets: ExamTicket[]
   }
 
   return (
-    <div className="ds-root ds-callout" style={{ marginBottom: "var(--space-4)" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: shown.length ? "var(--space-2)" : 0 }}>
-        <Link2 size={15} aria-hidden="true" />
-        <span className="ds-body">
+    <div className="c-ticket-plaque">
+      <div className="c-ticket-plaque-head">
+        <Icon name="link" size={15} aria-hidden="true" />
+        <span>
           Нужна для {tickets.length}{" "}
           {pluralRu(tickets.length, ["билета", "билетов", "билетов"])}
         </span>
       </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)" }}>
+      <div className="c-ticket-plaque-chips">
         {shown.map((t) => (
           <button
             key={t.id}
             type="button"
-            className="ds-badge ds-badge--neutral"
-            style={{ cursor: "pointer", border: "none" }}
+            className="c-ticket-plaque-chip"
             onClick={() => openTicket(t)}
           >
             {t.number} · {ticketQuestion(t).slice(0, 40)}
           </button>
         ))}
-        {rest > 0 && <span className="ds-badge ds-badge--neutral">+{rest}</span>}
+        {rest > 0 && <span className="c-ticket-plaque-chip more">+{rest}</span>}
       </div>
     </div>
   );
