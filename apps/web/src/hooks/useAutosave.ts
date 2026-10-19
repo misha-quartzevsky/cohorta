@@ -16,20 +16,21 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export type SaveState = "idle" | "saving" | "saved" | "error";
+export type SaveState = "idle" | "saving" | "saved" | "error" | "queued";
 
 const SAVE_TEXT: Record<SaveState, string> = {
   idle: "Сохранено",
   saving: "Сохранение…",
   saved: "Обновлено только что",
   error: "Ошибка сохранения",
+  queued: "Сохранено на устройстве",
 };
 
 const SAVED_DECAY_MS = 3000;
 
 interface UseAutosaveOptions {
   /** Persists the current values. Should read fresh state (refs), not close over stale props. */
-  save: () => Promise<void>;
+  save: () => Promise<void | "queued">;
   /** Values to watch — same semantics as a useEffect dependency array. */
   deps: unknown[];
   /** Autosave is armed only while this is true (e.g. after the record loads). */
@@ -62,8 +63,9 @@ export function useAutosave({
 
   const flush = useCallback(async () => {
     try {
-      await saveRef.current();
-      setSaveState("saved");
+      const result = await saveRef.current();
+      // «queued» — не дошло до сервера, но лежит в очереди на устройстве (B6).
+      setSaveState(result === "queued" ? "queued" : "saved");
     } catch (e) {
       console.error("Ошибка автосохранения:", e);
       setSaveState("error");

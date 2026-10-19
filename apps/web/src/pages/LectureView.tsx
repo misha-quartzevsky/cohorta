@@ -38,6 +38,12 @@ import type { ExamTicket } from "../lib/types";
 import { useLectureBySlug } from "../hooks/useLectureBySlug";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useAutosave } from "../hooks/useAutosave";
+import { classifySaveError, readDraft, removeDraft, saveDraft } from "../lib/draftQueue";
+import { setSaveStatus } from "../lib/saveStatus";
+import { pb } from "../lib/pocketbase";
+import { syncDrafts } from "../services/draftSync";
+import NotFoundPage from "./NotFoundPage";
+import { isNewUI } from "../lib/featureFlags";
 import { useLectureFrame } from "../lib/lectureFrame";
 import { useUndo } from "../lib/undoContext";
 
@@ -138,9 +144,18 @@ function LectureView() {
   useEffect(() => {
     if (!lecture) return;
     let cancelled = false;
-    const t = lectureTitle(lecture);
+    // Остался несохранённый текст (закрыли вкладку без связи или сессия истекла)?
+    // Берём его, если он новее записи на сервере, и сразу пробуем отправить.
+    const draft = readDraft(lecture.id);
+    const useDraft = Boolean(draft && draft.ts > Date.parse(String(lecture.updated).replace(" ", "T")));
+    const t = useDraft && draft ? draft.title : lectureTitle(lecture);
     // Токены `[[file:…]]` → абсолютные URL (чтобы картинки видел и TipTap).
-    const c = resolveFileTokens(lectureBody(lecture), lecture);
+    const c = resolveFileTokens(useDraft && draft ? draft.content : lectureBody(lecture), lecture);
+    if (draft) {
+      // Устаревший черновик (на сервере новее) не нужен, свежий — отправляем.
+      if (useDraft) void syncDrafts();
+      else removeDraft(lecture.id);
+    }
     titleRef.current = t;
     contentRef.current = c;
     setTitle(t);
@@ -236,15 +251,30 @@ function LectureView() {
   }, [lecture, isCourseContext, semesterSlug, courseSlug]);
 
   // ---- Автосохранение (title / content / tags) --------------------------
-  const doSave = useCallback(async () => {
+  const doSave = useCallback(async (): Promise<void | "queued"> => {
     if (!lecture) return;
-    await updateLecture(
-      lecture.id,
-      titleRef.current.trim() || "Без названия",
+    const draft = {
+      id: lecture.id,
+      title: titleRef.current.trim() || "Без названия",
       // Абсолютные URL картинок → портативные токены [[file:…]].
-      tokenizePbFileUrls(contentRef.current, lecture),
-      tagsRef.current
-    );
+      content: tokenizePbFileUrls(contentRef.current, lecture),
+      tags: tagsRef.current,
+    };
+    try {
+      await updateLecture(draft.id, draft.title, draft.content, draft.tags);
+      removeDraft(draft.id);
+    } catch (e) {
+      // Не вышло: текст остаётся на устройстве и уйдёт позже (B6, очередь).
+      const kind = classifySaveError(e, pb.authStore.isValid);
+      const kept = saveDraft(draft);
+      if (kind === "session") return kept ? "queued" : void setSaveStatus("failed");
+      if (kind === "offline" && kept) {
+        setSaveStatus("offline");
+        return "queued";
+      }
+      setSaveStatus("failed");
+      throw e;
+    }
   }, [lecture]);
 
   const { saveState, saveText, flush } = useAutosave({
@@ -370,13 +400,18 @@ function LectureView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [highlightQuote, mode, content]);
 
+  // Лекцию удалили или доступа нет: сервер отвечает «не найдено» (экран 404, B6).
+  const notFound =
+    !lecture && !loading && isNewUI() && (!error || /not found|wasn't found|не найден|404/i.test(error));
+
   return (
     <>
       <main className="workspace-main" key={lectureSlugParam || "view"}>
-        {error && !lecture && (
+        {notFound && <NotFoundPage embedded />}
+        {error && !lecture && !notFound && (
           <ErrorBanner message={error || "Запись не найдена."} />
         )}
-        {!lecture && !loading && !error && (
+        {!lecture && !loading && !error && !notFound && (
           <div className="empty">Запись не найдена.</div>
         )}
         {!lecture && loading && <CardSkeleton />}
