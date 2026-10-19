@@ -88,6 +88,23 @@ function sampleSemesterDates(n: number, firstYear: number): { from: string; to: 
 }
 
 /**
+ * Образцовые даты для периода с номером `order`, который добавляют к
+ * существующим (кнопка «Добавить период»). Только у семестров; год начала
+ * берём из первого периода, а если его даты пусты — от нынешнего учебного года.
+ */
+export function sampleDatesFor(
+  order: number,
+  type: PeriodType,
+  firstFrom: string | undefined,
+  today: Date = new Date()
+): { from: string; to: string } | null {
+  if (type !== "semester") return null;
+  const y = firstFrom && /^\d{4}/.test(firstFrom) ? Number(firstFrom.slice(0, 4)) : academicYearStart(today);
+  const d = sampleSemesterDates(order, y);
+  return { from: d.from, to: d.to };
+}
+
+/**
  * Набор периодов по умолчанию. Текущий: у семестров — тот, чьи даты
  * включают сегодня (летом — ближайший следующий); у остальных типов дат
  * нет, текущим ставится первый период нынешнего курса.

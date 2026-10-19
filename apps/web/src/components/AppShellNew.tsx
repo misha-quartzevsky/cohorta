@@ -15,7 +15,7 @@
  * дефолтным. Этот компонент не трогает их код.
  */
 
-import { NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { useUiShell } from "../lib/uiShellContext";
 import SearchOverlay from "./SearchOverlay";
@@ -226,14 +226,14 @@ function SidebarProfile() {
   const name = userName(user);
   const initial = nameInitials(name);
   return (
-    <div className="c-shell-profile">
+    <Link to="/settings" className="c-shell-profile" aria-label="Профиль и настройки">
       <span className="avatar">{initial}</span>
       <span className="tx">
         <span className="name">{name}</span>
         <span className="sub">Профиль</span>
       </span>
       <Icon name="chev" size={18} />
-    </div>
+    </Link>
   );
 }
 

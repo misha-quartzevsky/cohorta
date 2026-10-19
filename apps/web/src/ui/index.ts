@@ -20,3 +20,6 @@ export { default as Menu } from "./Menu";
 export type { MenuItem } from "./Menu";
 export { default as Pills } from "./Pills";
 export type { PillOption } from "./Pills";
+export { default as EditableRow, PickField } from "./EditableRow";
+export { RowSaveError } from "./rowSaveError";
+export type { PickOption } from "./EditableRow";

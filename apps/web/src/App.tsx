@@ -45,6 +45,10 @@ import CardsPageNew from "./pages/CardsPageNew";
 import DeckPageNew from "./pages/DeckPageNew";
 import CardReviewPageNew from "./pages/CardReviewPageNew";
 import ProfilePage from "./pages/ProfilePage";
+import NotFoundPage from "./pages/NotFoundPage";
+import SettingsPage from "./pages/SettingsPage";
+import SettingsPeriodsPage from "./pages/SettingsPeriodsPage";
+import TrashPage from "./pages/TrashPage";
 import LoadingState from "./components/LoadingState";
 import ErrorBanner from "./components/ErrorBanner";
 import Header from "./components/Header";
@@ -197,6 +201,10 @@ function App() {
               />
               <Route path="/more" element={<MorePage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              {/* Настройки, периоды учёбы и корзина (B6). */}
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/settings/periods" element={<SettingsPeriodsPage />} />
+              <Route path="/trash" element={<TrashPage />} />
               <Route path="/notes" element={<NotesPage />} />
               <Route path="/note/new" element={<NoteCreate />} />
               {/* Lecture view + edit are ONE surface (Notion-style inline
@@ -271,7 +279,7 @@ function App() {
               )}
             </Route>
           </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={isNewUI() ? <NotFoundPage /> : <Navigate to="/" replace />} />
         </Routes>
         </ToastProvider>
         </SemesterProvider>

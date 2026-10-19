@@ -1,7 +1,16 @@
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
+
 import { useAuth } from "../hooks/useAuth";
+import { useMyGroups, useRoster } from "../hooks/useGroups";
+import { useMediaQuery } from "../hooks/useMediaQuery";
+import { nameInitials, pluralRu, userName } from "../lib/format";
+import { lastSemesterSlug } from "../lib/lastSemester";
 import { useMode, type Mode } from "../lib/modeContext";
-import { nameInitials, userName } from "../lib/format";
+import { useSemester } from "../lib/semesterContext";
+import { DEGREE_YEARS } from "../lib/studyPeriods";
+import type { DegreeLevel } from "../lib/types";
+import { TRASH_DAYS } from "../services/trashService";
+import { avatarUrl } from "../services/profileService";
 import { Icon, Segmented } from "../ui";
 import type { IconName } from "../ui";
 
@@ -13,58 +22,99 @@ const MODE_OPTIONS: { value: Mode; label: string }[] = [
 interface Row {
   icon: IconName;
   title: string;
+  sub?: string;
   danger?: boolean;
   onClick: () => void;
 }
 
 /**
- * «Профиль» на телефоне (Screen-m-profile-draft, блоки 3–4). Пока только
- * то, что уже работает: переключатель Соло/Группа, «Политика данных»,
- * «Выйти». Строки «Профиль и данные», «Периоды учёбы», «Уведомления»,
- * «Корзина» и группа («Мой доступ», «Настройки группы») — экраны волн B6 и C,
- * без них пункты вели бы в никуда, поэтому их здесь нет.
+ * «Профиль» на телефоне (Screen-m-profile и Screen-m-profile-group): аватар,
+ * имя, переключатель Соло/Группа и строки. Строка «Уведомления» не
+ * показывается: экрана настроек уведомлений нет (решение 19.10). Строки
+ * группы «Мой доступ» и «Настройки группы» появятся вместе с экранами
+ * волны C. На компьютере профиль — это «Профиль и настройки».
  */
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { mode, setMode } = useMode();
+  const { mode, setMode, isGroup } = useMode();
+  const { current } = useSemester();
+  const wide = useMediaQuery("(min-width: 1024px)");
+  const { groups } = useMyGroups(isGroup);
+  const group = groups[0];
+  const { roster } = useRoster(group?.id ?? "");
+
+  if (wide) return <Navigate to="/settings" replace />;
   if (!user) return null;
 
   const name = userName(user);
-  const rows: Row[] = [
-    { icon: "shield", title: "Политика данных", onClick: () => navigate("/privacy") },
-    {
-      icon: "logout",
-      title: "Выйти",
-      danger: true,
-      onClick: () => {
-        logout();
-        navigate("/login", { replace: true });
-      },
+  const photo = avatarUrl(user);
+  const years = user.degree_level ? DEGREE_YEARS[user.degree_level as DegreeLevel] : 0;
+  const periods = [current?.label, years ? `${years} ${pluralRu(years, ["год", "года", "лет"])}` : ""].filter(Boolean).join(" · ");
+
+  const exit: Row = {
+    icon: "logout",
+    title: "Выйти",
+    danger: true,
+    onClick: () => {
+      logout();
+      navigate("/login", { replace: true });
     },
-  ];
+  };
+
+  const lists: Row[][] = isGroup
+    ? [
+        [
+          ...(group
+            ? [
+                {
+                  icon: "people" as IconName,
+                  title: `Группа ${group.name}`,
+                  sub: `${roster.length} ${pluralRu(roster.length, ["студент", "студента", "студентов"])} · переключить`,
+                  onClick: () => navigate(`/s/${lastSemesterSlug() || "1"}/group`),
+                },
+              ]
+            : []),
+        ],
+        [{ icon: "user", title: "Профиль и данные", onClick: () => navigate("/settings") }, exit],
+      ]
+    : [
+        [
+          { icon: "user", title: "Профиль и данные", sub: "Имя, город, вуз, курс", onClick: () => navigate("/settings") },
+          { icon: "cal", title: "Периоды учёбы", sub: periods || "Семестры и даты", onClick: () => navigate("/settings/periods") },
+          { icon: "trash", title: "Корзина", sub: `Удалённое хранится ${TRASH_DAYS} дней`, onClick: () => navigate("/trash") },
+        ],
+        [{ icon: "shield", title: "Политика данных", onClick: () => navigate("/privacy") }, exit],
+      ];
 
   return (
     <div className="c-profile">
       <div className="c-profile-head">
         <span className="big-av" aria-hidden="true">
-          {nameInitials(name)}
+          {photo ? <img src={photo} alt="" /> : nameInitials(name)}
         </span>
         <span className="name">{name}</span>
         <span className="mail">{user.email}</span>
       </div>
       <Segmented aria-label="Режим" options={MODE_OPTIONS} value={mode} onChange={setMode} />
-      <div className="c-profile-list">
-        {rows.map((r) => (
-          <button key={r.title} type="button" className="c-profile-row" onClick={r.onClick}>
-            <span className="ic">
-              <Icon name={r.icon} size={20} />
-            </span>
-            <span className={`t${r.danger ? " danger" : ""}`}>{r.title}</span>
-            <Icon name="chev" size={18} className="chev" />
-          </button>
+      {lists
+        .filter((l) => l.length > 0)
+        .map((rows, i) => (
+          <div key={i} className="c-profile-list">
+            {rows.map((r) => (
+              <button key={r.title} type="button" className="c-profile-row" onClick={r.onClick}>
+                <span className="ic">
+                  <Icon name={r.icon} size={20} />
+                </span>
+                <span className="tx">
+                  <span className={`t${r.danger ? " danger" : ""}`}>{r.title}</span>
+                  {r.sub ? <span className="m">{r.sub}</span> : null}
+                </span>
+                <Icon name="chev" size={18} className="chev" />
+              </button>
+            ))}
+          </div>
         ))}
-      </div>
     </div>
   );
 }

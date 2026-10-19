@@ -9,7 +9,8 @@
    "note": "",
    "entry": true,
    "terminal": false,
-   "virtual": true
+   "virtual": true,
+   "route": "`/` (HomeRedirect: вход → онбординг → Главная)"
   },
   "login": {
    "id": "login",
@@ -20,29 +21,32 @@
    "note": "Есть «Забыли пароль?» и «Создать аккаунт»",
    "entry": true,
    "terminal": false,
-   "virtual": false
+   "virtual": false,
+   "route": "`/login`"
   },
   "register": {
    "id": "register",
    "title": "Регистрация",
    "area": "start",
-   "mock": null,
-   "mobile": null,
-   "note": "Не нарисована. Нужна почта, пароль, подтверждение почты или нет?",
+   "mock": "Screen-register",
+   "mobile": "Screen-m-register",
+   "note": "Нарисован: Screen-register, Screen-m-register. Почта, пароль, повтор. Шаг «Подтверди почту» готов, выключен.",
    "entry": false,
    "terminal": false,
-   "virtual": false
+   "virtual": false,
+   "route": "`/register`"
   },
   "reset": {
    "id": "reset",
    "title": "Восстановление пароля",
    "area": "start",
-   "mock": null,
+   "mock": "Screen-auth-reset",
    "mobile": null,
-   "note": "Не нарисовано: запрос письма, письмо, новый пароль",
+   "note": "Нарисован: Screen-auth-reset. Сейчас — «Напиши в поддержку» (support@cohorta.ru), остальные экраны за флагом.",
    "entry": false,
    "terminal": false,
-   "virtual": false
+   "virtual": false,
+   "route": "`/reset` (сейчас «Не помнишь пароль?» → поддержка; письма за флагом `VITE_AUTH_EMAIL`, `/reset/confirm/:token`)"
   },
   "policy": {
    "id": "policy",
@@ -53,40 +57,32 @@
    "note": "",
    "entry": false,
    "terminal": true,
-   "virtual": false
+   "virtual": false,
+   "route": "`/privacy`"
   },
   "onb": {
    "id": "onb",
-   "title": "Онбординг (8 шагов)",
+   "title": "Онбординг (4 шага)",
    "area": "start",
    "mock": "Screen-onboarding-1",
    "mobile": null,
-   "note": "Нарисованы шаги 1, 5 (Screen-onboarding-2) и 7. Шаги 2, 3, 4, 6 и 8 не нарисованы",
+   "note": "4 шага (Screen-onboarding-1…4): имя и фото; город и вуз; уровень и курс; периоды. Шага «Группа» и адреса профиля нет. Телефонных макетов нет.",
    "entry": false,
    "terminal": false,
-   "virtual": false
-  },
-  "onb_group": {
-   "id": "onb_group",
-   "title": "Онбординг, шаг «Группа»",
-   "area": "start",
-   "mock": "Screen-onboarding-3",
-   "mobile": null,
-   "note": "Можно пропустить",
-   "entry": false,
-   "terminal": false,
-   "virtual": false
+   "virtual": false,
+   "route": "`/onboarding` (4 шага на одном адресе)"
   },
   "join_link": {
    "id": "join_link",
-   "title": "Ссылка-приглашение cohorta.app/join/КОД",
+   "title": "Ссылка-приглашение cohorta.ru/join/КОД",
    "area": "start",
    "mock": null,
    "mobile": null,
-   "note": "Не вошедшего ведёт на вход и потом возвращает к подтверждению",
+   "note": "Не вошедшего ведёт на регистрацию, код сохраняется через вход и регистрацию; в конце — подтверждение вступления без автовступления.",
    "entry": true,
    "terminal": false,
-   "virtual": true
+   "virtual": true,
+   "route": "`/join/:code` (публичный; код хранится в localStorage `cohorta:pendingInvite`)"
   },
   "home": {
    "id": "home",
@@ -258,33 +254,36 @@
    "title": "Профиль и настройки",
    "area": "learn",
    "mock": "Screen-settings",
-   "mobile": null,
-   "note": "Аватар внизу меню, из любого экрана",
+   "mobile": "Screen-m-profile",
+   "note": "Левый список — оглавление (клик прокручивает, текущий раздел подсвечен). «Начало недели» из макета не сделано (нет поля в базе).",
    "entry": true,
    "terminal": false,
-   "virtual": false
+   "virtual": false,
+   "route": "`/settings` (компьютер); на телефоне `/profile`, на компьютере `/profile` переводит в `/settings`"
   },
   "settings_edit": {
    "id": "settings_edit",
    "title": "Правка поля профиля / учёбы",
    "area": "learn",
-   "mock": null,
+   "mock": "Screen-settings-inline",
    "mobile": null,
-   "note": "Не нарисовано: «Изменить», «Сменить фото»",
+   "note": "Один компонент `EditableRow`: «Изменить» → поле на месте → «Сохранить»/«Отмена»; на телефоне выбор из списка — шторка.",
    "entry": false,
    "terminal": false,
-   "virtual": false
+   "virtual": false,
+   "route": "на месте, в строке `/settings` (адреса нет)"
   },
   "account_delete": {
    "id": "account_delete",
    "title": "Удаление аккаунта: подтверждение и выгрузка",
    "area": "learn",
-   "mock": null,
+   "mock": "Screen-account-delete",
    "mobile": null,
-   "note": "Не нарисовано. В настройках обещано «попросим подтвердить и предложим выгрузить»",
+   "note": "3 шага (Screen-account-delete): выгрузка ZIP на клиенте и проверка владельца группы; подтверждение словом; при входе в течение 14 дней — «Отменить удаление».",
    "entry": false,
    "terminal": false,
-   "virtual": false
+   "virtual": false,
+   "route": "окно поверх `/settings`; шаг 3 — экран при входе (`PendingDeletionPage` в `ProtectedRoute`)"
   },
   "understanding": {
    "id": "understanding",
@@ -471,7 +470,8 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false
+   "virtual": false,
+   "route": "`/join`"
   },
   "g_join_ok": {
    "id": "g_join_ok",
@@ -482,7 +482,8 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false
+   "virtual": false,
+   "route": "`/join/:code` (тот же экран с найденной группой)"
   },
   "g_create": {
    "id": "g_create",
@@ -664,12 +665,13 @@
    "id": "offline",
    "title": "Нет связи",
    "area": "system",
-   "mock": "States-system",
+   "mock": "Screen-session-states",
    "mobile": null,
-   "note": "",
+   "note": "Нарисовано (Screen-session-states, полосы): нет связи / не удалось / связь вернулась. Очередь — только для текста лекции.",
    "entry": true,
    "terminal": false,
-   "virtual": false
+   "virtual": false,
+   "route": "полоса `SaveStatusBanner` (адреса нет)"
   },
   "error": {
    "id": "error",
@@ -686,23 +688,73 @@
    "id": "gone",
    "title": "Лекции или группы больше нет / нет прав",
    "area": "system",
-   "mock": null,
+   "mock": "Screen-session-states",
    "mobile": null,
-   "note": "Не нарисовано: удалена лекция, исключён из группы, неверная ссылка (404)",
+   "note": "Нарисовано (Screen-session-states, 404).",
    "entry": true,
    "terminal": false,
-   "virtual": false
+   "virtual": false,
+   "route": "`*` и «не найдено» внутри лекции (`NotFoundPage`)"
   },
   "expired": {
    "id": "expired",
    "title": "Сессия истекла",
    "area": "system",
-   "mock": null,
+   "mock": "Screen-session-states",
    "mobile": null,
-   "note": "Не нарисовано: возврат на вход и возврат на прежний экран",
+   "note": "Нарисовано (Screen-session-states). Несохранённый текст лекции лежит на устройстве и уходит после входа.",
    "entry": true,
    "terminal": false,
-   "virtual": false
+   "virtual": false,
+   "route": "окно `SessionGuard` поверх страницы (адреса нет)"
+  },
+  "settings_periods": {
+   "id": "settings_periods",
+   "title": "Периоды учёбы",
+   "area": "learn",
+   "mock": "Screen-settings-periods",
+   "mobile": "Screen-m-settings-periods",
+   "note": "Форма обучения, тип, количество, даты, «Сейчас». Автопереключения семестра по датам нет.",
+   "entry": false,
+   "terminal": false,
+   "virtual": false,
+   "route": "`/settings/periods`"
+  },
+  "trash": {
+   "id": "trash",
+   "title": "Корзина",
+   "area": "learn",
+   "mock": "Screen-trash",
+   "mobile": "Screen-m-trash",
+   "note": "Лекции и предметы, 30 дней. Доступ одногруппников к лекции из корзины пропадает сразу и возвращается при восстановлении.",
+   "entry": false,
+   "terminal": false,
+   "virtual": false,
+   "route": "`/trash`"
+  },
+  "mobile_more": {
+   "id": "mobile_more",
+   "title": "Ещё (телефон)",
+   "area": "learn",
+   "mock": "Screen-m-more",
+   "mobile": null,
+   "note": "Задачи, Карточки, Поиск.",
+   "entry": false,
+   "terminal": false,
+   "virtual": false,
+   "route": "`/more`"
+  },
+  "mobile_profile": {
+   "id": "mobile_profile",
+   "title": "Профиль (телефон)",
+   "area": "learn",
+   "mock": "Screen-m-profile; Screen-m-profile-group",
+   "mobile": null,
+   "note": "Строка «Уведомления» не показывается: экрана настроек уведомлений нет.",
+   "entry": false,
+   "terminal": false,
+   "virtual": false,
+   "route": "`/profile`"
   }
  },
  "transitions": [
@@ -770,24 +822,6 @@
    "from_": "policy",
    "to": "login",
    "how": "«Вход» / назад",
-   "note": ""
-  },
-  {
-   "from_": "onb",
-   "to": "onb_group",
-   "how": "шаг 7",
-   "note": ""
-  },
-  {
-   "from_": "onb_group",
-   "to": "home",
-   "how": "«Далее» или пропустить",
-   "note": ""
-  },
-  {
-   "from_": "onb_group",
-   "to": "g_join_ok",
-   "how": "введён код → подтверждение",
    "note": ""
   },
   {
@@ -1539,6 +1573,102 @@
    "to": "login",
    "how": "«Войти снова»",
    "note": "после входа вернуть на прежний экран"
+  },
+  {
+   "from_": "join_link",
+   "to": "register",
+   "how": "не вошёл (код сохраняется)",
+   "note": ""
+  },
+  {
+   "from_": "register",
+   "to": "g_join_ok",
+   "how": "есть сохранённый код приглашения",
+   "note": ""
+  },
+  {
+   "from_": "g_join_ok",
+   "to": "onb",
+   "how": "онбординг не пройден: «Вступить в …»",
+   "note": ""
+  },
+  {
+   "from_": "onb",
+   "to": "home",
+   "how": "«Готово» (после 4-го шага)",
+   "note": ""
+  },
+  {
+   "from_": "settings",
+   "to": "settings_periods",
+   "how": "«Настроить» у периодов учёбы",
+   "note": ""
+  },
+  {
+   "from_": "settings_periods",
+   "to": "settings",
+   "how": "пункт оглавления / «Профиль» на телефоне",
+   "note": ""
+  },
+  {
+   "from_": "settings",
+   "to": "trash",
+   "how": "«Открыть» у корзины",
+   "note": ""
+  },
+  {
+   "from_": "trash",
+   "to": "settings",
+   "how": "«Профиль» в крошках",
+   "note": ""
+  },
+  {
+   "from_": "mobile_profile",
+   "to": "settings",
+   "how": "«Профиль и данные»",
+   "note": ""
+  },
+  {
+   "from_": "mobile_profile",
+   "to": "settings_periods",
+   "how": "«Периоды учёбы»",
+   "note": ""
+  },
+  {
+   "from_": "mobile_profile",
+   "to": "trash",
+   "how": "«Корзина»",
+   "note": ""
+  },
+  {
+   "from_": "mobile_profile",
+   "to": "policy",
+   "how": "«Политика данных»",
+   "note": ""
+  },
+  {
+   "from_": "mobile_profile",
+   "to": "login",
+   "how": "«Выйти»",
+   "note": ""
+  },
+  {
+   "from_": "mobile_more",
+   "to": "tasks",
+   "how": "«Задачи»",
+   "note": ""
+  },
+  {
+   "from_": "mobile_more",
+   "to": "cards",
+   "how": "«Карточки»",
+   "note": ""
+  },
+  {
+   "from_": "mobile_more",
+   "to": "search",
+   "how": "«Поиск»",
+   "note": ""
   }
  ],
  "gaps": [
