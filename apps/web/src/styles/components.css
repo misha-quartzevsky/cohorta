@@ -3003,3 +3003,89 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
 }
 .c-review-card .card-face-content { font: inherit; letter-spacing: inherit; color: inherit; text-align: center; }
 .c-review-card .card-face-content p { margin: 0; }
+
+/* ============================================================
+ *  Вход, регистрация, восстановление, политика, вступление — B6.
+ *  Вёрстка по Screen-login, Screen-register, Screen-m-register,
+ *  Screen-auth-reset, Screen-policy, Screen-group-join-confirm.
+ * ============================================================ */
+.c-auth {
+  min-height: 100vh;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-10) var(--space-4);
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+.c-auth-col { width: 420px; max-width: 100%; display: flex; flex-direction: column; gap: calc(var(--space-2) * 3); }
+.c-auth-logo { height: 26px; width: auto; align-self: flex-start; display: block; }
+.c-auth-head { display: flex; flex-direction: column; gap: 8px; }
+.c-auth-head h1 { margin: 0; font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em; }
+.c-auth-head span { font-size: 15px; line-height: 24px; color: var(--ink-2); }
+.c-auth-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: calc(var(--space-2) * 3);
+  box-sizing: border-box;
+}
+.c-auth-form { display: flex; flex-direction: column; gap: var(--space-4); }
+.c-auth-submit { width: 100%; justify-content: center; text-decoration: none; }
+.c-auth-forgot { font-size: 14px; font-weight: 500; color: var(--accent-strong); text-decoration: none; align-self: flex-start; }
+.c-auth-forgot:hover, .c-auth-switch a:hover, .c-auth-legal a:hover, .c-auth-back:hover { text-decoration: underline; }
+.c-auth-error { margin: 0; font-size: 13px; line-height: 18px; color: var(--danger-text); }
+.c-auth-switch { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; color: var(--ink-2); }
+.c-auth-switch a, .c-auth-legal a, .c-auth-back { font-weight: 500; color: var(--accent-strong); text-decoration: none; }
+.c-auth-legal { font-size: 12px; line-height: 18px; color: var(--ink-3); text-align: center; }
+.c-auth-back { align-self: center; font-size: 14px; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; }
+.c-auth-note { margin: 0; padding: 14px 16px; border-radius: var(--radius-md); background: var(--sunken); font-size: 14px; line-height: 21px; color: var(--ink-2); }
+.c-auth-copy { display: flex; gap: 8px; }
+.c-auth-copy-val { flex: 1; min-width: 0; display: flex; align-items: center; height: var(--control-md); padding: 0 14px; box-sizing: border-box; border-radius: var(--radius-md); background: var(--sunken); font-size: 14px; }
+@media (max-width: 767px) {
+  .c-auth { align-items: flex-start; padding: 64px var(--space-4) calc(var(--space-2) * 3); }
+  /* на телефоне поля стоят прямо на фоне, без карточки (Screen-m-register) */
+  .c-auth-card { background: transparent; border: 0; padding: 0; }
+  .c-auth-col { gap: calc(var(--space-1) * 5); }
+  .c-auth-legal { font-size: 12px; }
+}
+
+.c-policy { min-height: 100vh; min-height: 100dvh; box-sizing: border-box; padding: var(--space-10) var(--space-4) var(--space-12); background: var(--bg); color: var(--ink); font-family: var(--font-sans); display: flex; justify-content: center; }
+.c-policy-col { width: 640px; max-width: 100%; display: flex; flex-direction: column; gap: 12px; }
+.c-policy-crumb { display: inline-flex; align-items: center; gap: 2px; align-self: flex-start; font-size: 13px; color: var(--ink-3); text-decoration: none; }
+.c-policy-crumb:hover { color: var(--ink-2); }
+.c-policy h1 { margin: 0; font-size: 36px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; }
+.c-policy .lead { font-size: 15px; line-height: 24px; color: var(--ink-2); }
+.c-policy section { display: flex; flex-direction: column; gap: 6px; padding: 20px 0; border-top: 1px solid var(--line); }
+.c-policy section:first-of-type { margin-top: 4px; }
+.c-policy h2 { margin: 0; font-size: 16px; font-weight: 600; }
+.c-policy p { margin: 0; font-size: 15px; line-height: 24px; color: var(--ink-2); }
+@media (max-width: 767px) { .c-policy h1 { font-size: 28px; line-height: 36px; } }
+
+.c-join-col { width: 520px; }
+.c-join-ic { width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--sunken); display: inline-flex; align-items: center; justify-content: center; color: var(--ink); }
+.c-join .c-auth-head h1 { font-size: 32px; line-height: 40px; }
+.c-join-find { display: flex; align-items: flex-start; gap: 12px; }
+.c-join-find .c-field { flex: 1; min-width: 0; }
+.c-join-find .c-btn { margin-top: 26px; flex: none; }
+.c-join-group { margin-top: var(--space-4); display: flex; flex-direction: column; gap: 0; padding: 20px; border-radius: var(--radius-lg); background: var(--sunken); flex-direction: row; align-items: center; gap: 16px; }
+.c-join-badge { width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--ink); color: var(--on-ink); font-size: 16px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.c-join-group .tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.c-join-group .t { font-size: 17px; line-height: 24px; font-weight: 600; }
+.c-join-group .m { font-size: 13px; line-height: 18px; color: var(--ink-3); }
+.c-join-note { margin-top: var(--space-4); background: transparent; padding: 0; }
+.c-join-actions { margin-top: var(--space-4); display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
+@media (max-width: 767px) {
+  .c-join .c-auth-card { background: var(--surface); border: 1px solid var(--line); padding: var(--space-4); }
+  .c-join-find { flex-direction: column; align-items: stretch; }
+  .c-join-find .c-btn { margin-top: 0; }
+  .c-join-actions { flex-direction: column-reverse; align-items: stretch; }
+  .c-join-actions .c-btn { width: 100%; justify-content: center; }
+}
+.c-auth .c-field { width: 100%; }
+.c-auth .c-field input { width: 100%; box-sizing: border-box; }
+.c-policy-crumb { height: 16px; line-height: 16px; }
+.c-policy h2 { line-height: normal; }

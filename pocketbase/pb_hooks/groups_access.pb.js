@@ -65,6 +65,55 @@ routerAdd(
   $apis.requireAuth()
 );
 
+// Предпросмотр группы по коду — для экрана подтверждения вступления
+// (ссылка cohorta.ru/join/КОД). Отдаёт только название, число участников
+// и имя того, кто создал группу; ни код, ни список людей не раскрывает.
+routerAdd(
+  "GET",
+  "/api/groups/preview",
+  (e) => {
+    const code = String(e.request.url.query().get("code") || "").trim().toLowerCase();
+    if (!code) {
+      throw new BadRequestError("Введите код приглашения.");
+    }
+    let group;
+    try {
+      group = e.app.findFirstRecordByFilter("groups", "invite_code = {:code}", { code: code });
+    } catch (err) {
+      throw new NotFoundError("Группа с таким кодом не найдена.");
+    }
+    let members = 0;
+    try {
+      members = e.app.countRecords("group_members", $dbx.hashExp({ group: group.id }));
+    } catch (err) {
+      members = 0;
+    }
+    let ownerName = "";
+    try {
+      const owner = e.app.findRecordById("users", group.get("owner"));
+      ownerName = String(owner.get("name") || "").trim();
+      if (!ownerName) ownerName = String(owner.get("email") || "").split("@")[0];
+    } catch (err) {
+      ownerName = "";
+    }
+    let isMember = false;
+    try {
+      e.app.findFirstRecordByFilter("group_members", "group = {:g} && user = {:u}", { g: group.id, u: e.auth.id });
+      isMember = true;
+    } catch (err) {
+      isMember = false;
+    }
+    return e.json(200, {
+      id: group.id,
+      name: group.get("name"),
+      members: members,
+      owner_name: ownerName,
+      is_member: isMember,
+    });
+  },
+  $apis.requireAuth()
+);
+
 routerAdd(
   "GET",
   "/api/groups/search",

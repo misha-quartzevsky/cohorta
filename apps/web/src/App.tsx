@@ -51,6 +51,10 @@ import Header from "./components/Header";
 import { useAuth } from "./hooks/useAuth";
 import Login from "./pages/Login";
 import PrivacyPage from "./pages/PrivacyPage";
+import LoginPageNew from "./pages/auth/LoginPageNew";
+import PolicyPageNew from "./pages/auth/PolicyPageNew";
+import { ResetEntryPage, ResetNewPasswordPage } from "./pages/auth/ResetPages";
+import { JoinRoute } from "./pages/auth/JoinGroupPage";
 import OnboardingWizard from "./features/onboarding/OnboardingWizard";
 import LectureLayout from "./components/LectureLayout";
 import AppLayout from "./components/AppLayout";
@@ -72,6 +76,7 @@ import {
 } from "./lib/semesterContext";
 import { semesterSlug } from "./lib/types";
 import { isNewUI } from "./lib/featureFlags";
+import { LAND_IN_GROUP_KEY } from "./pages/auth/JoinGroupPage";
 import "./App.css";
 
 /**
@@ -119,6 +124,16 @@ function HomeRedirect() {
   const target = semesters.some((s) => semesterSlug(s) === last)
     ? (last as string)
     : semesterSlug(semesters[0]);
+  // Вступил в группу по ссылке до онбординга: после него показываем группу,
+  // чтобы человек понял, где он (решение 19.10, «Группа»).
+  try {
+    if (localStorage.getItem(LAND_IN_GROUP_KEY) === "1") {
+      localStorage.removeItem(LAND_IN_GROUP_KEY);
+      return <Navigate to={`/s/${target}/group`} replace />;
+    }
+  } catch {
+    /* хранилище недоступно */
+  }
   return <Navigate to={`/s/${target}`} replace />;
 }
 
@@ -131,8 +146,19 @@ function App() {
         <SemesterProvider>
         <ToastProvider>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/login" element={isNewUI() ? <LoginPageNew mode="login" /> : <Login />} />
+          <Route path="/privacy" element={isNewUI() ? <PolicyPageNew /> : <PrivacyPage />} />
+          {/* Вход, регистрация, восстановление пароля и ссылка-приглашение
+              (B6). Старый интерфейс держит всё на /login (Login.tsx). */}
+          {isNewUI() && (
+            <>
+              <Route path="/register" element={<LoginPageNew mode="register" />} />
+              <Route path="/reset" element={<ResetEntryPage />} />
+              <Route path="/reset/confirm/:token" element={<ResetNewPasswordPage />} />
+              <Route path="/join" element={<JoinRoute />} />
+              <Route path="/join/:code" element={<JoinRoute />} />
+            </>
+          )}
           <Route element={<ProtectedRoute />}>
             {/* Мастер онбординга — фуллскрин, без сайдбара, вне AppLayout. */}
             <Route path="/onboarding" element={<OnboardingWizard />} />

@@ -257,3 +257,31 @@ export async function fetchOwnerPreviews(
     sort: "-updated",
   });
 }
+
+export interface GroupPreview {
+  id: string;
+  name: string;
+  members: number;
+  owner_name: string;
+  is_member: boolean;
+}
+
+/**
+ * Предпросмотр группы по коду приглашения (экран «Вступить в группу»).
+ * Серверный маршрут `/api/groups/preview` отдаёт только название, число
+ * участников и имя создателя.
+ *
+ * @throws если код не найден
+ */
+export async function fetchGroupPreview(code: string): Promise<GroupPreview> {
+  const trimmed = code.trim().toLowerCase();
+  if (!trimmed) throw new Error("Введите код приглашения.");
+  try {
+    return await pb.send<GroupPreview>("/api/groups/preview", {
+      method: "GET",
+      query: { code: trimmed },
+    });
+  } catch {
+    throw new Error("Группа с таким кодом не найдена.");
+  }
+}

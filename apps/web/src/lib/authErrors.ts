@@ -28,27 +28,27 @@ export function registerErrorMessage(err: unknown): string {
 
   const emailCode = fields.email?.code;
   if (emailCode === "validation_not_unique") {
-    return "Этот email уже зарегистрирован.";
+    return "Эта почта уже зарегистрирована.";
   }
   if (emailCode === "validation_invalid_email" || emailCode === "validation_is_email") {
-    return "Введите корректный email.";
+    return "Введи корректную почту.";
   }
   if (emailCode) {
-    return "Проверьте email — он уже занят или введён неверно.";
+    return "Проверь почту: она уже занята или введена неверно.";
   }
 
   if (fields.password?.code) {
-    return "Пароль слишком короткий — нужно не меньше 8 символов.";
+    return "Пароль слишком короткий: нужно не меньше 8 символов.";
   }
 
   const raw = errorMessage(err);
   if (/failed to create record|Failed to authenticate/i.test(raw)) {
-    return "Не удалось зарегистрироваться. Попробуйте ещё раз.";
+    return "Не удалось зарегистрироваться. Попробуй ещё раз.";
   }
-  return "Не удалось зарегистрироваться. Попробуйте ещё раз.";
+  return "Не удалось зарегистрироваться. Попробуй ещё раз.";
 }
 
 /** Сообщение для формы входа. */
 export function loginErrorMessage(_err: unknown): string {
-  return "Не удалось войти. Проверьте email и пароль.";
+  return "Не удалось войти. Проверь почту и пароль.";
 }
