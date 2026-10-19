@@ -3266,6 +3266,8 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
   .c-erow { padding: var(--space-4); }
   .c-settings-card > h2 { padding: var(--space-4); }
   .c-settings-me { padding: 0 var(--space-4) var(--space-4); flex-wrap: wrap; }
+  .c-settings-me .tx { flex: 1 1 calc(100% - 80px); }
+  .c-settings-me .c-btn { flex: 1 1 100%; justify-content: center; }
 }
 @media (max-width: 639px) {
   .c-delete-dialog { width: auto; }
@@ -3315,6 +3317,7 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
   .c-trash-head .sub-d { display: none; }
   .c-trash-head .sub-m { display: block; }
   .c-trash-note { display: none; }
+  .c-trash-clear { display: none; }
   .c-trash-row { display: grid; grid-template-columns: 40px 1fr auto; grid-template-areas: "cover tx left" "acts acts acts"; column-gap: 12px; row-gap: 12px; padding: 16px; }
   .c-trash-row > :nth-child(1) { grid-area: cover; }
   .c-trash-row .tx { grid-area: tx; }

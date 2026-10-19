@@ -110,7 +110,7 @@ export default function TrashPage() {
           <span className="sub-m">{items ? `${count} · хранятся ${TRASH_DAYS} дней` : ""}</span>
         </div>
         {n > 0 ? (
-          <Button variant="secondary" onClick={() => setConfirm({ kind: "all" })}>
+          <Button variant="secondary" className="c-trash-clear" onClick={() => setConfirm({ kind: "all" })}>
             Очистить корзину
           </Button>
         ) : null}
@@ -144,7 +144,10 @@ export default function TrashPage() {
                   <span className="m d-only">{meta(it)}</span>
                   <span className="m m-only">{it.type === "course" ? "Предмет" : it.course_name || "Лекция"}</span>
                 </div>
-                <span className="left">{daysLabel(left)}</span>
+                <span className="left">
+                  <span className="d-only">{daysLabel(left)}</span>
+                  <span className="m-only">{left} дн.</span>
+                </span>
                 <div className="acts">
                   <Button variant="secondary" size="sm" loading={busyKey === key} onClick={() => void restore(it)}>
                     Восстановить
