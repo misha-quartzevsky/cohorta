@@ -41,6 +41,9 @@ import CheatsheetPage from "./pages/CheatsheetPage";
 import CheatsheetPageNew from "./pages/CheatsheetPageNew";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MorePage from "./pages/MorePage";
+import CardsPageNew from "./pages/CardsPageNew";
+import DeckPageNew from "./pages/DeckPageNew";
+import CardReviewPageNew from "./pages/CardReviewPageNew";
 import ProfilePage from "./pages/ProfilePage";
 import LoadingState from "./components/LoadingState";
 import ErrorBanner from "./components/ErrorBanner";
@@ -219,9 +222,11 @@ function App() {
                 element={isNewUI() ? <TicketPageNew /> : <TicketEdit />}
               />
               {/* Flashcards: cards module (not semester-scoped) */}
-              <Route path="/decks" element={<CardLibraryPage />} />
+              <Route path="/decks" element={isNewUI() ? <CardsPageNew /> : <CardLibraryPage />} />
               <Route path="/decks/new" element={<DeckEditorPage />} />
-              <Route path="/decks/:slug" element={<CardStudyPage />} />
+              <Route path="/cards/review" element={<CardReviewPageNew />} />
+              <Route path="/decks/:slug" element={isNewUI() ? <DeckPageNew /> : <CardStudyPage />} />
+              <Route path="/decks/:slug/review" element={<CardReviewPageNew />} />
               <Route path="/decks/:slug/edit" element={<DeckEditorPage />} />
               {/* Расписание и задачи — глобальные, вне семестра. Новая
                   дизайн-основа (B3) — за флагом VITE_NEW_UI, как и
