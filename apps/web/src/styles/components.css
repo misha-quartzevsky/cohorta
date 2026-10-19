@@ -1350,6 +1350,15 @@ button.c-row.on:hover { background: var(--accent-soft); }
   color: var(--ink-2);
 }
 .c-pills span.on { background: var(--ink); color: var(--on-ink); }
+.c-pills span { white-space: nowrap; flex: none; }
+@media (max-width: 767px) {
+  /* четыре вкладки с числами не влезают в 358px — не переносим число
+     на вторую строку, а сжимаем отступы и, если надо, прокручиваем */
+  .c-pills { max-width: 100%; overflow-x: auto; scrollbar-width: none; box-sizing: border-box; }
+  .c-pills::-webkit-scrollbar { display: none; }
+  .c-pills { gap: 0; }
+  .c-pills span { padding: 0 10px; font-size: 13px; }
+}
 
 .c-pop {
   background: var(--surface);
@@ -1765,6 +1774,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
   .c-shell-burger { display: inline-flex; }
   .c-shell-content { padding: var(--space-4) var(--space-4) calc(84px + var(--space-4)); }
   .c-shell-search { max-width: none; }
+  .c-shell-topbar.hide-mobile { display: none; }
   .c-shell-backdrop { display: block; position: fixed; inset: 0; background: var(--color-scrim, rgba(27, 25, 22, .4)); z-index: 55; }
   /* .c-tabbar — ширина 390px из макета (Figma-фрейм); в реальной
      разметке растягивается на весь экран. */
@@ -1824,6 +1834,12 @@ button.c-row.on:hover { background: var(--accent-soft); }
   padding: 12px 20px;
   box-sizing: border-box;
   border-top: 1px solid var(--line);
+}
+@media (max-width: 767px) {
+  /* кнопка справа не должна выдавливать название пары: уходит на свою строку */
+  .c-dash-row { flex-wrap: wrap; }
+  .c-dash-row .tx { flex: 1 1 140px; }
+  .c-dash-row > .c-btn { margin-left: calc(56px + var(--space-4)); }
 }
 .c-dash-row .time { width: 56px; flex: none; font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--ink-2); }
 .c-dash-row .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }

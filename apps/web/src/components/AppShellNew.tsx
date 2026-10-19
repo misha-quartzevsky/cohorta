@@ -15,7 +15,7 @@
  * дефолтным. Этот компонент не трогает их код.
  */
 
-import { NavLink, Outlet, useNavigate, useParams } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { useUiShell } from "../lib/uiShellContext";
 import SearchOverlay from "./SearchOverlay";
@@ -303,6 +303,9 @@ function Topbar({ open, onBurger }: { open: boolean; onBurger: () => void }) {
   const { lectureSlug } = useParams();
   const inLecture = !!lectureSlug;
   const { openSearch } = useUiShell();
+  // На экране «Профиль» (телефон) верхней строки нет (Screen-m-profile):
+  // иначе она закрывает аватар.
+  const { pathname } = useLocation();
   const label = inLecture
     ? open
       ? "Закрыть содержание"
@@ -311,7 +314,7 @@ function Topbar({ open, onBurger }: { open: boolean; onBurger: () => void }) {
       ? "Закрыть меню"
       : "Открыть меню";
   return (
-    <header className="c-shell-topbar">
+    <header className={`c-shell-topbar${pathname === "/profile" ? " hide-mobile" : ""}`}>
       <button
         type="button"
         className="c-shell-burger"

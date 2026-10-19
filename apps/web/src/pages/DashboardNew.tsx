@@ -209,7 +209,7 @@ export default function DashboardNew() {
                           Открыть конспект
                         </Button>
                       ) : (
-                        <Button variant="soft" size="sm" onClick={() => void startNote(slot)}>
+                        <Button variant="secondary" size="sm" onClick={() => void startNote(slot)}>
                           Начать конспект
                         </Button>
                       )}

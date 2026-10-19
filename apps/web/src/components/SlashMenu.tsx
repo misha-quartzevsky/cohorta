@@ -55,6 +55,9 @@ function askImageUrl(editor: Editor, range: Range) {
   editor.chain().focus().deleteRange(range).setImage({ src: url.trim() }).run();
 }
 
+/** Максимальная высота списка меню «/», px. */
+const SLASH_MAX_H = 320;
+
 /** Опции создания slash-меню (см. createSlashMenu ниже). */
 export interface SlashMenuOptions {
   /**
@@ -326,6 +329,8 @@ export function createSlashMenu(opts?: SlashMenuOptions): Extension {
               SlashMenuListProps
             > | null = null;
             let unmount: (() => void) | null = null;
+            let latest: SuggestionProps<SlashItem, SlashItem> | null = null;
+            let placeFn: (() => void) | null = null;
 
             const listProps = (
               props: SuggestionProps<SlashItem, SlashItem>
@@ -340,10 +345,43 @@ export function createSlashMenu(opts?: SlashMenuOptions): Extension {
                   props: listProps(props),
                   editor: props.editor,
                 });
-                unmount = props.mount(component.element);
+                latest = props;
+                const el = component.element;
+                // На телефоне клавиатура закрывает нижнюю часть экрана, но не
+                // меняет layout viewport — floating-ui её «не видит». Место
+                // считаем по visualViewport, список вписываем над клавиатурой
+                // или под строкой, где больше места.
+                const place = () => {
+                  const rect = latest?.clientRect?.();
+                  if (!rect) return;
+                  const vv = window.visualViewport;
+                  const top = vv?.offsetTop ?? 0;
+                  const bottom = top + (vv?.height ?? window.innerHeight);
+                  const below = bottom - rect.bottom - 8;
+                  const above = rect.top - top - 8;
+                  const natural = Math.min(el.scrollHeight, SLASH_MAX_H);
+                  const down = below >= natural || below >= above;
+                  const room = Math.max(120, Math.min(SLASH_MAX_H, down ? below : above));
+                  const h = Math.min(natural, room);
+                  Object.assign(el.style, {
+                    position: "fixed",
+                    left: `${Math.max(8, Math.min(rect.left, window.innerWidth - 248))}px`,
+                    top: `${down ? rect.bottom + 4 : rect.top - h - 4}px`,
+                    maxHeight: `${room}px`,
+                    overflowY: "auto",
+                    zIndex: "60",
+                    visibility: "",
+                  });
+                };
+                placeFn = place;
+                unmount = props.mount(el, { onPosition: place });
+                window.visualViewport?.addEventListener("resize", place);
+                window.visualViewport?.addEventListener("scroll", place);
               },
               onUpdate: (props) => {
+                latest = props;
                 component?.updateProps(listProps(props));
+                requestAnimationFrame(() => placeFn?.());
               },
               onKeyDown: (props) => {
                 if (props.event.key === "Escape") {
@@ -354,6 +392,11 @@ export function createSlashMenu(opts?: SlashMenuOptions): Extension {
                 return component?.ref?.onKeyDown(props) ?? false;
               },
               onExit: () => {
+                if (placeFn) {
+                  window.visualViewport?.removeEventListener("resize", placeFn);
+                  window.visualViewport?.removeEventListener("scroll", placeFn);
+                  placeFn = null;
+                }
                 unmount?.();
                 unmount = null;
                 component?.destroy();
