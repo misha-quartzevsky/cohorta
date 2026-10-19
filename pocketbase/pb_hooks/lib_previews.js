@@ -53,8 +53,10 @@ function syncPreviewForLecture(app, lecture) {
   );
   const row = existing && existing[0];
 
+  // Лекция в корзине (deleted_at) для группы не показывается.
+  const inTrash = String(lecture.get("deleted_at") || "") !== "";
   const shouldShow =
-    groupId && ownerId && memberPreviewEnabled(app, groupId, ownerId);
+    !inTrash && groupId && ownerId && memberPreviewEnabled(app, groupId, ownerId);
 
   if (!shouldShow) {
     if (row) app.delete(row);
