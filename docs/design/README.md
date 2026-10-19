@@ -12,7 +12,7 @@
 2. `design-system/`: токены (`tokens.json`, `tokens.css`), компоненты (`components/bundle.css` и README у каждого), иконки, словарь.
 3. `screens/` и `screens-png/`: макеты 61 экрана.
 4. `ia/`: информационная архитектура (карта, объекты, навигация, сценарии, доступ, словарь) и `ia/userflow.md`: карта переходов между экранами (откуда входят, куда ведёт, какие экраны не нарисованы).
-5. `instructions/ia-decisions-2026-10-18.md`, `subject-cover-generator.md`, `spec-schedule-tasks-quiz.md`.
+5. `instructions/ia-decisions-2026-10-18.md`, `subject-cover-generator.md`, `spec-schedule-tasks-quiz.md`. Также `userflow-decisions-2026-10-19.md` (решения по переходам, актуальные) и `backlog.md`.
 
 ## Что где лежит
 
