@@ -72,7 +72,7 @@ function CoursesPage() {
   const handleDeleteCourse = (course: Course) => {
     confirm.ask(
       "Удалить курс?",
-      "Курс будет удалён. Связанные лекции погибнут.",
+      "Курс и его лекции уйдут в корзину на 30 дней.",
       () => {
         void deleteCourse(course.id);
       }

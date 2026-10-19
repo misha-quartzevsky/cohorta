@@ -8,6 +8,7 @@
  */
 
 import { pb } from "../lib/pocketbase";
+import { moveToTrash } from "./trashService";
 import type { Lecture } from "../lib/types";
 import { FIELDS, lectureFiles } from "../lib/types";
 import { slugify } from "../lib/slugify";
@@ -170,12 +171,13 @@ export async function updateLecture(
 }
 
 /**
- * Delete a lecture by ID.
+ * Положить лекцию в корзину (B6): она пропадает из списков и для тех, кому
+ * открыт доступ, и 30 дней ждёт восстановления (services/trashService.ts).
  *
  * @param id — PocketBase record ID
  */
 export async function deleteLecture(id: string): Promise<void> {
-  await pb.collection("lectures").delete(id);
+  await moveToTrash("lecture", id);
 }
 
 /**

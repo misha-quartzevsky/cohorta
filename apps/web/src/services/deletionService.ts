@@ -15,7 +15,19 @@ export interface DeletionRequest extends PbRecord {
   user: string;
   email?: string;
   reason?: string;
-  status?: "new" | "done";
+  status?: "new" | "done" | "cancelled";
+  /** Когда аккаунт будет удалён ("2026-11-02 09:30:00.000Z"), +14 дней от запроса. */
+  scheduled_for?: string;
+}
+
+/** Ответ сервера: владелец группы должен сначала передать её. */
+export class GroupOwnerError extends Error {
+  groupName: string;
+  constructor(groupName: string) {
+    super("Ты владелец группы " + groupName + ". Сначала передай владение: иначе группа останется без владельца.");
+    this.name = "GroupOwnerError";
+    this.groupName = groupName;
+  }
 }
 
 function currentUserId(): string {
@@ -49,4 +61,35 @@ export async function requestDeletion(
     reason,
     status: "new",
   });
+}
+
+/**
+ * Запросить удаление: аккаунт скрывается сразу, данные стираются через
+ * 14 дней (серверная задача), до этого срок можно отменить. Владелец
+ * группы, где есть другие участники, получает GroupOwnerError.
+ */
+export async function requestAccountDeletion(): Promise<{ scheduled_for: string }> {
+  try {
+    return await pb.send("/api/account/delete-request", { method: "POST" });
+  } catch (e) {
+    const err = e as { status?: number; response?: { code?: string; group_name?: string } };
+    if (err.status === 409 && err.response?.code === "group_owner") {
+      throw new GroupOwnerError(String(err.response.group_name ?? ""));
+    }
+    throw e;
+  }
+}
+
+/** Отменить удаление (человек вошёл и передумал). */
+export async function cancelAccountDeletion(): Promise<void> {
+  await pb.send("/api/account/delete-cancel", { method: "POST" });
+}
+
+const MONTHS_GEN = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+
+/** "2 ноября" из "2026-11-02 09:30:00.000Z". */
+export function deletionDateLabel(scheduledFor: string): string {
+  const d = new Date(scheduledFor.replace(" ", "T"));
+  if (Number.isNaN(d.getTime())) return "";
+  return d.getDate() + " " + MONTHS_GEN[d.getMonth()];
 }

@@ -9,6 +9,7 @@
  */
 
 import { pb } from "../lib/pocketbase";
+import { moveToTrash } from "./trashService";
 import type { Course, Lecture } from "../lib/types";
 import { FIELDS } from "../lib/types";
 import { randomCourseColor } from "../lib/colors";
@@ -109,14 +110,13 @@ export async function updateCourse(
 }
 
 /**
- * Delete a course by ID.  Note: PocketBase cascade-delete
- * is not configured by default — the caller should ensure
- * lectures are deleted or reassigned first.
+ * Положить предмет в корзину вместе с его лекциями (B6). Восстановление
+ * возвращает предмет и те лекции, что ушли с ним (services/trashService.ts).
  *
  * @param id — PocketBase record ID
  */
 export async function deleteCourse(id: string): Promise<void> {
-  await pb.collection("courses").delete(id);
+  await moveToTrash("course", id);
 }
 
 /**
