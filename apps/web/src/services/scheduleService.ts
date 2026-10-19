@@ -196,6 +196,37 @@ export async function startNoteForSlot(
   return normalizeLecture(created);
 }
 
+/**
+ * «Новая лекция» со страницы предмета: «Лекция N» (N = max number + 1) с
+ * сегодняшней датой, без привязки к паре.
+ */
+export async function createLectureInSubject(
+  subjectId: string,
+  lecturesOfSubject: Lecture[],
+  dateStr: string
+): Promise<Lecture> {
+  const maxNumber = lecturesOfSubject.reduce(
+    (max, l) => (typeof l.number === "number" && l.number > max ? l.number : max),
+    0
+  );
+  const number = maxNumber + 1;
+  const title = `Лекция ${number}`;
+  const created = await pb.collection("lectures").create<Lecture>({
+    [FIELDS.lectureTitle]: title,
+    [FIELDS.lectureContent]: "",
+    [FIELDS.lectureCourse]: subjectId,
+    [FIELDS.lectureOwner]: currentUserId(),
+    [FIELDS.lectureDate]: dateStr,
+    [FIELDS.lectureNumber]: number,
+    [FIELDS.lectureSlug]: await uniqueSlugForCollection(
+      "lectures",
+      FIELDS.lectureSlug,
+      slugify(title) || "lecture"
+    ),
+  });
+  return normalizeLecture(created);
+}
+
 /** Лекции предмета (для привязки к парам). */
 export async function fetchLecturesOfSubject(
   subjectId: string
