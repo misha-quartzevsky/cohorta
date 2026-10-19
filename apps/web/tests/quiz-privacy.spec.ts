@@ -123,4 +123,76 @@ test.describe("квиз: данные одного пользователя не
     });
     expect(r.ok()).toBeFalsy();
   });
+
+  // ── Гость: тому, кому лекцию открыли (lecture_shares) ──────────────────
+  test.describe.serial("гость с доступом к лекции", () => {
+    let shareId = "";
+    let guestAnswerId = "";
+
+    test("после выдачи доступа гость видит квиз и вопросы владельца", async ({ request }) => {
+      const share = await request.post(`${PB}/api/collections/lecture_shares/records`, {
+        headers: h(a),
+        data: { lecture: lectureId, owner: a.id, grantee: b.id },
+      });
+      expect(share.ok(), await share.text()).toBeTruthy();
+      shareId = (await share.json()).id;
+      for (const [name, id] of [["quizzes", quizId], ["quiz_questions", questionId]]) {
+        const one = await request.get(`${PB}/api/collections/${name}/records/${id}`, { headers: h(b) });
+        expect(one.ok(), name).toBeTruthy();
+      }
+    });
+
+    test("гость не видит ответы владельца", async ({ request }) => {
+      const list = await request.get(`${PB}/api/collections/quiz_answers/records`, { headers: h(b) });
+      expect((await list.json()).totalItems).toBe(0);
+    });
+
+    test("гость не может создать, изменить или удалить квиз и вопросы", async ({ request }) => {
+      const create = await request.post(`${PB}/api/collections/quizzes/records`, {
+        headers: h(b),
+        data: { owner: b.id, lecture: lectureId, source_hash: "g", size: 5, model: "t" },
+      });
+      expect(create.ok()).toBeFalsy();
+      const upd = await request.patch(`${PB}/api/collections/quiz_questions/records/${questionId}`, {
+        headers: h(b),
+        data: { flagged: true },
+      });
+      expect(upd.ok()).toBeFalsy();
+      const del = await request.delete(`${PB}/api/collections/quizzes/records/${quizId}`, { headers: h(b) });
+      expect(del.ok()).toBeFalsy();
+      const still = await request.get(`${PB}/api/collections/quiz_questions/records/${questionId}`, { headers: h(a) });
+      expect((await still.json()).flagged).toBe(false);
+    });
+
+    test("гость отвечает на квиз владельца; ответ виден только ему", async ({ request }) => {
+      const r = await request.post(`${PB}/api/collections/quiz_answers/records`, {
+        headers: h(b),
+        data: { owner: b.id, question: questionId, lecture: lectureId, correct: false, attempt: "g1" },
+      });
+      expect(r.ok(), await r.text()).toBeTruthy();
+      guestAnswerId = (await r.json()).id;
+      const mine = await request.get(`${PB}/api/collections/quiz_answers/records`, { headers: h(b) });
+      expect((await mine.json()).totalItems).toBe(1);
+      const owners = await request.get(`${PB}/api/collections/quiz_answers/records`, { headers: h(a) });
+      const ids = (await owners.json()).items.map((x: { id: string }) => x.id);
+      expect(ids).toContain(answerId);
+      expect(ids).not.toContain(guestAnswerId);
+      const peek = await request.get(`${PB}/api/collections/quiz_answers/records/${guestAnswerId}`, { headers: h(a) });
+      expect(peek.status()).toBe(404);
+    });
+
+    test("доступ снят — квиз скрыт, отвечать нельзя, прежние ответы остаются личными", async ({ request }) => {
+      const del = await request.delete(`${PB}/api/collections/lecture_shares/records/${shareId}`, { headers: h(a) });
+      expect(del.ok()).toBeTruthy();
+      for (const [name, id] of [["quizzes", quizId], ["quiz_questions", questionId]]) {
+        const one = await request.get(`${PB}/api/collections/${name}/records/${id}`, { headers: h(b) });
+        expect(one.status(), name).toBe(404);
+      }
+      const r = await request.post(`${PB}/api/collections/quiz_answers/records`, {
+        headers: h(b),
+        data: { owner: b.id, question: questionId, lecture: lectureId, correct: true, attempt: "g2" },
+      });
+      expect(r.ok()).toBeFalsy();
+    });
+  });
 });

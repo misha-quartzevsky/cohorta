@@ -171,28 +171,34 @@ async function pbAuthRefresh(
   }
 }
 
-async function pbLectureBelongsToUser(
+/** Лекция видна пользователю (правила PocketBase) -> её владелец, либо null, если не видна. */
+async function pbLectureOwner(
   pbUrl: string,
   token: string,
   lectureId: string
-): Promise<boolean> {
+): Promise<string | null> {
   try {
     const res = await fetch(
       `${pbUrl}/api/collections/lectures/records/${encodeURIComponent(lectureId)}`,
       { headers: { Authorization: token } }
     );
-    return res.ok;
+    if (!res.ok) return null;
+    const data = (await res.json()) as { owner?: string };
+    return data.owner ?? "";
   } catch {
-    return false;
+    return null;
   }
 }
 
 async function pbQuizzesToday(
   pbUrl: string,
   token: string,
-  tz: string
+  tz: string,
+  userId: string
 ): Promise<number> {
-  const filter = encodeURIComponent(`created>="${startOfDayUtc(new Date(), tz)}"`);
+  // Только квизы, созданные этим пользователем: квизы владельцев к лекциям, открытым ему,
+  // он тоже видит, но лимит они не тратят.
+  const filter = encodeURIComponent(`owner="${userId}" && created>="${startOfDayUtc(new Date(), tz)}"`);
   const res = await fetch(
     `${pbUrl}/api/collections/quizzes/records?filter=${filter}&perPage=1`,
     { headers: { Authorization: token } }
@@ -371,9 +377,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return errorResponse("invalid_body", 400);
   }
 
-  const belongsToUser = await pbLectureBelongsToUser(pbUrl, authHeader, lectureId);
-  if (!belongsToUser) {
+  const lectureOwner = await pbLectureOwner(pbUrl, authHeader, lectureId);
+  if (lectureOwner === null) {
     return errorResponse("not_found", 404);
+  }
+  // Квиз создаёт только владелец лекции; гость проходит готовый.
+  if (lectureOwner !== user.id) {
+    return errorResponse("not_owner", 403);
   }
 
   if (!ALLOWED_SIZES.includes(size)) {
@@ -387,7 +397,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const dailyLimit = env.QUIZ_DAILY_LIMIT
     ? parseInt(env.QUIZ_DAILY_LIMIT, 10)
     : DEFAULT_DAILY_LIMIT;
-  const todayCount = await pbQuizzesToday(pbUrl, authHeader, env.QUIZ_TZ || DEFAULT_TZ);
+  const todayCount = await pbQuizzesToday(pbUrl, authHeader, env.QUIZ_TZ || DEFAULT_TZ, user.id);
   if (todayCount >= dailyLimit) {
     return errorResponse("daily_limit", 429, { limit: dailyLimit, used: todayCount });
   }

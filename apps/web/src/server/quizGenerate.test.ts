@@ -23,6 +23,7 @@ function goodQuestions(n: number) {
 interface Mock {
   authOk?: boolean;
   lectureOk?: boolean;
+  lectureOwner?: string;
   quizzesToday?: number;
   gemini?: Array<unknown | "http500">;
 }
@@ -39,7 +40,9 @@ function installFetch(m: Mock) {
         : new Response(JSON.stringify({ record: { id: "u1" } }), { status: 200 });
     }
     if (url.includes("/collections/lectures/records/")) {
-      return new Response("{}", { status: m.lectureOk === false ? 404 : 200 });
+      return new Response(JSON.stringify({ owner: m.lectureOwner ?? "u1" }), {
+        status: m.lectureOk === false ? 404 : 200,
+      });
     }
     if (url.includes("/collections/quizzes/records")) {
       return new Response(JSON.stringify({ totalItems: m.quizzesToday ?? 0 }), { status: 200 });
@@ -86,6 +89,21 @@ describe("POST /api/quiz/generate", () => {
   it("404 для лекции, которую пользователь не видит", async () => {
     installFetch({ lectureOk: false });
     expect((await call(ok)).status).toBe(404);
+  });
+
+  it("403: гость (лекцию открыли ему, но она не его) создать квиз не может, ИИ не вызывается", async () => {
+    const { calls } = installFetch({ lectureOwner: "someone-else" });
+    const r = await call(ok);
+    expect(r.status).toBe(403);
+    expect(JSON.parse(r.text)).toEqual({ error: "not_owner" });
+    expect(calls.some((u) => u.includes("generativelanguage"))).toBe(false);
+  });
+
+  it("лимит считается только по квизам самого пользователя", async () => {
+    const { calls } = installFetch({ quizzesToday: 0, gemini: [goodQuestions(5)] });
+    await call(ok);
+    const q = calls.find((u) => u.includes("/collections/quizzes/records"))!;
+    expect(decodeURIComponent(q)).toContain('owner="u1"');
   });
 
   it("422: неверный размер и мало текста (порог 300 приходит в ответе)", async () => {

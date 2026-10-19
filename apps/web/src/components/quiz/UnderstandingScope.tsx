@@ -7,6 +7,7 @@ import { lectureStatus, type LectureStatus, type TopicStatus } from "../../lib/c
 import { closeDialog, openCreate, useCreation } from "../../lib/quizCreation";
 import { QUIZ_DEFAULT_SIZE } from "../../lib/quizLimits";
 import { pluralRu } from "../../lib/format";
+import { pb } from "../../lib/pocketbase";
 import { fetchLecture } from "../../services/lectureService";
 import type { Lecture } from "../../lib/types";
 import QuizCreateDialog from "./QuizCreateDialog";
@@ -29,10 +30,11 @@ export function UnderstandingScope({ lecture, children }: { lecture: Lecture | n
   const location = useLocation();
   const navigate = useNavigate();
 
+  const isOwner = !!lecture && String(lecture.owner ?? "") === String(pb.authStore.record?.id ?? "");
   const content = lecture?.content;
   const create = useCallback(
     async (forceNew: boolean) => {
-      if (!lectureId) return;
+      if (!lectureId || !isOwner) return;
       let textLength = extractText(content ?? "").length;
       try {
         textLength = extractText((await fetchLecture(lectureId)).content ?? "").length;
@@ -42,7 +44,7 @@ export function UnderstandingScope({ lecture, children }: { lecture: Lecture | n
       setSheetOpen(false);
       openCreate(lectureId, { forceNew, textLength });
     },
-    [lectureId, content]
+    [lectureId, content, isOwner]
   );
 
   // Пришли из квиза без собранного квиза (например по задаче): сразу предлагаем создать.
@@ -60,9 +62,9 @@ export function UnderstandingScope({ lecture, children }: { lecture: Lecture | n
   const value = useMemo<Value | null>(
     () =>
       lecture
-        ? { lecture, readiness, panel, hasQuiz, loading, sheetOpen, setSheetOpen, create }
+        ? { lecture, readiness, panel, hasQuiz, loading, isOwner, sheetOpen, setSheetOpen, create }
         : null,
-    [lecture, readiness, panel, hasQuiz, loading, sheetOpen, create]
+    [lecture, readiness, panel, hasQuiz, loading, isOwner, sheetOpen, create]
   );
 
   return (
@@ -244,9 +246,11 @@ function PanelBody() {
         <Button variant="primary" onClick={() => go()}>
           Пройти квиз
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => void v.create(true)}>
-          Собрать другой
-        </Button>
+        {v.isOwner && (
+          <Button variant="ghost" size="sm" onClick={() => void v.create(true)}>
+            Собрать другой
+          </Button>
+        )}
       </>
     );
   }
@@ -259,16 +263,22 @@ function PanelBody() {
         <StatusChip tone="neutral">Пока нет данных</StatusChip>
       </div>
       <div className="track" />
-      <p className="body-text">
-        Здесь появится, насколько хорошо ты понимаешь эту лекцию. Чтобы узнать, создай квиз: он соберётся из твоего
-        конспекта.
-      </p>
-      <Button variant="primary" onClick={() => void v.create(false)}>
-        Создать квиз
-      </Button>
-      <span className="hint">
-        {QUIZ_DEFAULT_SIZE} вопросов, около 5 минут. Нужен хотя бы один абзац текста.
-      </span>
+      {v.isOwner ? (
+        <>
+          <p className="body-text">
+            Здесь появится, насколько хорошо ты понимаешь эту лекцию. Чтобы узнать, создай квиз: он соберётся из твоего
+            конспекта.
+          </p>
+          <Button variant="primary" onClick={() => void v.create(false)}>
+            Создать квиз
+          </Button>
+          <span className="hint">
+            {QUIZ_DEFAULT_SIZE} вопросов, около 5 минут. Нужен хотя бы один абзац текста.
+          </span>
+        </>
+      ) : (
+        <p className="body-text">Квиза по этой лекции пока нет. Его создаёт владелец лекции.</p>
+      )}
     </>
   );
 }

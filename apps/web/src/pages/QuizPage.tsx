@@ -5,6 +5,7 @@ import { fetchLecture } from "../services/lectureService";
 import type { Lecture } from "../lib/types";
 import { courseName, lectureCourseId, lectureHref } from "../lib/types";
 import { lastSemesterSlug } from "../lib/lastSemester";
+import { pb } from "../lib/pocketbase";
 import { attemptStats, understandingBeforeAfter, understandingLabel } from "../lib/quizSummary";
 import { Button, Icon, StatusChip } from "../ui";
 import LoadingState from "../components/LoadingState";
@@ -59,14 +60,18 @@ export default function QuizPage() {
 function QuizRunner({ lecture, mode }: { lecture: Lecture; mode: QuizMode }) {
   const navigate = useNavigate();
   const quiz = useQuiz(lecture.id, mode);
+  const isOwner = String(lecture.owner ?? "") === String(pb.authStore.record?.id ?? "");
   const toLecture = (state?: unknown) => navigate(lectureHref(lecture, lastSemesterSlug()), state ? { state } : undefined);
 
   // Квиза ещё нет (например, пришли по задаче): возвращаем к лекции, где его можно создать.
   useEffect(() => {
     if (quiz.phase === "empty") {
-      navigate(lectureHref(lecture, lastSemesterSlug()), { replace: true, state: { openQuizCreate: true } });
+      navigate(lectureHref(lecture, lastSemesterSlug()), {
+        replace: true,
+        state: isOwner ? { openQuizCreate: true } : undefined,
+      });
     }
-  }, [quiz.phase, lecture, navigate]);
+  }, [quiz.phase, lecture, navigate, isOwner]);
 
   if (quiz.phase === "loading" || quiz.phase === "empty") return <LoadingState />;
 
@@ -90,16 +95,18 @@ function QuizRunner({ lecture, mode }: { lecture: Lecture; mode: QuizMode }) {
 
   if (quiz.phase === "done") return <QuizSummary lecture={lecture} quiz={quiz} onExit={() => toLecture()} />;
 
-  return <QuizQuestionView lecture={lecture} quiz={quiz} onExit={() => toLecture()} />;
+  return <QuizQuestionView lecture={lecture} quiz={quiz} isOwner={isOwner} onExit={() => toLecture()} />;
 }
 
 function QuizQuestionView({
   lecture,
   quiz,
+  isOwner,
   onExit,
 }: {
   lecture: Lecture;
   quiz: UseQuizResult;
+  isOwner: boolean;
   onExit: () => void;
 }) {
   const navigate = useNavigate();
@@ -255,9 +262,14 @@ function QuizQuestionView({
           <div className="c-quiz-actions">
             {revealed ? (
               <>
-                <Button variant="ghost" onClick={() => void quiz.flagCurrent()}>
-                  Плохой вопрос
-                </Button>
+                {/* «Плохой вопрос» меняет сам квиз — это может только владелец лекции. */}
+                {isOwner ? (
+                  <Button variant="ghost" onClick={() => void quiz.flagCurrent()}>
+                    Плохой вопрос
+                  </Button>
+                ) : (
+                  <span />
+                )}
                 <Button variant="primary" onClick={quiz.next}>
                   Дальше
                 </Button>

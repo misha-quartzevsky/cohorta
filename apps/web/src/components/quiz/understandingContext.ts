@@ -9,6 +9,8 @@ export interface Value {
   panel: QuizPanelState;
   hasQuiz: boolean;
   loading: boolean;
+  /** Владелец лекции создаёт квиз; гость (лекцию открыли ему) только проходит готовый. */
+  isOwner: boolean;
   sheetOpen: boolean;
   setSheetOpen: (v: boolean) => void;
   /** «Создать квиз» / «Собрать другой». Свежую длину текста берём из базы, а не с экрана. */
