@@ -129,9 +129,18 @@ export function parseTicketsFromHtml(html: string): ParsedTicket[] | null {
   return parseWordPseudoList(doc);
 }
 
-/** Строка начинается с маркера номера: `1.` `2)` `№3` `1 -` `Билет 4`. */
+/**
+ * Строка начинается с маркера номера: `1.` `2)` `№3` `1 -` `Билет 4`.
+ *
+ * Голый номер (без «билет»/«№» впереди) обязан идти с разделителем
+ * (`.` `)` `-` `:`) сразу после цифр — иначе билет, чей текст сам
+ * начинается с числа («7 сил Портера», «12 друзей оушена»), ложно
+ * считается маркером списка и рвёт разбор (найдено на реальном
+ * списке, где не было явной нумерации вовсе). «Билет N» и «№N» —
+ * самодостаточный маркер и без разделителя после числа.
+ */
 const NUMBER_MARKER =
-  /^\s*(?:билет\s+)?(?:№\s*)?(\d{1,3})\s*[.)\-:]?\s*(.*)$/iu;
+  /^\s*(?:билет\s+(\d{1,3})|№\s*(\d{1,3})|(\d{1,3})\s*[.)\-:])\s*(.*)$/iu;
 
 /**
  * Запасной разбор: строки с маркером номера начинают билет,
@@ -151,7 +160,8 @@ export function parseTicketList(text: string): ParsedTicket[] {
   for (const line of lines) {
     const m = hasAnyMarker ? NUMBER_MARKER.exec(line) : null;
     if (m) {
-      const [, numStr, rest] = m;
+      const [, byBilet, byKnak, byDigit, rest] = m;
+      const numStr = byBilet ?? byKnak ?? byDigit;
       tickets.push({ number: Number(numStr), question: cleanQuestionTail(rest) });
     } else if (tickets.length > 0 && hasAnyMarker) {
       // Строка без маркера следом за билетом — перенос длинного вопроса.
