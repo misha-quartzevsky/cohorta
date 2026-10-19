@@ -1729,8 +1729,8 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .c-shell-burger:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 .c-shell-content {
-  max-width: var(--content-max);
-  margin: 0 auto 0 0;
+  width: 100%;
+  margin: 0;
   padding: var(--space-10);
   box-sizing: border-box;
 }
