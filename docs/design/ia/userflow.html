@@ -1,0 +1,432 @@
+<title>Карта переходов cohorta</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#F7F7F5;--card:#FFFFFF;--sub:#EEEEEB;--line:#E5E5E1;--ink:#1C1B19;--ink2:#5A5A56;--ink3:#6A6A65;--ac:#E86800;--acs:#A84A00;--acsoft:#FDEBDB;--er:#B00008;--ersoft:#FDE3E3;--wa:#8A5A00;--wasoft:#FBF0D5;--ok:#256440;--oksoft:#E4F0E8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1A1917;--card:#242321;--sub:#2E2D2A;--line:#3A3936;--ink:#F2F1EE;--ink2:#B9B8B3;--ink3:#9A9992;--ac:#F08A3C;--acs:#F5A867;--acsoft:#3A2A1C;--er:#FF8A8F;--ersoft:#3A2224;--wa:#E8B860;--wasoft:#3A3020;--ok:#7CC49A;--oksoft:#1F3328;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1A1917;--card:#242321;--sub:#2E2D2A;--line:#3A3936;--ink:#F2F1EE;--ink2:#B9B8B3;--ink3:#9A9992;--ac:#F08A3C;--acs:#F5A867;--acsoft:#3A2A1C;--er:#FF8A8F;--ersoft:#3A2224;--wa:#E8B860;--wasoft:#3A3020;--ok:#7CC49A;--oksoft:#1F3328;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:24px;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:48px}
+h1{font-size:36px;line-height:44px;letter-spacing:-.02em;font-weight:600;margin:0;text-wrap:balance}
+h2{font-size:24px;line-height:32px;letter-spacing:-.01em;font-weight:600;margin:0;text-wrap:balance}
+h3{margin:0}
+p{margin:0}
+.lead{font-size:17px;line-height:28px;color:var(--ink2);max-width:720px;margin-top:12px}
+.stats{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}
+.st{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;min-width:150px}
+.st b{display:block;font-size:28px;line-height:34px;font-weight:600}
+.st span{font-size:13px;color:var(--ink3)}
+.st.bad b{color:var(--er)}
+.sub{color:var(--ink2);margin-top:6px}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+nav a{height:36px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;font-size:14px;font-weight:500;display:inline-flex;align-items:center}
+nav a:hover{border-color:var(--ink3)}
+.ph{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:600;margin:28px 0 12px}
+.ph .dot{width:10px;height:10px;border-radius:50%}
+.p1 .dot{background:var(--er)} .p2 .dot{background:var(--ac)} .p3 .dot{background:var(--ink3)}
+.cnt{font-size:13px;font-weight:500;color:var(--ink3);background:var(--sub);border-radius:999px;padding:0 9px;line-height:22px}
+.gaps{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:12px}
+.gap{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.gap h4{margin:0;font-size:15px;line-height:22px;font-weight:600}
+.gap p{font-size:14px;line-height:22px;color:var(--ink2)}
+.gap .need{color:var(--ink)}
+.gap .scr{font-size:12px;color:var(--ink3);font-family:ui-monospace,Menlo,monospace;overflow-wrap:anywhere}
+.fixed{background:var(--oksoft);color:var(--ok);border-radius:16px;padding:16px 20px;margin-top:24px}
+.fixed b{display:block;margin-bottom:4px}
+.fixed ul{margin:0;padding-left:20px;font-size:14px;line-height:22px}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--ink2);margin-top:14px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.sw{width:22px;height:14px;border-radius:4px;border:1px solid #B8B8B2;background:#fff}
+.sw.no{background:#FDE3E3;border:1px dashed #B00008} .sw.ex{background:#EEEEEB;border-color:#D2D2CD} .sw.vi{background:#FDEBDB;border-color:#E86800}
+.dwrap{margin-top:16px;overflow-x:auto;background:#FFFFFF;border:1px solid var(--line);border-radius:16px;padding:16px;color:#1C1B19}
+.dwrap pre{margin:0;min-width:1200px}
+.det{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.det+.det{margin-top:10px}
+summary{cursor:pointer;padding:14px 20px;font-weight:600;display:flex;align-items:center;gap:10px;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"›";font-size:20px;line-height:1;color:var(--ink3);transition:transform .15s}
+.det[open] summary::before{transform:rotate(90deg)}
+.twrap{overflow-x:auto;border-top:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:13px;line-height:20px}
+th{text-align:left;font-weight:600;color:var(--ink3);font-size:12px;letter-spacing:.04em;text-transform:uppercase;padding:10px 16px;background:var(--sub)}
+td{padding:12px 16px;border-top:1px solid var(--line);vertical-align:top;color:var(--ink2)}
+td b{color:var(--ink);font-weight:600}
+td i{font-style:normal;color:var(--ink3)}
+td code{font-size:12px;color:var(--ink2)}
+.note{font-size:12px;color:var(--ink3);margin-top:4px}
+.tag{display:inline-block;border-radius:999px;padding:0 10px;font-size:12px;font-weight:500;line-height:22px}
+.tag.no{background:var(--ersoft);color:var(--er)} .tag.vi{background:var(--acsoft);color:var(--acs)}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px;margin-top:16px}
+.how div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;font-size:14px;color:var(--ink2)}
+.how b{display:block;color:var(--ink);margin-bottom:4px}
+@media (max-width:640px){h1{font-size:28px;line-height:36px}}
+</style>
+<div class="wrap">
+<header>
+<h1>Карта переходов cohorta</h1>
+<p class="lead">Откуда в какой экран можно попасть и как. По ней видно, где пользователь упрётся в стену: экран без входа, кнопка без цели, форма без макета.</p>
+<div class="stats"><div class="st"><b>64</b><span>экранов и состояний</span></div><div class="st"><b>139</b><span>переходов</span></div><div class="st bad"><b>22</b><span>не нарисованы</span></div><div class="st bad"><b>7</b><span>дыр блокируют запуск</span></div></div>
+<nav><a href="#gaps">Дыры</a><a href="#start">Старт</a><a href="#learn">Учёба</a><a href="#account">Настройки</a><a href="#review">Повторение</a><a href="#group">Группа</a><a href="#group2">Доступ</a><a href="#tables">Экран за экраном</a></nav>
+</header>
+<section class="sec" id="gaps"><h2>Дыры</h2><p class="sub">Найдены при составлении карты: каждую кнопку в макетах проверили на «куда ведёт» и «откуда сюда попасть».</p><h3 class="ph p1"><span class="dot"></span>Блокирует запуск <span class="cnt">7</span></h3><div class="gaps"><article class="gap"><h4>Регистрация и восстановление пароля не нарисованы</h4><p>Со входа есть ссылки «Создать аккаунт» и «Забыли пароль?», но за ними пусто. Нужно решить, подтверждается ли почта, и нарисовать: регистрация, письмо отправлено, новый пароль, пароль изменён.</p><p class="need"><b>Нужно:</b> Решение Маргариты + макеты</p><p class="scr">register, reset</p></article><article class="gap"><h4>Чужая лекция, открытая тебе: экрана нет</h4><p>Это главный итог всей группы: одногруппник открыл лекцию, ты нажимаешь «Открыта тебе» и... куда? Нужно решить: только чтение или можно проходить квиз, делать карточки, копировать себе? Как выглядит шапка («Лекция Игоря Власова, только чтение»).</p><p class="need"><b>Нужно:</b> Решение Маргариты + макет</p><p class="scr">g_read</p></article><article class="gap"><h4>Страница предмета, вкладка «Лекции»</h4><p>Клик по предмету в меню слева и по ряду предметов на телефоне ведёт сюда. Есть вкладки «Пары» и «Экзамен», самой главной вкладки «Лекции» нет. Без неё путь «меню → предмет → лекция» не работает.</p><p class="need"><b>Нужно:</b> Макет (десктоп и телефон)</p><p class="scr">subject</p></article><article class="gap"><h4>Создание квиза: размер, ожидание, ошибка ИИ</h4><p>После «Создать квиз» нет ни выбора размера, ни экрана ожидания, ни ошибки, если ИИ не ответил (превышен лимит, пустой конспект, нет связи). Это самое хрупкое место продукта.</p><p class="need"><b>Нужно:</b> Макет состояний</p><p class="scr">quiz_create</p></article><article class="gap"><h4>Кто видит код приглашения: макет спорит с правилом безопасности</h4><p>В инструкции (шаг A0.5) код видит только владелец группы. В макете «Группа МК-31» код и «Сбросить код» показаны обычному участнику (Анастасия не создавала группу). Нужно выбрать: код видят все участники (проще, но любой может сбросить) или только владелец. Заодно решить, есть ли у группы владелец и что с ним, если он выйдет.</p><p class="need"><b>Нужно:</b> Решение Маргариты</p><p class="scr">g_home, g_settings</p></article><article class="gap"><h4>Ссылка-приглашение у не вошедшего</h4><p>Человек открывает cohorta.app/join/КОД, у него нет аккаунта: код должен пережить регистрацию, онбординг и вход, и в конце показать подтверждение вступления, а не главную. Это главный способ привлечь первых людей.</p><p class="need"><b>Нужно:</b> Решение + реализация</p><p class="scr">join_link, login, onb</p></article><article class="gap"><h4>Онбординг: в макетах 8 шагов, нарисовано 3, в IA написано 6</h4><p>Шаги 1, 5 и 7 нарисованы, шагов 2, 3, 4, 6 и 8 нет. Нужно договориться о списке шагов (предложение: имя, вуз и город, уровень, курс, семестры, начало недели, группа, предметы), нарисовать недостающие и поправить IA («6 шагов»).</p><p class="need"><b>Нужно:</b> Решение + макеты</p><p class="scr">onb</p></article></div><h3 class="ph p2"><span class="dot"></span>Нужно до запуска <span class="cnt">10</span></h3><div class="gaps"><article class="gap"><h4>Формы создания: предмет, пара, колода и карточка, экзамен, подгруппа, экзамен группы</h4><p>Везде есть кнопки «Добавить…», но формы не нарисованы. Часть можно собрать из готовых компонентов (окно с полями), но состав полей нужно определить. Подгруппа: как выбираются люди, что видит приглашённый, как не нарушить «один человек: одна подгруппа».</p><p class="need"><b>Нужно:</b> Макеты (можно одним листом «Формы»)</p><p class="scr">subject_new, pair_edit, deck_edit, exam_new, g_exam_new, g_sub_new</p></article><article class="gap"><h4>Новая лекция без предмета</h4><p>«Новая лекция» на главной: в какой предмет она попадает? Предложение: окно выбора предмета, последний использованный выбран заранее. Сейчас не определено.</p><p class="need"><b>Нужно:</b> Решение Маргариты</p><p class="scr">home, lecture_new</p></article><article class="gap"><h4>Меню лекции «···» и удаление</h4><p>Туда ведёт «Доступ», но меню не нарисовано: переименовать, перенести в другой предмет, доступ, удалить. Удаление необратимо: нужно подтверждение, лучше с «Корзиной» на 30 дней.</p><p class="need"><b>Нужно:</b> Макет + решение про корзину</p><p class="scr">lecture_menu, lecture_delete</p></article><article class="gap"><h4>Уведомления: как узнать про запрос и про открытый доступ</h4><p>Есть только счётчик у «Мой доступ». Если тебе открыли лекцию, об этом никто не сообщает. Предложение для MVP: счётчик на значке «Группа» и пометка «Новое» у открытой лекции; письма и пуши после запуска.</p><p class="need"><b>Нужно:</b> Решение Маргариты</p><p class="scr">g_myaccess</p></article><article class="gap"><h4>Настройки группы: выйти, переименовать, сбросить код</h4><p>Выйти из группы нигде нельзя. Что происходит с чужими доступами к твоим лекциям и с твоим местом в подгруппе после выхода, не определено.</p><p class="need"><b>Нужно:</b> Решение + макет</p><p class="scr">g_settings</p></article><article class="gap"><h4>Удаление аккаунта: подтверждение и выгрузка</h4><p>В настройках обещано «попросим подтвердить и предложим выгрузить данные», экрана нет. Нужен для заявленной политики данных.</p><p class="need"><b>Нужно:</b> Макет</p><p class="scr">account_delete</p></article><article class="gap"><h4>Служебные: сессия истекла, лекции или группы нет, неверная ссылка</h4><p>Не определено, что видит человек, если лекцию удалили, его исключили или сессия закончилась на середине конспекта. Незаписанный текст не должен пропасть.</p><p class="need"><b>Нужно:</b> Макет + правило сохранения</p><p class="scr">expired, gone</p></article><article class="gap"><h4>Билет подгруппы (совместная правка)</h4><p>В тексте экрана «Билеты внутри подгруппы пишут вместе», но самого экрана билета подгруппы нет: кто сейчас пишет, что при одновременной правке, куда сохраняется ответ.</p><p class="need"><b>Нужно:</b> Макет + решение</p><p class="scr">g_ticket</p></article><article class="gap"><h4>Выход из квиза посередине</h4><p>Закрыл вкладку или нажал назад на вопросе 5 из 8: прогресс сохраняется или нет? Предложение: сохраняется, при возвращении «Продолжить квиз».</p><p class="need"><b>Нужно:</b> Решение</p><p class="scr">quiz_exit</p></article><article class="gap"><h4>Выбор лекции для билета</h4><p>«Привязать лекцию» ведёт в выбор, которого нет в макетах (поиск по лекциям предмета, несколько штук).</p><p class="need"><b>Нужно:</b> Макет</p><p class="scr">ticket_edit</p></article></div><h3 class="ph p3"><span class="dot"></span>Можно после запуска <span class="cnt">2</span></h3><div class="gaps"><article class="gap"><h4>Вкладка «Расписание повторов» у карточек</h4><p>Заголовок вкладки есть, содержимого нет. Можно оставить на после запуска, убрав вкладку.</p><p class="need"><b>Нужно:</b> Решение</p><p class="scr">cards</p></article><article class="gap"><h4>Правка профиля и учёбы</h4><p>Рядом с каждым полем «Изменить». Окна простые, можно собрать из компонентов без отдельных макетов.</p><p class="need"><b>Нужно:</b> Реализация по компонентам</p><p class="scr">settings_edit</p></article></div><div class="fixed"><b>Уже исправлено при составлении карты</b><ul><li>В трёх текстах макетов было «Cohorta» с заглавной (онбординг, пустое состояние задач). Исправлено на «cohorta».</li><li>Заголовок экрана «Курс одногруппника» заменён на «Предмет одногруппника» (по правилу «курс» только про год обучения).</li></ul></div></section>
+<section class="sec"><h2>Как читать схемы</h2><div class="legend"><span><i class="sw"></i>экран нарисован</span><span><i class="sw no"></i>экрана нет</span><span><i class="sw ex"></i>экран из другого раздела</span><span><i class="sw vi"></i>вход в приложение</span></div><div class="how"><div><b>Стрелка</b>можно перейти нажатием. Что именно нажать, написано в таблицах внизу.</div><div><b>Поиск и профиль</b>открываются с любого экрана, поэтому стрелок от каждого экрана к ним нет.</div><div><b>Возвраты</b>(«назад», «Сохранить», «Готово») на схемах не рисуем, они есть в таблицах внизу. Служебные состояния (нет связи, ошибка) накладываются на любой экран и описаны там же.</div></div></section>
+<section class="sec" id="start"><h2>Старт</h2><p class="sub">Вход, регистрация, восстановление пароля, онбординг, ссылка-приглашение</p><div class="dwrap"><pre class="mermaid">%%{init:{"themeVariables":{"fontSize":"17px"},"flowchart":{"nodeSpacing":36,"rankSpacing":80,"curve":"basis"}}}%%
+flowchart LR
+  open["Открытие приложения или ссылки"]
+  login["Вход"]
+  register["Регистрация"]
+  reset["Восстановление пароля"]
+  policy["Политика данных"]
+  onb["Онбординг  8 шагов "]
+  onb_group["Онбординг, шаг «Группа»"]
+  join_link["Ссылка-приглашение cohorta.app/join/КОД"]
+  g_join_ok["Вступление: подтверждение"]
+  home["Главная"]
+  home_new["Главная, новичок"]
+  open --> login
+  open --> home
+  open --> onb
+  login --> home
+  login --> register
+  login --> reset
+  login --> policy
+  register --> onb
+  register --> policy
+  onb --> onb_group
+  onb_group --> home
+  onb_group --> g_join_ok
+  onb --> home_new
+  join_link --> login
+  join_link --> g_join_ok
+  login --> g_join_ok
+  classDef ok fill:#FFFFFF,stroke:#B8B8B2,color:#1C1B19
+  classDef no fill:#FDE3E3,stroke:#B00008,stroke-dasharray:4 3,color:#1C1B19
+  classDef ex fill:#EEEEEB,stroke:#D2D2CD,color:#5A5A56
+  classDef vi fill:#FDEBDB,stroke:#E86800,color:#1C1B19
+  class open vi
+  class login ok
+  class register no
+  class reset no
+  class policy ok
+  class onb ok
+  class onb_group ok
+  class join_link vi
+  class g_join_ok ex
+  class home ex
+  class home_new ex</pre></div></section><section class="sec" id="learn"><h2>Соло: учёба</h2><p class="sub">Главная, лекции, предметы, расписание, задачи, редактор</p><div class="dwrap"><pre class="mermaid">%%{init:{"themeVariables":{"fontSize":"17px"},"flowchart":{"nodeSpacing":36,"rankSpacing":80,"curve":"basis"}}}%%
+flowchart LR
+  home["Главная"]
+  home_new["Главная, новичок"]
+  lectures["Все лекции"]
+  subject["Предмет: вкладка «Лекции»"]
+  subject_new["Новый предмет / правка предмета"]
+  pairs["Предмет: вкладка «Пары»"]
+  pair_edit["Добавить / изменить пару"]
+  schedule["Расписание"]
+  lecture_new["Новая лекция  пустая "]
+  editor["Редактор лекции"]
+  lecture_menu["Меню лекции «···»"]
+  lecture_delete["Подтверждение удаления лекции"]
+  tasks["Задачи"]
+  task_edit["Задача: правка, срок, предмет"]
+  cards["Карточки: колоды"]
+  deck["Колода"]
+  exam["Экзамен предмета"]
+  g_lecture_access["Доступ к лекции  кто читает "]
+  login["Вход"]
+  onb["Онбординг  8 шагов "]
+  onb_group["Онбординг, шаг «Группа»"]
+  open["Открытие приложения или ссылки"]
+  quiz_a["Квиз: ответ и объяснение"]
+  quiz_q["Квиз: вопрос"]
+  quiz_sum["Квиз: итог"]
+  ticket["Билет"]
+  understanding["Панель «Твоё понимание темы»"]
+  open --> home
+  login --> home
+  onb_group --> home
+  onb --> home_new
+  home --> editor
+  home --> lecture_new
+  home --> tasks
+  home --> schedule
+  home --> exam
+  home_new --> subject_new
+  home_new --> pair_edit
+  home_new --> lecture_new
+  lectures --> editor
+  lectures --> lecture_new
+  lectures --> subject
+  subject --> editor
+  subject --> pairs
+  subject --> exam
+  subject --> subject_new
+  subject --> lecture_new
+  pairs --> pair_edit
+  pairs --> editor
+  schedule --> editor
+  schedule --> pair_edit
+  lecture_new --> editor
+  editor --> lecture_menu
+  editor --> understanding
+  editor --> ticket
+  editor --> cards
+  lecture_menu --> lecture_delete
+  lecture_menu --> g_lecture_access
+  quiz_a --> editor
+  quiz_sum --> tasks
+  tasks --> task_edit
+  tasks --> editor
+  tasks --> quiz_q
+  deck --> editor
+  ticket --> editor
+  classDef ok fill:#FFFFFF,stroke:#B8B8B2,color:#1C1B19
+  classDef no fill:#FDE3E3,stroke:#B00008,stroke-dasharray:4 3,color:#1C1B19
+  classDef ex fill:#EEEEEB,stroke:#D2D2CD,color:#5A5A56
+  classDef vi fill:#FDEBDB,stroke:#E86800,color:#1C1B19
+  class home ok
+  class home_new ok
+  class lectures ok
+  class subject no
+  class subject_new no
+  class pairs ok
+  class pair_edit no
+  class schedule ok
+  class lecture_new ok
+  class editor ok
+  class lecture_menu no
+  class lecture_delete no
+  class tasks ok
+  class task_edit no
+  class cards ex
+  class deck ex
+  class exam ex
+  class g_lecture_access ex
+  class login ex
+  class onb ex
+  class onb_group ex
+  class open ex
+  class quiz_a ex
+  class quiz_q ex
+  class quiz_sum ex
+  class ticket ex
+  class understanding ex</pre></div></section><section class="sec" id="account"><h2>Поиск и настройки</h2><p class="sub">Поиск открывается с любого экрана, настройки через аватар</p><div class="dwrap"><pre class="mermaid">%%{init:{"themeVariables":{"fontSize":"17px"},"flowchart":{"nodeSpacing":36,"rankSpacing":80,"curve":"basis"}}}%%
+flowchart LR
+  search["Поиск"]
+  settings["Профиль и настройки"]
+  settings_edit["Правка поля профиля / учёбы"]
+  account_delete["Удаление аккаунта: подтверждение и выгрузка"]
+  policy["Политика данных"]
+  editor["Редактор лекции"]
+  g_closed["Закрытая лекция"]
+  g_member["Одногруппник: предметы"]
+  g_read["Чужая лекция, открытая тебе  чтение "]
+  login["Вход"]
+  register["Регистрация"]
+  subject["Предмет: вкладка «Лекции»"]
+  login --> policy
+  register --> policy
+  search --> editor
+  search --> subject
+  search --> g_member
+  search --> g_closed
+  search --> g_read
+  settings --> settings_edit
+  settings --> policy
+  settings --> account_delete
+  classDef ok fill:#FFFFFF,stroke:#B8B8B2,color:#1C1B19
+  classDef no fill:#FDE3E3,stroke:#B00008,stroke-dasharray:4 3,color:#1C1B19
+  classDef ex fill:#EEEEEB,stroke:#D2D2CD,color:#5A5A56
+  classDef vi fill:#FDEBDB,stroke:#E86800,color:#1C1B19
+  class search ok
+  class settings ok
+  class settings_edit no
+  class account_delete no
+  class policy ok
+  class editor ex
+  class g_closed ex
+  class g_member ex
+  class g_read ex
+  class login ex
+  class register ex
+  class subject ex</pre></div></section><section class="sec" id="review"><h2>Соло: квиз, карточки, экзамен</h2><p class="sub">Понимание темы, квиз, карточки, экзамен, билеты</p><div class="dwrap"><pre class="mermaid">%%{init:{"themeVariables":{"fontSize":"17px"},"flowchart":{"nodeSpacing":36,"rankSpacing":80,"curve":"basis"}}}%%
+flowchart LR
+  understanding["Панель «Твоё понимание темы»"]
+  quiz_create["Создание квиза  размер, загрузка, ошибка "]
+  quiz_q["Квиз: вопрос"]
+  quiz_a["Квиз: ответ и объяснение"]
+  quiz_sum["Квиз: итог"]
+  quiz_exit["Выйти из квиза посередине"]
+  cards["Карточки: колоды"]
+  deck["Колода"]
+  deck_edit["Новая колода / правка карточки"]
+  cards_review["Повторение карточек"]
+  exam["Экзамен предмета"]
+  exam_new["Создать экзамен предмета"]
+  ticket["Билет"]
+  ticket_edit["Правка билета и привязка лекций"]
+  ticket_import["Импорт билетов"]
+  cheatsheet["Шпаргалка"]
+  editor["Редактор лекции"]
+  error["Ошибка загрузки"]
+  subject["Предмет: вкладка «Лекции»"]
+  tasks["Задачи"]
+  subject --> exam
+  editor --> understanding
+  editor --> ticket
+  editor --> cards
+  understanding --> quiz_create
+  understanding --> quiz_q
+  quiz_create --> quiz_q
+  quiz_create --> error
+  quiz_q --> quiz_a
+  quiz_q --> quiz_exit
+  quiz_a --> editor
+  quiz_a --> quiz_sum
+  quiz_sum --> quiz_q
+  quiz_sum --> tasks
+  tasks --> quiz_q
+  cards --> deck
+  cards --> cards_review
+  cards --> deck_edit
+  deck --> cards_review
+  deck --> deck_edit
+  deck --> editor
+  exam --> ticket
+  exam --> ticket_import
+  exam --> cheatsheet
+  exam --> exam_new
+  ticket --> ticket_edit
+  ticket --> editor
+  ticket --> ticket
+  classDef ok fill:#FFFFFF,stroke:#B8B8B2,color:#1C1B19
+  classDef no fill:#FDE3E3,stroke:#B00008,stroke-dasharray:4 3,color:#1C1B19
+  classDef ex fill:#EEEEEB,stroke:#D2D2CD,color:#5A5A56
+  classDef vi fill:#FDEBDB,stroke:#E86800,color:#1C1B19
+  class understanding ok
+  class quiz_create no
+  class quiz_q ok
+  class quiz_a ok
+  class quiz_sum ok
+  class quiz_exit no
+  class cards ok
+  class deck ok
+  class deck_edit no
+  class cards_review ok
+  class exam ok
+  class exam_new no
+  class ticket ok
+  class ticket_edit no
+  class ticket_import ok
+  class cheatsheet ok
+  class editor ex
+  class error ex
+  class subject ex
+  class tasks ex</pre></div></section><section class="sec" id="group"><h2>Группа: вступление и люди</h2><p class="sub">Вступить, создать, переключить группу, одногруппники и их лекции</p><div class="dwrap"><pre class="mermaid">%%{init:{"themeVariables":{"fontSize":"17px"},"flowchart":{"nodeSpacing":36,"rankSpacing":80,"curve":"basis"}}}%%
+flowchart LR
+  g_join["Вступление: ввод кода"]
+  g_join_ok["Вступление: подтверждение"]
+  g_create["Создание группы"]
+  g_home["Группа: одногруппники"]
+  g_switch["Переключатель групп"]
+  g_member["Одногруппник: предметы"]
+  g_member_subj["Предмет одногруппника: лекции"]
+  g_read["Чужая лекция, открытая тебе  чтение "]
+  g_closed["Закрытая лекция"]
+  g_sent["Запрос доступа отправлен"]
+  g_settings["Настройки группы: выйти, код, название"]
+  g_exams["Экзамены группы"]
+  g_myaccess["Мой доступ"]
+  join_link["Ссылка-приглашение cohorta.app/join/КОД"]
+  login["Вход"]
+  onb_group["Онбординг, шаг «Группа»"]
+  onb_group --> g_join_ok
+  join_link --> g_join_ok
+  login --> g_join_ok
+  g_home --> g_join
+  g_join --> g_join_ok
+  g_join --> g_create
+  g_join_ok --> g_home
+  g_create --> g_home
+  g_home --> g_switch
+  g_switch --> g_join
+  g_home --> g_member
+  g_home --> g_settings
+  g_member --> g_member_subj
+  g_member_subj --> g_read
+  g_member_subj --> g_closed
+  g_closed --> g_sent
+  g_home --> g_myaccess
+  g_home --> g_exams
+  classDef ok fill:#FFFFFF,stroke:#B8B8B2,color:#1C1B19
+  classDef no fill:#FDE3E3,stroke:#B00008,stroke-dasharray:4 3,color:#1C1B19
+  classDef ex fill:#EEEEEB,stroke:#D2D2CD,color:#5A5A56
+  classDef vi fill:#FDEBDB,stroke:#E86800,color:#1C1B19
+  class g_join ok
+  class g_join_ok ok
+  class g_create ok
+  class g_home ok
+  class g_switch ok
+  class g_member ok
+  class g_member_subj ok
+  class g_read no
+  class g_closed ok
+  class g_sent ok
+  class g_settings no
+  class g_exams ex
+  class g_myaccess ex
+  class join_link ex
+  class login ex
+  class onb_group ex</pre></div></section><section class="sec" id="group2"><h2>Группа: доступ и экзамены</h2><p class="sub">Мой доступ, доступ к лекции, экзамены группы и подгруппы</p><div class="dwrap"><pre class="mermaid">%%{init:{"themeVariables":{"fontSize":"17px"},"flowchart":{"nodeSpacing":36,"rankSpacing":80,"curve":"basis"}}}%%
+flowchart LR
+  g_home["Группа: одногруппники"]
+  g_myaccess["Мой доступ"]
+  g_lecture_access["Доступ к лекции  кто читает "]
+  g_exams["Экзамены группы"]
+  g_exam["Коллективный экзамен, подгруппы"]
+  g_exam_new["Создать экзамен группы"]
+  g_sub_new["Новая подгруппа и приглашение"]
+  g_ticket["Билет подгруппы  пишут вместе "]
+  g_create["Создание группы"]
+  g_join["Вступление: ввод кода"]
+  g_join_ok["Вступление: подтверждение"]
+  g_member["Одногруппник: предметы"]
+  g_settings["Настройки группы: выйти, код, название"]
+  g_switch["Переключатель групп"]
+  lecture_menu["Меню лекции «···»"]
+  lecture_menu --> g_lecture_access
+  g_home --> g_join
+  g_join_ok --> g_home
+  g_create --> g_home
+  g_home --> g_switch
+  g_home --> g_member
+  g_home --> g_settings
+  g_home --> g_myaccess
+  g_myaccess --> g_lecture_access
+  g_home --> g_exams
+  g_exams --> g_exam
+  g_exams --> g_exam_new
+  g_exam --> g_sub_new
+  g_exam --> g_ticket
+  classDef ok fill:#FFFFFF,stroke:#B8B8B2,color:#1C1B19
+  classDef no fill:#FDE3E3,stroke:#B00008,stroke-dasharray:4 3,color:#1C1B19
+  classDef ex fill:#EEEEEB,stroke:#D2D2CD,color:#5A5A56
+  classDef vi fill:#FDEBDB,stroke:#E86800,color:#1C1B19
+  class g_home ok
+  class g_myaccess ok
+  class g_lecture_access ok
+  class g_exams ok
+  class g_exam ok
+  class g_exam_new no
+  class g_sub_new no
+  class g_ticket no
+  class g_create ex
+  class g_join ex
+  class g_join_ok ex
+  class g_member ex
+  class g_settings ex
+  class g_switch ex
+  class lecture_menu ex</pre></div></section>
+<section class="sec" id="tables"><h2>Экран за экраном</h2><p class="sub" style="margin-bottom:16px">Для каждого экрана: какой макет, откуда входят и куда ведёт. Эти же таблицы лежат в репозитории для Claude Code.</p><details class="det"><summary>Старт <span class="cnt">8</span></summary><div class="twrap"><table><thead><tr><th>Экран</th><th>Макет</th><th>Откуда входят</th><th>Куда ведёт</th></tr></thead><tbody><tr><td data-l="Экран"><b>Открытие приложения или ссылки</b></td><td data-l="Макет"><span class="tag vi">вход</span></td><td data-l="Откуда входят">вход в приложение</td><td data-l="Куда ведёт">Вход: <i>не вошёл</i><br>Главная: <i>вошёл, онбординг пройден</i><br>Онбординг (8 шагов): <i>вошёл, онбординг не пройден</i></td></tr><tr><td data-l="Экран"><b>Вход</b><div class="note">Есть «Забыли пароль?» и «Создать аккаунт»</div></td><td data-l="Макет"><code>Screen-login</code></td><td data-l="Откуда входят">Открытие приложения или ссылки: <i>не вошёл</i><br>Восстановление пароля: <i>после нового пароля</i><br>Политика данных: <i>«Вход» / назад</i><br>Ссылка-приглашение cohorta.app/join/КОД: <i>не вошёл (код сохраняется)</i><br>Профиль и настройки: <i>выйти</i><br>Удаление аккаунта: подтверждение и выгрузка: <i>после удаления</i><br>Сессия истекла: <i>«Войти снова»</i></td><td data-l="Куда ведёт">Главная: <i>«Войти»</i><br>Регистрация: <i>«Создать аккаунт»</i><br>Восстановление пароля: <i>«Забыли пароль?»</i><br>Политика данных: <i>ссылка «политикой данных»</i><br>Вступление: подтверждение: <i>вошёл по ссылке: вернуться к подтверждению</i></td></tr><tr><td data-l="Экран"><b>Регистрация</b><div class="note">Не нарисована. Нужна почта, пароль, подтверждение почты или нет?</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Вход: <i>«Создать аккаунт»</i></td><td data-l="Куда ведёт">Онбординг (8 шагов): <i>после регистрации</i><br>Политика данных: <i>ссылка политики</i></td></tr><tr><td data-l="Экран"><b>Восстановление пароля</b><div class="note">Не нарисовано: запрос письма, письмо, новый пароль</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Вход: <i>«Забыли пароль?»</i></td><td data-l="Куда ведёт">Вход: <i>после нового пароля</i></td></tr><tr><td data-l="Экран"><b>Политика данных</b></td><td data-l="Макет"><code>Screen-policy</code></td><td data-l="Откуда входят">Вход: <i>ссылка «политикой данных»</i><br>Регистрация: <i>ссылка политики</i><br>Профиль и настройки: <i>«Читать»</i></td><td data-l="Куда ведёт">Вход: <i>«Вход» / назад</i></td></tr><tr><td data-l="Экран"><b>Онбординг (8 шагов)</b><div class="note">Нарисованы шаги 1, 5 (Screen-onboarding-2) и 7. Шаги 2, 3, 4, 6 и 8 не нарисованы</div></td><td data-l="Макет"><code>Screen-onboarding-1</code></td><td data-l="Откуда входят">Открытие приложения или ссылки: <i>вошёл, онбординг не пройден</i><br>Регистрация: <i>после регистрации</i></td><td data-l="Куда ведёт">Онбординг, шаг «Группа»: <i>шаг 7</i><br>Главная, новичок: <i>после последнего шага</i></td></tr><tr><td data-l="Экран"><b>Онбординг, шаг «Группа»</b><div class="note">Можно пропустить</div></td><td data-l="Макет"><code>Screen-onboarding-3</code></td><td data-l="Откуда входят">Онбординг (8 шагов): <i>шаг 7</i></td><td data-l="Куда ведёт">Главная: <i>«Далее» или пропустить</i><br>Вступление: подтверждение: <i>введён код → подтверждение</i></td></tr><tr><td data-l="Экран"><b>Ссылка-приглашение cohorta.app/join/КОД</b><div class="note">Не вошедшего ведёт на вход и потом возвращает к подтверждению</div></td><td data-l="Макет"><span class="tag vi">вход</span></td><td data-l="Откуда входят">вход в приложение</td><td data-l="Куда ведёт">Вход: <i>не вошёл (код сохраняется)</i><br>Вступление: подтверждение: <i>вошёл</i></td></tr></tbody></table></div></details><details class="det"><summary>Соло: учёба <span class="cnt">18</span></summary><div class="twrap"><table><thead><tr><th>Экран</th><th>Макет</th><th>Откуда входят</th><th>Куда ведёт</th></tr></thead><tbody><tr><td data-l="Экран"><b>Главная</b></td><td data-l="Макет"><code>Screen-dashboard</code><br><code>Screen-dashboard-mobile</code></td><td data-l="Откуда входят">Открытие приложения или ссылки: <i>вошёл, онбординг пройден</i><br>Вход: <i>«Войти»</i><br>Онбординг, шаг «Группа»: <i>«Далее» или пропустить</i><br>Настройки группы: выйти, код, название: <i>«Выйти из группы»</i><br>Нет связи: <i>сеть вернулась</i><br>Ошибка загрузки: <i>«Повторить»</i><br>Лекции или группы больше нет / нет прав: <i>«На главную»</i></td><td data-l="Куда ведёт">Поиск: <i>строка поиска в шапке</i><br>Профиль и настройки: <i>аватар внизу меню</i><br>Редактор лекции: <i>«Продолжить», «Открыть лекцию», «Открыть конспект»</i><br>Новая лекция (пустая): <i>«Новая лекция», «Начать конспект» (без пары открывает чистую)</i><br>Редактор лекции: <i>«Начать конспект» на паре (создаёт лекцию на дату пары)</i><br>Задачи: <i>«Все задачи»</i><br>Расписание: <i>«Расписание»</i><br>Квиз: вопрос: <i>задача «Пройти квиз…», «Повторить» в блоке «Что повторить»</i><br>Экзамен предмета: <i>блок «Экзамен» (когда есть)</i></td></tr><tr><td data-l="Экран"><b>Главная, новичок</b><div class="note">Блок «С чего начать»</div></td><td data-l="Макет"><code>States-empty</code></td><td data-l="Откуда входят">Онбординг (8 шагов): <i>после последнего шага</i></td><td data-l="Куда ведёт">Новый предмет / правка предмета: <i>«Добавить» предмет</i><br>Добавить / изменить пару: <i>«Добавить» пару</i><br>Новая лекция (пустая): <i>«Начать»</i></td></tr><tr><td data-l="Экран"><b>Все лекции</b></td><td data-l="Макет"><code>Screen-lectures</code><br><code>Screen-m-lectures</code></td><td data-l="Откуда входят">Подтверждение удаления лекции: <i>подтвердил</i></td><td data-l="Куда ведёт">Редактор лекции: <i>строка лекции</i><br>Новая лекция (пустая): <i>«Новая лекция»</i><br>Предмет: вкладка «Лекции»: <i>ряд предметов (телефон) / предмет в меню</i></td></tr><tr><td data-l="Экран"><b>Предмет: вкладка «Лекции»</b><div class="note">Не нарисована. Нужна как цель клика по предмету в меню и по ряду предметов на телефоне</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Все лекции: <i>ряд предметов (телефон) / предмет в меню</i><br>Новый предмет / правка предмета: <i>«Сохранить»</i><br>Предмет: вкладка «Пары»: <i>вкладка «Лекции»</i><br>Редактор лекции: <i>ссылка назад к предмету</i><br>Поиск: <i>предмет</i></td><td data-l="Куда ведёт">Редактор лекции: <i>строка лекции</i><br>Предмет: вкладка «Пары»: <i>вкладка «Пары»</i><br>Экзамен предмета: <i>вкладка «Экзамен»</i><br>Новый предмет / правка предмета: <i>правка предмета</i><br>Новая лекция (пустая): <i>«Новая лекция»</i></td></tr><tr><td data-l="Экран"><b>Новый предмет / правка предмета</b><div class="note">Не нарисовано: название, обложка (генератор), семестр</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Главная, новичок: <i>«Добавить» предмет</i><br>Предмет: вкладка «Лекции»: <i>правка предмета</i></td><td data-l="Куда ведёт">Предмет: вкладка «Лекции»: <i>«Сохранить»</i></td></tr><tr><td data-l="Экран"><b>Предмет: вкладка «Пары»</b></td><td data-l="Макет"><code>Screen-subject-pairs</code><br><code>Screen-m-subject-pairs</code></td><td data-l="Откуда входят">Предмет: вкладка «Лекции»: <i>вкладка «Пары»</i><br>Добавить / изменить пару: <i>«Сохранить»</i></td><td data-l="Куда ведёт">Добавить / изменить пару: <i>«Добавить пару», строка пары</i><br>Редактор лекции: <i>«Конспект есть»</i><br>Предмет: вкладка «Лекции»: <i>вкладка «Лекции»</i></td></tr><tr><td data-l="Экран"><b>Добавить / изменить пару</b><div class="note">Не нарисовано: день, время, тип, аудитория, чётность</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Главная, новичок: <i>«Добавить» пару</i><br>Предмет: вкладка «Пары»: <i>«Добавить пару», строка пары</i><br>Расписание: <i>«Добавить пару»</i></td><td data-l="Куда ведёт">Предмет: вкладка «Пары»: <i>«Сохранить»</i></td></tr><tr><td data-l="Экран"><b>Расписание</b></td><td data-l="Макет"><code>Screen-schedule</code><br><code>Screen-m-schedule</code></td><td data-l="Откуда входят">Главная: <i>«Расписание»</i></td><td data-l="Куда ведёт">Редактор лекции: <i>пара с конспектом</i><br>Редактор лекции: <i>«Начать конспект»</i><br>Добавить / изменить пару: <i>«Добавить пару»</i></td></tr><tr><td data-l="Экран"><b>Новая лекция (пустая)</b><div class="note">Новая лекция без названия. Куда попадает, если предмет не выбран, не решено</div></td><td data-l="Макет"><code>States-empty</code></td><td data-l="Откуда входят">Главная: <i>«Новая лекция», «Начать конспект» (без пары открывает чистую)</i><br>Главная, новичок: <i>«Начать»</i><br>Все лекции: <i>«Новая лекция»</i><br>Предмет: вкладка «Лекции»: <i>«Новая лекция»</i></td><td data-l="Куда ведёт">Редактор лекции: <i>начал писать</i></td></tr><tr><td data-l="Экран"><b>Редактор лекции</b><div class="note">Содержание лекции: Screen-editor-toc и Screen-m-editor-toc. Меню «/»: Screen-editor-slash</div></td><td data-l="Макет"><code>Screen-editor</code><br><code>Screen-m-editor</code></td><td data-l="Откуда входят">Главная: <i>«Продолжить», «Открыть лекцию», «Открыть конспект»</i><br>Главная: <i>«Начать конспект» на паре (создаёт лекцию на дату пары)</i><br>Все лекции: <i>строка лекции</i><br>Предмет: вкладка «Лекции»: <i>строка лекции</i><br>Предмет: вкладка «Пары»: <i>«Конспект есть»</i><br>Расписание: <i>пара с конспектом</i><br>Расписание: <i>«Начать конспект»</i><br>Новая лекция (пустая): <i>начал писать</i><br>Квиз: ответ и объяснение: <i>«Показать в лекции, абзац…»</i><br>Выйти из квиза посередине: <i>выйти</i><br>Квиз: итог: <i>«К лекции», «Закрыть»</i><br>Задачи: <i>задача со ссылкой на лекцию</i><br>Поиск: <i>своя лекция</i><br>Колода: <i>«Лекция N» у карточки</i><br>Билет: <i>«Связанные лекции»</i></td><td data-l="Куда ведёт">Меню лекции «···»: <i>«···»</i><br>Предмет: вкладка «Лекции»: <i>ссылка назад к предмету</i><br>Панель «Твоё понимание темы»: <i>правая панель (на телефоне: кнопка «Понимание»)</i><br>Билет: <i>плашка «Нужна для N билетов»</i><br>Карточки: колоды: <i>«+ Карточка» из меню «/»</i></td></tr><tr><td data-l="Экран"><b>Меню лекции «···»</b><div class="note">Не нарисовано: переименовать, перенести, доступ, удалить</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Редактор лекции: <i>«···»</i></td><td data-l="Куда ведёт">Подтверждение удаления лекции: <i>«Удалить»</i><br>Доступ к лекции (кто читает): <i>«Доступ»</i></td></tr><tr><td data-l="Экран"><b>Подтверждение удаления лекции</b><div class="note">Не нарисовано</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Меню лекции «···»: <i>«Удалить»</i></td><td data-l="Куда ведёт">Все лекции: <i>подтвердил</i></td></tr><tr><td data-l="Экран"><b>Задачи</b></td><td data-l="Макет"><code>Screen-tasks</code><br><code>Screen-m-tasks</code></td><td data-l="Откуда входят">Главная: <i>«Все задачи»</i><br>Квиз: итог: <i>автозадача «Повторить через день»</i><br>Задача: правка, срок, предмет: <i>«Сохранить»</i></td><td data-l="Куда ведёт">Задача: правка, срок, предмет: <i>строка задачи</i><br>Редактор лекции: <i>задача со ссылкой на лекцию</i><br>Квиз: вопрос: <i>задача «Квиз…»</i></td></tr><tr><td data-l="Экран"><b>Задача: правка, срок, предмет</b><div class="note">Не нарисовано (быстрое добавление строкой есть)</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Задачи: <i>строка задачи</i></td><td data-l="Куда ведёт">Задачи: <i>«Сохранить»</i></td></tr><tr><td data-l="Экран"><b>Поиск</b><div class="note">Строка в шапке на каждом экране</div></td><td data-l="Макет"><code>Screen-search</code><br><code>Screen-m-search</code></td><td data-l="Откуда входят">Главная: <i>строка поиска в шапке</i><br>Группа: одногруппники: <i>строка поиска в шапке</i></td><td data-l="Куда ведёт">Редактор лекции: <i>своя лекция</i><br>Предмет: вкладка «Лекции»: <i>предмет</i><br>Одногруппник: предметы: <i>одногруппник</i><br>Закрытая лекция: <i>чужая лекция (видно только название)</i><br>Чужая лекция, открытая тебе (чтение): <i>чужая лекция, открытая тебе</i></td></tr><tr><td data-l="Экран"><b>Профиль и настройки</b><div class="note">Аватар внизу меню, из любого экрана</div></td><td data-l="Макет"><code>Screen-settings</code></td><td data-l="Откуда входят">Главная: <i>аватар внизу меню</i><br>Группа: одногруппники: <i>«Профиль»</i><br>Правка поля профиля / учёбы: <i>«Сохранить»</i></td><td data-l="Куда ведёт">Правка поля профиля / учёбы: <i>«Изменить», «Сменить фото»</i><br>Политика данных: <i>«Читать»</i><br>Удаление аккаунта: подтверждение и выгрузка: <i>«Удалить аккаунт»</i><br>Вход: <i>выйти</i></td></tr><tr><td data-l="Экран"><b>Правка поля профиля / учёбы</b><div class="note">Не нарисовано: «Изменить», «Сменить фото»</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Профиль и настройки: <i>«Изменить», «Сменить фото»</i></td><td data-l="Куда ведёт">Профиль и настройки: <i>«Сохранить»</i></td></tr><tr><td data-l="Экран"><b>Удаление аккаунта: подтверждение и выгрузка</b><div class="note">Не нарисовано. В настройках обещано «попросим подтвердить и предложим выгрузить»</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Профиль и настройки: <i>«Удалить аккаунт»</i></td><td data-l="Куда ведёт">Вход: <i>после удаления</i></td></tr></tbody></table></div></details><details class="det"><summary>Соло: повторение и экзамен <span class="cnt">16</span></summary><div class="twrap"><table><thead><tr><th>Экран</th><th>Макет</th><th>Откуда входят</th><th>Куда ведёт</th></tr></thead><tbody><tr><td data-l="Экран"><b>Панель «Твоё понимание темы»</b><div class="note">Три состояния: нет квиза, квиз создан, квиз пройден</div></td><td data-l="Макет"><code>Screen-understanding</code><br><code>Screen-m-understanding</code></td><td data-l="Откуда входят">Редактор лекции: <i>правая панель (на телефоне: кнопка «Понимание»)</i></td><td data-l="Куда ведёт">Создание квиза (размер, загрузка, ошибка): <i>«Создать квиз», «Собрать другой»</i><br>Квиз: вопрос: <i>«Пройти квиз», «Проверить себя»</i></td></tr><tr><td data-l="Экран"><b>Создание квиза (размер, загрузка, ошибка)</b><div class="note">Размер квиза, ожидание генерации и ошибка ИИ не нарисованы</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Панель «Твоё понимание темы»: <i>«Создать квиз», «Собрать другой»</i></td><td data-l="Куда ведёт">Квиз: вопрос: <i>квиз готов</i><br>Ошибка загрузки: <i>ИИ не ответил</i></td></tr><tr><td data-l="Экран"><b>Квиз: вопрос</b></td><td data-l="Макет"><code>Screen-quiz-question</code><br><code>Screen-m-quiz</code></td><td data-l="Откуда входят">Главная: <i>задача «Пройти квиз…», «Повторить» в блоке «Что повторить»</i><br>Панель «Твоё понимание темы»: <i>«Пройти квиз», «Проверить себя»</i><br>Создание квиза (размер, загрузка, ошибка): <i>квиз готов</i><br>Квиз: ответ и объяснение: <i>«Дальше»</i><br>Квиз: итог: <i>«Повторить слабые темы»</i><br>Задачи: <i>задача «Квиз…»</i></td><td data-l="Куда ведёт">Квиз: ответ и объяснение: <i>«Ответить», «Не помню»</i><br>Выйти из квиза посередине: <i>закрыть</i></td></tr><tr><td data-l="Экран"><b>Квиз: ответ и объяснение</b></td><td data-l="Макет"><code>Screen-quiz-answered</code></td><td data-l="Откуда входят">Квиз: вопрос: <i>«Ответить», «Не помню»</i></td><td data-l="Куда ведёт">Квиз: вопрос: <i>«Дальше»</i><br>Редактор лекции: <i>«Показать в лекции, абзац…»</i><br>Квиз: итог: <i>последний вопрос</i></td></tr><tr><td data-l="Экран"><b>Квиз: итог</b></td><td data-l="Макет"><code>Screen-quiz-summary</code></td><td data-l="Откуда входят">Квиз: ответ и объяснение: <i>последний вопрос</i></td><td data-l="Куда ведёт">Квиз: вопрос: <i>«Повторить слабые темы»</i><br>Редактор лекции: <i>«К лекции», «Закрыть»</i><br>Задачи: <i>автозадача «Повторить через день»</i></td></tr><tr><td data-l="Экран"><b>Выйти из квиза посередине</b><div class="note">Не нарисовано: сохраняется ли прогресс</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Квиз: вопрос: <i>закрыть</i></td><td data-l="Куда ведёт">Редактор лекции: <i>выйти</i></td></tr><tr><td data-l="Экран"><b>Карточки: колоды</b><div class="note">Вкладка «Расписание повторов» не нарисована</div></td><td data-l="Макет"><code>Screen-cards</code><br><code>Screen-m-cards</code></td><td data-l="Откуда входят">Редактор лекции: <i>«+ Карточка» из меню «/»</i><br>Повторение карточек: <i>«Закончить»</i></td><td data-l="Куда ведёт">Колода: <i>колода</i><br>Повторение карточек: <i>«Повторить N карточек»</i><br>Новая колода / правка карточки: <i>«Новая колода»</i></td></tr><tr><td data-l="Экран"><b>Колода</b></td><td data-l="Макет"><code>Screen-deck</code><br><code>Screen-m-deck</code></td><td data-l="Откуда входят">Карточки: колоды: <i>колода</i><br>Новая колода / правка карточки: <i>«Сохранить»</i></td><td data-l="Куда ведёт">Повторение карточек: <i>«Повторить N карточек»</i><br>Новая колода / правка карточки: <i>«Добавить карточку»</i><br>Редактор лекции: <i>«Лекция N» у карточки</i></td></tr><tr><td data-l="Экран"><b>Новая колода / правка карточки</b><div class="note">Не нарисовано</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Карточки: колоды: <i>«Новая колода»</i><br>Колода: <i>«Добавить карточку»</i></td><td data-l="Куда ведёт">Колода: <i>«Сохранить»</i></td></tr><tr><td data-l="Экран"><b>Повторение карточек</b></td><td data-l="Макет"><code>Screen-cards-review</code></td><td data-l="Откуда входят">Карточки: колоды: <i>«Повторить N карточек»</i><br>Колода: <i>«Повторить N карточек»</i></td><td data-l="Куда ведёт">Карточки: колоды: <i>«Закончить»</i></td></tr><tr><td data-l="Экран"><b>Экзамен предмета</b></td><td data-l="Макет"><code>Screen-exam</code><br><code>Screen-m-exam</code></td><td data-l="Откуда входят">Главная: <i>блок «Экзамен» (когда есть)</i><br>Предмет: вкладка «Лекции»: <i>вкладка «Экзамен»</i><br>Создать экзамен предмета: <i>«Создать»</i><br>Импорт билетов: <i>«Добавить N билетов»</i><br>Шпаргалка: <i>назад</i></td><td data-l="Куда ведёт">Билет: <i>строка билета, «Открыть билет», «Продолжить»</i><br>Импорт билетов: <i>«Добавить билет», импорт</i><br>Шпаргалка: <i>вкладка «Шпаргалка»</i><br>Создать экзамен предмета: <i>нет экзамена у предмета</i></td></tr><tr><td data-l="Экран"><b>Создать экзамен предмета</b><div class="note">Не нарисовано: дата, выбор предмета. Пустое состояние «экзамена нет» тоже</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Экзамен предмета: <i>нет экзамена у предмета</i></td><td data-l="Куда ведёт">Экзамен предмета: <i>«Создать»</i></td></tr><tr><td data-l="Экран"><b>Билет</b></td><td data-l="Макет"><code>Screen-ticket</code></td><td data-l="Откуда входят">Редактор лекции: <i>плашка «Нужна для N билетов»</i><br>Экзамен предмета: <i>строка билета, «Открыть билет», «Продолжить»</i><br>Билет: <i>«Следующий билет»</i><br>Правка билета и привязка лекций: <i>«Сохранить»</i></td><td data-l="Куда ведёт">Правка билета и привязка лекций: <i>«Изменить», «Привязать лекцию»</i><br>Редактор лекции: <i>«Связанные лекции»</i><br>Билет: <i>«Следующий билет»</i></td></tr><tr><td data-l="Экран"><b>Правка билета и привязка лекций</b><div class="note">Не нарисовано: «Изменить», «Привязать лекцию» (выбор лекции)</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Билет: <i>«Изменить», «Привязать лекцию»</i></td><td data-l="Куда ведёт">Билет: <i>«Сохранить»</i></td></tr><tr><td data-l="Экран"><b>Импорт билетов</b></td><td data-l="Макет"><code>Screen-ticket-import</code></td><td data-l="Откуда входят">Экзамен предмета: <i>«Добавить билет», импорт</i></td><td data-l="Куда ведёт">Экзамен предмета: <i>«Добавить N билетов»</i></td></tr><tr><td data-l="Экран"><b>Шпаргалка</b></td><td data-l="Макет"><code>Screen-cheatsheet</code></td><td data-l="Откуда входят">Экзамен предмета: <i>вкладка «Шпаргалка»</i></td><td data-l="Куда ведёт">Экзамен предмета: <i>назад</i></td></tr></tbody></table></div></details><details class="det"><summary>Группа <span class="cnt">18</span></summary><div class="twrap"><table><thead><tr><th>Экран</th><th>Макет</th><th>Откуда входят</th><th>Куда ведёт</th></tr></thead><tbody><tr><td data-l="Экран"><b>Вступление: ввод кода</b></td><td data-l="Макет"><code>Screen-group-join</code></td><td data-l="Откуда входят">Группа: одногруппники: <i>«Вступить в ещё одну» / режим «Группа» без группы</i><br>Вступление: подтверждение: <i>«Это не та группа»</i><br>Переключатель групп: <i>«Вступить в ещё одну»</i></td><td data-l="Куда ведёт">Вступление: подтверждение: <i>введён код</i><br>Создание группы: <i>«Создать свою группу»</i></td></tr><tr><td data-l="Экран"><b>Вступление: подтверждение</b></td><td data-l="Макет"><code>Screen-group-join-confirm</code></td><td data-l="Откуда входят">Онбординг, шаг «Группа»: <i>введён код → подтверждение</i><br>Ссылка-приглашение cohorta.app/join/КОД: <i>вошёл</i><br>Вход: <i>вошёл по ссылке: вернуться к подтверждению</i><br>Вступление: ввод кода: <i>введён код</i></td><td data-l="Куда ведёт">Группа: одногруппники: <i>«Вступить в МК-31»</i><br>Вступление: ввод кода: <i>«Это не та группа»</i></td></tr><tr><td data-l="Экран"><b>Создание группы</b></td><td data-l="Макет"><code>Screen-group-create</code></td><td data-l="Откуда входят">Вступление: ввод кода: <i>«Создать свою группу»</i></td><td data-l="Куда ведёт">Группа: одногруппники: <i>«Создать группу»</i></td></tr><tr><td data-l="Экран"><b>Группа: одногруппники</b></td><td data-l="Макет"><code>Screen-group-home</code><br><code>Screen-m-group-people</code></td><td data-l="Откуда входят">Вступление: подтверждение: <i>«Вступить в МК-31»</i><br>Создание группы: <i>«Создать группу»</i><br>Переключатель групп: <i>выбрать группу</i><br>Настройки группы: выйти, код, название: <i>«Сохранить»</i></td><td data-l="Куда ведёт">Поиск: <i>строка поиска в шапке</i><br>Профиль и настройки: <i>«Профиль»</i><br>Вступление: ввод кода: <i>«Вступить в ещё одну» / режим «Группа» без группы</i><br>Переключатель групп: <i>карточка группы в меню</i><br>Одногруппник: предметы: <i>«Открыть» у одногруппника</i><br>Настройки группы: выйти, код, название: <i>название группы, «Сбросить код»</i><br>Мой доступ: <i>«Мой доступ»</i><br>Экзамены группы: <i>«Экзамены группы»</i></td></tr><tr><td data-l="Экран"><b>Переключатель групп</b></td><td data-l="Макет"><code>Screen-group-switcher</code><br><code>Screen-m-group-switcher</code></td><td data-l="Откуда входят">Группа: одногруппники: <i>карточка группы в меню</i></td><td data-l="Куда ведёт">Группа: одногруппники: <i>выбрать группу</i><br>Вступление: ввод кода: <i>«Вступить в ещё одну»</i></td></tr><tr><td data-l="Экран"><b>Одногруппник: предметы</b></td><td data-l="Макет"><code>Screen-group-member</code></td><td data-l="Откуда входят">Поиск: <i>одногруппник</i><br>Группа: одногруппники: <i>«Открыть» у одногруппника</i></td><td data-l="Куда ведёт">Предмет одногруппника: лекции: <i>предмет одногруппника</i></td></tr><tr><td data-l="Экран"><b>Предмет одногруппника: лекции</b><div class="note">Файл назван «thumbnails», но это список. Заголовок в макете «Курс одногруппника» надо заменить на «Предмет»</div></td><td data-l="Макет"><code>Screen-group-thumbnails</code></td><td data-l="Откуда входят">Одногруппник: предметы: <i>предмет одногруппника</i><br>Запрос доступа отправлен: <i>назад</i><br>Чужая лекция, открытая тебе (чтение): <i>назад</i></td><td data-l="Куда ведёт">Чужая лекция, открытая тебе (чтение): <i>«Открыта тебе»</i><br>Закрытая лекция: <i>строка закрытой лекции</i></td></tr><tr><td data-l="Экран"><b>Чужая лекция, открытая тебе (чтение)</b><div class="note">Не нарисовано. Только чтение? Можно ли пройти квиз? Решение нужно</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Поиск: <i>чужая лекция, открытая тебе</i><br>Предмет одногруппника: лекции: <i>«Открыта тебе»</i></td><td data-l="Куда ведёт">Предмет одногруппника: лекции: <i>назад</i></td></tr><tr><td data-l="Экран"><b>Закрытая лекция</b><div class="note">Кнопка «Запросить доступ»</div></td><td data-l="Макет"><code>States-system</code></td><td data-l="Откуда входят">Поиск: <i>чужая лекция (видно только название)</i><br>Предмет одногруппника: лекции: <i>строка закрытой лекции</i></td><td data-l="Куда ведёт">Запрос доступа отправлен: <i>«Запросить доступ»</i></td></tr><tr><td data-l="Экран"><b>Запрос доступа отправлен</b></td><td data-l="Макет"><code>States-system</code></td><td data-l="Откуда входят">Закрытая лекция: <i>«Запросить доступ»</i></td><td data-l="Куда ведёт">Предмет одногруппника: лекции: <i>назад</i></td></tr><tr><td data-l="Экран"><b>Мой доступ</b></td><td data-l="Макет"><code>Screen-group-access-my</code><br><code>Screen-m-group-access</code></td><td data-l="Откуда входят">Группа: одногруппники: <i>«Мой доступ»</i><br>Доступ к лекции (кто читает): <i>«Готово»</i></td><td data-l="Куда ведёт">Доступ к лекции (кто читает): <i>«Открыть» у запроса, «Кому открыты лекции»</i><br>Доступ к лекции (кто читает): <i>«Убрать» у одного</i></td></tr><tr><td data-l="Экран"><b>Доступ к лекции (кто читает)</b></td><td data-l="Макет"><code>Screen-group-access</code></td><td data-l="Откуда входят">Меню лекции «···»: <i>«Доступ»</i><br>Мой доступ: <i>«Открыть» у запроса, «Кому открыты лекции»</i><br>Мой доступ: <i>«Убрать» у одного</i></td><td data-l="Куда ведёт">Мой доступ: <i>«Готово»</i></td></tr><tr><td data-l="Экран"><b>Экзамены группы</b></td><td data-l="Макет"><code>Screen-group-exams</code><br><code>Screen-m-group-exams</code></td><td data-l="Откуда входят">Группа: одногруппники: <i>«Экзамены группы»</i></td><td data-l="Куда ведёт">Коллективный экзамен, подгруппы: <i>строка экзамена</i><br>Создать экзамен группы: <i>«Создать экзамен»</i></td></tr><tr><td data-l="Экран"><b>Коллективный экзамен, подгруппы</b></td><td data-l="Макет"><code>Screen-group-exam</code></td><td data-l="Откуда входят">Экзамены группы: <i>строка экзамена</i><br>Создать экзамен группы: <i>«Создать»</i><br>Новая подгруппа и приглашение: <i>«Готово»</i><br>Билет подгруппы (пишут вместе): <i>назад</i></td><td data-l="Куда ведёт">Новая подгруппа и приглашение: <i>«Новая подгруппа», «Пригласить в подгруппу»</i><br>Билет подгруппы (пишут вместе): <i>строка билета подгруппы</i></td></tr><tr><td data-l="Экран"><b>Создать экзамен группы</b><div class="note">Не нарисовано</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Экзамены группы: <i>«Создать экзамен»</i></td><td data-l="Куда ведёт">Коллективный экзамен, подгруппы: <i>«Создать»</i></td></tr><tr><td data-l="Экран"><b>Новая подгруппа и приглашение</b><div class="note">Не нарисовано: выбор людей, подтверждение, «один человек: одна подгруппа»</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Коллективный экзамен, подгруппы: <i>«Новая подгруппа», «Пригласить в подгруппу»</i></td><td data-l="Куда ведёт">Коллективный экзамен, подгруппы: <i>«Готово»</i></td></tr><tr><td data-l="Экран"><b>Билет подгруппы (пишут вместе)</b><div class="note">Не нарисовано: у билета несколько авторов, видно, кто над ним работает</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Коллективный экзамен, подгруппы: <i>строка билета подгруппы</i></td><td data-l="Куда ведёт">Коллективный экзамен, подгруппы: <i>назад</i></td></tr><tr><td data-l="Экран"><b>Настройки группы: выйти, код, название</b><div class="note">Не нарисовано. «Сбросить код» есть на экране группы, «Выйти из группы» нигде нет</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">Группа: одногруппники: <i>название группы, «Сбросить код»</i></td><td data-l="Куда ведёт">Группа: одногруппники: <i>«Сохранить»</i><br>Главная: <i>«Выйти из группы»</i></td></tr></tbody></table></div></details><details class="det"><summary>Служебные <span class="cnt">4</span></summary><div class="twrap"><table><thead><tr><th>Экран</th><th>Макет</th><th>Откуда входят</th><th>Куда ведёт</th></tr></thead><tbody><tr><td data-l="Экран"><b>Нет связи</b></td><td data-l="Макет"><code>States-system</code></td><td data-l="Откуда входят">вход в приложение</td><td data-l="Куда ведёт">Главная: <i>сеть вернулась</i></td></tr><tr><td data-l="Экран"><b>Ошибка загрузки</b></td><td data-l="Макет"><code>States-system</code></td><td data-l="Откуда входят">Создание квиза (размер, загрузка, ошибка): <i>ИИ не ответил</i></td><td data-l="Куда ведёт">Главная: <i>«Повторить»</i></td></tr><tr><td data-l="Экран"><b>Лекции или группы больше нет / нет прав</b><div class="note">Не нарисовано: удалена лекция, исключён из группы, неверная ссылка (404)</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">вход в приложение</td><td data-l="Куда ведёт">Главная: <i>«На главную»</i></td></tr><tr><td data-l="Экран"><b>Сессия истекла</b><div class="note">Не нарисовано: возврат на вход и возврат на прежний экран</div></td><td data-l="Макет"><span class="tag no">не нарисован</span></td><td data-l="Откуда входят">вход в приложение</td><td data-l="Куда ведёт">Вход: <i>«Войти снова»</i></td></tr></tbody></table></div></details></section>
+</div>

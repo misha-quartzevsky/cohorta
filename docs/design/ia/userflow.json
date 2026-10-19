@@ -1,0 +1,1679 @@
+{
+ "screens": {
+  "open": {
+   "id": "open",
+   "title": "Открытие приложения или ссылки",
+   "area": "start",
+   "mock": null,
+   "mobile": null,
+   "note": "",
+   "entry": true,
+   "terminal": false,
+   "virtual": true
+  },
+  "login": {
+   "id": "login",
+   "title": "Вход",
+   "area": "start",
+   "mock": "Screen-login",
+   "mobile": null,
+   "note": "Есть «Забыли пароль?» и «Создать аккаунт»",
+   "entry": true,
+   "terminal": false,
+   "virtual": false
+  },
+  "register": {
+   "id": "register",
+   "title": "Регистрация",
+   "area": "start",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисована. Нужна почта, пароль, подтверждение почты или нет?",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "reset": {
+   "id": "reset",
+   "title": "Восстановление пароля",
+   "area": "start",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано: запрос письма, письмо, новый пароль",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "policy": {
+   "id": "policy",
+   "title": "Политика данных",
+   "area": "start",
+   "mock": "Screen-policy",
+   "mobile": null,
+   "note": "",
+   "entry": false,
+   "terminal": true,
+   "virtual": false
+  },
+  "onb": {
+   "id": "onb",
+   "title": "Онбординг (8 шагов)",
+   "area": "start",
+   "mock": "Screen-onboarding-1",
+   "mobile": null,
+   "note": "Нарисованы шаги 1, 5 (Screen-onboarding-2) и 7. Шаги 2, 3, 4, 6 и 8 не нарисованы",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "onb_group": {
+   "id": "onb_group",
+   "title": "Онбординг, шаг «Группа»",
+   "area": "start",
+   "mock": "Screen-onboarding-3",
+   "mobile": null,
+   "note": "Можно пропустить",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "join_link": {
+   "id": "join_link",
+   "title": "Ссылка-приглашение cohorta.app/join/КОД",
+   "area": "start",
+   "mock": null,
+   "mobile": null,
+   "note": "Не вошедшего ведёт на вход и потом возвращает к подтверждению",
+   "entry": true,
+   "terminal": false,
+   "virtual": true
+  },
+  "home": {
+   "id": "home",
+   "title": "Главная",
+   "area": "learn",
+   "mock": "Screen-dashboard",
+   "mobile": "Screen-dashboard-mobile",
+   "note": "",
+   "entry": true,
+   "terminal": false,
+   "virtual": false
+  },
+  "home_new": {
+   "id": "home_new",
+   "title": "Главная, новичок",
+   "area": "learn",
+   "mock": "States-empty",
+   "mobile": null,
+   "note": "Блок «С чего начать»",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "lectures": {
+   "id": "lectures",
+   "title": "Все лекции",
+   "area": "learn",
+   "mock": "Screen-lectures",
+   "mobile": "Screen-m-lectures",
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "subject": {
+   "id": "subject",
+   "title": "Предмет: вкладка «Лекции»",
+   "area": "learn",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисована. Нужна как цель клика по предмету в меню и по ряду предметов на телефоне",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "subject_new": {
+   "id": "subject_new",
+   "title": "Новый предмет / правка предмета",
+   "area": "learn",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано: название, обложка (генератор), семестр",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "pairs": {
+   "id": "pairs",
+   "title": "Предмет: вкладка «Пары»",
+   "area": "learn",
+   "mock": "Screen-subject-pairs",
+   "mobile": "Screen-m-subject-pairs",
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "pair_edit": {
+   "id": "pair_edit",
+   "title": "Добавить / изменить пару",
+   "area": "learn",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано: день, время, тип, аудитория, чётность",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "schedule": {
+   "id": "schedule",
+   "title": "Расписание",
+   "area": "learn",
+   "mock": "Screen-schedule",
+   "mobile": "Screen-m-schedule",
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "lecture_new": {
+   "id": "lecture_new",
+   "title": "Новая лекция (пустая)",
+   "area": "learn",
+   "mock": "States-empty",
+   "mobile": null,
+   "note": "Новая лекция без названия. Куда попадает, если предмет не выбран, не решено",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "editor": {
+   "id": "editor",
+   "title": "Редактор лекции",
+   "area": "learn",
+   "mock": "Screen-editor",
+   "mobile": "Screen-m-editor",
+   "note": "Содержание лекции: Screen-editor-toc и Screen-m-editor-toc. Меню «/»: Screen-editor-slash",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "lecture_menu": {
+   "id": "lecture_menu",
+   "title": "Меню лекции «···»",
+   "area": "learn",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано: переименовать, перенести, доступ, удалить",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "lecture_delete": {
+   "id": "lecture_delete",
+   "title": "Подтверждение удаления лекции",
+   "area": "learn",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "tasks": {
+   "id": "tasks",
+   "title": "Задачи",
+   "area": "learn",
+   "mock": "Screen-tasks",
+   "mobile": "Screen-m-tasks",
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "task_edit": {
+   "id": "task_edit",
+   "title": "Задача: правка, срок, предмет",
+   "area": "learn",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано (быстрое добавление строкой есть)",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "search": {
+   "id": "search",
+   "title": "Поиск",
+   "area": "learn",
+   "mock": "Screen-search",
+   "mobile": "Screen-m-search",
+   "note": "Строка в шапке на каждом экране",
+   "entry": true,
+   "terminal": false,
+   "virtual": false
+  },
+  "settings": {
+   "id": "settings",
+   "title": "Профиль и настройки",
+   "area": "learn",
+   "mock": "Screen-settings",
+   "mobile": null,
+   "note": "Аватар внизу меню, из любого экрана",
+   "entry": true,
+   "terminal": false,
+   "virtual": false
+  },
+  "settings_edit": {
+   "id": "settings_edit",
+   "title": "Правка поля профиля / учёбы",
+   "area": "learn",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано: «Изменить», «Сменить фото»",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "account_delete": {
+   "id": "account_delete",
+   "title": "Удаление аккаунта: подтверждение и выгрузка",
+   "area": "learn",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано. В настройках обещано «попросим подтвердить и предложим выгрузить»",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "understanding": {
+   "id": "understanding",
+   "title": "Панель «Твоё понимание темы»",
+   "area": "review",
+   "mock": "Screen-understanding",
+   "mobile": "Screen-m-understanding",
+   "note": "Три состояния: нет квиза, квиз создан, квиз пройден",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "quiz_create": {
+   "id": "quiz_create",
+   "title": "Создание квиза (размер, загрузка, ошибка)",
+   "area": "review",
+   "mock": null,
+   "mobile": null,
+   "note": "Размер квиза, ожидание генерации и ошибка ИИ не нарисованы",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "quiz_q": {
+   "id": "quiz_q",
+   "title": "Квиз: вопрос",
+   "area": "review",
+   "mock": "Screen-quiz-question",
+   "mobile": "Screen-m-quiz",
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "quiz_a": {
+   "id": "quiz_a",
+   "title": "Квиз: ответ и объяснение",
+   "area": "review",
+   "mock": "Screen-quiz-answered",
+   "mobile": null,
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "quiz_sum": {
+   "id": "quiz_sum",
+   "title": "Квиз: итог",
+   "area": "review",
+   "mock": "Screen-quiz-summary",
+   "mobile": null,
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "quiz_exit": {
+   "id": "quiz_exit",
+   "title": "Выйти из квиза посередине",
+   "area": "review",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано: сохраняется ли прогресс",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "cards": {
+   "id": "cards",
+   "title": "Карточки: колоды",
+   "area": "review",
+   "mock": "Screen-cards",
+   "mobile": "Screen-m-cards",
+   "note": "Вкладка «Расписание повторов» не нарисована",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "deck": {
+   "id": "deck",
+   "title": "Колода",
+   "area": "review",
+   "mock": "Screen-deck",
+   "mobile": "Screen-m-deck",
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "deck_edit": {
+   "id": "deck_edit",
+   "title": "Новая колода / правка карточки",
+   "area": "review",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "cards_review": {
+   "id": "cards_review",
+   "title": "Повторение карточек",
+   "area": "review",
+   "mock": "Screen-cards-review",
+   "mobile": null,
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "exam": {
+   "id": "exam",
+   "title": "Экзамен предмета",
+   "area": "review",
+   "mock": "Screen-exam",
+   "mobile": "Screen-m-exam",
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "exam_new": {
+   "id": "exam_new",
+   "title": "Создать экзамен предмета",
+   "area": "review",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано: дата, выбор предмета. Пустое состояние «экзамена нет» тоже",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "ticket": {
+   "id": "ticket",
+   "title": "Билет",
+   "area": "review",
+   "mock": "Screen-ticket",
+   "mobile": null,
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "ticket_edit": {
+   "id": "ticket_edit",
+   "title": "Правка билета и привязка лекций",
+   "area": "review",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано: «Изменить», «Привязать лекцию» (выбор лекции)",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "ticket_import": {
+   "id": "ticket_import",
+   "title": "Импорт билетов",
+   "area": "review",
+   "mock": "Screen-ticket-import",
+   "mobile": null,
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "cheatsheet": {
+   "id": "cheatsheet",
+   "title": "Шпаргалка",
+   "area": "review",
+   "mock": "Screen-cheatsheet",
+   "mobile": null,
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_join": {
+   "id": "g_join",
+   "title": "Вступление: ввод кода",
+   "area": "group",
+   "mock": "Screen-group-join",
+   "mobile": null,
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_join_ok": {
+   "id": "g_join_ok",
+   "title": "Вступление: подтверждение",
+   "area": "group",
+   "mock": "Screen-group-join-confirm",
+   "mobile": null,
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_create": {
+   "id": "g_create",
+   "title": "Создание группы",
+   "area": "group",
+   "mock": "Screen-group-create",
+   "mobile": null,
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_home": {
+   "id": "g_home",
+   "title": "Группа: одногруппники",
+   "area": "group",
+   "mock": "Screen-group-home",
+   "mobile": "Screen-m-group-people",
+   "note": "",
+   "entry": true,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_switch": {
+   "id": "g_switch",
+   "title": "Переключатель групп",
+   "area": "group",
+   "mock": "Screen-group-switcher",
+   "mobile": "Screen-m-group-switcher",
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_member": {
+   "id": "g_member",
+   "title": "Одногруппник: предметы",
+   "area": "group",
+   "mock": "Screen-group-member",
+   "mobile": null,
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_member_subj": {
+   "id": "g_member_subj",
+   "title": "Предмет одногруппника: лекции",
+   "area": "group",
+   "mock": "Screen-group-thumbnails",
+   "mobile": null,
+   "note": "Файл назван «thumbnails», но это список. Заголовок в макете «Курс одногруппника» надо заменить на «Предмет»",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_read": {
+   "id": "g_read",
+   "title": "Чужая лекция, открытая тебе (чтение)",
+   "area": "group",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано. Только чтение? Можно ли пройти квиз? Решение нужно",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_closed": {
+   "id": "g_closed",
+   "title": "Закрытая лекция",
+   "area": "group",
+   "mock": "States-system",
+   "mobile": null,
+   "note": "Кнопка «Запросить доступ»",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_sent": {
+   "id": "g_sent",
+   "title": "Запрос доступа отправлен",
+   "area": "group",
+   "mock": "States-system",
+   "mobile": null,
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_myaccess": {
+   "id": "g_myaccess",
+   "title": "Мой доступ",
+   "area": "group",
+   "mock": "Screen-group-access-my",
+   "mobile": "Screen-m-group-access",
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_lecture_access": {
+   "id": "g_lecture_access",
+   "title": "Доступ к лекции (кто читает)",
+   "area": "group",
+   "mock": "Screen-group-access",
+   "mobile": null,
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_exams": {
+   "id": "g_exams",
+   "title": "Экзамены группы",
+   "area": "group",
+   "mock": "Screen-group-exams",
+   "mobile": "Screen-m-group-exams",
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_exam": {
+   "id": "g_exam",
+   "title": "Коллективный экзамен, подгруппы",
+   "area": "group",
+   "mock": "Screen-group-exam",
+   "mobile": null,
+   "note": "",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_exam_new": {
+   "id": "g_exam_new",
+   "title": "Создать экзамен группы",
+   "area": "group",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_sub_new": {
+   "id": "g_sub_new",
+   "title": "Новая подгруппа и приглашение",
+   "area": "group",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано: выбор людей, подтверждение, «один человек: одна подгруппа»",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_ticket": {
+   "id": "g_ticket",
+   "title": "Билет подгруппы (пишут вместе)",
+   "area": "group",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано: у билета несколько авторов, видно, кто над ним работает",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "g_settings": {
+   "id": "g_settings",
+   "title": "Настройки группы: выйти, код, название",
+   "area": "group",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано. «Сбросить код» есть на экране группы, «Выйти из группы» нигде нет",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
+  },
+  "offline": {
+   "id": "offline",
+   "title": "Нет связи",
+   "area": "system",
+   "mock": "States-system",
+   "mobile": null,
+   "note": "",
+   "entry": true,
+   "terminal": false,
+   "virtual": false
+  },
+  "error": {
+   "id": "error",
+   "title": "Ошибка загрузки",
+   "area": "system",
+   "mock": "States-system",
+   "mobile": null,
+   "note": "",
+   "entry": true,
+   "terminal": false,
+   "virtual": false
+  },
+  "gone": {
+   "id": "gone",
+   "title": "Лекции или группы больше нет / нет прав",
+   "area": "system",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано: удалена лекция, исключён из группы, неверная ссылка (404)",
+   "entry": true,
+   "terminal": false,
+   "virtual": false
+  },
+  "expired": {
+   "id": "expired",
+   "title": "Сессия истекла",
+   "area": "system",
+   "mock": null,
+   "mobile": null,
+   "note": "Не нарисовано: возврат на вход и возврат на прежний экран",
+   "entry": true,
+   "terminal": false,
+   "virtual": false
+  }
+ },
+ "transitions": [
+  {
+   "from_": "open",
+   "to": "login",
+   "how": "не вошёл",
+   "note": ""
+  },
+  {
+   "from_": "open",
+   "to": "home",
+   "how": "вошёл, онбординг пройден",
+   "note": ""
+  },
+  {
+   "from_": "open",
+   "to": "onb",
+   "how": "вошёл, онбординг не пройден",
+   "note": ""
+  },
+  {
+   "from_": "login",
+   "to": "home",
+   "how": "«Войти»",
+   "note": ""
+  },
+  {
+   "from_": "login",
+   "to": "register",
+   "how": "«Создать аккаунт»",
+   "note": ""
+  },
+  {
+   "from_": "login",
+   "to": "reset",
+   "how": "«Забыли пароль?»",
+   "note": ""
+  },
+  {
+   "from_": "login",
+   "to": "policy",
+   "how": "ссылка «политикой данных»",
+   "note": ""
+  },
+  {
+   "from_": "register",
+   "to": "onb",
+   "how": "после регистрации",
+   "note": ""
+  },
+  {
+   "from_": "register",
+   "to": "policy",
+   "how": "ссылка политики",
+   "note": ""
+  },
+  {
+   "from_": "reset",
+   "to": "login",
+   "how": "после нового пароля",
+   "note": ""
+  },
+  {
+   "from_": "policy",
+   "to": "login",
+   "how": "«Вход» / назад",
+   "note": ""
+  },
+  {
+   "from_": "onb",
+   "to": "onb_group",
+   "how": "шаг 7",
+   "note": ""
+  },
+  {
+   "from_": "onb_group",
+   "to": "home",
+   "how": "«Далее» или пропустить",
+   "note": ""
+  },
+  {
+   "from_": "onb_group",
+   "to": "g_join_ok",
+   "how": "введён код → подтверждение",
+   "note": ""
+  },
+  {
+   "from_": "onb",
+   "to": "home_new",
+   "how": "после последнего шага",
+   "note": ""
+  },
+  {
+   "from_": "join_link",
+   "to": "login",
+   "how": "не вошёл (код сохраняется)",
+   "note": ""
+  },
+  {
+   "from_": "join_link",
+   "to": "g_join_ok",
+   "how": "вошёл",
+   "note": ""
+  },
+  {
+   "from_": "home",
+   "to": "search",
+   "how": "строка поиска в шапке",
+   "note": ""
+  },
+  {
+   "from_": "home",
+   "to": "settings",
+   "how": "аватар внизу меню",
+   "note": ""
+  },
+  {
+   "from_": "g_home",
+   "to": "search",
+   "how": "строка поиска в шапке",
+   "note": ""
+  },
+  {
+   "from_": "g_home",
+   "to": "settings",
+   "how": "«Профиль»",
+   "note": ""
+  },
+  {
+   "from_": "login",
+   "to": "g_join_ok",
+   "how": "вошёл по ссылке: вернуться к подтверждению",
+   "note": "после входа вернуть на ссылку"
+  },
+  {
+   "from_": "home",
+   "to": "editor",
+   "how": "«Продолжить», «Открыть лекцию», «Открыть конспект»",
+   "note": ""
+  },
+  {
+   "from_": "home",
+   "to": "lecture_new",
+   "how": "«Новая лекция», «Начать конспект» (без пары открывает чистую)",
+   "note": ""
+  },
+  {
+   "from_": "home",
+   "to": "editor",
+   "how": "«Начать конспект» на паре (создаёт лекцию на дату пары)",
+   "note": "повторное нажатие открывает ту же лекцию"
+  },
+  {
+   "from_": "home",
+   "to": "tasks",
+   "how": "«Все задачи»",
+   "note": ""
+  },
+  {
+   "from_": "home",
+   "to": "schedule",
+   "how": "«Расписание»",
+   "note": ""
+  },
+  {
+   "from_": "home",
+   "to": "quiz_q",
+   "how": "задача «Пройти квиз…», «Повторить» в блоке «Что повторить»",
+   "note": ""
+  },
+  {
+   "from_": "home",
+   "to": "exam",
+   "how": "блок «Экзамен» (когда есть)",
+   "note": ""
+  },
+  {
+   "from_": "home_new",
+   "to": "subject_new",
+   "how": "«Добавить» предмет",
+   "note": ""
+  },
+  {
+   "from_": "home_new",
+   "to": "pair_edit",
+   "how": "«Добавить» пару",
+   "note": ""
+  },
+  {
+   "from_": "home_new",
+   "to": "lecture_new",
+   "how": "«Начать»",
+   "note": ""
+  },
+  {
+   "from_": "lectures",
+   "to": "editor",
+   "how": "строка лекции",
+   "note": ""
+  },
+  {
+   "from_": "lectures",
+   "to": "lecture_new",
+   "how": "«Новая лекция»",
+   "note": ""
+  },
+  {
+   "from_": "lectures",
+   "to": "subject",
+   "how": "ряд предметов (телефон) / предмет в меню",
+   "note": ""
+  },
+  {
+   "from_": "subject",
+   "to": "editor",
+   "how": "строка лекции",
+   "note": ""
+  },
+  {
+   "from_": "subject",
+   "to": "pairs",
+   "how": "вкладка «Пары»",
+   "note": ""
+  },
+  {
+   "from_": "subject",
+   "to": "exam",
+   "how": "вкладка «Экзамен»",
+   "note": ""
+  },
+  {
+   "from_": "subject",
+   "to": "subject_new",
+   "how": "правка предмета",
+   "note": ""
+  },
+  {
+   "from_": "subject",
+   "to": "lecture_new",
+   "how": "«Новая лекция»",
+   "note": ""
+  },
+  {
+   "from_": "subject_new",
+   "to": "subject",
+   "how": "«Сохранить»",
+   "note": ""
+  },
+  {
+   "from_": "pairs",
+   "to": "pair_edit",
+   "how": "«Добавить пару», строка пары",
+   "note": ""
+  },
+  {
+   "from_": "pairs",
+   "to": "editor",
+   "how": "«Конспект есть»",
+   "note": ""
+  },
+  {
+   "from_": "pairs",
+   "to": "subject",
+   "how": "вкладка «Лекции»",
+   "note": ""
+  },
+  {
+   "from_": "pair_edit",
+   "to": "pairs",
+   "how": "«Сохранить»",
+   "note": ""
+  },
+  {
+   "from_": "schedule",
+   "to": "editor",
+   "how": "пара с конспектом",
+   "note": ""
+  },
+  {
+   "from_": "schedule",
+   "to": "editor",
+   "how": "«Начать конспект»",
+   "note": ""
+  },
+  {
+   "from_": "schedule",
+   "to": "pair_edit",
+   "how": "«Добавить пару»",
+   "note": ""
+  },
+  {
+   "from_": "lecture_new",
+   "to": "editor",
+   "how": "начал писать",
+   "note": ""
+  },
+  {
+   "from_": "editor",
+   "to": "lecture_menu",
+   "how": "«···»",
+   "note": ""
+  },
+  {
+   "from_": "editor",
+   "to": "subject",
+   "how": "ссылка назад к предмету",
+   "note": ""
+  },
+  {
+   "from_": "editor",
+   "to": "understanding",
+   "how": "правая панель (на телефоне: кнопка «Понимание»)",
+   "note": ""
+  },
+  {
+   "from_": "editor",
+   "to": "ticket",
+   "how": "плашка «Нужна для N билетов»",
+   "note": ""
+  },
+  {
+   "from_": "editor",
+   "to": "cards",
+   "how": "«+ Карточка» из меню «/»",
+   "note": "проверить по макету"
+  },
+  {
+   "from_": "lecture_menu",
+   "to": "lecture_delete",
+   "how": "«Удалить»",
+   "note": ""
+  },
+  {
+   "from_": "lecture_menu",
+   "to": "g_lecture_access",
+   "how": "«Доступ»",
+   "note": ""
+  },
+  {
+   "from_": "lecture_delete",
+   "to": "lectures",
+   "how": "подтвердил",
+   "note": ""
+  },
+  {
+   "from_": "understanding",
+   "to": "quiz_create",
+   "how": "«Создать квиз», «Собрать другой»",
+   "note": ""
+  },
+  {
+   "from_": "understanding",
+   "to": "quiz_q",
+   "how": "«Пройти квиз», «Проверить себя»",
+   "note": ""
+  },
+  {
+   "from_": "quiz_create",
+   "to": "quiz_q",
+   "how": "квиз готов",
+   "note": ""
+  },
+  {
+   "from_": "quiz_create",
+   "to": "error",
+   "how": "ИИ не ответил",
+   "note": ""
+  },
+  {
+   "from_": "quiz_q",
+   "to": "quiz_a",
+   "how": "«Ответить», «Не помню»",
+   "note": ""
+  },
+  {
+   "from_": "quiz_q",
+   "to": "quiz_exit",
+   "how": "закрыть",
+   "note": ""
+  },
+  {
+   "from_": "quiz_a",
+   "to": "quiz_q",
+   "how": "«Дальше»",
+   "note": ""
+  },
+  {
+   "from_": "quiz_a",
+   "to": "editor",
+   "how": "«Показать в лекции, абзац…»",
+   "note": ""
+  },
+  {
+   "from_": "quiz_a",
+   "to": "quiz_sum",
+   "how": "последний вопрос",
+   "note": ""
+  },
+  {
+   "from_": "quiz_exit",
+   "to": "editor",
+   "how": "выйти",
+   "note": ""
+  },
+  {
+   "from_": "quiz_sum",
+   "to": "quiz_q",
+   "how": "«Повторить слабые темы»",
+   "note": ""
+  },
+  {
+   "from_": "quiz_sum",
+   "to": "editor",
+   "how": "«К лекции», «Закрыть»",
+   "note": ""
+  },
+  {
+   "from_": "quiz_sum",
+   "to": "tasks",
+   "how": "автозадача «Повторить через день»",
+   "note": ""
+  },
+  {
+   "from_": "tasks",
+   "to": "task_edit",
+   "how": "строка задачи",
+   "note": ""
+  },
+  {
+   "from_": "tasks",
+   "to": "editor",
+   "how": "задача со ссылкой на лекцию",
+   "note": ""
+  },
+  {
+   "from_": "tasks",
+   "to": "quiz_q",
+   "how": "задача «Квиз…»",
+   "note": ""
+  },
+  {
+   "from_": "task_edit",
+   "to": "tasks",
+   "how": "«Сохранить»",
+   "note": ""
+  },
+  {
+   "from_": "search",
+   "to": "editor",
+   "how": "своя лекция",
+   "note": ""
+  },
+  {
+   "from_": "search",
+   "to": "subject",
+   "how": "предмет",
+   "note": ""
+  },
+  {
+   "from_": "search",
+   "to": "g_member",
+   "how": "одногруппник",
+   "note": ""
+  },
+  {
+   "from_": "search",
+   "to": "g_closed",
+   "how": "чужая лекция (видно только название)",
+   "note": ""
+  },
+  {
+   "from_": "search",
+   "to": "g_read",
+   "how": "чужая лекция, открытая тебе",
+   "note": ""
+  },
+  {
+   "from_": "settings",
+   "to": "settings_edit",
+   "how": "«Изменить», «Сменить фото»",
+   "note": ""
+  },
+  {
+   "from_": "settings",
+   "to": "policy",
+   "how": "«Читать»",
+   "note": ""
+  },
+  {
+   "from_": "settings",
+   "to": "account_delete",
+   "how": "«Удалить аккаунт»",
+   "note": ""
+  },
+  {
+   "from_": "settings",
+   "to": "login",
+   "how": "выйти",
+   "note": ""
+  },
+  {
+   "from_": "settings_edit",
+   "to": "settings",
+   "how": "«Сохранить»",
+   "note": ""
+  },
+  {
+   "from_": "account_delete",
+   "to": "login",
+   "how": "после удаления",
+   "note": ""
+  },
+  {
+   "from_": "cards",
+   "to": "deck",
+   "how": "колода",
+   "note": ""
+  },
+  {
+   "from_": "cards",
+   "to": "cards_review",
+   "how": "«Повторить N карточек»",
+   "note": ""
+  },
+  {
+   "from_": "cards",
+   "to": "deck_edit",
+   "how": "«Новая колода»",
+   "note": ""
+  },
+  {
+   "from_": "deck",
+   "to": "cards_review",
+   "how": "«Повторить N карточек»",
+   "note": ""
+  },
+  {
+   "from_": "deck",
+   "to": "deck_edit",
+   "how": "«Добавить карточку»",
+   "note": ""
+  },
+  {
+   "from_": "deck",
+   "to": "editor",
+   "how": "«Лекция N» у карточки",
+   "note": "проверить по макету"
+  },
+  {
+   "from_": "deck_edit",
+   "to": "deck",
+   "how": "«Сохранить»",
+   "note": ""
+  },
+  {
+   "from_": "cards_review",
+   "to": "cards",
+   "how": "«Закончить»",
+   "note": ""
+  },
+  {
+   "from_": "exam",
+   "to": "ticket",
+   "how": "строка билета, «Открыть билет», «Продолжить»",
+   "note": ""
+  },
+  {
+   "from_": "exam",
+   "to": "ticket_import",
+   "how": "«Добавить билет», импорт",
+   "note": ""
+  },
+  {
+   "from_": "exam",
+   "to": "cheatsheet",
+   "how": "вкладка «Шпаргалка»",
+   "note": ""
+  },
+  {
+   "from_": "exam",
+   "to": "exam_new",
+   "how": "нет экзамена у предмета",
+   "note": ""
+  },
+  {
+   "from_": "exam_new",
+   "to": "exam",
+   "how": "«Создать»",
+   "note": ""
+  },
+  {
+   "from_": "ticket",
+   "to": "ticket_edit",
+   "how": "«Изменить», «Привязать лекцию»",
+   "note": ""
+  },
+  {
+   "from_": "ticket",
+   "to": "editor",
+   "how": "«Связанные лекции»",
+   "note": ""
+  },
+  {
+   "from_": "ticket",
+   "to": "ticket",
+   "how": "«Следующий билет»",
+   "note": ""
+  },
+  {
+   "from_": "ticket_import",
+   "to": "exam",
+   "how": "«Добавить N билетов»",
+   "note": ""
+  },
+  {
+   "from_": "ticket_edit",
+   "to": "ticket",
+   "how": "«Сохранить»",
+   "note": ""
+  },
+  {
+   "from_": "cheatsheet",
+   "to": "exam",
+   "how": "назад",
+   "note": ""
+  },
+  {
+   "from_": "g_home",
+   "to": "g_join",
+   "how": "«Вступить в ещё одну» / режим «Группа» без группы",
+   "note": ""
+  },
+  {
+   "from_": "g_join",
+   "to": "g_join_ok",
+   "how": "введён код",
+   "note": ""
+  },
+  {
+   "from_": "g_join",
+   "to": "g_create",
+   "how": "«Создать свою группу»",
+   "note": ""
+  },
+  {
+   "from_": "g_join_ok",
+   "to": "g_home",
+   "how": "«Вступить в МК-31»",
+   "note": ""
+  },
+  {
+   "from_": "g_join_ok",
+   "to": "g_join",
+   "how": "«Это не та группа»",
+   "note": ""
+  },
+  {
+   "from_": "g_create",
+   "to": "g_home",
+   "how": "«Создать группу»",
+   "note": ""
+  },
+  {
+   "from_": "g_home",
+   "to": "g_switch",
+   "how": "карточка группы в меню",
+   "note": ""
+  },
+  {
+   "from_": "g_switch",
+   "to": "g_home",
+   "how": "выбрать группу",
+   "note": ""
+  },
+  {
+   "from_": "g_switch",
+   "to": "g_join",
+   "how": "«Вступить в ещё одну»",
+   "note": ""
+  },
+  {
+   "from_": "g_home",
+   "to": "g_member",
+   "how": "«Открыть» у одногруппника",
+   "note": ""
+  },
+  {
+   "from_": "g_home",
+   "to": "g_settings",
+   "how": "название группы, «Сбросить код»",
+   "note": ""
+  },
+  {
+   "from_": "g_settings",
+   "to": "g_home",
+   "how": "«Сохранить»",
+   "note": ""
+  },
+  {
+   "from_": "g_settings",
+   "to": "home",
+   "how": "«Выйти из группы»",
+   "note": ""
+  },
+  {
+   "from_": "g_member",
+   "to": "g_member_subj",
+   "how": "предмет одногруппника",
+   "note": ""
+  },
+  {
+   "from_": "g_member_subj",
+   "to": "g_read",
+   "how": "«Открыта тебе»",
+   "note": ""
+  },
+  {
+   "from_": "g_member_subj",
+   "to": "g_closed",
+   "how": "строка закрытой лекции",
+   "note": ""
+  },
+  {
+   "from_": "g_closed",
+   "to": "g_sent",
+   "how": "«Запросить доступ»",
+   "note": ""
+  },
+  {
+   "from_": "g_sent",
+   "to": "g_member_subj",
+   "how": "назад",
+   "note": ""
+  },
+  {
+   "from_": "g_read",
+   "to": "g_member_subj",
+   "how": "назад",
+   "note": ""
+  },
+  {
+   "from_": "g_home",
+   "to": "g_myaccess",
+   "how": "«Мой доступ»",
+   "note": ""
+  },
+  {
+   "from_": "g_myaccess",
+   "to": "g_lecture_access",
+   "how": "«Открыть» у запроса, «Кому открыты лекции»",
+   "note": ""
+  },
+  {
+   "from_": "g_myaccess",
+   "to": "g_lecture_access",
+   "how": "«Убрать» у одного",
+   "note": ""
+  },
+  {
+   "from_": "g_lecture_access",
+   "to": "g_myaccess",
+   "how": "«Готово»",
+   "note": ""
+  },
+  {
+   "from_": "g_home",
+   "to": "g_exams",
+   "how": "«Экзамены группы»",
+   "note": ""
+  },
+  {
+   "from_": "g_exams",
+   "to": "g_exam",
+   "how": "строка экзамена",
+   "note": ""
+  },
+  {
+   "from_": "g_exams",
+   "to": "g_exam_new",
+   "how": "«Создать экзамен»",
+   "note": ""
+  },
+  {
+   "from_": "g_exam_new",
+   "to": "g_exam",
+   "how": "«Создать»",
+   "note": ""
+  },
+  {
+   "from_": "g_exam",
+   "to": "g_sub_new",
+   "how": "«Новая подгруппа», «Пригласить в подгруппу»",
+   "note": ""
+  },
+  {
+   "from_": "g_sub_new",
+   "to": "g_exam",
+   "how": "«Готово»",
+   "note": ""
+  },
+  {
+   "from_": "g_exam",
+   "to": "g_ticket",
+   "how": "строка билета подгруппы",
+   "note": ""
+  },
+  {
+   "from_": "g_ticket",
+   "to": "g_exam",
+   "how": "назад",
+   "note": ""
+  },
+  {
+   "from_": "offline",
+   "to": "home",
+   "how": "сеть вернулась",
+   "note": "баннер, экран не блокируется"
+  },
+  {
+   "from_": "error",
+   "to": "home",
+   "how": "«Повторить»",
+   "note": "повторяет тот же запрос на том же экране"
+  },
+  {
+   "from_": "gone",
+   "to": "home",
+   "how": "«На главную»",
+   "note": ""
+  },
+  {
+   "from_": "expired",
+   "to": "login",
+   "how": "«Войти снова»",
+   "note": "после входа вернуть на прежний экран"
+  }
+ ],
+ "gaps": [
+  {
+   "priority": 1,
+   "title": "Регистрация и восстановление пароля не нарисованы",
+   "screens": "register, reset",
+   "why": "Со входа есть ссылки «Создать аккаунт» и «Забыли пароль?», но за ними пусто. Нужно решить, подтверждается ли почта, и нарисовать: регистрация, письмо отправлено, новый пароль, пароль изменён.",
+   "need": "Решение Маргариты + макеты"
+  },
+  {
+   "priority": 1,
+   "title": "Чужая лекция, открытая тебе: экрана нет",
+   "screens": "g_read",
+   "why": "Это главный итог всей группы: одногруппник открыл лекцию, ты нажимаешь «Открыта тебе» и... куда? Нужно решить: только чтение или можно проходить квиз, делать карточки, копировать себе? Как выглядит шапка («Лекция Игоря Власова, только чтение»).",
+   "need": "Решение Маргариты + макет"
+  },
+  {
+   "priority": 1,
+   "title": "Страница предмета, вкладка «Лекции»",
+   "screens": "subject",
+   "why": "Клик по предмету в меню слева и по ряду предметов на телефоне ведёт сюда. Есть вкладки «Пары» и «Экзамен», самой главной вкладки «Лекции» нет. Без неё путь «меню → предмет → лекция» не работает.",
+   "need": "Макет (десктоп и телефон)"
+  },
+  {
+   "priority": 1,
+   "title": "Создание квиза: размер, ожидание, ошибка ИИ",
+   "screens": "quiz_create",
+   "why": "После «Создать квиз» нет ни выбора размера, ни экрана ожидания, ни ошибки, если ИИ не ответил (превышен лимит, пустой конспект, нет связи). Это самое хрупкое место продукта.",
+   "need": "Макет состояний"
+  },
+  {
+   "priority": 1,
+   "title": "Кто видит код приглашения: макет спорит с правилом безопасности",
+   "screens": "g_home, g_settings",
+   "why": "В инструкции (шаг A0.5) код видит только владелец группы. В макете «Группа МК-31» код и «Сбросить код» показаны обычному участнику (Анастасия не создавала группу). Нужно выбрать: код видят все участники (проще, но любой может сбросить) или только владелец. Заодно решить, есть ли у группы владелец и что с ним, если он выйдет.",
+   "need": "Решение Маргариты"
+  },
+  {
+   "priority": 1,
+   "title": "Ссылка-приглашение у не вошедшего",
+   "screens": "join_link, login, onb",
+   "why": "Человек открывает cohorta.app/join/КОД, у него нет аккаунта: код должен пережить регистрацию, онбординг и вход, и в конце показать подтверждение вступления, а не главную. Это главный способ привлечь первых людей.",
+   "need": "Решение + реализация"
+  },
+  {
+   "priority": 1,
+   "title": "Онбординг: в макетах 8 шагов, нарисовано 3, в IA написано 6",
+   "screens": "onb",
+   "why": "Шаги 1, 5 и 7 нарисованы, шагов 2, 3, 4, 6 и 8 нет. Нужно договориться о списке шагов (предложение: имя, вуз и город, уровень, курс, семестры, начало недели, группа, предметы), нарисовать недостающие и поправить IA («6 шагов»).",
+   "need": "Решение + макеты"
+  },
+  {
+   "priority": 2,
+   "title": "Формы создания: предмет, пара, колода и карточка, экзамен, подгруппа, экзамен группы",
+   "screens": "subject_new, pair_edit, deck_edit, exam_new, g_exam_new, g_sub_new",
+   "why": "Везде есть кнопки «Добавить…», но формы не нарисованы. Часть можно собрать из готовых компонентов (окно с полями), но состав полей нужно определить. Подгруппа: как выбираются люди, что видит приглашённый, как не нарушить «один человек: одна подгруппа».",
+   "need": "Макеты (можно одним листом «Формы»)"
+  },
+  {
+   "priority": 2,
+   "title": "Новая лекция без предмета",
+   "screens": "home, lecture_new",
+   "why": "«Новая лекция» на главной: в какой предмет она попадает? Предложение: окно выбора предмета, последний использованный выбран заранее. Сейчас не определено.",
+   "need": "Решение Маргариты"
+  },
+  {
+   "priority": 2,
+   "title": "Меню лекции «···» и удаление",
+   "screens": "lecture_menu, lecture_delete",
+   "why": "Туда ведёт «Доступ», но меню не нарисовано: переименовать, перенести в другой предмет, доступ, удалить. Удаление необратимо: нужно подтверждение, лучше с «Корзиной» на 30 дней.",
+   "need": "Макет + решение про корзину"
+  },
+  {
+   "priority": 2,
+   "title": "Уведомления: как узнать про запрос и про открытый доступ",
+   "screens": "g_myaccess",
+   "why": "Есть только счётчик у «Мой доступ». Если тебе открыли лекцию, об этом никто не сообщает. Предложение для MVP: счётчик на значке «Группа» и пометка «Новое» у открытой лекции; письма и пуши после запуска.",
+   "need": "Решение Маргариты"
+  },
+  {
+   "priority": 2,
+   "title": "Настройки группы: выйти, переименовать, сбросить код",
+   "screens": "g_settings",
+   "why": "Выйти из группы нигде нельзя. Что происходит с чужими доступами к твоим лекциям и с твоим местом в подгруппе после выхода, не определено.",
+   "need": "Решение + макет"
+  },
+  {
+   "priority": 2,
+   "title": "Удаление аккаунта: подтверждение и выгрузка",
+   "screens": "account_delete",
+   "why": "В настройках обещано «попросим подтвердить и предложим выгрузить данные», экрана нет. Нужен для заявленной политики данных.",
+   "need": "Макет"
+  },
+  {
+   "priority": 2,
+   "title": "Служебные: сессия истекла, лекции или группы нет, неверная ссылка",
+   "screens": "expired, gone",
+   "why": "Не определено, что видит человек, если лекцию удалили, его исключили или сессия закончилась на середине конспекта. Незаписанный текст не должен пропасть.",
+   "need": "Макет + правило сохранения"
+  },
+  {
+   "priority": 2,
+   "title": "Билет подгруппы (совместная правка)",
+   "screens": "g_ticket",
+   "why": "В тексте экрана «Билеты внутри подгруппы пишут вместе», но самого экрана билета подгруппы нет: кто сейчас пишет, что при одновременной правке, куда сохраняется ответ.",
+   "need": "Макет + решение"
+  },
+  {
+   "priority": 2,
+   "title": "Выход из квиза посередине",
+   "screens": "quiz_exit",
+   "why": "Закрыл вкладку или нажал назад на вопросе 5 из 8: прогресс сохраняется или нет? Предложение: сохраняется, при возвращении «Продолжить квиз».",
+   "need": "Решение"
+  },
+  {
+   "priority": 2,
+   "title": "Выбор лекции для билета",
+   "screens": "ticket_edit",
+   "why": "«Привязать лекцию» ведёт в выбор, которого нет в макетах (поиск по лекциям предмета, несколько штук).",
+   "need": "Макет"
+  },
+  {
+   "priority": 3,
+   "title": "Вкладка «Расписание повторов» у карточек",
+   "screens": "cards",
+   "why": "Заголовок вкладки есть, содержимого нет. Можно оставить на после запуска, убрав вкладку.",
+   "need": "Решение"
+  },
+  {
+   "priority": 3,
+   "title": "Правка профиля и учёбы",
+   "screens": "settings_edit",
+   "why": "Рядом с каждым полем «Изменить». Окна простые, можно собрать из компонентов без отдельных макетов.",
+   "need": "Реализация по компонентам"
+  }
+ ]
+}

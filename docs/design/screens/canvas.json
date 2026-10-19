@@ -72,19 +72,33 @@
    "h": 980,
    "title": "Содержание лекции: состояния"
   },
-  "Screen-m-editor.dc.html": {
+  "Screen-understanding.dc.html": {
    "x": 0,
+   "y": 5740,
+   "w": 1440,
+   "h": 740,
+   "title": "Твоё понимание темы: состояния"
+  },
+  "Screen-m-editor.dc.html": {
+   "x": 1520,
    "y": 5740,
    "w": 390,
    "h": 844,
    "title": "Редактор, телефон"
   },
   "Screen-m-editor-toc.dc.html": {
-   "x": 470,
+   "x": 1990,
    "y": 5740,
    "w": 390,
    "h": 844,
    "title": "Содержание, телефон"
+  },
+  "Screen-m-understanding.dc.html": {
+   "x": 2460,
+   "y": 5740,
+   "w": 390,
+   "h": 844,
+   "title": "Понимание темы, телефон"
   },
   "Screen-lectures.dc.html": {
    "x": 0,
@@ -562,8 +576,10 @@
   "Screen-search.dc.html",
   "Screen-m-lectures.dc.html",
   "Screen-lectures.dc.html",
+  "Screen-m-understanding.dc.html",
   "Screen-m-editor-toc.dc.html",
   "Screen-m-editor.dc.html",
+  "Screen-understanding.dc.html",
   "Screen-editor-toc.dc.html",
   "Screen-editor-slash.dc.html",
   "Screen-editor.dc.html",
