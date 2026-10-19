@@ -21,7 +21,7 @@
  */
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 
 import { Button, Icon, Pills, StatusChip, SubjectCover, EmptyState, Menu } from "../ui";
@@ -121,7 +121,12 @@ export default function SchedulePageNew() {
   const todayWd = weekdayMon1(new Date());
   const [mobileDay, setMobileDay] = useState<number>(todayWd <= dayCount ? todayWd : 1);
 
-  const [formOpen, setFormOpen] = useState(false);
+  // «Добавить» у шага «Добавь пары» на пустой Главной ведёт сюда с ?add=1 и сразу открывает форму.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [formOpen, setFormOpen] = useState(searchParams.get("add") === "1");
+  useEffect(() => {
+    if (searchParams.get("add") === "1") setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams]);
   const [editSlot, setEditSlot] = useState<ScheduleSlot | null>(null);
   const [preset, setPreset] = useState<{ weekday?: number; pair_number?: number } | undefined>();
 

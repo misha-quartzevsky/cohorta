@@ -9,6 +9,8 @@ import { useLastVisited } from "../hooks/useLastVisited";
 import { useUpcomingExam, useExam } from "../hooks/useExam";
 import { useActivityHeatmap, heatmapDayKey } from "../hooks/useActivityHeatmap";
 import { useDecks } from "../hooks/useDecks";
+import { useRecentLectures } from "../hooks/useRecentLectures";
+import StartCard from "./dashboard/StartCard";
 import {
   fetchScheduledLectures,
   fetchLecturesOfSubject,
@@ -86,10 +88,15 @@ export default function DashboardNew() {
   const heatmap = useActivityHeatmap();
   const { decks } = useDecks(3);
 
+  const { lectures: anyLecture, loading: lecturesLoading } = useRecentLectures(1);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [coursesLoaded, setCoursesLoaded] = useState(false);
   const [scheduled, setScheduled] = useState<Lecture[]>([]);
   useEffect(() => {
-    void fetchCourses().then(setCourses).catch(() => {});
+    void fetchCourses()
+      .then(setCourses)
+      .catch(() => {})
+      .finally(() => setCoursesLoaded(true));
     void fetchScheduledLectures().then(setScheduled).catch(() => {});
   }, []);
 
@@ -140,6 +147,10 @@ export default function DashboardNew() {
 
   if (loading) return <LoadingState />;
 
+  const hasLectures = anyLecture.length > 0;
+  // Карточку не показываем, пока не пришли данные, чтобы она не мигала у тех, у кого всё есть.
+  const startReady = coursesLoaded && !lecturesLoading;
+
   return (
     <SemesterGate>
       <Header />
@@ -157,6 +168,17 @@ export default function DashboardNew() {
 
         <div className="c-dash-cols">
           <div className="c-dash-main">
+            {startReady && (
+              <StartCard
+                hasSubjects={courses.length > 0}
+                hasPairs={slots.length > 0}
+                hasLectures={hasLectures}
+                onAddSubject={() => navigate(`/s/${semSlug}/courses`)}
+                onAddPairs={() => navigate("/schedule?add=1")}
+                onStartNote={() => navigate("/note/new")}
+              />
+            )}
+
             {lastVisited ? (
               <div className="c-dash-card c-dash-continue">
                 <SubjectCover seed={lastVisited.courseCoverSeed} size={48} />
@@ -172,15 +194,7 @@ export default function DashboardNew() {
                   Открыть лекцию
                 </Button>
               </div>
-            ) : (
-              <div className="c-dash-card c-dash-continue">
-                <SubjectCover seed={null} size={48} />
-                <div className="c-dash-continue-tx">
-                  <span className="label">С чего начнём</span>
-                  <span className="t">Создай первую заметку — она откроется здесь одним кликом</span>
-                </div>
-              </div>
-            )}
+            ) : null}
 
             {todaySlots.length > 0 && (
               <div className="c-dash-card">
@@ -297,10 +311,12 @@ export default function DashboardNew() {
                   );
                 })}
               </div>
-              <p className="legend">
-                <i />
-                Одно действие за день: правка конспекта, квиз или задача.
-              </p>
+              {hasLectures && (
+                <p className="legend">
+                  <i />
+                  Одно действие за день: правка конспекта, квиз или задача.
+                </p>
+              )}
             </div>
 
             {upcomingExam && daysLeft !== null && daysLeft >= 0 && (

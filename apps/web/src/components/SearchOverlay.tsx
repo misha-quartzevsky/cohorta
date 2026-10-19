@@ -64,15 +64,17 @@ export default function SearchOverlay() {
       <div className="c-search-backdrop" onClick={closeSearch} aria-hidden="true" />
       <div className="c-search-panel" role="dialog" aria-label="Поиск">
         <div className="c-search-field">
-          <Icon name="search" size={18} />
-          <input
-            type="search"
-            autoFocus
-            placeholder="Лекции, предметы, одногруппники"
-            aria-label="Поиск по продукту"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+          <div className="c-search-box">
+            <Icon name="search" size={18} />
+            <input
+              type="search"
+              autoFocus
+              placeholder="Лекции, предметы, одногруппники"
+              aria-label="Поиск по продукту"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
           <button type="button" className="c-search-cancel" onClick={closeSearch}>
             Отмена
           </button>
@@ -96,7 +98,9 @@ export default function SearchOverlay() {
               <>
                 {result.lectures.length > 0 && (
                   <section>
-                    <h2>Лекции · {result.lectures.length}</h2>
+                    <h2>
+                      Лекции<span className="n"> · {result.lectures.length}</span>
+                    </h2>
                     <List>
                       {result.lectures.map((hit) => (
                         <ListRow
@@ -125,7 +129,9 @@ export default function SearchOverlay() {
 
                 {result.courses.length > 0 && (
                   <section>
-                    <h2>Предметы · {result.courses.length}</h2>
+                    <h2>
+                      Предметы<span className="n"> · {result.courses.length}</span>
+                    </h2>
                     <List>
                       {result.courses.map((hit) => (
                         <ListRow
@@ -153,7 +159,9 @@ export default function SearchOverlay() {
 
                 {result.previews.length > 0 && (
                   <section>
-                    <h2>Чужие лекции · {result.previews.length}</h2>
+                    <h2>
+                      Чужие лекции<span className="n"> · {result.previews.length}</span>
+                    </h2>
                     <List>
                       {result.previews.map((hit) => (
                         <ListRow
@@ -169,7 +177,9 @@ export default function SearchOverlay() {
 
                 {result.classmates.length > 0 && (
                   <section>
-                    <h2>Одногруппники · {result.classmates.length}</h2>
+                    <h2>
+                      Одногруппники<span className="n"> · {result.classmates.length}</span>
+                    </h2>
                     <List>
                       {result.classmates.map((hit) => (
                         <ListRow

@@ -22,7 +22,6 @@ import { pb } from "../lib/pocketbase";
 import type { Course, Lecture, LecturePreview } from "../lib/types";
 import { FIELDS, courseName, lectureTitle } from "../lib/types";
 import { fetchMyGroups, fetchRoster } from "./groupService";
-import { searchLectures } from "./lectureService";
 
 function currentUserId(): string {
   return String(pb.authStore.record?.id ?? "");
@@ -63,6 +62,21 @@ export interface SearchResult {
 }
 
 const EMPTY: SearchResult = { lectures: [], previews: [], courses: [], classmates: [] };
+
+/**
+ * Лекции по названию, с предметом (для обложки и подписи). Текст лекций не
+ * ищем: в результатах виден только заголовок, а чужие открытые лекции (по
+ * `lectures.listRule`) по тексту искаться не должны (подпись в Screen-search).
+ */
+async function searchLectures(query: string, limit: number): Promise<Lecture[]> {
+  const escaped = query.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const result = await pb.collection("lectures").getList<Lecture>(1, limit, {
+    sort: "-created",
+    filter: `${FIELDS.lectureTitle}~"${escaped}"`,
+    expand: "field",
+  });
+  return result.items;
+}
 
 /** Чужие лекции по названию (предпросмотр группы). Содержимое не ищем. */
 async function searchPreviews(query: string, limit: number): Promise<SearchPreviewHit[]> {
