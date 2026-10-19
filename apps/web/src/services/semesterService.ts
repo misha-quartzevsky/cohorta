@@ -14,6 +14,7 @@ import { pb } from "../lib/pocketbase";
 import type { PeriodType, Semester } from "../lib/types";
 import { FIELDS, semesterOrder } from "../lib/types";
 import { withTimeout } from "../lib/withTimeout";
+import { pbDateOnly } from "../lib/localDate";
 
 /** Id текущего пользователя ("" — не залогинен). */
 function currentUserId(): string {
@@ -34,7 +35,16 @@ export async function fetchSemesters(): Promise<Semester[]> {
     "список периодов"
   );
 
-  return [...records].sort((a, b) => semesterOrder(a) - semesterOrder(b));
+  return records.map(withDates).sort((a, b) => semesterOrder(a) - semesterOrder(b));
+}
+
+/** PocketBase отдаёт даты полным ISO — оставляем только YYYY-MM-DD. */
+function withDates(s: Semester): Semester {
+  return {
+    ...s,
+    date_from: s.date_from ? pbDateOnly(s.date_from) : "",
+    date_to: s.date_to ? pbDateOnly(s.date_to) : "",
+  };
 }
 
 /** Периоды текущего пользователя (алиас `fetchSemesters` для читаемости в онбординге). */
@@ -47,6 +57,8 @@ export interface NewPeriod {
   order: number;
   type: PeriodType;
   is_current?: boolean;
+  date_from?: string;
+  date_to?: string;
 }
 
 /** Создать один период за текущего пользователя. `slug` = `String(order)`. */
@@ -58,17 +70,19 @@ export async function createPeriod(period: NewPeriod): Promise<Semester> {
     [FIELDS.periodType]: period.type,
     [FIELDS.periodIsCurrent]: period.is_current ?? false,
     [FIELDS.periodUser]: currentUserId(),
-  });
+    date_from: period.date_from ?? "",
+    date_to: period.date_to ?? "",
+  }).then(withDates);
 }
 
 /** Точечно обновить период (переименование, отметка «текущий»). */
 export async function updatePeriod(
   id: string,
-  patch: Partial<Pick<Semester, "label" | "order" | "type" | "is_current">> & {
+  patch: Partial<Pick<Semester, "label" | "order" | "type" | "is_current" | "date_from" | "date_to">> & {
     slug?: string;
   }
 ): Promise<Semester> {
-  return pb.collection("semesters").update<Semester>(id, patch);
+  return pb.collection("semesters").update<Semester>(id, patch).then(withDates);
 }
 
 /** Удалить один период. */

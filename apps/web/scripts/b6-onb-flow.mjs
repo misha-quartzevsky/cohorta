@@ -1,0 +1,40 @@
+// Проверка руками: новый пользователь проходит онбординг до «Главной» (1440 и 390).
+import { chromium } from "playwright";
+const OUT = process.argv[2];
+const BASE = "http://127.0.0.1:5173";
+const b = await chromium.launch();
+for (const [w, h] of [[1440, 900], [390, 844]]) {
+  const p = await (await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: w < 500 ? 2 : 1 })).newPage();
+  p.on("pageerror", (e) => console.log("pageerror", e.message));
+  await p.goto(`${BASE}/register`);
+  const email = `onb-${w}-${Date.now()}@example.com`;
+  await p.fill('input[type="email"]', email);
+  const pw = p.locator('input[type="password"]'); await pw.nth(0).fill("test12345"); await pw.nth(1).fill("test12345");
+  await p.click('button[type="submit"]');
+  await p.waitForURL(/onboarding/, { timeout: 15000 });
+  await p.waitForSelector(".c-onb-card");
+  await p.screenshot({ path: `${OUT}/onb1-${w}.png` });
+  await p.fill(".c-onb-body input[type=text], .c-onb-body input:not([type])", "Анастасия К.");
+  await p.click(".c-onb-nav .primary");
+  await p.waitForSelector(".c-onb-combo");
+  await p.fill(".c-onb-combo input", "Москва");
+  await p.waitForTimeout(500);
+  await p.screenshot({ path: `${OUT}/onb2a-${w}.png` });
+  await p.click(".c-onb-sugg button");
+  await p.waitForSelector(".c-onb-unis");
+  await p.click(".c-onb-unis button >> nth=0");
+  await p.screenshot({ path: `${OUT}/onb2-${w}.png` });
+  await p.click(".c-onb-nav .primary");
+  await p.click("text=Специалитет");
+  await p.click('.c-onb-round[aria-label="2 курс"]');
+  await p.screenshot({ path: `${OUT}/onb3-${w}.png` });
+  await p.click(".c-onb-nav .primary");
+  await p.waitForSelector(".c-onb-plist");
+  await p.screenshot({ path: `${OUT}/onb4-${w}.png` });
+  await p.click(".c-onb-nav .primary");
+  await p.waitForURL(/\/s\//, { timeout: 30000 });
+  await p.waitForTimeout(1500);
+  console.log(w, "-> landed on", p.url());
+  await p.screenshot({ path: `${OUT}/onb-home-${w}.png` });
+}
+await b.close();

@@ -231,6 +231,9 @@ export interface Semester extends PbRecord {
   type?: PeriodType;
   /** Текущий период (максимум один). */
   is_current?: boolean;
+  /** Даты периода (B6): YYYY-MM-DD после pbDateOnly; необязательные. */
+  date_from?: string;
+  date_to?: string;
 }
 
 /** Справочник вузов для онбординга (коллекция `universities`). */

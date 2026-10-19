@@ -56,6 +56,7 @@ import PolicyPageNew from "./pages/auth/PolicyPageNew";
 import { ResetEntryPage, ResetNewPasswordPage } from "./pages/auth/ResetPages";
 import { JoinRoute } from "./pages/auth/JoinGroupPage";
 import OnboardingWizard from "./features/onboarding/OnboardingWizard";
+import OnboardingNew from "./features/onboarding/OnboardingNew";
 import LectureLayout from "./components/LectureLayout";
 import AppLayout from "./components/AppLayout";
 import { SemesterProvider } from "./lib/SemesterProvider";
@@ -161,7 +162,7 @@ function App() {
           )}
           <Route element={<ProtectedRoute />}>
             {/* Мастер онбординга — фуллскрин, без сайдбара, вне AppLayout. */}
-            <Route path="/onboarding" element={<OnboardingWizard />} />
+            <Route path="/onboarding" element={isNewUI() ? <OnboardingNew /> : <OnboardingWizard />} />
             {/* Квиз — фуллскрин, без сайдбара и нижней панели (spec 6.3). */}
             <Route path="/quiz/:lectureId" element={<QuizPage />} />
             <Route element={<AppLayout />}>
