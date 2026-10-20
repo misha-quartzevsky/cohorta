@@ -1,17 +1,18 @@
-import { useEffect, useState } from "react";
-import { Modal, Button } from "../../ui";
+import { useEffect, useMemo, useState } from "react";
+import { Modal, Button, FormDialog, Segmented, Icon } from "../../ui";
 import { Input, Select } from "../../ui/Field";
 import type { Course, ScheduleSlot, PairTime } from "../../lib/types";
 import { courseName } from "../../lib/types";
 import type { SlotInput } from "../../services/scheduleService";
+import { findSlotConflict, parityPhrase } from "../../lib/slotConflict";
 
 const WEEKDAYS = [
-  { n: 1, label: "Понедельник" },
-  { n: 2, label: "Вторник" },
-  { n: 3, label: "Среда" },
-  { n: 4, label: "Четверг" },
-  { n: 5, label: "Пятница" },
-  { n: 6, label: "Суббота" },
+  { value: "1", label: "Пн", full: "Понедельник" },
+  { value: "2", label: "Вт", full: "Вторник" },
+  { value: "3", label: "Ср", full: "Среда" },
+  { value: "4", label: "Чт", full: "Четверг" },
+  { value: "5", label: "Пт", full: "Пятница" },
+  { value: "6", label: "Сб", full: "Суббота" },
 ];
 
 const KINDS = [
@@ -32,39 +33,42 @@ interface Props {
   onClose: () => void;
   courses: Course[];
   pairTimes: PairTime[];
+  /** Все пары расписания: по ним ищется занятая клетка. */
+  slots: ScheduleSlot[];
   /** Предзаполнение для добавления из клетки сетки. */
   preset?: { weekday?: number; pair_number?: number; week_parity?: string };
   /** Редактируемый слот (режим правки). */
   slot?: ScheduleSlot | null;
   onSave: (input: SlotInput) => Promise<void>;
   onDelete?: () => Promise<void>;
+  /** Открыть «Новый предмет», когда предметов ещё нет. */
+  onAddSubject?: () => void;
 }
 
-/** Форма пары (spec 4.4), новая дизайн-основа. Без confirm() — удаление
- * подтверждается внутри окна. */
+/** Форма пары (Screen-forms-create, Screen-m-form-pair; spec 4.4). Занятая клетка — текст под «Недели», сохранить нельзя. */
 export default function SlotFormNew({
   open,
   onClose,
   courses,
   pairTimes,
+  slots,
   preset,
   slot,
   onSave,
   onDelete,
+  onAddSubject,
 }: Props) {
   const [subject, setSubject] = useState(slot?.subject ?? courses[0]?.id ?? "");
   const [weekday, setWeekday] = useState(slot?.weekday ?? preset?.weekday ?? 1);
   const [pairNumber, setPairNumber] = useState(
     slot?.pair_number ?? preset?.pair_number ?? pairTimes[0]?.n ?? 1
   );
-  const [parity, setParity] = useState<string>(
-    slot?.week_parity ?? preset?.week_parity ?? "any"
-  );
+  const [parity, setParity] = useState<string>(slot?.week_parity ?? preset?.week_parity ?? "any");
   const [kind, setKind] = useState<string>(slot?.kind ?? "lecture");
   const [room, setRoom] = useState(slot?.room ?? "");
   const [teacher, setTeacher] = useState(slot?.teacher ?? "");
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   // Modal не размонтирует содержимое между открытиями — перечитываем поля
   // из актуальных slot/preset при каждом новом открытии.
@@ -78,31 +82,48 @@ export default function SlotFormNew({
     setRoom(slot?.room ?? "");
     setTeacher(slot?.teacher ?? "");
     setConfirmDelete(false);
+    setSaveError("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, slot, preset]);
 
+  const conflict = useMemo(
+    () => findSlotConflict(slots, { weekday, pair_number: pairNumber, week_parity: parity }, slot?.id),
+    [slots, weekday, pairNumber, parity, slot?.id]
+  );
+  const conflictCourse = conflict
+    ? (conflict.expand?.subject ?? courses.find((c) => c.id === conflict.subject))
+    : undefined;
+  const conflictText = conflict
+    ? `В это время уже есть пара «${conflictCourse ? courseName(conflictCourse) : "другого предмета"}» ${parityPhrase(
+        conflict.week_parity ?? "any"
+      )}. Выбери другую неделю или номер пары.`
+    : "";
+
   if (courses.length === 0) {
     return (
-      <Modal
-        open={open}
-        onClose={onClose}
-        title="Сначала добавь предмет"
-        footer={
-          <Button variant="secondary" onClick={onClose}>
-            Понятно
-          </Button>
-        }
-      >
-        <p style={{ margin: 0, color: "var(--ink-2)", fontSize: 14 }}>
-          Чтобы поставить пару, нужен хотя бы один предмет.
-        </p>
+      <Modal open={open} onClose={onClose} title="Новая пара">
+        <div className="c-form-notice">
+          <strong>Сначала добавь предмет</strong>
+          <p>Пара привязана к предмету. Без него её некуда поставить.</p>
+          {onAddSubject && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                onClose();
+                onAddSubject();
+              }}
+            >
+              <Icon name="plus" size={16} />
+              Добавить предмет
+            </Button>
+          )}
+        </div>
       </Modal>
     );
   }
 
-  async function handleSave() {
-    if (!subject) return;
-    setSaving(true);
+  async function submit() {
+    if (!subject || conflict) return false;
     try {
       await onSave({
         subject,
@@ -113,51 +134,47 @@ export default function SlotFormNew({
         room: room.trim(),
         teacher: teacher.trim(),
       });
-      onClose();
-    } finally {
-      setSaving(false);
+    } catch {
+      setSaveError("Не удалось сохранить пару. Попробуй ещё раз.");
+      return false;
     }
   }
 
+  const hasPairTime = pairTimes.some((p) => p.n === pairNumber);
+  const weekdayFull = WEEKDAYS.find((d) => d.value === String(weekday))?.full ?? "";
+
   return (
-    <Modal
+    <FormDialog
       open={open}
       onClose={onClose}
-      title={slot ? "Изменить пару" : "Добавить пару"}
-      footer={
-        <>
-          {slot && onDelete && (
-            <div style={{ marginRight: "auto" }}>
-              {confirmDelete ? (
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <span style={{ fontSize: 13, color: "var(--ink-2)" }}>Удалить?</span>
-                  <Button
-                    variant="danger"
-                    onClick={async () => {
-                      await onDelete();
-                      onClose();
-                    }}
-                  >
-                    Да
-                  </Button>
-                  <Button variant="ghost" onClick={() => setConfirmDelete(false)}>
-                    Нет
-                  </Button>
-                </div>
-              ) : (
-                <Button variant="danger" onClick={() => setConfirmDelete(true)}>
-                  Удалить пару
-                </Button>
-              )}
+      title={slot ? "Пара" : "Новая пара"}
+      subtitle={slot ? `${weekdayFull}, ${pairNumber} пара. Правка.` : "Выбери клетку в сетке или заполни здесь."}
+      submitLabel="Сохранить"
+      onSubmit={submit}
+      leading={
+        slot && onDelete ? (
+          confirmDelete ? (
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <span style={{ fontSize: 13, color: "var(--ink-2)" }}>Удалить?</span>
+              <Button
+                variant="danger"
+                onClick={async () => {
+                  await onDelete();
+                  onClose();
+                }}
+              >
+                Да
+              </Button>
+              <Button variant="ghost" onClick={() => setConfirmDelete(false)}>
+                Нет
+              </Button>
             </div>
-          )}
-          <Button variant="secondary" onClick={onClose}>
-            Отмена
-          </Button>
-          <Button onClick={() => void handleSave()} loading={saving}>
-            Сохранить
-          </Button>
-        </>
+          ) : (
+            <Button variant="danger" onClick={() => setConfirmDelete(true)}>
+              Удалить пару
+            </Button>
+          )
+        ) : undefined
       }
     >
       <Select label="Предмет" value={subject} onChange={(e) => setSubject(e.target.value)}>
@@ -167,49 +184,50 @@ export default function SlotFormNew({
           </option>
         ))}
       </Select>
-      <Select
-        label="День недели"
-        value={String(weekday)}
-        onChange={(e) => setWeekday(Number(e.target.value))}
-      >
-        {WEEKDAYS.map((d) => (
-          <option key={d.n} value={d.n}>
-            {d.label}
-          </option>
-        ))}
-      </Select>
-      <Select
-        label="Номер пары"
-        value={String(pairNumber)}
-        onChange={(e) => setPairNumber(Number(e.target.value))}
-      >
+      <div className="c-form-seg">
+        <label>День недели</label>
+        <Segmented
+          aria-label="День недели"
+          value={String(weekday)}
+          onChange={(v) => setWeekday(Number(v))}
+          options={WEEKDAYS.map((d) => ({ value: d.value, label: d.label }))}
+        />
+      </div>
+      <Select label="Пара" value={String(pairNumber)} onChange={(e) => setPairNumber(Number(e.target.value))}>
         {pairTimes.map((p) => (
           <option key={p.n} value={p.n}>
             {p.n} пара · {p.start}–{p.end}
           </option>
         ))}
+        {!hasPairTime && <option value={pairNumber}>{pairNumber} пара</option>}
       </Select>
-      <Select label="Недели" value={parity} onChange={(e) => setParity(e.target.value)}>
-        {PARITIES.map((p) => (
-          <option key={p.value} value={p.value}>
-            {p.label}
-          </option>
-        ))}
-      </Select>
-      <Select label="Тип" value={kind} onChange={(e) => setKind(e.target.value)}>
-        {KINDS.map((k) => (
-          <option key={k.value} value={k.value}>
-            {k.label}
-          </option>
-        ))}
-      </Select>
-      <Input label="Аудитория" value={room} onChange={(e) => setRoom(e.target.value)} placeholder="214" />
-      <Input
-        label="Преподаватель"
-        value={teacher}
-        onChange={(e) => setTeacher(e.target.value)}
-        placeholder="необязательно"
-      />
-    </Modal>
+      <div className="c-form-seg">
+        <label>Недели</label>
+        <Segmented aria-label="Недели" value={parity} onChange={setParity} options={PARITIES} />
+        {conflictText && (
+          <p className="c-form-err" role="alert">
+            {conflictText}
+          </p>
+        )}
+      </div>
+      <div className="c-form-seg">
+        <label>Тип</label>
+        <Segmented aria-label="Тип" value={kind} onChange={setKind} options={KINDS} />
+      </div>
+      <div className="c-form-two">
+        <Input label="Аудитория" value={room} onChange={(e) => setRoom(e.target.value)} placeholder="214" />
+        <Input
+          label="Преподаватель"
+          value={teacher}
+          onChange={(e) => setTeacher(e.target.value)}
+          placeholder="Необязательно"
+        />
+      </div>
+      {saveError && (
+        <p className="c-form-err" role="alert">
+          {saveError}
+        </p>
+      )}
+    </FormDialog>
   );
 }

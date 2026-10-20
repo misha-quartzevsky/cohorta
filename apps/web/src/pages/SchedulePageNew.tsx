@@ -25,6 +25,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import MobileSearchButton from "../components/MobileSearchButton";
 import { ChevronRight } from "lucide-react";
 
+import { useForms } from "../lib/formsContext";
 import { Button, Icon, Pills, StatusChip, SubjectCover, EmptyState, Menu } from "../ui";
 import SlotFormNew from "../components/schedule/SlotFormNew";
 import AttachLectureModal from "../components/schedule/AttachLectureModal";
@@ -69,6 +70,7 @@ type Parity = "odd" | "even";
 
 export default function SchedulePageNew() {
   const navigate = useNavigate();
+  const forms = useForms();
   const { semesters } = useSemester();
 
   const activeSemester = useMemo(() => pickActiveSemester(semesters), [semesters]);
@@ -343,6 +345,8 @@ export default function SchedulePageNew() {
         }}
         courses={courses}
         pairTimes={pairTimes}
+        slots={slots}
+        onAddSubject={forms ? forms.openSubjectForm : undefined}
         preset={preset}
         slot={editSlot}
         onSave={handleSave}

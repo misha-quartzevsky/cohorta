@@ -308,6 +308,7 @@ export default function SubjectPairsPage() {
         }}
         courses={course ? [course] : []}
         pairTimes={settings?.pair_times ?? []}
+        slots={slots}
         slot={editSlot}
         onSave={handleSave}
         onDelete={editSlot ? () => deleteSlot(editSlot.id) : undefined}
