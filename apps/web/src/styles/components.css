@@ -1624,6 +1624,10 @@ button.c-row.on:hover { background: var(--accent-soft); }
   z-index: 60;
 }
 /* Логотип в сайдбаре: 16 px, одноцветный тёмный, левый край по линии значков меню (20.10; исключение из минимума 24 px). */
+/* Компьютер: сверху 16 px, снизу вплотную (профиль прижат к низу). */
+@media (min-width: 1024px) {
+  .c-shell-sidebar { padding-top: var(--space-4); padding-bottom: 0; }
+}
 .c-shell-logo { display: block; align-self: flex-start; height: 16px; width: auto; margin: var(--space-2) 0 var(--space-2) var(--space-3); }
 .c-shell-side-search {
   display: flex;
