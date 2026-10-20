@@ -8,6 +8,7 @@
  * delete, and fetch latest lecture titles.
  */
 
+import { nextCoverSeed } from "../lib/coverSeed";
 import { pb } from "../lib/pocketbase";
 import { moveToTrash } from "./trashService";
 import type { Course, Lecture } from "../lib/types";
@@ -62,6 +63,11 @@ export async function createCourse(
   if (semesterId) {
     payload[FIELDS.courseSemester] = semesterId;
   }
+  // Обложка создаётся сама и больше не меняется (subject-cover-generator.md).
+  const owned = await pb
+    .collection("courses")
+    .getList(1, 1, { filter: `${FIELDS.courseOwner} = "${currentUserId()}"`, fields: "id" });
+  payload[FIELDS.courseCoverSeed] = nextCoverSeed(owned.totalItems);
   return pb.collection("courses").create<Course>(payload);
 }
 

@@ -21,6 +21,7 @@ import {
   deleteCourse as deleteCourseService,
 } from "../services/courseService";
 import { useAsyncData } from "./useAsyncData";
+import { useLecturesChanged } from "../lib/lecturesChanged";
 
 export interface UseCoursesResult {
   courses: Course[];
@@ -77,6 +78,11 @@ export function useCourses(semesterId?: string): UseCoursesResult {
   const { data, loading, error, setError, refetch } = useAsyncData<
     CourseBundle
   >(fetcher, !!semesterId);
+
+  // Предмет, созданный из формы (окно поверх любой страницы), появляется в списках сразу.
+  useLecturesChanged(() => {
+    if (semesterId) void refetch();
+  });
 
   /**
    * Create a new course and refresh the list.
