@@ -158,10 +158,11 @@ export default function SubjectPairsPage() {
           <h1>Пары: {courseName(course)}</h1>
           <span>
             {subjectSlots.length} {subjectSlots.length === 1 ? "пара" : "пары"} в неделю
-            {activeSemester ? ` · ${activeSemester.label ?? "семестр"}` : ""}
+            {activeSemester ? ` · ${(activeSemester.label ?? "семестр").toLowerCase()}` : ""}
           </span>
         </div>
         <Button
+          variant="primary"
           onClick={() => {
             setEditSlot(null);
             setFormOpen(true);
@@ -176,11 +177,12 @@ export default function SubjectPairsPage() {
         <h1>Пары</h1>
         <span>
           {subjectSlots.length} {subjectSlots.length === 1 ? "пара" : "пары"} в неделю
-          {activeSemester ? ` · ${activeSemester.label ?? "семестр"}` : ""}
+          {activeSemester ? ` · ${(activeSemester.label ?? "семестр").toLowerCase()}` : ""}
         </span>
       </div>
 
       <Button
+        variant="primary"
         className="c-pairs-m-add"
         onClick={() => {
           setEditSlot(null);

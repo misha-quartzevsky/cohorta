@@ -69,6 +69,9 @@ export default function SlotFormNew({
   const [teacher, setTeacher] = useState(slot?.teacher ?? "");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [saveError, setSaveError] = useState("");
+  // Занятая клетка показывается, когда человек сам выбрал время или нажал «Сохранить»,
+  // а не в первую секунду после открытия.
+  const [touched, setTouched] = useState(false);
 
   // Modal не размонтирует содержимое между открытиями — перечитываем поля
   // из актуальных slot/preset при каждом новом открытии.
@@ -83,8 +86,14 @@ export default function SlotFormNew({
     setTeacher(slot?.teacher ?? "");
     setConfirmDelete(false);
     setSaveError("");
+    setTouched(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, slot, preset]);
+
+  // Предметы могут догрузиться после открытия формы (?add=1 с Главной) — подставляем первый.
+  useEffect(() => {
+    if (open && !subject && courses[0]) setSubject(courses[0].id);
+  }, [open, subject, courses]);
 
   const conflict = useMemo(
     () => findSlotConflict(slots, { weekday, pair_number: pairNumber, week_parity: parity }, slot?.id),
@@ -93,7 +102,7 @@ export default function SlotFormNew({
   const conflictCourse = conflict
     ? (conflict.expand?.subject ?? courses.find((c) => c.id === conflict.subject))
     : undefined;
-  const conflictText = conflict
+  const conflictText = conflict && touched
     ? `В это время уже есть пара «${conflictCourse ? courseName(conflictCourse) : "другого предмета"}» ${parityPhrase(
         conflict.week_parity ?? "any"
       )}. Выбери другую неделю или номер пары.`
@@ -123,7 +132,11 @@ export default function SlotFormNew({
   }
 
   async function submit() {
-    if (!subject || conflict) return false;
+    if (!subject) return false;
+    if (conflict) {
+      setTouched(true);
+      return false;
+    }
     try {
       await onSave({
         subject,
@@ -189,11 +202,17 @@ export default function SlotFormNew({
         <Segmented
           aria-label="День недели"
           value={String(weekday)}
-          onChange={(v) => setWeekday(Number(v))}
+          onChange={(v) => {
+            setTouched(true);
+            setWeekday(Number(v));
+          }}
           options={WEEKDAYS.map((d) => ({ value: d.value, label: d.label }))}
         />
       </div>
-      <Select label="Пара" value={String(pairNumber)} onChange={(e) => setPairNumber(Number(e.target.value))}>
+      <Select label="Пара" value={String(pairNumber)} onChange={(e) => {
+          setTouched(true);
+          setPairNumber(Number(e.target.value));
+        }}>
         {pairTimes.map((p) => (
           <option key={p.n} value={p.n}>
             {p.n} пара · {p.start}–{p.end}
@@ -203,7 +222,10 @@ export default function SlotFormNew({
       </Select>
       <div className="c-form-seg">
         <label>Недели</label>
-        <Segmented aria-label="Недели" value={parity} onChange={setParity} options={PARITIES} />
+        <Segmented aria-label="Недели" value={parity} onChange={(v) => {
+            setTouched(true);
+            setParity(v);
+          }} options={PARITIES} />
         {conflictText && (
           <p className="c-form-err" role="alert">
             {conflictText}

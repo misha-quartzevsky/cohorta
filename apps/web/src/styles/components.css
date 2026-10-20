@@ -2569,7 +2569,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
  *  «Расписание» — B3, 2026-10-20 (pages/SchedulePageNew.tsx).
  *  Вёрстка 1:1 по docs/design/screens/Screen-schedule(-m).dc.html.
  * ============================================================ */
-.c-schedule { display: flex; flex-direction: column; gap: var(--space-7); font-family: var(--font-sans); }
+.c-schedule { display: flex; flex-direction: column; gap: calc(var(--space-1) * 7); font-family: var(--font-sans); }
 
 .c-schedule-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); }
 .c-schedule-head-tx { display: flex; flex-direction: column; gap: 8px; }
@@ -2684,7 +2684,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
  *  «Задачи» — B3, 2026-10-20 (pages/TasksPageNew.tsx).
  *  Вёрстка 1:1 по docs/design/screens/Screen-tasks(-m).dc.html.
  * ============================================================ */
-.c-tasks { display: flex; flex-direction: column; gap: var(--space-7); font-family: var(--font-sans); }
+.c-tasks { display: flex; flex-direction: column; gap: calc(var(--space-1) * 7); font-family: var(--font-sans); }
 
 .c-tasks-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); }
 .c-tasks-head-tx { display: flex; flex-direction: column; gap: 8px; }
@@ -2763,7 +2763,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
  *  «Пары предмета» — B3, 2026-10-20 (pages/SubjectPairsPage.tsx).
  *  Вёрстка 1:1 по docs/design/screens/Screen-subject-pairs(-m).dc.html.
  * ============================================================ */
-.c-pairs { display: flex; flex-direction: column; gap: var(--space-5); font-family: var(--font-sans); }
+.c-pairs { display: flex; flex-direction: column; gap: calc(var(--space-1) * 7); font-family: var(--font-sans); }
 
 .c-pairs-crumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-3); }
 .c-pairs-crumb .current { color: var(--ink-2); }
@@ -3765,3 +3765,31 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
 }
 .c-tasks-head-end { display: flex; align-items: center; gap: var(--space-3); }
 .c-tasks-m-period { align-self: flex-start; margin-top: var(--space-2); }
+.c-form .c-field input,
+.c-form .c-field select,
+.c-form .c-field textarea { width: 100%; box-sizing: border-box; }
+.c-dialog-body:has(> .c-form) { max-height: 78vh; }
+.c-form .c-field { width: 100%; }
+@media (max-width: 639px) {
+  /* Телефон (Screen-m-form-*): шторка с ручкой, одна широкая главная кнопка, без «Отмена» (закрывает крестик, фон и Esc). */
+  .c-form-dialog .c-dialog-foot { gap: var(--space-3); }
+  .c-form-dialog .c-dialog-foot > .c-btn.ghost { display: none; }
+  .c-form-dialog .c-dialog-foot > .c-btn { flex: 1; height: var(--control-lg); }
+  .c-form-dialog .c-dialog-foot > .c-form-lead { flex: none; }
+}
+.c-schedule-m-card .c-chip { align-self: flex-start; margin-top: 6px; }
+
+/* Расстояние между блоками экранов расписания, задач и пар — 28 px по макетам (токена нет, считаем от шага 4 px). */
+.c-pills { align-self: flex-start; }
+@media (max-width: 767px) {
+  .c-schedule, .c-tasks, .c-pairs { gap: var(--space-4); }
+  /* Телефон (Screen-m-tasks, Screen-m-subject-pairs): вкладки — отдельные пилюли без общей подложки. */
+  .c-tasks .c-pills, .c-pairs .c-pills { background: none; padding: 0; gap: var(--space-2); overflow-x: auto; }
+  .c-tasks .c-pills span, .c-pairs .c-pills span { background: var(--sunken); padding: 0 14px; }
+  .c-tasks .c-pills span.on, .c-pairs .c-pills span.on { background: var(--ink); }
+  /* В строке задачи на телефоне предмет — текст без обложки. */
+  .c-task-row-subject .c-cover, .c-task-row-subject .c-cover-empty { display: none; }
+}
+@media (min-width: 1024px) {
+  .c-pairs .c-task-row-menu-btn { width: var(--control-md); height: var(--control-md); border: 1px solid var(--line-strong); background: var(--surface); }
+}

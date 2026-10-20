@@ -192,7 +192,9 @@ export default function SchedulePageNew() {
             {weekSlots.length} {pluralRu(weekSlots.length, ["пара", "пары", "пар"])}
           </span>
         </div>
+        {/* Главная кнопка экрана (Screen-schedule); на пустом экране главная — в EmptyState. */}
         <Button
+          variant={hasSlots ? "primary" : "secondary"}
           onClick={() => {
             setEditSlot(null);
             setPreset(undefined);
@@ -412,7 +414,6 @@ function WeekGrid({
         const isToday = toDateStr(date) === today;
         return (
           <div key={i} className={`c-schedule-dayhead${isToday ? " today" : ""}`}>
-            {isToday && <span className="c-dot c-dot-accent" />}
             {DAY_NAMES[i]} {date.getDate()}
           </div>
         );
@@ -670,6 +671,7 @@ function MobileDayPairs({
               >
                 <span className="t">{name}</span>
                 <span className="m">{kindLabel}{slot.room ? ` · ${slot.room}` : ""}</span>
+                <StatusChip tone="ok">Конспект есть</StatusChip>
               </button>
             ) : (
               <div className="c-schedule-m-card no-note">

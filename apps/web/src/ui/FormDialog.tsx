@@ -61,6 +61,7 @@ export default function FormDialog({
       open={open}
       onClose={onClose}
       title={title}
+      className="c-sheet-dialog c-form-dialog"
       footer={
         <>
           {leading && <div className="c-form-lead">{leading}</div>}

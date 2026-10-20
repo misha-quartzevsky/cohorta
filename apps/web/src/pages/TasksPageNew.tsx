@@ -169,7 +169,7 @@ export default function TasksPageNew() {
             if (e.key === "Enter") void handleQuickAdd();
           }}
         />
-        <Button onClick={() => void handleQuickAdd()} disabled={!draft.trim()}>
+        <Button onClick={() => void handleQuickAdd()}>
           Добавить
         </Button>
       </div>
