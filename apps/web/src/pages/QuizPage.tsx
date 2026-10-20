@@ -74,7 +74,7 @@ function QuizRunner({ lecture, mode }: { lecture: Lecture; mode: QuizMode }) {
         state: isOwner ? { openQuizCreate: true } : undefined,
       });
     }
-  }, [quiz.phase, lecture, navigate, isOwner]);
+  }, [quiz.phase, lecture, navigate, isOwner, semSlug]);
 
   if (quiz.phase === "loading" || quiz.phase === "empty") return <LoadingState />;
 
