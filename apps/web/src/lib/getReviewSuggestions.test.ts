@@ -177,13 +177,11 @@ describe("getReviewSuggestions", () => {
     expect(getReviewSuggestions([l, l], "2026-10-20")).toHaveLength(1);
   });
 
-  it("название предмета различает лекции с одинаковым названием", () => {
-    const a = lecture({ id: "a", title: "Лекция 1", subjectName: "Статистика", lectureDate: "2026-10-19" });
-    const b = lecture({ id: "b", title: "Лекция 1", subjectName: "Философия", lectureDate: "2026-10-19" });
-    const titles = getReviewSuggestions([a, b], "2026-10-20").map((r) => r.title);
-    expect(titles).toEqual([
-      "Квиз по вчерашней лекции: Лекция 1 · Статистика",
-      "Квиз по вчерашней лекции: Лекция 1 · Философия",
-    ]);
+  it("подсказка несёт предмет и ведёт на квиз; «давно не открывали» — на лекцию", () => {
+    const q = lecture({ id: "a", title: "Лекция 1", subjectId: "c1", lectureDate: "2026-10-19", lectureHref: "/s/3/stat/lec-1" });
+    const stale = lecture({ id: "b", title: "Лекция 2", subjectId: "c2", updatedDate: "2026-10-01", lectureHref: "/s/3/phil/lec-2" });
+    const [first, second] = getReviewSuggestions([q, stale], "2026-10-20");
+    expect(first).toMatchObject({ kind: "quiz_yesterday", subjectId: "c1", href: "/quiz/a" });
+    expect(second).toMatchObject({ kind: "stale", subjectId: "c2", href: "/s/3/phil/lec-2" });
   });
 });

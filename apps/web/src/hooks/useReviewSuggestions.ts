@@ -15,9 +15,12 @@ import { computeLectureReadiness } from "../lib/computeLectureReadiness";
 import { getReviewSuggestions, type ReviewSuggestion } from "../lib/getReviewSuggestions";
 import { todayStr, pbDateOnly } from "../lib/localDate";
 import { useAsyncData } from "./useAsyncData";
-import { lectureTitle } from "../lib/types";
+import { lectureTitle, lectureHref } from "../lib/types";
+import { semesterSlugForLecture } from "../lib/lectureSemester";
+import { useSemester } from "../lib/semesterContext";
+import type { Semester } from "../lib/types";
 
-async function loadSuggestions(existingDedupeKeys: ReadonlySet<string>): Promise<ReviewSuggestion[]> {
+async function loadSuggestions(existingDedupeKeys: ReadonlySet<string>, semesters: Semester[]): Promise<ReviewSuggestion[]> {
   const [lectures, questionsByLecture, answersByLecture] = await Promise.all([
     fetchAllLectures(),
     fetchReadinessQuestionsByLecture(),
@@ -34,7 +37,8 @@ async function loadSuggestions(existingDedupeKeys: ReadonlySet<string>): Promise
     return {
       id: lecture.id,
       title: lectureTitle(lecture),
-      subjectName: lecture.expand?.field?.name,
+      subjectId: lecture.field || undefined,
+      lectureHref: lectureHref(lecture, semesterSlugForLecture(lecture, semesters)),
       lectureDate: lecture.lecture_date ? pbDateOnly(lecture.lecture_date) : null,
       updatedDate,
       hasQuiz: questions.length > 0,
@@ -49,7 +53,8 @@ async function loadSuggestions(existingDedupeKeys: ReadonlySet<string>): Promise
 }
 
 export function useReviewSuggestions(existingDedupeKeys: ReadonlySet<string>) {
-  const fetcher = useCallback(() => loadSuggestions(existingDedupeKeys), [existingDedupeKeys]);
+  const { semesters } = useSemester();
+  const fetcher = useCallback(() => loadSuggestions(existingDedupeKeys, semesters), [existingDedupeKeys, semesters]);
   const { data, loading, error, refetch } = useAsyncData<ReviewSuggestion[]>(fetcher);
   return { suggestions: data ?? [], loading, error, refetch };
 }

@@ -4,7 +4,8 @@ import { useQuiz, type QuizMode, type UseQuizResult } from "../hooks/useQuiz";
 import { fetchLecture } from "../services/lectureService";
 import type { Lecture } from "../lib/types";
 import { courseName, lectureCourseId, lectureHref } from "../lib/types";
-import { lastSemesterSlug } from "../lib/lastSemester";
+import { semesterSlugForLecture } from "../lib/lectureSemester";
+import { useSemester } from "../lib/semesterContext";
 import { pb } from "../lib/pocketbase";
 import { attemptStats, understandingBeforeAfter, understandingLabel } from "../lib/quizSummary";
 import { Button, Icon, StatusChip } from "../ui";
@@ -60,13 +61,15 @@ export default function QuizPage() {
 function QuizRunner({ lecture, mode }: { lecture: Lecture; mode: QuizMode }) {
   const navigate = useNavigate();
   const quiz = useQuiz(lecture.id, mode);
+  const { semesters } = useSemester();
+  const semSlug = semesterSlugForLecture(lecture, semesters);
   const isOwner = String(lecture.owner ?? "") === String(pb.authStore.record?.id ?? "");
-  const toLecture = (state?: unknown) => navigate(lectureHref(lecture, lastSemesterSlug()), state ? { state } : undefined);
+  const toLecture = (state?: unknown) => navigate(lectureHref(lecture, semSlug), state ? { state } : undefined);
 
   // Квиза ещё нет (например, пришли по задаче): возвращаем к лекции, где его можно создать.
   useEffect(() => {
     if (quiz.phase === "empty") {
-      navigate(lectureHref(lecture, lastSemesterSlug()), {
+      navigate(lectureHref(lecture, semSlug), {
         replace: true,
         state: isOwner ? { openQuizCreate: true } : undefined,
       });
@@ -110,6 +113,8 @@ function QuizQuestionView({
   onExit: () => void;
 }) {
   const navigate = useNavigate();
+  const { semesters } = useSemester();
+  const semSlug = semesterSlugForLecture(lecture, semesters);
   const q = quiz.current!;
   const [selected, setSelected] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
@@ -250,7 +255,7 @@ function QuizQuestionView({
                   type="button"
                   className="c-quiz-link"
                   onClick={() =>
-                    navigate(lectureHref(lecture, lastSemesterSlug()), { state: { highlightQuote: q.quote } })
+                    navigate(lectureHref(lecture, semSlug), { state: { highlightQuote: q.quote } })
                   }
                 >
                   Показать в лекции, абзац «{q.topic || lecture.title}»

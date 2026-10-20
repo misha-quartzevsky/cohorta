@@ -15,7 +15,9 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import TaskRowNew from "../components/tasks/TaskRowNew";
-import { Button, Pills, EmptyState, SubjectCover, Toggletip } from "../ui";
+import { useNavigate } from "react-router-dom";
+import { Link2 } from "lucide-react";
+import { Button, Pills, EmptyState, SubjectCover, Toggletip, Checkbox } from "../ui";
 import PeriodSelect from "../components/lectures/PeriodSelect";
 import { useLecturePeriod } from "../hooks/useLecturePeriod";
 import { useTasks } from "../hooks/useTasks";
@@ -112,6 +114,7 @@ export default function TasksPageNew() {
     await createTask({
       title: s.title,
       lecture: s.lectureId,
+      subject: s.subjectId ?? null,
       source: "auto_review",
       dedupe_key: s.dedupeKey,
       done_at: today,
@@ -122,6 +125,7 @@ export default function TasksPageNew() {
     await createTask({
       title: s.title,
       lecture: s.lectureId,
+      subject: s.subjectId ?? null,
       source: "auto_review",
       dedupe_key: s.dedupeKey,
       dismissed: true,
@@ -329,6 +333,7 @@ function TaskList({
     <SuggestionRow
       key={s.dedupeKey}
       suggestion={s}
+      subject={courses.find((c) => c.id === s.subjectId)}
       onDone={() => onSuggestionDone(s)}
       onDismiss={() => onSuggestionDismiss(s)}
     />
@@ -420,18 +425,35 @@ function TaskList({
 
 function SuggestionRow({
   suggestion,
+  subject,
   onDone,
   onDismiss,
 }: {
   suggestion: ReviewSuggestion;
+  subject?: Course;
   onDone: () => void;
   onDismiss: () => void;
 }) {
+  const navigate = useNavigate();
   return (
     <div className="c-task-suggested-row">
-      <button type="button" className="c-task-suggested-main" onClick={onDone}>
+      <Checkbox checked={false} onChange={onDone} label={`Выполнить: ${suggestion.title}`} />
+      {/* Нажатие на название ведёт на квиз (или на лекцию), а не отмечает подсказку. */}
+      <button type="button" className="c-task-suggested-main" onClick={() => navigate(suggestion.href)}>
         <span className="c-task-suggested-label">Предложено</span>
         <span className="c-task-suggested-title">{suggestion.title}</span>
+        <span className="c-task-row-meta">
+          {subject && (
+            <span className="c-task-row-subject">
+              <SubjectCover seed={subject.cover_seed} size={16} />
+              <span>{courseName(subject)}</span>
+            </span>
+          )}
+          <span className="c-task-row-lecture">
+            <Link2 size={13} aria-hidden="true" />
+            Лекция
+          </span>
+        </span>
       </button>
       <button type="button" className="c-task-row-menu-btn" aria-label="Скрыть подсказку" onClick={onDismiss}>
         ×

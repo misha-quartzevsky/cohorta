@@ -50,11 +50,12 @@ export function UnderstandingScope({ lecture, children }: { lecture: Lecture | n
   // Пришли из квиза без собранного квиза (например по задаче): сразу предлагаем создать.
   useEffect(() => {
     const st = location.state as { openQuizCreate?: boolean } | null;
-    if (st?.openQuizCreate) {
+    // Ждём, пока лекция загрузится: иначе метка гасла раньше, чем было что открывать.
+    if (st?.openQuizCreate && lectureId) {
       navigate(location.pathname, { replace: true, state: null });
       void create(false);
     }
-  }, [location.state, location.pathname, navigate, create]);
+  }, [location.state, location.pathname, navigate, create, lectureId]);
 
   // Окно не должно «переехать» на другую лекцию.
   useEffect(() => () => closeDialog(lectureId), [lectureId]);

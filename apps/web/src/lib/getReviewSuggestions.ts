@@ -14,8 +14,10 @@ export type SuggestionKind = "quiz_yesterday" | "review" | "stale";
 export interface SuggestionLecture {
   id: string;
   title: string;
-  /** Название предмета лекции: различает лекции с одинаковым названием («Лекция 1»). */
-  subjectName?: string;
+  /** Предмет лекции (id курса): подсказка получает тот же предмет при выполнении и скрытии. */
+  subjectId?: string;
+  /** Адрес лекции — куда ведёт подсказка «Давно не открывали». */
+  lectureHref?: string;
   /** YYYY-MM-DD, дата конкретной пары/конспекта. Может отсутствовать. */
   lectureDate: string | null;
   /** YYYY-MM-DD, последняя правка записи (PocketBase `updated`). */
@@ -36,16 +38,16 @@ export interface ReviewSuggestion {
   /** Заголовок подсказки, как в интерфейсе (spec 5.3). */
   title: string;
   dedupeKey: string;
+  /** Предмет лекции. */
+  subjectId?: string;
+  /** Куда ведёт нажатие: квиз (подсказки 1 и 2) или лекция (подсказка 3). */
+  href: string;
 }
 
 const REVIEW_THRESHOLD = 75;
 const REVIEW_STALE_DAYS = 3;
 const NOT_OPENED_DAYS = 7;
 const MAX_SUGGESTIONS = 3;
-
-function withSubject(l: SuggestionLecture): string {
-  return l.subjectName ? `${l.title} · ${l.subjectName}` : l.title;
-}
 
 function daysSince(dateStr: string | null, today: Date): number {
   if (!dateStr) return Infinity;
@@ -85,7 +87,9 @@ export function getReviewSuggestions(
     .map((l) => ({
       kind: "quiz_yesterday" as const,
       lectureId: l.id,
-      title: `Квиз по вчерашней лекции: ${withSubject(l)}`,
+      title: `Квиз по вчерашней лекции: ${l.title}`,
+      subjectId: l.subjectId,
+      href: `/quiz/${l.id}`,
       dedupeKey: dedupeKey("quiz_yesterday", l.id),
     }));
 
@@ -106,7 +110,9 @@ export function getReviewSuggestions(
     .map((l) => ({
       kind: "review" as const,
       lectureId: l.id,
-      title: `Повторить: ${withSubject(l)}`,
+      title: `Повторить: ${l.title}`,
+      subjectId: l.subjectId,
+      href: `/quiz/${l.id}`,
       dedupeKey: dedupeKey("review", l.id),
     }));
 
@@ -125,7 +131,9 @@ export function getReviewSuggestions(
     .map((l) => ({
       kind: "stale" as const,
       lectureId: l.id,
-      title: `Давно не открывали: ${withSubject(l)}`,
+      title: `Давно не открывали: ${l.title}`,
+      subjectId: l.subjectId,
+      href: l.lectureHref ?? `/quiz/${l.id}`,
       dedupeKey: dedupeKey("stale", l.id),
     }));
 
