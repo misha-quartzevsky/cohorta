@@ -17,6 +17,7 @@
 import { pb } from "../lib/pocketbase";
 import type {
   Exam,
+  Lecture,
   ExamParticipant,
   ExamTicket,
   TicketStatus,
@@ -216,19 +217,33 @@ export async function getTicket(ticketId: string): Promise<ExamTicket> {
 export interface TicketDraft {
   number: number;
   question: string;
+  /** Необязательный ответ (обычный текст, из формы «Добавить билет»). */
+  answer?: string;
 }
 
-/** Создать билет (пустой ответ, статус `empty`). */
+/** Обычный текст в HTML абзацев (ответ хранится как HTML редактора). */
+function textToHtml(text: string): string {
+  const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return text
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((l) => `<p>${esc(l)}</p>`)
+    .join("");
+}
+
+/** Создать билет (ответ необязательный; без него статус `empty`). */
 export async function createTicket(
   examId: string,
   draft: TicketDraft
 ): Promise<ExamTicket> {
+  const answerHtml = textToHtml(draft.answer ?? "");
   return pb.collection("exam_tickets").create<ExamTicket>({
     [FIELDS.ticketExam]: examId,
     [FIELDS.ticketNumber]: draft.number,
     [FIELDS.ticketQuestion]: draft.question,
-    [FIELDS.ticketAnswer]: "",
-    [FIELDS.ticketStatus]: "empty",
+    [FIELDS.ticketAnswer]: answerHtml,
+    [FIELDS.ticketStatus]: statusForAnswer(answerHtml, "empty"),
   });
 }
 
@@ -332,5 +347,19 @@ export async function fetchTicketsForLecture(
     filter: pb.filter(`${FIELDS.ticketSources} ~ {:id}`, { id: lectureId }),
     expand: `${FIELDS.ticketExam}.${FIELDS.examCourse}`,
     sort: FIELDS.ticketNumber,
+  });
+}
+
+/**
+ * Чужие лекции, открытые текущему человеку (`lectures.listRule` отдаёт их
+ * только при выданном доступе) — вкладка «Открытые мне» в окне привязки.
+ */
+export async function fetchLecturesOpenedToMe(): Promise<Lecture[]> {
+  const me = currentUserId();
+  if (!me) return [];
+  return pb.collection("lectures").getFullList<Lecture>({
+    filter: pb.filter(`${FIELDS.lectureOwner} != {:me}`, { me }),
+    expand: "field",
+    sort: "-updated",
   });
 }

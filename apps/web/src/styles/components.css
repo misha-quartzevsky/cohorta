@@ -3836,3 +3836,42 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
 .c-sheet-dialog .c-field { width: 100%; }
 .c-task-suggested-main .c-task-row-meta { flex-wrap: wrap; }
 @media (max-width: 767px) { .c-task-suggested-row { padding: var(--space-1) var(--space-2) var(--space-1) var(--space-4); gap: var(--space-3); } }
+
+/* ---------- Экзамен: формы (B4 v2) ---------- */
+.c-form-link { background: none; border: 0; padding: 0; font: 500 14px/22px var(--font-sans); color: var(--accent-strong); cursor: pointer; }
+.c-form-link:hover { text-decoration: underline; }
+@media (max-width: 639px) {
+  .c-form-dialog .c-dialog-foot { flex-wrap: wrap; }
+  .c-form-dialog .c-dialog-foot > .c-form-lead:has(.c-form-link) { order: 2; flex: 1 1 100%; text-align: center; margin-right: 0; }
+}
+.c-picker-search { display: flex; align-items: center; gap: var(--space-2); height: var(--control-md); padding: 0 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-md); background: var(--surface); color: var(--ink-3); box-sizing: border-box; }
+.c-picker-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font: 400 14px/1 var(--font-sans); color: var(--ink); }
+.c-picker-search:focus-within { outline: 2px solid var(--ink); outline-offset: 2px; }
+.c-picker-tabs.c-seg { display: flex; width: 100%; box-sizing: border-box; }
+.c-picker-tabs.c-seg span { flex: 1; justify-content: center; text-align: center; }
+.c-picker-row .c-check { border-radius: var(--radius-sm); flex: none; }
+.c-picker-list { display: flex; flex-direction: column; max-height: 320px; overflow-y: auto; }
+.c-picker-row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 0; border: 0; border-top: 1px solid var(--line); background: none; text-align: left; cursor: pointer; font: inherit; color: var(--ink); }
+.c-picker-row:first-child { border-top: 0; }
+.c-picker-row .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.c-picker-row .t { font-size: 14px; font-weight: 500; }
+.c-picker-row .m { font-size: 12px; color: var(--ink-3); }
+.c-picker-note { margin: 0; font-size: 13px; line-height: 18px; color: var(--ink-3); }
+
+/* Импорт билетов: Screen-ticket-import, Screen-m-ticket-import */
+.c-import > .c-exam-crumb + .c-import-head { margin-top: calc(var(--space-4) * -1); }
+.c-import .c-field textarea, .c-import-textarea textarea { width: 100%; box-sizing: border-box; }
+.c-import-col .c-field { width: 100%; }
+.c-import-preview-row .c-chip { flex: none; }
+.c-import-m-cta { display: none; }
+@media (max-width: 639px) {
+  .c-import { gap: var(--space-4); }
+  .c-import > .c-exam-crumb { display: none; }
+  .c-import > .c-import-head { margin-top: 0; }
+  .c-import-head h1 { font-size: 28px; line-height: 36px; }
+  .c-import-found { font: 600 12px/18px var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+  .c-import-preview-row { padding: 8px 16px; }
+  .c-import-preview-row .c-chip:not(.warn) { display: none; }
+  .c-import-m-cta { display: block; position: sticky; bottom: calc(var(--space-1) * 24); }
+  .c-import-m-cta .c-btn { width: 100%; height: var(--control-lg); }
+}

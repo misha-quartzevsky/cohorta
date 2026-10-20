@@ -251,8 +251,9 @@ export default function TicketPageNew() {
         <TicketSourcesPanel
           lectures={lectures}
           selectedIds={ticketSourceIds(ticket)}
-          onChange={(next) => void handleSourcesChange(next)}
+          onChange={handleSourcesChange}
           course={course}
+          ticketNumber={ticketNumber(ticket)}
         />
       </div>
     </div>

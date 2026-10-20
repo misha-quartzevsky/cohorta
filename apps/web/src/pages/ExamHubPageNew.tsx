@@ -21,6 +21,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { Button, Icon, StatusChip, Toggletip, EmptyState } from "../ui";
 import AddTicketModal from "../components/exam/AddTicketModal";
+import { useForms } from "../lib/formsContext";
 import { useSemester } from "../lib/semesterContext";
 import { useCourseBySlug } from "../hooks/useCourseBySlug";
 import { useExam } from "../hooks/useExam";
@@ -71,6 +72,7 @@ export default function ExamHubPageNew() {
   const { isPending } = useUndo();
   const tickets = allTickets.filter((t) => !isPending(`ticket:${t.id}`));
 
+  const forms = useForms();
   const [addOpen, setAddOpen] = useState(false);
 
   const readyCount = tickets.filter((t) => ticketStatus(t) === "ready").length;
@@ -84,9 +86,9 @@ export default function ExamHubPageNew() {
     return status === "ready" ? `${base}/exam/${n}` : `${base}/exam/${n}/edit`;
   }
 
-  async function handleCreateTicket(question: string) {
+  async function handleCreateTicket(question: string, answer: string) {
     const target = exam ?? (await createExam({ courseId: course?.id ?? "" }));
-    await createTicket(target.id, { number: maxNumber + 1, question });
+    await createTicket(target.id, { number: maxNumber + 1, question, answer });
     await refetch();
   }
 
@@ -96,11 +98,13 @@ export default function ExamHubPageNew() {
         <EmptyState
           icon="exam"
           title="Экзамена пока нет"
-          description="Загрузи список билетов — получишь карту подготовки со статусами и честным прогрессом."
+          description="Создай экзамен, и здесь появятся билеты, карта готовности и шпаргалка."
           action={
-            <Button variant="primary" onClick={() => navigate(`${base}/exam/import`)}>
-              <Icon name="plus" size={18} />
-              Загрузить билеты
+            <Button
+              variant="primary"
+              onClick={() => (forms ? forms.openExamForm(course?.id) : navigate(`${base}/exam/import`))}
+            >
+              Создать экзамен
             </Button>
           }
         />
@@ -303,8 +307,8 @@ export default function ExamHubPageNew() {
       <AddTicketModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        nextNumber={maxNumber + 1}
         onCreate={handleCreateTicket}
+        onImportList={() => navigate(`${base}/exam/import`)}
       />
     </div>
   );

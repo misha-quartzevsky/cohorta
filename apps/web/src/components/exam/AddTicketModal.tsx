@@ -1,70 +1,84 @@
 import { useEffect, useState } from "react";
-import { Modal, Button } from "../../ui";
-import { Textarea } from "../../ui/Field";
+import { FormDialog, Input, Textarea } from "../../ui";
+import { errorMessage } from "../../lib/format";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  /** Следующий свободный номер билета (подставляется в форму, не редактируется). */
-  nextNumber: number;
-  onCreate: (question: string) => Promise<void>;
+  onCreate: (question: string, answer: string) => Promise<void>;
+  /** «Вставить список билетов сразу» — переход на экран импорта. */
+  onImportList: () => void;
 }
 
 /**
- * «Добавить билет» (Screen-m-exam.dc.html) — ручное добавление ОДНОГО
- * билета, в отличие от «Импорт» (вставка целого списка). В макете нет
- * формы для этого действия — минимальная карточка по образцу остальных
- * модалок (SlotFormNew): один билет, номер назначается автоматически.
+ * «Добавить билет» (Screen-m-ticket-add): название и необязательный ответ,
+ * номер назначается сам. Ссылка внизу ведёт на вставку списка.
  */
-export default function AddTicketModal({ open, onClose, nextNumber, onCreate }: Props) {
+export default function AddTicketModal({ open, onClose, onCreate, onImportList }: Props) {
   const [question, setQuestion] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [answer, setAnswer] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (open) setQuestion("");
+    if (open) {
+      setQuestion("");
+      setAnswer("");
+      setError("");
+    }
   }, [open]);
 
-  async function handleSave() {
-    const trimmed = question.trim();
-    if (!trimmed) return;
-    setSaving(true);
+  async function submit() {
+    const q = question.trim();
+    if (!q) {
+      setError("Введи название билета");
+      return false;
+    }
     try {
-      await onCreate(trimmed);
-      onClose();
-    } finally {
-      setSaving(false);
+      await onCreate(q, answer.trim());
+    } catch (e) {
+      setError("Не удалось добавить билет: " + errorMessage(e));
+      return false;
     }
   }
 
   return (
-    <Modal
+    <FormDialog
       open={open}
       onClose={onClose}
-      title={`Добавить билет ${nextNumber}`}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Отмена
-          </Button>
-          <Button
-            variant="primary"
-            onClick={() => void handleSave()}
-            loading={saving}
-            disabled={!question.trim()}
-          >
-            Добавить
-          </Button>
-        </>
+      title="Добавить билет"
+      submitLabel="Добавить"
+      onSubmit={submit}
+      leading={
+        <button
+          type="button"
+          className="c-form-link"
+          onClick={() => {
+            onClose();
+            onImportList();
+          }}
+        >
+          Вставить список билетов сразу
+        </button>
       }
     >
-      <Textarea
-        label="Текст билета"
-        placeholder="Вопрос билета…"
+      <Input
+        label="Название билета"
         value={question}
-        onChange={(e) => setQuestion(e.target.value)}
-        rows={3}
+        onChange={(e) => {
+          setQuestion(e.target.value);
+          setError("");
+        }}
+        placeholder="Например, Виды сделок"
+        error={error || undefined}
         autoFocus
       />
-    </Modal>
+      <Textarea
+        label="Ответ · необязательно"
+        placeholder="Можно добавить позже"
+        value={answer}
+        onChange={(e) => setAnswer(e.target.value)}
+        rows={3}
+      />
+    </FormDialog>
   );
 }

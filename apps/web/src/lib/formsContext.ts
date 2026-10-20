@@ -5,6 +5,8 @@ export interface FormsApi {
   openSubjectForm: () => void;
   /** Окно «Новая колода»: после создания открывает колоду. */
   openDeckForm: () => void;
+  /** Окно «Новый экзамен»: предмет подставляется, после создания открывается экзамен. */
+  openExamForm: (subjectId?: string) => void;
 }
 
 export const FormsContext = createContext<FormsApi | null>(null);

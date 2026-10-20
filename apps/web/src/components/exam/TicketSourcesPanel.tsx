@@ -1,66 +1,70 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { Button, Icon, SubjectCover } from "../../ui";
+import LecturePickerDialog from "./LecturePickerDialog";
 import type { Course, Lecture } from "../../lib/types";
 import { courseName, lectureTitle } from "../../lib/types";
+import { fetchLecturesOpenedToMe } from "../../services/examService";
 
 interface Props {
   lectures: Lecture[];
   selectedIds: string[];
-  onChange: (next: string[]) => void;
+  onChange: (next: string[]) => void | Promise<void>;
   course: Course | null;
+  ticketNumber: number;
 }
 
 /**
  * «Связанные лекции» (spec раздел 8) — Screen-ticket.dc.html, правая панель.
- * В новом макете связь редактируется прямо на экране билета (список +
- * «Привязать лекцию»), а не на отдельном экране правки ответа.
+ * «Привязать лекцию» открывает окно выбора (Screen-ticket-lecture-picker).
+ * Лекция, доступ к которой закрыли, остаётся строкой «Лекция недоступна» с кнопкой убрать.
  */
-export default function TicketSourcesPanel({ lectures, selectedIds, onChange, course }: Props) {
+export default function TicketSourcesPanel({ lectures, selectedIds, onChange, course, ticketNumber }: Props) {
   const [picking, setPicking] = useState(false);
-  const [query, setQuery] = useState("");
+  const [opened, setOpened] = useState<Lecture[]>([]);
 
-  const selected = useMemo(
-    () => selectedIds.map((id) => lectures.find((l) => l.id === id)).filter((l): l is Lecture => !!l),
-    [selectedIds, lectures]
+  useEffect(() => {
+    void fetchLecturesOpenedToMe()
+      .then(setOpened)
+      .catch(() => setOpened([]));
+  }, []);
+
+  const rows = useMemo(
+    () =>
+      selectedIds.map((id) => {
+        const mine = lectures.find((l) => l.id === id);
+        if (mine) return { id, lecture: mine, course };
+        const other = opened.find((l) => l.id === id);
+        return { id, lecture: other, course: other?.expand?.field ?? null };
+      }),
+    [selectedIds, lectures, opened, course]
   );
 
-  const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return lectures
-      .filter((l) => !selectedIds.includes(l.id))
-      .filter((l) => !q || lectureTitle(l).toLowerCase().includes(q))
-      .slice(0, 8);
-  }, [lectures, selectedIds, query]);
-
-  function add(id: string) {
-    onChange([...selectedIds, id]);
-    setQuery("");
-    setPicking(false);
-  }
   function remove(id: string) {
-    onChange(selectedIds.filter((x) => x !== id));
+    void onChange(selectedIds.filter((x) => x !== id));
   }
 
   return (
     <div className="c-exam-card c-ticket-aside c-exam-card-pad">
       <h2>Связанные лекции</h2>
       <div className="list" style={{ marginTop: 6 }}>
-        {selected.map((l) => (
-          <div key={l.id} className="c-ticket-source-row">
-            <SubjectCover seed={course?.cover_seed} size={36} />
+        {rows.map(({ id, lecture: l, course: c }) => (
+          <div key={id} className="c-ticket-source-row">
+            {l ? <SubjectCover seed={c?.cover_seed} size={36} /> : <SubjectCover size={36} />}
             <div className="c-ticket-source-tx">
-              <span className="t">{lectureTitle(l)}</span>
-              <span className="m">
-                {l.number ? `Лекция ${l.number}` : "Лекция"}
-                {course ? ` · ${courseName(course)}` : ""}
-              </span>
+              <span className="t">{l ? lectureTitle(l) : "Лекция недоступна"}</span>
+              {l && (
+                <span className="m">
+                  {l.number ? `Лекция ${l.number}` : "Лекция"}
+                  {c ? ` · ${courseName(c)}` : ""}
+                </span>
+              )}
             </div>
             <button
               type="button"
               className="c-ticket-source-remove"
-              aria-label={`Отвязать «${lectureTitle(l)}»`}
-              onClick={() => remove(l.id)}
+              aria-label={l ? `Отвязать «${lectureTitle(l)}»` : "Убрать недоступную лекцию"}
+              onClick={() => remove(id)}
             >
               <X size={16} aria-hidden="true" />
             </button>
@@ -68,38 +72,23 @@ export default function TicketSourcesPanel({ lectures, selectedIds, onChange, co
         ))}
       </div>
       <div className="c-ticket-source-pick">
-        {picking ? (
-          <>
-            <input
-              className="c-ticket-source-pick-input"
-              autoFocus
-              placeholder="Найти лекцию…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onBlur={() => window.setTimeout(() => setPicking(false), 150)}
-            />
-            {results.length > 0 && (
-              <div className="c-pop c-menu c-ticket-source-pick-menu" role="listbox">
-                {results.map((l) => (
-                  <button
-                    key={l.id}
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => add(l.id)}
-                  >
-                    {lectureTitle(l)}
-                  </button>
-                ))}
-              </div>
-            )}
-          </>
-        ) : (
-          <Button variant="secondary" onClick={() => setPicking(true)}>
-            <Icon name="plus" size={18} />
-            Привязать лекцию
-          </Button>
-        )}
+        <Button variant="secondary" onClick={() => setPicking(true)}>
+          <Icon name="plus" size={18} />
+          Привязать лекцию
+        </Button>
       </div>
+      <LecturePickerDialog
+        open={picking}
+        onClose={() => setPicking(false)}
+        ticketNumber={ticketNumber}
+        mine={lectures}
+        course={course}
+        opened={opened}
+        selectedIds={selectedIds}
+        onSave={async (ids) => {
+          await onChange(ids);
+        }}
+      />
     </div>
   );
 }
