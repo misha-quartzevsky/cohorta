@@ -15,7 +15,9 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import TaskRowNew from "../components/tasks/TaskRowNew";
-import { Button, Pills, EmptyState, SubjectCover } from "../ui";
+import { Button, Pills, EmptyState, SubjectCover, Toggletip } from "../ui";
+import PeriodSelect from "../components/lectures/PeriodSelect";
+import { useLecturePeriod } from "../hooks/useLecturePeriod";
 import { useTasks } from "../hooks/useTasks";
 import { useReviewSuggestions } from "../hooks/useReviewSuggestions";
 import type { ReviewSuggestion } from "../lib/getReviewSuggestions";
@@ -23,7 +25,7 @@ import { fetchCourses } from "../services/courseService";
 import type { Course, Task } from "../lib/types";
 import { courseName } from "../lib/types";
 import { todayStr, fromDateStr, addDays, toDateStr } from "../lib/localDate";
-import { isOpen, isOverdue } from "../lib/taskView";
+import { isOpen, isOverdue, taskInPeriod } from "../lib/taskView";
 import { parseQuickTask, type SubjectRef } from "../lib/parseQuickTask";
 import { openSelect } from "../lib/openSelect";
 import { pluralRu } from "../lib/format";
@@ -37,12 +39,19 @@ const EXAMPLES = [
 ];
 
 export default function TasksPageNew() {
-  const { tasks, loading, error, createTask, updateTask, setDone, deleteTask } = useTasks();
+  const { tasks: allTasks, loading, error, createTask, updateTask, setDone, deleteTask } = useTasks();
 
   const [courses, setCourses] = useState<Course[]>([]);
   useEffect(() => {
     void fetchCourses().then(setCourses).catch(() => setCourses([]));
   }, []);
+
+  // Период (Screen-period-lists): задача относится к периоду своего предмета, без предмета видна всегда.
+  const period = useLecturePeriod("tasks");
+  const tasks = useMemo(
+    () => allTasks.filter((t) => taskInPeriod(t, courses, period.value)),
+    [allTasks, courses, period.value]
+  );
 
   const dismissedOrDoneDedupeKeys = useMemo(
     () =>
@@ -134,6 +143,10 @@ export default function TasksPageNew() {
               `, ${overdueCount} ${pluralRu(overdueCount, ["просрочена", "просрочено", "просрочено"])}`}
           </span>
         </div>
+        <div className="c-tasks-head-end">
+          <PeriodSelect popover accent={!period.isCurrent} options={period.options} value={period.value} onChange={period.setValue} />
+          <TasksHint />
+        </div>
       </div>
       <div className="c-tasks-m-head">
         <h1>Задачи</h1>
@@ -141,6 +154,7 @@ export default function TasksPageNew() {
           {allCount} {pluralRu(allCount, ["открытая", "открытые", "открытых"])}
           {overdueCount > 0 && `, ${overdueCount} просрочено`}
         </span>
+        <PeriodSelect options={period.options} value={period.value} onChange={period.setValue} className="c-tasks-m-period" />
       </div>
 
       {error && <p style={{ color: "var(--danger-text)", fontSize: 14 }}>{error}</p>}
@@ -428,5 +442,16 @@ function Group({ title, danger, children }: { title: string; danger?: boolean; c
       <div className={`c-task-group-title${danger ? " danger" : ""}`}>{title}</div>
       <div className="c-task-list">{children}</div>
     </div>
+  );
+}
+
+/** Лампочка в шапке: что за строки «Предложено» (spec 5.3). */
+function TasksHint() {
+  return (
+    <Toggletip label="Задачи из лекций" align="right">
+      <strong>Задачи из лекций.</strong> Рядом с твоими задачами мы предлагаем пройти квиз по вчерашней лекции
+      и повторить те, что плохо запомнились или давно не открывались. Такие строки помечены «Предложено» и без
+      срока. Отметь галочкой — она станет обычной выполненной задачей. Ненужную можно скрыть.
+    </Toggletip>
   );
 }

@@ -39,3 +39,19 @@ export function dueLabel(due: string, today: string = todayStr()): string {
   // В ближайшую неделю показываем день недели для ориентира.
   return within7 ? `${WD_SHORT[d.getDay()]}, ${withYear}` : withYear;
 }
+
+/**
+ * Задача попадает в период по периоду своего предмета; задача без предмета
+ * (и с предметом, которого нет в списке) видна в любом периоде.
+ */
+export function taskInPeriod(
+  task: Task,
+  courses: { id: string; semesters?: string }[],
+  period: string
+): boolean {
+  if (period === "all") return true;
+  if (!task.subject) return true;
+  const course = courses.find((c) => c.id === task.subject);
+  if (!course) return true;
+  return String(course.semesters ?? "") === period;
+}
