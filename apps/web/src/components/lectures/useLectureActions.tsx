@@ -1,0 +1,246 @@
+/**
+ * Меню лекции «···» и его окна (Screen-lecture-menu): переименовать на месте,
+ * перенести в предмет, дублировать, скачать .md, удалить. «Доступ» есть только
+ * у владельца в режиме «Группа» — экрана доступа ещё нет (волна C), пункта нет.
+ * Всё, что можно вернуть, даёт «Отменить» в тосте.
+ */
+
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { Button, Icon, Menu, Modal, SubjectCover } from "../../ui";
+import { useToast } from "../ui/Toast";
+import { useUndo } from "../../lib/undoContext";
+import { useSemester } from "../../lib/semesterContext";
+import { pickActiveSemester } from "../../lib/activeSemester";
+import { fetchCourses } from "../../services/courseService";
+import { deleteLecture } from "../../services/lectureService";
+import {
+  downloadLectureMarkdown,
+  duplicateLecture,
+  moveLecture,
+  renameLecture,
+} from "../../services/lectureActions";
+import {
+  courseName,
+  courseSemesterId,
+  lectureCourseId,
+  lectureHref,
+  lectureTitle,
+  semesterSlug,
+  type Course,
+  type Lecture,
+} from "../../lib/types";
+import { notifyLecturesChanged } from "../../lib/lecturesChanged";
+
+export function useLectureActions() {
+  const navigate = useNavigate();
+  const toast = useToast();
+  const { scheduleDelete, isPending } = useUndo();
+  const { semesters, current } = useSemester();
+  const active = current ?? pickActiveSemester(semesters);
+  const semSlug = active ? semesterSlug(active) : "";
+
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [moveFor, setMoveFor] = useState<Lecture | null>(null);
+  const [deleteFor, setDeleteFor] = useState<Lecture | null>(null);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [picked, setPicked] = useState("");
+
+  useEffect(() => {
+    if (!moveFor) return;
+    void fetchCourses()
+      .then(setCourses)
+      .catch(() => {});
+  }, [moveFor]);
+
+  const commitRename = useCallback(
+    async (lecture: Lecture, value: string) => {
+      setRenamingId(null);
+      const title = value.trim();
+      if (!title || title === lectureTitle(lecture)) return;
+      try {
+        await renameLecture(lecture.id, title);
+      } catch {
+        toast.show("Не удалось переименовать лекцию");
+      }
+    },
+    [toast]
+  );
+
+  /** Перенос с «Отменить»: возвращает лекцию в прежний предмет (или в черновики). */
+  const move = useCallback(
+    async (lecture: Lecture, course: Course) => {
+      const before = lectureCourseId(lecture);
+      try {
+        await moveLecture(lecture.id, course.id);
+      } catch {
+        toast.show("Не удалось перенести лекцию");
+        return;
+      }
+      toast.show(`Перенесено в «${courseName(course)}»`, {
+        label: "Отменить",
+        onClick: () => void moveLecture(lecture.id, before),
+      });
+    },
+    [toast]
+  );
+
+  const menu = (lecture: Lecture): ReactNode => (
+    <Menu
+      width={280}
+      aria-label={`Действия: ${lectureTitle(lecture)}`}
+      trigger={(p) => (
+        <button
+          type="button"
+          className="c-lec-more"
+          aria-label={`Меню лекции «${lectureTitle(lecture)}»`}
+          onClick={(e) => {
+            e.stopPropagation();
+            p.onClick();
+          }}
+          ref={p.ref}
+          aria-expanded={p["aria-expanded"]}
+          aria-haspopup={p["aria-haspopup"]}
+        >
+          <Icon name="dots" size={18} />
+        </button>
+      )}
+      items={[
+        { label: "Переименовать", icon: <Icon name="edit" size={18} />, onClick: () => setRenamingId(lecture.id) },
+        {
+          label: "Перенести в предмет",
+          icon: <Icon name="folder" size={18} />,
+          onClick: () => {
+            setPicked("");
+            setMoveFor(lecture);
+          },
+        },
+        {
+          label: "Дублировать",
+          icon: <Icon name="copy" size={18} />,
+          onClick: () =>
+            void duplicateLecture(lecture)
+              .then((copy) =>
+                toast.show("Копия создана", {
+                  label: "Открыть",
+                  onClick: () => navigate(lectureHref({ ...copy, expand: lecture.expand }, semSlug)),
+                })
+              )
+              .catch(() => toast.show("Не удалось создать копию")),
+        },
+        { label: "Скачать, .md", icon: <Icon name="download" size={18} />, onClick: () => downloadLectureMarkdown(lecture) },
+        { label: "Удалить", icon: <Icon name="trash" size={18} />, danger: true, separatorBefore: true, onClick: () => setDeleteFor(lecture) },
+      ]}
+    />
+  );
+
+  const semesterCourses = courses.filter((c) => !active || courseSemesterId(c) === active.id);
+  const currentCourseId = moveFor ? lectureCourseId(moveFor) : "";
+  const currentCourse = courses.find((c) => c.id === currentCourseId);
+
+  const dialogs = (
+    <>
+      <Modal open={!!moveFor} onClose={() => setMoveFor(null)} title="Перенести в предмет" className="c-sheet-dialog c-move" bare>
+        {moveFor && (
+          <>
+            <h2 className="c-move-title">Перенести в предмет</h2>
+            <p className="c-move-sub">
+              «{lectureTitle(moveFor)}».{" "}
+              {currentCourse ? `Сейчас лекция в предмете «${courseName(currentCourse)}».` : "Сейчас лекция без предмета."}
+            </p>
+            <div className="c-move-list" role="radiogroup" aria-label="Предмет">
+              {semesterCourses.map((c) => {
+                const here = c.id === currentCourseId;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={picked === c.id}
+                    disabled={here}
+                    className={picked === c.id ? "on" : ""}
+                    onClick={() => setPicked(c.id)}
+                  >
+                    <span className="radio" aria-hidden="true" />
+                    <SubjectCover seed={c.cover_seed} size={22} />
+                    <span className="name">{courseName(c)}</span>
+                    {here && <span className="here">сейчас здесь</span>}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                className="new"
+                onClick={() => {
+                  setMoveFor(null);
+                  navigate(`/s/${semSlug}/courses`);
+                }}
+              >
+                <Icon name="plus" size={18} />
+                Новый предмет
+              </button>
+            </div>
+            <div className="c-move-foot">
+              <Button variant="ghost" onClick={() => setMoveFor(null)}>
+                Отмена
+              </Button>
+              <Button
+                variant="primary"
+                disabled={!picked}
+                onClick={() => {
+                  const target = semesterCourses.find((c) => c.id === picked);
+                  const lec = moveFor;
+                  setMoveFor(null);
+                  if (target) void move(lec, target);
+                }}
+              >
+                Перенести
+              </Button>
+            </div>
+          </>
+        )}
+      </Modal>
+
+      <Modal open={!!deleteFor} onClose={() => setDeleteFor(null)} title="Удалить лекцию?" className="c-sheet-dialog c-move" bare>
+        {deleteFor && (
+          <>
+            <h2 className="c-move-title">Удалить лекцию?</h2>
+            <p className="c-move-sub">
+              «{lectureTitle(deleteFor)}» попадёт в корзину на 30 дней. Одногруппники потеряют доступ сразу; при
+              восстановлении доступ вернётся.
+            </p>
+            <div className="c-move-foot">
+              <Button variant="ghost" onClick={() => setDeleteFor(null)}>
+                Отмена
+              </Button>
+              <Button
+                variant="danger"
+                onClick={() => {
+                  const lec = deleteFor;
+                  setDeleteFor(null);
+                  scheduleDelete(`lecture:${lec.id}`, "Лекция в корзине", async () => {
+                    await deleteLecture(lec.id);
+                    notifyLecturesChanged();
+                  });
+                }}
+              >
+                Удалить
+              </Button>
+            </div>
+          </>
+        )}
+      </Modal>
+    </>
+  );
+
+  return {
+    renamingId,
+    cancelRename: () => setRenamingId(null),
+    commitRename,
+    menu,
+    dialogs,
+    move,
+    isHidden: (lecture: Lecture) => isPending(`lecture:${lecture.id}`),
+  };
+}

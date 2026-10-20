@@ -40,6 +40,7 @@ import { Button, Icon, EmptyState, List, ListRow, Pills, Segmented, SubjectCover
 import type { LectureListStatusKey } from "../lib/computeLectureReadiness";
 import LectureGroupList from "../components/lectures/LectureGroupList";
 import PeriodSelect from "../components/lectures/PeriodSelect";
+import DraftCover from "../components/lectures/DraftCover";
 
 type StatusFilter = "all" | LectureListStatusKey;
 type Tab = "all" | "subjects";
@@ -72,9 +73,8 @@ export default function LecturesAllPage() {
   const semSlug = activeSemester ? semesterSlug(activeSemester) : "";
   const { rows, loading, error } = useLecturesOverview();
   const { openSearch } = useUiShell();
-  // На компьютере выбора периода в макете нет — показываем все периоды;
-  // на телефоне по умолчанию текущий (Screen-m-lectures-all).
-  const period = useLecturePeriod(!phone);
+  // И на компьютере (Screen-lectures-period), и на телефоне по умолчанию текущий период.
+  const period = useLecturePeriod(false);
   const [courses, setCourses] = useState<Course[]>([]);
   useEffect(() => {
     void fetchCourses()
@@ -245,15 +245,18 @@ export default function LecturesAllPage() {
           value={statusFilter}
           onChange={setStatusFilter}
         />
-        <div className="c-lec-search">
-          <Icon name="search" size={18} />
-          <input
-            type="search"
-            placeholder="Искать по названию"
-            aria-label="Искать по названию"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+        <div className="c-lec-filters-end">
+          <PeriodSelect popover options={period.options} value={period.value} onChange={period.setValue} />
+          <div className="c-lec-search">
+            <Icon name="search" size={18} />
+            <input
+              type="search"
+              placeholder="Искать по названию"
+              aria-label="Искать по названию"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
@@ -310,12 +313,27 @@ function SubjectsTab({
     };
   }, [courses]);
 
+  const draftsCount = rows.filter((r) => !lectureCourseId(r.lecture)).length;
   const lectureCount = (courseId: string) =>
     rows.filter((r) => lectureCourseId(r.lecture) === courseId).length;
 
   return (
     <div className="c-lec-m-body">
       <List className="c-lec-list c-lec-subjects">
+        {draftsCount > 0 && (
+          <ListRow
+            onClick={() => navigate(`/s/${semSlug}/drafts`)}
+            cover={<DraftCover size={40} />}
+            title="Черновики"
+            meta="Лекции без предмета"
+            right={
+              <>
+                <span className="c-lec-subject-count">{draftsCount}</span>
+                <Icon name="chev" size={18} className="c-lec-chev" />
+              </>
+            }
+          />
+        )}
         {courses.map((c) => {
           const n = pairs[c.id] ?? 0;
           const sub = [

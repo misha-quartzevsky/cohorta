@@ -12,6 +12,7 @@ import { useCallback } from "react";
 import type { Lecture } from "../lib/types";
 import { fetchRecentLectures as fetchRecentLecturesService } from "../services/lectureService";
 import { useAsyncData } from "./useAsyncData";
+import { useLecturesChanged } from "../lib/lecturesChanged";
 
 /** Result type returned by the hook. */
 export interface UseRecentLecturesResult {
@@ -36,5 +37,6 @@ export function useRecentLectures(
   );
   const { data, loading, error, refetch } = useAsyncData<Lecture[]>(fetcher);
 
+  useLecturesChanged(refetch);
   return { lectures: data ?? [], loading, error, refetch };
 }

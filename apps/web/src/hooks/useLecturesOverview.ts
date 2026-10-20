@@ -23,6 +23,7 @@ import {
   type ReadinessResult,
 } from "../lib/computeLectureReadiness";
 import { useAsyncData } from "./useAsyncData";
+import { useLecturesChanged } from "../lib/lecturesChanged";
 
 export interface LectureOverviewRow {
   lecture: Lecture;
@@ -50,5 +51,6 @@ async function loadOverview(): Promise<LectureOverviewRow[]> {
 export function useLecturesOverview() {
   const fetcher = useCallback(() => loadOverview(), []);
   const { data, loading, error, refetch } = useAsyncData<LectureOverviewRow[]>(fetcher);
+  useLecturesChanged(refetch);
   return { rows: data ?? [], loading, error, refetch };
 }

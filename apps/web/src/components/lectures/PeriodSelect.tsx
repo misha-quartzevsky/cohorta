@@ -1,12 +1,13 @@
 /**
- * Выбор периода: кнопка «Семестр 3 ⌄» и окно «Период» (Screen-m-lectures-period).
- * На телефоне окно выезжает снизу шторкой, на компьютере то же окно по центру
- * (раскрытый список на десктопе в макетах не нарисован).
+ * Выбор периода. Телефон (Screen-m-lectures-period): кнопка «Семестр 3 ⌄» и
+ * шторка «Период». Компьютер (Screen-lectures-period): кнопка «Период Семестр 3 ⌄»
+ * и список под ней — у текущего «текущий ✓», внизу «Все периоды».
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Icon, Modal } from "../../ui";
+import { ALL_PERIODS } from "../../lib/lectureListRules";
 
 export interface PeriodOption {
   value: string;
@@ -18,13 +19,86 @@ interface Props {
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  /** Список под кнопкой (компьютер) вместо шторки. */
+  popover?: boolean;
 }
 
-export default function PeriodSelect({ options, value, onChange, className }: Props) {
+const CURRENT_SUFFIX = /, сейчас$/;
+
+export default function PeriodSelect({ options, value, onChange, className, popover }: Props) {
   const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
   const current = options.find((o) => o.value === value);
-  // На кнопке — короткая подпись без «, сейчас».
-  const buttonLabel = (current?.label ?? "Период").replace(/, сейчас$/, "");
+  const short = (o: PeriodOption) => o.label.replace(CURRENT_SUFFIX, "");
+  const buttonLabel = popover
+    ? value === ALL_PERIODS
+      ? "Все периоды"
+      : current
+        ? short(current)
+        : "Период"
+    : (current ? short(current) : "Период");
+
+  useEffect(() => {
+    if (!popover || !open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [popover, open]);
+
+  if (popover) {
+    return (
+      <div className="c-lec-period-wrap" ref={rootRef}>
+        <button
+          type="button"
+          className={`c-lec-period wide${className ? ` ${className}` : ""}`}
+          onClick={() => setOpen((o) => !o)}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-label={`Период: ${buttonLabel}`}
+        >
+          <span className="lbl">Период</span>
+          <b>{buttonLabel}</b>
+          <Icon name="chevd" size={16} />
+        </button>
+        {open && (
+          <div className="c-pop c-lec-period-list" role="listbox" aria-label="Период">
+            {options.map((o) => {
+              const isCurrent = CURRENT_SUFFIX.test(o.label);
+              const on = o.value === value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  role="option"
+                  aria-selected={on}
+                  className={on ? "on" : ""}
+                  onClick={() => {
+                    onChange(o.value);
+                    setOpen(false);
+                  }}
+                >
+                  <span>{o.value === ALL_PERIODS ? "Все периоды" : short(o)}</span>
+                  <span className="hint">
+                    {isCurrent && "текущий"}
+                    {on && <Icon name="check" size={16} />}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <>

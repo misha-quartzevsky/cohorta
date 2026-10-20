@@ -16,6 +16,7 @@
  */
 
 import { hidesMobileTopbar } from "../lib/lectureListRules";
+import DraftCover from "./lectures/DraftCover";
 import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { useUiShell } from "../lib/uiShellContext";
@@ -225,7 +226,7 @@ function SidebarCourses({ semSlug, onNavigate }: { semSlug: string; onNavigate: 
             onClick={onNavigate}
             className={({ isActive }) => (isActive ? "on" : "")}
           >
-            <SubjectCover seed={null} size={22} />
+            <DraftCover size={22} />
             <span className="name">Черновики</span>
             <span className="count">{draftsCount}</span>
           </NavLink>

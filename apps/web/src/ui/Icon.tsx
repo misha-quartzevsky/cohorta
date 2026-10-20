@@ -36,6 +36,10 @@ const PATHS: Record<string, string> = {
   exam: '<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>',
   user: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>',
   toc: '<path d="M3 6h18M3 12h12M3 18h8"/>',
+  // Меню лекции (Screen-lecture-menu), в icons.md пока нет — предложить добавить в дизайн-систему.
+  folder: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
   // Нарисованы в Screen-m-profile-draft.dc.html, в icons.md пока нет —
   // предложить добавить в дизайн-систему.
   // Треугольник «ошибка» из Screen-quiz-states (окно «Не получилось собрать квиз»).

@@ -23,6 +23,7 @@ import CoursesPage from "./pages/CoursesPage";
 import LecturesPage from "./pages/LecturesPage";
 import LecturesAllPage from "./pages/LecturesAllPage";
 import SubjectLecturesPage from "./pages/SubjectLecturesPage";
+import DraftsPage from "./pages/DraftsPage";
 import LectureView from "./pages/LectureView";
 import NotesPage from "./pages/NotesPage";
 import NoteCreate from "./pages/NoteCreate";
@@ -191,6 +192,8 @@ function App() {
               {/* Экран «Моя группа» — статический сегмент "group"
                   (RESERVED_SLUGS), тоже до :courseSlug. */}
               <Route path="/s/:semesterSlug/group" element={<GroupPage />} />
+              {/* «Черновики» — предмет по умолчанию для лекций без предмета (B2). */}
+              {isNewUI() && <Route path="/s/:semesterSlug/drafts" element={<DraftsPage />} />}
               <Route
                 path="/s/:semesterSlug/:courseSlug"
                 element={isNewUI() ? <SubjectLecturesPage /> : <LecturesPage />}
