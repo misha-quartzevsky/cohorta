@@ -348,7 +348,35 @@ function TaskList({
   const future = open.filter((t) => t.due && t.due > today).sort((a, b) => (a.due ?? "").localeCompare(b.due ?? ""));
   const noDue = open.filter((t) => !t.due);
 
+  // Задач нет вовсе: большая плашка на вкладках «Сегодня», «Скоро» и «Все».
+  const noOpenTasks = open.length === 0 && suggestions.length === 0;
+  const emptyState = (
+    <EmptyState
+            icon="task"
+            title="Задач пока нет"
+            description="Добавь первую — или начни с примера."
+            action={
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {EXAMPLES.map((ex) => (
+                    <button
+                      key={ex}
+                      type="button"
+                      className="c-tasks-quickadd-subject"
+                      onClick={() => onExample(ex)}
+                    >
+                      {ex}
+                    </button>
+                  ))}
+                </div>
+                <Button onClick={onFocusInput}>Создать задачу</Button>
+              </div>
+            }
+          />
+  );
+
   if (tab === "today") {
+    if (noOpenTasks) return emptyState;
     if (overdue.length + todayTasks.length + suggestions.length === 0)
       return <p style={{ fontSize: 14, color: "var(--ink-3)" }}>На сегодня задач нет.</p>;
     return (
@@ -366,38 +394,14 @@ function TaskList({
 
   if (tab === "soon") {
     const soon = future.filter((t) => (t.due ?? "") <= in14);
+    if (open.length === 0) return emptyState;
     if (soon.length === 0)
       return <p style={{ fontSize: 14, color: "var(--ink-3)" }}>На ближайшие две недели задач нет.</p>;
     return <Group title="Завтра и позже">{soon.map(row)}</Group>;
   }
 
   // tab === "all"
-  if (open.length === 0 && suggestions.length === 0) {
-    return (
-      <EmptyState
-        icon="task"
-        title="Задач пока нет"
-        description="Добавь первую — или начни с примера."
-        action={
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {EXAMPLES.map((ex) => (
-                <button
-                  key={ex}
-                  type="button"
-                  className="c-tasks-quickadd-subject"
-                  onClick={() => onExample(ex)}
-                >
-                  {ex}
-                </button>
-              ))}
-            </div>
-            <Button onClick={onFocusInput}>Создать задачу</Button>
-          </div>
-        }
-      />
-    );
-  }
+  if (noOpenTasks) return emptyState;
 
   return (
     <>
