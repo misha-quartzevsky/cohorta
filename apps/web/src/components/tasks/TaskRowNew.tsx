@@ -99,7 +99,7 @@ export default function TaskRowNew({
         )}
       </div>
 
-      <div style={{ position: "relative" }}>
+      <div className="c-task-row-due-wrap" style={{ position: "relative" }}>
         <button
           type="button"
           className={`c-task-row-due${overdue ? " overdue" : ""}`}

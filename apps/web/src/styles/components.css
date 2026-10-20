@@ -3793,3 +3793,44 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
 @media (min-width: 1024px) {
   .c-pairs .c-task-row-menu-btn { width: var(--control-md); height: var(--control-md); border: 1px solid var(--line-strong); background: var(--surface); }
 }
+
+/* ---------- Телефон: правки по записи iPhone 13 (mobile-fixes) ---------- */
+/* iOS Safari увеличивает страницу при фокусе в поле со шрифтом меньше 16 px — шторка и поиск
+   «уезжают» вправо. На телефоне и планшете поля 16 px. */
+@media (max-width: 1023px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea { font-size: 16px !important; }
+}
+
+/* «Продолжить» на Главной (Screen-dashboard-mobile): вся карточка нажимается, справа стрелка, без кнопки. */
+.c-dash-continue { cursor: pointer; }
+.c-dash-continue-chev { display: none; color: var(--ink-3); flex: none; }
+@media (max-width: 1023px) {
+  .c-dash-continue { padding: var(--space-4); gap: var(--space-3); }
+  .c-dash-continue-btn { display: none; }
+  .c-dash-continue-chev { display: inline-flex; }
+  .c-dash-continue-tx .t,
+  .c-dash-continue-tx .m { overflow-wrap: anywhere; }
+}
+
+@media (max-width: 767px) {
+  /* Задачи: дата под названием, а не рядом; четыре вкладки помещаются в 358 px. */
+  .c-task-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "c m x" ". d .";
+    align-items: start;
+    column-gap: var(--space-3);
+    row-gap: 2px;
+    padding: var(--space-3) var(--space-4);
+  }
+  .c-task-row > .c-check { grid-area: c; margin-top: 1px; }
+  .c-task-row-main { grid-area: m; }
+  .c-task-row-due-wrap { grid-area: d; }
+  .c-task-row > .c-task-row-menu-btn { grid-area: x; align-self: start; }
+  .c-task-row-due { height: auto; padding: 4px 0; }
+  .c-tasks .c-pills span, .c-pairs .c-pills span { padding: 0 12px; font-size: 13px; }
+  .c-tasks .c-pills, .c-pairs .c-pills { gap: 6px; }
+}
+.c-sheet-dialog .c-field { width: 100%; }

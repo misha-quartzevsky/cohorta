@@ -34,6 +34,7 @@ async function loadSuggestions(existingDedupeKeys: ReadonlySet<string>): Promise
     return {
       id: lecture.id,
       title: lectureTitle(lecture),
+      subjectName: lecture.expand?.field?.name,
       lectureDate: lecture.lecture_date ? pbDateOnly(lecture.lecture_date) : null,
       updatedDate,
       hasQuiz: questions.length > 0,

@@ -23,8 +23,8 @@ interface Item {
  */
 export default function MorePage() {
   const navigate = useNavigate();
-  const { tasks } = useTasks();
-  const { decks } = useDecks();
+  const { tasks, loading: tasksLoading, error: tasksError } = useTasks();
+  const { decks, loading: decksLoading, error: decksError } = useDecks();
 
   const open = tasks.filter(isOpen);
   const overdue = open.filter((t) => isOverdue(t)).length;
@@ -34,18 +34,26 @@ export default function MorePage() {
     {
       icon: "task",
       title: "Задачи",
-      meta:
-        `${open.length} ${pluralRu(open.length, ["открытая", "открытые", "открытых"])}` +
+      // Пока данные грузятся (или не загрузились), числа нет: «0» вводил в заблуждение.
+      meta: tasksLoading
+        ? " "
+        : tasksError
+          ? "Не удалось загрузить"
+          : `${open.length} ${pluralRu(open.length, ["открытая", "открытые", "открытых"])}` +
         (overdue > 0
           ? `, ${overdue} ${pluralRu(overdue, ["просрочена", "просрочено", "просрочено"])}`
           : ""),
-      badge: overdue,
+      badge: tasksLoading || tasksError ? 0 : overdue,
       onClick: () => navigate("/tasks"),
     },
     {
       icon: "cards",
       title: "Карточки",
-      meta: `${decksN} ${pluralRu(decksN, ["колода", "колоды", "колод"])}`,
+      meta: decksLoading
+        ? " "
+        : decksError
+          ? "Не удалось загрузить"
+          : `${decksN} ${pluralRu(decksN, ["колода", "колоды", "колод"])}`,
       onClick: () => navigate("/decks"),
     },
   ];

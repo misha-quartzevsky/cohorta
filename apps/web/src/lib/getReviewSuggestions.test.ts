@@ -159,4 +159,31 @@ describe("getReviewSuggestions", () => {
   it("пустой список лекций — пустой результат", () => {
     expect(getReviewSuggestions([], "2026-10-20")).toEqual([]);
   });
+
+  it("три вчерашние лекции дают три разные строки с названиями лекций", () => {
+    const lectures = ["Предел", "Производная", "Интеграл"].map((title, n) =>
+      lecture({ id: `l${n}`, title, lectureDate: "2026-10-19" })
+    );
+    const result = getReviewSuggestions(lectures, "2026-10-20");
+    expect(result.map((r) => r.title)).toEqual([
+      "Квиз по вчерашней лекции: Предел",
+      "Квиз по вчерашней лекции: Производная",
+      "Квиз по вчерашней лекции: Интеграл",
+    ]);
+  });
+
+  it("одна лекция, пришедшая дважды, даёт одну строку", () => {
+    const l = lecture({ id: "l1", title: "Предел", lectureDate: "2026-10-19" });
+    expect(getReviewSuggestions([l, l], "2026-10-20")).toHaveLength(1);
+  });
+
+  it("название предмета различает лекции с одинаковым названием", () => {
+    const a = lecture({ id: "a", title: "Лекция 1", subjectName: "Статистика", lectureDate: "2026-10-19" });
+    const b = lecture({ id: "b", title: "Лекция 1", subjectName: "Философия", lectureDate: "2026-10-19" });
+    const titles = getReviewSuggestions([a, b], "2026-10-20").map((r) => r.title);
+    expect(titles).toEqual([
+      "Квиз по вчерашней лекции: Лекция 1 · Статистика",
+      "Квиз по вчерашней лекции: Лекция 1 · Философия",
+    ]);
+  });
 });

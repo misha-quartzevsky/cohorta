@@ -14,6 +14,8 @@ export type SuggestionKind = "quiz_yesterday" | "review" | "stale";
 export interface SuggestionLecture {
   id: string;
   title: string;
+  /** Название предмета лекции: различает лекции с одинаковым названием («Лекция 1»). */
+  subjectName?: string;
   /** YYYY-MM-DD, дата конкретной пары/конспекта. Может отсутствовать. */
   lectureDate: string | null;
   /** YYYY-MM-DD, последняя правка записи (PocketBase `updated`). */
@@ -41,6 +43,10 @@ const REVIEW_STALE_DAYS = 3;
 const NOT_OPENED_DAYS = 7;
 const MAX_SUGGESTIONS = 3;
 
+function withSubject(l: SuggestionLecture): string {
+  return l.subjectName ? `${l.title} · ${l.subjectName}` : l.title;
+}
+
 function daysSince(dateStr: string | null, today: Date): number {
   if (!dateStr) return Infinity;
   const ms = today.getTime() - fromDateStr(dateStr).getTime();
@@ -55,10 +61,12 @@ function daysSince(dateStr: string | null, today: Date): number {
  * или скрыты (`dismissed=true`) и поэтому не должны показываться снова.
  */
 export function getReviewSuggestions(
-  lectures: SuggestionLecture[],
+  allLectures: SuggestionLecture[],
   todayStr: string,
   existingDedupeKeys: ReadonlySet<string> = new Set()
 ): ReviewSuggestion[] {
+  // Одна лекция — одна запись: повторы во входных данных не должны давать одинаковые строки.
+  const lectures = allLectures.filter((l, i) => allLectures.findIndex((x) => x.id === l.id) === i);
   const today = fromDateStr(todayStr);
   const yesterdayStr = toDateStr(addDays(today, -1));
 
@@ -77,7 +85,7 @@ export function getReviewSuggestions(
     .map((l) => ({
       kind: "quiz_yesterday" as const,
       lectureId: l.id,
-      title: "Квиз по вчерашней лекции · 8 вопросов",
+      title: `Квиз по вчерашней лекции: ${withSubject(l)}`,
       dedupeKey: dedupeKey("quiz_yesterday", l.id),
     }));
 
@@ -98,7 +106,7 @@ export function getReviewSuggestions(
     .map((l) => ({
       kind: "review" as const,
       lectureId: l.id,
-      title: `Повторить: ${l.title}`,
+      title: `Повторить: ${withSubject(l)}`,
       dedupeKey: dedupeKey("review", l.id),
     }));
 
@@ -117,7 +125,7 @@ export function getReviewSuggestions(
     .map((l) => ({
       kind: "stale" as const,
       lectureId: l.id,
-      title: `Давно не открывали: ${l.title}`,
+      title: `Давно не открывали: ${withSubject(l)}`,
       dedupeKey: dedupeKey("stale", l.id),
     }));
 

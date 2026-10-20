@@ -184,7 +184,15 @@ export default function DashboardNew() {
             )}
 
             {lastVisited ? (
-              <div className="c-dash-card c-dash-continue">
+              <div
+                className="c-dash-card c-dash-continue"
+                role="link"
+                tabIndex={0}
+                onClick={() => navigate(lastVisited.to)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") navigate(lastVisited.to);
+                }}
+              >
                 <SubjectCover seed={lastVisited.courseCoverSeed} size={48} />
                 <div className="c-dash-continue-tx">
                   <span className="label">Продолжить</span>
@@ -194,9 +202,10 @@ export default function DashboardNew() {
                     {timeAgo(lastVisited.savedAt)}
                   </span>
                 </div>
-                <Button variant="primary" onClick={() => navigate(lastVisited.to)}>
+                <Button variant="primary" className="c-dash-continue-btn" onClick={(e) => { e.stopPropagation(); navigate(lastVisited.to); }}>
                   Открыть лекцию
                 </Button>
+                <Icon name="chev" size={18} className="c-dash-continue-chev" />
               </div>
             ) : null}
 
