@@ -25,6 +25,7 @@ import {
   courseName,
   courseSemesterId,
   lectureCourseId,
+  type Course,
   lectureSlug,
   lectureTitle,
   semesterLabel,
@@ -51,11 +52,20 @@ const STATUS_LABELS: { key: StatusFilter; label: string }[] = [
   { key: "not_started", label: "Не начато" },
 ];
 
+/** «Черновики»: предмет по умолчанию для лекций без предмета (не запись в базе). */
+export const DRAFTS_SLUG = "drafts";
+const DRAFTS_COURSE = { id: "", name: "Черновики" } as Course;
+
 export default function SubjectLecturesPage() {
   const navigate = useNavigate();
   const phone = useMediaQuery("(max-width: 1023px)");
   const { courseSlug: courseSlugParam = "" } = useParams();
-  const { course, loading: courseLoading, error: courseError } = useCourseBySlug(courseSlugParam);
+  const isDrafts = courseSlugParam === DRAFTS_SLUG;
+  const { course: fetchedCourse, loading: fetchedLoading, error: courseError } = useCourseBySlug(
+    isDrafts ? "" : courseSlugParam
+  );
+  const course = isDrafts ? DRAFTS_COURSE : fetchedCourse;
+  const courseLoading = isDrafts ? false : fetchedLoading;
   const { semesters, current } = useSemester();
   const activeSemester = current ?? pickActiveSemester(semesters);
   const semSlug = activeSemester ? semesterSlug(activeSemester) : "";
@@ -77,8 +87,11 @@ export default function SubjectLecturesPage() {
   }, [course, courseSemester, semSlug, courseSlugParam, navigate]);
 
   const courseRows = useMemo(
-    () => (course ? rows.filter((r) => lectureCourseId(r.lecture) === course.id) : []),
-    [rows, course]
+    () =>
+      course
+        ? rows.filter((r) => (isDrafts ? !lectureCourseId(r.lecture) : lectureCourseId(r.lecture) === course.id))
+        : [],
+    [rows, course, isDrafts]
   );
 
   const filtered = useMemo(() => {
@@ -102,6 +115,10 @@ export default function SubjectLecturesPage() {
 
   async function newLecture() {
     if (!course || creating) return;
+    if (isDrafts) {
+      navigate("/note/new");
+      return;
+    }
     setCreating(true);
     setCreateError("");
     try {
@@ -185,6 +202,7 @@ export default function SubjectLecturesPage() {
         <div className="c-lec-m-body">{list}</div>
 
         <div className="c-lec-m-bar">
+          {!isDrafts && (
           <div className="c-seg c-lec-m-tabs" role="tablist" aria-label="Раздел предмета">
             <span role="tab" aria-selected className="on" tabIndex={0}>
               Лекции
@@ -201,6 +219,7 @@ export default function SubjectLecturesPage() {
               Пары и экзамен
             </span>
           </div>
+          )}
           <div className="c-lec-m-filters">
             {periodText && <span className="c-lec-period static">{semesterLabel(courseSemester!)}</span>}
             <div className="c-lec-m-pills" role="tablist" aria-label="Статус">
@@ -248,15 +267,19 @@ export default function SubjectLecturesPage() {
       </div>
 
       <div className="c-lec-filters">
-        <Pills<SubjectTab>
-          aria-label="Раздел предмета"
-          options={tabs}
-          value="lectures"
-          onChange={(v) => {
-            if (v === "pairs") navigate(`${base}/pairs`);
-            else if (v === "exam") navigate(`${base}/exam`);
-          }}
-        />
+        {isDrafts ? (
+          <span />
+        ) : (
+          <Pills<SubjectTab>
+            aria-label="Раздел предмета"
+            options={tabs}
+            value="lectures"
+            onChange={(v) => {
+              if (v === "pairs") navigate(`${base}/pairs`);
+              else if (v === "exam") navigate(`${base}/exam`);
+            }}
+          />
+        )}
         <div className="c-lec-filters-end">
           {courseSemester && <span className="c-lec-period static">{semesterLabel(courseSemester)}</span>}
           <div className="c-lec-search c-lec-search-narrow">

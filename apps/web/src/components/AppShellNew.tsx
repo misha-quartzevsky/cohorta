@@ -71,13 +71,17 @@ function useCourseList() {
   const { lectures } = useRecentLectures(100);
 
   const countByCourse = new Map<string, number>();
+  let draftsCount = 0;
   for (const lec of lectures) {
     const cid = lectureCourseId(lec);
-    if (!cid) continue;
+    if (!cid) {
+      draftsCount += 1;
+      continue;
+    }
     countByCourse.set(cid, (countByCourse.get(cid) ?? 0) + 1);
   }
 
-  return { courses, coursesLoading, countByCourse, totalLectures: lectures.length };
+  return { courses, coursesLoading, countByCourse, draftsCount, totalLectures: lectures.length };
 }
 
 function useSoloNavItems(): NavItem[] {
@@ -202,7 +206,7 @@ function SidebarLectureToc({ courseSlug, onNavigate }: { courseSlug?: string; on
  * семестра с обложкой и числом лекций, «+» ведёт на страницу курсов —
  * создание прямо из сайдбара пока не делаю (форма живёт на странице). */
 function SidebarCourses({ semSlug, onNavigate }: { semSlug: string; onNavigate: () => void }) {
-  const { courses, coursesLoading, countByCourse } = useCourseList();
+  const { courses, coursesLoading, countByCourse, draftsCount } = useCourseList();
   const addHref = `/s/${semSlug}/courses`;
   return (
     <>
@@ -214,6 +218,18 @@ function SidebarCourses({ semSlug, onNavigate }: { semSlug: string; onNavigate: 
       </div>
       <nav className="c-shell-courses" aria-label="Предметы семестра">
         {/* Пустой аккаунт: вместо пустого поля — строка с тем же действием, что у «+». */}
+        {/* «Черновики» — предмет по умолчанию, всегда первый; появляется, когда есть лекция без предмета. */}
+        {draftsCount > 0 && (
+          <NavLink
+            to={`/s/${semSlug}/drafts`}
+            onClick={onNavigate}
+            className={({ isActive }) => (isActive ? "on" : "")}
+          >
+            <SubjectCover seed={null} size={22} />
+            <span className="name">Черновики</span>
+            <span className="count">{draftsCount}</span>
+          </NavLink>
+        )}
         {courses.length === 0 && !coursesLoading && (
           <NavLink to={addHref} onClick={onNavigate} className="c-shell-courses-empty">
             Добавь первый предмет

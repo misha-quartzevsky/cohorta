@@ -31,7 +31,7 @@ interface Props {
 
 export default function LectureGroupList({ rows, semSlug, showSubject }: Props) {
   const navigate = useNavigate();
-  const groups = groupByWeek(rows, (r) => r.lecture.lecture_date);
+  const groups = groupByWeek(rows, (r) => r.lecture.lecture_date || r.lecture.created);
 
   return (
     <div className="c-lec-groups">
@@ -44,8 +44,9 @@ export default function LectureGroupList({ rows, semSlug, showSubject }: Props) 
               const course = lecture.field ? lecture.expand?.field : undefined;
               const subject = course ? courseName(course) : "Без предмета";
               const number = lecture.number ? `Лекция ${lecture.number}` : "";
-              const long = formatDate(lecture.lecture_date, "long");
-              const short = formatDate(lecture.lecture_date, "short");
+              const date = lecture.lecture_date || lecture.created;
+              const long = formatDate(date, "long");
+              const short = formatDate(date, "short");
               return (
                 <ListRow
                   key={lecture.id}
