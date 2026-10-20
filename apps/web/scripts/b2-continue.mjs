@@ -1,0 +1,30 @@
+// «Продолжить» не ведёт на удалённую лекцию: node scripts/b2-continue.mjs. Демо-вход, создаёт и удаляет лекцию.
+import { chromium } from "playwright";
+const BASE = "http://127.0.0.1:5173", PB = "http://127.0.0.1:8090";
+const b = await chromium.launch();
+const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+await p.goto(`${BASE}/login`);
+await p.fill('input[type="email"]', "asyaobraz17@gmail.com");
+await p.fill('input[type="password"]', "12345678");
+await p.click('button[type="submit"]');
+await p.waitForURL(/\/s\//);
+const made = await p.evaluate(async (pb) => {
+  const auth = JSON.parse(localStorage.getItem("pocketbase_auth") || "{}");
+  const h = { "Content-Type": "application/json", Authorization: auth.token };
+  const slug = `zz-continue-${Date.now()}`;
+  const r = await fetch(`${pb}/api/collections/lectures/records`, { method: "POST", headers: h, body: JSON.stringify({ title: "ZZ Продолжить", content: "<p>текст</p>", slug, owner: auth.record?.id }) });
+  return { id: (await r.json()).id, slug, token: auth.token };
+}, PB);
+let ok = true;
+await p.goto(`${BASE}/note/${made.slug}`);
+await p.waitForTimeout(1500);
+await p.goto(`${BASE}/s/demo`);
+const shown = await p.getByText("ZZ Продолжить").first().isVisible().catch(() => false);
+console.log(shown ? "ok   «Продолжить» показывает существующую лекцию" : "FAIL «Продолжить» не показан"); ok = ok && shown;
+await p.evaluate(async ({ pb, id, token }) => { await fetch(`${pb}/api/collections/lectures/records/${id}`, { method: "DELETE", headers: { Authorization: token } }); }, { pb: PB, id: made.id, token: made.token });
+await p.reload();
+await p.waitForTimeout(2000);
+const gone = !(await p.getByText("ZZ Продолжить").count());
+console.log(gone ? "ok   после удаления «Продолжить» пропало" : "FAIL «Продолжить» осталось"); ok = ok && gone;
+await b.close();
+process.exit(ok ? 0 : 1);

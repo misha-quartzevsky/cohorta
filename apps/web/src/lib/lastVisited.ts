@@ -45,3 +45,19 @@ export function writeLastVisited(entry: LastVisitedEntry): void {
     /* приватный режим / переполнение — молча игнорируем */
   }
 }
+
+/** Слаг лекции из пути записи: `/s/5/math/limit/edit` → `limit`, `/note/idea` → `idea`. */
+export function lastVisitedSlug(to: string): string {
+  const parts = to.split("?")[0].split("/").filter(Boolean);
+  if (parts[parts.length - 1] === "edit") parts.pop();
+  return parts[parts.length - 1] ?? "";
+}
+
+/** Стирает запись «Продолжить». */
+export function clearLastVisited(): void {
+  try {
+    localStorage.removeItem(LAST_VISITED_KEY);
+  } catch {
+    /* хранилище недоступно */
+  }
+}
