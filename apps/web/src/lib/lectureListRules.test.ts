@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ALL_PERIODS, hidesMobileTopbar, lectureInPeriod, openStartSteps } from "./lectureListRules";
+import { ALL_PERIODS, lectureInPeriod, openStartSteps } from "./lectureListRules";
 import type { Course, Lecture } from "./types";
 
 const lecture = (course?: Partial<Course>): Lecture =>
@@ -30,7 +30,7 @@ describe("openStartSteps", () => {
 });
 
 describe("lectureInPeriod", () => {
-  it("«Весь архив» пропускает всё", () => {
+  it("«Все периоды» пропускает всё", () => {
     expect(lectureInPeriod(lecture({ semesters: "s1" }), ALL_PERIODS)).toBe(true);
   });
 
@@ -41,22 +41,5 @@ describe("lectureInPeriod", () => {
 
   it("лекция без предмета видна в любом периоде", () => {
     expect(lectureInPeriod(lecture(), "s3")).toBe(true);
-  });
-});
-
-describe("hidesMobileTopbar", () => {
-  it("«Профиль», «Все лекции» и страница предмета — без общей строки", () => {
-    expect(hidesMobileTopbar("/profile")).toBe(true);
-    expect(hidesMobileTopbar("/s/3/lectures")).toBe(true);
-    expect(hidesMobileTopbar("/s/3/grazhdanskoe-pravo")).toBe(true);
-  });
-
-  it("Главная, лекция, пары и служебные адреса — со строкой", () => {
-    expect(hidesMobileTopbar("/s/3")).toBe(false);
-    expect(hidesMobileTopbar("/s/3/grazhdanskoe-pravo/lektsiya-1")).toBe(false);
-    expect(hidesMobileTopbar("/s/3/grazhdanskoe-pravo/pairs")).toBe(false);
-    expect(hidesMobileTopbar("/s/3/courses")).toBe(false);
-    expect(hidesMobileTopbar("/s/3/exams")).toBe(false);
-    expect(hidesMobileTopbar("/s/3/group")).toBe(false);
   });
 });

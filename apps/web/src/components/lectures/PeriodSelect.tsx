@@ -21,11 +21,13 @@ interface Props {
   className?: string;
   /** Список под кнопкой (компьютер) вместо шторки. */
   popover?: boolean;
+  /** Выбран не текущий период: подпись на кнопке акцентная, на персиковом фоне. */
+  accent?: boolean;
 }
 
 const CURRENT_SUFFIX = /, сейчас$/;
 
-export default function PeriodSelect({ options, value, onChange, className, popover }: Props) {
+export default function PeriodSelect({ options, value, onChange, className, popover, accent }: Props) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const current = options.find((o) => o.value === value);
@@ -59,7 +61,7 @@ export default function PeriodSelect({ options, value, onChange, className, popo
       <div className="c-lec-period-wrap" ref={rootRef}>
         <button
           type="button"
-          className={`c-lec-period wide${className ? ` ${className}` : ""}`}
+          className={`c-lec-period wide${accent ? " accent" : ""}${className ? ` ${className}` : ""}`}
           onClick={() => setOpen((o) => !o)}
           aria-haspopup="listbox"
           aria-expanded={open}
@@ -86,11 +88,8 @@ export default function PeriodSelect({ options, value, onChange, className, popo
                     setOpen(false);
                   }}
                 >
-                  <span>{o.value === ALL_PERIODS ? "Все периоды" : short(o)}</span>
-                  <span className="hint">
-                    {isCurrent && "текущий"}
-                    {on && <Icon name="check" size={16} />}
-                  </span>
+                  <span>{o.value === ALL_PERIODS ? "Все периоды" : isCurrent ? `${short(o)} · текущий` : short(o)}</span>
+                  <span className="hint">{on && <Icon name="check" size={16} />}</span>
                 </button>
               );
             })}

@@ -19,7 +19,6 @@ import { useCourseBySlug } from "../hooks/useCourseBySlug";
 import { useLecturesOverview } from "../hooks/useLecturesOverview";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useSchedule } from "../hooks/useSchedule";
-import { useUiShell } from "../lib/uiShellContext";
 import { useSemester } from "../lib/semesterContext";
 import {
   courseName,
@@ -36,6 +35,9 @@ import { createLectureInSubject } from "../services/scheduleService";
 import { Button, EmptyState, Icon, Pills } from "../ui";
 import type { LectureListStatusKey } from "../lib/computeLectureReadiness";
 import LectureGroupList from "../components/lectures/LectureGroupList";
+import PeriodSelect from "../components/lectures/PeriodSelect";
+import { useLecturePeriod } from "../hooks/useLecturePeriod";
+import { ALL_PERIODS } from "../lib/lectureListRules";
 import LoadingState from "../components/LoadingState";
 import ErrorBanner from "../components/ErrorBanner";
 import NotFoundPage from "./NotFoundPage";
@@ -59,9 +61,10 @@ export default function SubjectLecturesPage() {
   const activeSemester = current ?? pickActiveSemester(semesters);
   const semSlug = activeSemester ? semesterSlug(activeSemester) : "";
   const { rows, loading, error } = useLecturesOverview();
-  const { openSearch } = useUiShell();
   const courseSemester = semesters.find((s) => s.id === (course ? courseSemesterId(course) : ""));
   const { slots } = useSchedule(courseSemester?.id);
+  // Период запоминается отдельно для каждого предмета; по умолчанию — период самого предмета.
+  const period = useLecturePeriod(`subject:${courseSlugParam}`, courseSemester?.id);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [creating, setCreating] = useState(false);
@@ -79,12 +82,14 @@ export default function SubjectLecturesPage() {
     [rows, course]
   );
 
+  const periodRows = useMemo(() => courseRows.filter((r) => period.includes(r.lecture)), [courseRows, period]);
+
   const filtered = useMemo(() => {
-    return courseRows.filter((row) => {
+    return periodRows.filter((row) => {
       if (statusFilter !== "all" && row.status.key !== statusFilter) return false;
       return true;
     });
-  }, [courseRows, statusFilter]);
+  }, [periodRows, statusFilter]);
 
   if (courseLoading) return <LoadingState />;
   if (!course) {
@@ -125,6 +130,8 @@ export default function SubjectLecturesPage() {
           </Button>
         }
       />
+    ) : !loading && periodRows.length === 0 ? (
+      <EmptyState icon="doc" title="В этом периоде лекций нет" description="Выбери другой период." />
     ) : !loading && filtered.length === 0 ? (
       <EmptyState
         icon="search"
@@ -142,7 +149,7 @@ export default function SubjectLecturesPage() {
         }
       />
     ) : (
-      <LectureGroupList rows={filtered} semSlug={semSlug} showSubject={false} />
+      <LectureGroupList rows={filtered} semSlug={semSlug} showSubject={false} groupByPeriods={period.value === ALL_PERIODS} />
     );
 
   const message = error || createError;
@@ -159,9 +166,6 @@ export default function SubjectLecturesPage() {
           <div className="c-lec-m-head-row">
             <h1>{courseName(course)}</h1>
             <span className="c-lec-m-head-actions">
-              <button type="button" className="c-lec-m-icon" aria-label="Поиск" onClick={openSearch}>
-                <Icon name="search" size={20} />
-              </button>
               <button
                 type="button"
                 className="c-lec-m-icon"
@@ -197,7 +201,7 @@ export default function SubjectLecturesPage() {
             </span>
           </div>
           <div className="c-lec-m-filters">
-            {periodText && <span className="c-lec-period static">{semesterLabel(courseSemester!)}</span>}
+            <PeriodSelect options={period.options} value={period.value} onChange={period.setValue} />
             <div className="c-lec-m-pills" role="tablist" aria-label="Статус">
               {STATUS_LABELS.map((s) => (
                 <button
@@ -253,7 +257,7 @@ export default function SubjectLecturesPage() {
           }}
         />
         <div className="c-lec-filters-end">
-          {courseSemester && <span className="c-lec-period static">{semesterLabel(courseSemester)}</span>}
+          <PeriodSelect popover accent={!period.isCurrent} options={period.options} value={period.value} onChange={period.setValue} />
         </div>
       </div>
 

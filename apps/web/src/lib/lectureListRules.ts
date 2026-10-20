@@ -1,7 +1,6 @@
 /**
  * Чистые правила экранов B2 (вынесены ради тестов): какие шаги «С чего начать»
- * ещё открыты, входит ли лекция в выбранный период, у каких адресов на
- * телефоне нет общей верхней строки.
+ * ещё открыты, входит ли лекция в выбранный период, а также какой период выбран сохранённым значением.
  */
 
 import { courseSemesterId, type Lecture } from "./types";
@@ -29,12 +28,4 @@ export function lectureInPeriod(lecture: Lecture, period: string): boolean {
   const course = lecture.field ? lecture.expand?.field : undefined;
   if (!course) return true;
   return courseSemesterId(course) === period;
-}
-
-/** Экраны, у которых на телефоне своя верхняя строка: «Профиль», «Все лекции», страница предмета. */
-export function hidesMobileTopbar(pathname: string): boolean {
-  if (pathname === "/profile") return true;
-  if (/^\/s\/[^/]+\/lectures\/?$/.test(pathname)) return true;
-  const m = /^\/s\/[^/]+\/([^/]+)\/?$/.exec(pathname);
-  return !!m && !["courses", "exams", "group", "lectures"].includes(m[1]);
 }

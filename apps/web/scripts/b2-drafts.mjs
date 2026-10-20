@@ -43,9 +43,9 @@ const cleanup = async (page) => {
 
 try {
   await p.goto(`${BASE}/s/demo/lectures`);
-  const side = p.locator(".c-shell-courses a").first();
-  await side.waitFor();
-  ok((await side.innerText()).includes("Черновики"), "«Черновики» первой строкой в сайдбаре");
+  const side = p.locator(".c-shell-courses a", { hasText: "Черновики" });
+  await side.waitFor({ timeout: 8000 });
+  ok((await p.locator(".c-shell-courses a").first().innerText()).includes("Черновики"), "«Черновики» первой строкой в сайдбаре");
   await side.click();
   await p.waitForURL(/\/drafts$/);
   await p.waitForSelector(".c-drafts-list .c-row");
@@ -124,6 +124,42 @@ try {
   await m.getByRole("listbox", { name: "Предмет" }).waitFor();
   await m.screenshot({ path: `${OUT}/drafts-assign-390.png` });
   ok(true, "телефон: черновики и шторка «Назначить предмет»");
+  await m.keyboard.press("Escape");
+  // долгое нажатие на строку лекции в списке открывает лист меню, обычный тап лекцию открывает
+  await m.goto(`${BASE}/s/demo/lectures`);
+  await m.waitForSelector(".c-lec-row");
+  const press = (sel) => m.evaluate((s) => {
+    const el = document.querySelector(s);
+    const r = el.getBoundingClientRect();
+    const o = { bubbles: true, pointerType: "touch", clientX: r.left + 40, clientY: r.top + 20, isPrimary: true };
+    el.dispatchEvent(new PointerEvent("pointerdown", o));
+  }, sel);
+  await press(".c-lec-row");
+  await m.waitForTimeout(700);
+  await m.evaluate(() => document.querySelector(".c-lec-row").dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerType: "touch" })));
+  await m.getByRole("menu", { name: "Действия" }).waitFor({ timeout: 3000 });
+  ok(true, "долгое нажатие на строку открывает лист меню");
+  ok((await m.locator(".c-lec-sheet-list button").allInnerTexts()).join("|").includes("Дублировать"), "в листе есть «Дублировать»");
+  ok(!(await m.locator(".c-lec-sheet-list").innerText()).includes("Доступ"), "пункта «Доступ» нет");
+  await m.screenshot({ path: `${OUT}/lecture-menu-390.png` });
+  await m.keyboard.press("Escape");
+  ok(m.url().endsWith("/lectures"), "после долгого нажатия лекция не открылась");
+  // короткое движение пальца — не долгое нажатие (прокрутка не ломается)
+  await m.evaluate(() => {
+    const el = document.querySelector(".c-lec-row");
+    const r = el.getBoundingClientRect();
+    el.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch", clientX: r.left + 40, clientY: r.top + 20 }));
+    el.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, pointerType: "touch", clientX: r.left + 40, clientY: r.top + 60 }));
+  });
+  await m.waitForTimeout(700);
+  ok((await m.getByRole("menu", { name: "Действия" }).count()) === 0, "сдвиг пальца отменяет долгое нажатие");
+  // «···» в верхней строке открытой лекции
+  await m.locator(".c-lec-row").first().click();
+  await m.waitForSelector(".c-shell-more");
+  await m.locator(".c-shell-more").click();
+  await m.getByRole("menu", { name: "Действия" }).waitFor({ timeout: 3000 });
+  ok(true, "«···» в верхней строке лекции открывает тот же лист");
+  await m.screenshot({ path: `${OUT}/editor-menu-390.png` });
 } catch (e) {
   failed++;
   console.log("FAIL", e.message.split("\n")[0]);

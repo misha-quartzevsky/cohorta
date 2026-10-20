@@ -17,7 +17,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useSemester } from "../lib/semesterContext";
-import { useUiShell } from "../lib/uiShellContext";
 import { pickActiveSemester } from "../lib/activeSemester";
 import { fetchCourses } from "../services/courseService";
 import { useLecturesOverview } from "../hooks/useLecturesOverview";
@@ -38,7 +37,9 @@ import { pluralRu } from "../lib/format";
 import { Button, Icon, EmptyState, List, ListRow, Pills, Segmented, SubjectCover } from "../ui";
 import type { LectureListStatusKey } from "../lib/computeLectureReadiness";
 import LectureGroupList from "../components/lectures/LectureGroupList";
+import MobileSearchButton from "../components/MobileSearchButton";
 import PeriodSelect from "../components/lectures/PeriodSelect";
+import { ALL_PERIODS } from "../lib/lectureListRules";
 import DraftCover from "../components/lectures/DraftCover";
 
 type StatusFilter = "all" | LectureListStatusKey;
@@ -71,9 +72,8 @@ export default function LecturesAllPage() {
   const activeSemester = current ?? pickActiveSemester(semesters);
   const semSlug = activeSemester ? semesterSlug(activeSemester) : "";
   const { rows, loading, error } = useLecturesOverview();
-  const { openSearch } = useUiShell();
   // И на компьютере (Screen-lectures-period), и на телефоне по умолчанию текущий период.
-  const period = useLecturePeriod(false);
+  const period = useLecturePeriod("lectures");
   const [courses, setCourses] = useState<Course[]>([]);
   useEffect(() => {
     void fetchCourses()
@@ -141,7 +141,7 @@ export default function LecturesAllPage() {
         }
       />
     ) : (
-      <LectureGroupList rows={filtered} semSlug={semSlug} showSubject />
+      <LectureGroupList rows={filtered} semSlug={semSlug} showSubject groupByPeriods={period.value === ALL_PERIODS} />
     );
 
   /* ---------- Телефон ---------- */
@@ -156,12 +156,10 @@ export default function LecturesAllPage() {
           <div className="c-lec-m-head-row">
             <h1>Лекции</h1>
             <span className="c-lec-m-head-actions">
-              <button type="button" className="c-lec-m-icon" aria-label="Поиск" onClick={openSearch}>
-                <Icon name="search" size={20} />
-              </button>
               <button type="button" className="c-lec-m-icon" aria-label="Новая лекция" onClick={newLecture}>
                 <Icon name="plus" size={20} />
               </button>
+              <MobileSearchButton />
             </span>
           </div>
           <span className="c-lec-m-count">
@@ -241,7 +239,7 @@ export default function LecturesAllPage() {
           onChange={setStatusFilter}
         />
         <div className="c-lec-filters-end">
-          <PeriodSelect popover options={period.options} value={period.value} onChange={period.setValue} />
+          <PeriodSelect popover accent={!period.isCurrent} options={period.options} value={period.value} onChange={period.setValue} />
         </div>
       </div>
 

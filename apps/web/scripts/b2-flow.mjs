@@ -72,16 +72,30 @@ async function login(p) {
 
   // Поиск: предмет ведёт на страницу предмета
   await p.goto(`${BASE}/s/${SEM}/lectures`);
-  await p.locator(".c-shell-search").click();
+  await p.locator(".c-shell-side-search").click();
   await p.fill('input[aria-label="Поиск по продукту"]', "анализ");
   await p.waitForSelector(".c-search-results .c-row");
   const subjRow = p.locator(".c-search-results section", { hasText: "Предметы" }).locator(".c-row").first();
   await subjRow.click();
   await p.waitForURL(new RegExp(`/s/${SEM}/[^/]+$`));
   ok(true, `результат-предмет → страница предмета: ${new URL(p.url()).pathname}`);
-  await p.locator(".c-shell-search").click();
+  await p.locator(".c-shell-side-search").click();
   await p.keyboard.press("Escape");
   ok((await p.locator(".c-search-overlay").count()) === 0, "Esc закрывает поиск");
+  // ⌘K / Ctrl+K открывает поиск, строки поиска в шапке нет
+  await p.goto(`${BASE}/s/${SEM}/lectures`);
+  ok((await p.locator(".c-shell-topbar").count()) === 0, "на компьютере верхней строки нет");
+  await p.keyboard.press("Control+k");
+  ok(await p.locator(".c-search-overlay").isVisible(), "Ctrl+K открывает поиск");
+  await p.keyboard.press("Escape");
+  // период запоминается отдельно для каждого списка
+  await p.getByRole("button", { name: /^Период:/ }).click();
+  await p.getByRole("option", { name: "Все периоды" }).click();
+  await p.goto(`${BASE}/s/${SEM}/${SUBJECT}`);
+  ok(!(await p.getByRole("button", { name: /^Период: Все периоды/ }).isVisible()), "период «Все лекции» не влияет на страницу предмета");
+  await p.goto(`${BASE}/s/${SEM}/lectures`);
+  ok(await p.getByRole("button", { name: /^Период: Все периоды/ }).isVisible(), "выбор периода запомнен для «Все лекции»");
+  await p.evaluate(() => localStorage.removeItem("cohorta:period:lectures"));
   await p.close();
 }
 
@@ -91,7 +105,7 @@ async function login(p) {
   await login(p);
   await p.goto(`${BASE}/s/${SEM}/lectures`);
   await p.waitForSelector(".c-lec-list .c-row");
-  ok((await p.locator(".c-shell-topbar").isVisible()) === false, "на телефоне общей верхней строки нет");
+  ok((await p.locator(".c-shell-topbar").count()) === 0, "на корневом экране телефона верхней строки нет");
   await p.getByRole("radio", { name: "Предметы" }).click();
   await p.waitForSelector(".c-lec-subjects .c-row");
   const rowsCount = await p.locator(".c-lec-subjects .c-row").count();
@@ -106,9 +120,10 @@ async function login(p) {
   ok(true, "«‹ Лекции» возвращает на «Все лекции»");
   await p.getByRole("button", { name: /^Период/ }).click();
   ok(await p.getByRole("listbox", { name: "Период" }).isVisible(), "окно «Период» открывается");
-  await p.getByRole("option", { name: "Весь архив" }).click();
-  ok(await p.getByRole("button", { name: /^Период: Весь архив/ }).isVisible(), "выбор «Весь архив» меняет кнопку периода");
-  await p.getByRole("button", { name: "Поиск" }).first().click();
+  await p.getByRole("option", { name: "Все периоды" }).evaluate((el) => el.scrollIntoView());
+  await p.getByRole("option", { name: "Все периоды" }).click({ force: true });
+  ok(await p.getByRole("button", { name: /^Период: Все периоды/ }).isVisible(), "выбор «Все периоды» меняет кнопку периода");
+  await p.locator(".c-search-m").click();
   ok(await p.locator(".c-search-overlay").isVisible(), "иконка поиска открывает поиск");
   await p.getByRole("button", { name: "Отмена" }).click();
   ok((await p.locator(".c-search-overlay").count()) === 0, "«Отмена» закрывает поиск");

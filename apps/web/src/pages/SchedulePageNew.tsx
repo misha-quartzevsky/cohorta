@@ -22,6 +22,7 @@
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import MobileSearchButton from "../components/MobileSearchButton";
 import { ChevronRight } from "lucide-react";
 
 import { Button, Icon, Pills, StatusChip, SubjectCover, EmptyState, Menu } from "../ui";
@@ -203,6 +204,7 @@ export default function SchedulePageNew() {
 
       {/* Телефон: заголовок, без кнопки добавления в шапке (мокап). */}
       <div className="c-schedule-m-head">
+        <MobileSearchButton />
         <h1>Расписание</h1>
         <span>
           {parity === "odd" ? "Нечётная неделя" : "Чётная неделя"} · {todaySlotsCount}{" "}

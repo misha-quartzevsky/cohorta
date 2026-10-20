@@ -43,8 +43,8 @@ for (const [w, h] of [[1440, 900], [390, 844]]) {
 
   await p.goto(`${BASE}/s/${sem}/lectures`);
   await p.waitForTimeout(800);
-  if (phone) await p.getByRole("button", { name: "Поиск" }).first().click();
-  else await p.locator(".c-shell-search").click();
+  if (phone) await p.locator(".c-search-m").click();
+  else await p.locator(".c-shell-side-search").click();
   await p.fill('input[type="search"][aria-label="Поиск по продукту"]', query);
   await p.waitForTimeout(1200);
   await shot("search");

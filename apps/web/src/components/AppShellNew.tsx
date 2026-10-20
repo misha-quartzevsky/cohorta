@@ -15,9 +15,11 @@
  * дефолтным. Этот компонент не трогает их код.
  */
 
-import { hidesMobileTopbar } from "../lib/lectureListRules";
+import { useLectureActions } from "./lectures/useLectureActions";
+import type { Lecture } from "../lib/types";
 import DraftCover from "./lectures/DraftCover";
-import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, NavLink, Outlet, useNavigate, useParams } from "react-router-dom";
 
 import { useUiShell } from "../lib/uiShellContext";
 import SearchOverlay from "./SearchOverlay";
@@ -138,7 +140,7 @@ function MobileTabBar() {
           // Страница предмета, его лекции, пары и экзамен — тоже раздел «Лекции».
           activeWhen: /^\/s\/[^/]+\/(?!courses$|exams$|group$)[^/]+(\/.*)?$/,
         },
-        { to: "/more", icon: "dots", label: "Занятия", alsoActive: ["/tasks", "/decks"] },
+        { to: "/more", icon: "grid", label: "Занятия", alsoActive: ["/tasks", "/decks"] },
         profile,
       ];
   return <TabBar items={items} />;
@@ -278,6 +280,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { courseSlug, lectureSlug } = useParams();
   const inLecture = !!lectureSlug;
   const { mode, setMode } = useMode();
+  const { openSearch } = useUiShell();
 
   return (
     <>
@@ -291,9 +294,15 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
       <aside className={`c-shell-sidebar${open ? " open" : ""}${inLecture ? " sheet" : ""}`}>
         <img
           className="c-shell-logo"
-          src="/brand/cohorta-logo-primary.svg"
+          src="/brand/cohorta-logo-mono-ink.svg"
           alt="cohorta"
         />
+        {/* Глобальный поиск (20.10): поле под логотипом, ⌘K / Ctrl+K открывает его с любого места. */}
+        <button type="button" className="c-shell-side-search" onClick={() => { onClose(); openSearch(); }}>
+          <Icon name="search" size={18} />
+          <span className="lbl">Поиск</span>
+          <kbd>⌘K</kbd>
+        </button>
         {/* Переключатель живёт в сайдбаре под логотипом на обоих мокапах
             (Screen-dashboard.dc.html, Screen-editor.dc.html), не в шапке. */}
         <Segmented
@@ -334,46 +343,56 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
-function Topbar({ open, onBurger }: { open: boolean; onBurger: () => void }) {
-  const { lectureSlug } = useParams();
-  const inLecture = !!lectureSlug;
-  const { openSearch } = useUiShell();
-  const { pathname } = useLocation();
-  const label = inLecture
-    ? open
-      ? "Закрыть содержание"
-      : "Открыть содержание"
-    : open
-      ? "Закрыть меню"
-      : "Открыть меню";
+/**
+ * Верхняя строка только на телефоне и только у открытой лекции: содержание, «···» (то же меню,
+ * что долгое нажатие в списках, Screen-m-lecture-menu) и «Понимание». Строки поиска в шапке нет:
+ * поиск глобальный (сайдбар на компьютере, лупа на корневых экранах телефона).
+ */
+function Topbar({ open, onBurger, lecture }: { open: boolean; onBurger: () => void; lecture: Lecture | null }) {
+  const navigate = useNavigate();
+  const { courseSlug } = useParams();
+  const semSlug = useSemSlug();
+  const actions = useLectureActions({
+    onRename: () => document.querySelector<HTMLInputElement>(".lecture-title-input")?.focus(),
+    onDeleted: () => navigate(courseSlug ? `/s/${semSlug}/${courseSlug}` : `/s/${semSlug}/lectures`),
+  });
   return (
-    <header className={`c-shell-topbar${hidesMobileTopbar(pathname) ? " hide-mobile" : ""}`}>
+    <header className="c-shell-topbar">
       <button
         type="button"
         className="c-shell-burger"
         onClick={onBurger}
-        aria-label={label}
+        aria-label={open ? "Закрыть содержание" : "Открыть содержание"}
         aria-expanded={open}
       >
-        {/* icons.md не даёт отдельной "гамбургер"-иконки — ближайшая по
-            смыслу из набора (три линии убывающей длины), до появления
-            своей в дизайн-системе. На странице лекции кнопка открывает
-            содержание нижней панелью (раздел B1 инструкции). */}
         <Icon name={open ? "x" : "toc"} size={20} />
       </button>
-      <button type="button" className="c-shell-search" onClick={openSearch}>
-        <Icon name="search" size={16} />
-        <span>Поиск</span>
-      </button>
-      {/* Только на телефоне и только на странице лекции: правая колонка там
-          скрыта, панель «Твоё понимание темы» открывается нижней шторкой. */}
+      <span className="c-shell-topbar-gap" />
+      {lecture && (
+        <button type="button" className="c-shell-more" aria-label="Меню лекции" onClick={() => actions.openSheet(lecture)}>
+          <Icon name="dots" size={20} />
+        </button>
+      )}
       <UnderstandingButton />
+      {actions.dialogs}
     </header>
   );
 }
 
 export default function AppShellNew() {
-  const { sidebarOpen, toggleSidebar, closeSidebar } = useUiShell();
+  const { sidebarOpen, toggleSidebar, closeSidebar, openSearch } = useUiShell();
+
+  // ⌘K / Ctrl+K открывает поиск с любого экрана.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        openSearch();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openSearch]);
   const { lectureSlug } = useParams();
   const inLecture = !!lectureSlug;
   const { lecture } = useLectureBySlug(lectureSlug ?? "");
@@ -385,7 +404,7 @@ export default function AppShellNew() {
           и шторку (телефон); вне страницы лекции scope пустой. */}
       <UnderstandingScope lecture={inLecture ? lecture : null}>
         <div className="c-shell-main">
-          <Topbar open={sidebarOpen} onBurger={toggleSidebar} />
+          {inLecture && <Topbar open={sidebarOpen} onBurger={toggleSidebar} lecture={lecture} />}
           {/* Контент: поля 40px на десктопе, до 1120px по центру. */}
           <div className={`c-shell-content${inLecture ? " with-aside" : ""}`}>
             <Outlet />

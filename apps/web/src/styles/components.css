@@ -1623,7 +1623,28 @@ button.c-row.on:hover { background: var(--accent-soft); }
   overflow-y: auto;
   z-index: 60;
 }
-.c-shell-logo { display: block; height: 24px; width: auto; margin: 0 0 4px var(--space-2); }
+/* Логотип в сайдбаре: 16 px, одноцветный тёмный, левый край по линии значков меню (20.10; исключение из минимума 24 px). */
+.c-shell-logo { display: block; align-self: flex-start; height: 16px; width: auto; margin: var(--space-2) 0 var(--space-2) var(--space-3); }
+.c-shell-side-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 40px;
+  margin-top: var(--space-3);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--sunken);
+  color: var(--ink-3);
+  font: 400 14px/1 var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.c-shell-side-search .lbl { flex: 1; }
+.c-shell-side-search kbd { padding: 1px 6px; border-radius: 6px; background: var(--surface); color: var(--ink-3); font: 400 12px/18px var(--font-sans); }
+.c-shell-side-search:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 /* Переключатель Соло/Группа под логотипом (Screen-dashboard.dc.html,
    Screen-editor.dc.html) — растянут на всю ширину сайдбара, не auto-width
    как базовый .c-seg (components/bundle.css). */
@@ -1723,6 +1744,25 @@ button.c-row.on:hover { background: var(--accent-soft); }
   top: 0;
   z-index: 10;
 }
+/* Верхняя строка — только телефон и открытая лекция (содержание, «···», «Понимание»). */
+@media (min-width: 1024px) {
+  .c-shell-topbar { display: none; }
+}
+.c-shell-topbar-gap { flex: 1; }
+.c-shell-more {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.c-shell-more:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .c-shell-search {
   flex: 1;
   max-width: 360px;
@@ -2113,6 +2153,47 @@ button.c-row.on:hover { background: var(--accent-soft); }
 }
 .c-lec-period:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .c-lec-period.static { cursor: default; padding: 0 14px; }
+.c-lec-period.wide.accent { background: var(--accent-soft); border-color: var(--accent-soft); color: var(--accent-strong); }
+.c-lec-period.wide.accent .lbl { color: var(--accent-strong); }
+.c-lec-row.touch { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.c-lec-sheet-list { display: flex; flex-direction: column; margin-top: var(--space-2); border-top: 1px solid var(--line); }
+.c-lec-sheet-list button {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 56px;
+  padding: 0 4px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font: 400 16px/1 var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+.c-lec-sheet-list button:last-child { border-bottom: 0; }
+.c-lec-sheet-list .bad { color: var(--danger-text); }
+.c-search-m {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.c-search-m:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; border-radius: var(--radius-md); }
+@media (max-width: 1023px) {
+  .c-search-m { display: inline-flex; }
+  .c-lec-m-head-actions .c-search-m { margin-right: -8px; }
+  .c-schedule-m-head, .c-more-head { position: relative; }
+  .c-schedule-m-head > .c-search-m, .c-more-head > .c-search-m { position: absolute; right: -8px; top: -4px; }
+  .c-dash-head .c-search-m { margin: 0 -8px 0 0; }
+  .c-dash-head > .c-btn { display: none; }
+}
 .c-lec-period-check { color: var(--accent); flex: none; }
 .c-sheet-dialog .c-pick-list { max-height: 60vh; overflow-y: auto; }
 
@@ -2354,13 +2435,13 @@ button.c-row.on:hover { background: var(--accent-soft); }
  *  сайдбара). Телефон: Screen-m-search.dc.html (полноэкранный).
  * ============================================================ */
 /* Над контентом справа от сайдбара и под верхней строкой; не привязан к прокрутке страницы. */
-.c-search-overlay { position: fixed; top: 64px; right: 0; bottom: 0; left: var(--sidebar-width); z-index: 30; }
+.c-search-overlay { position: fixed; top: 0; right: 0; bottom: 0; left: var(--sidebar-width); z-index: 30; }
 .c-search-backdrop { position: absolute; inset: 0; background: var(--color-scrim, rgba(28, 27, 25, .38)); }
 .c-search-panel {
   position: relative;
   width: 640px;
   max-width: calc(100% - var(--space-8));
-  margin: var(--space-8) auto 0;
+  margin: calc(var(--space-12) * 2) auto 0;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);

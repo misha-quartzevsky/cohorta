@@ -4,6 +4,7 @@ import { useDecks } from "../hooks/useDecks";
 import { isOpen, isOverdue } from "../lib/taskView";
 import { pluralRu } from "../lib/format";
 import { Icon, StatusChip } from "../ui";
+import MobileSearchButton from "../components/MobileSearchButton";
 import type { IconName } from "../ui";
 
 interface Item {
@@ -52,8 +53,9 @@ export default function MorePage() {
   return (
     <div className="c-more">
       <div className="c-more-head">
+        <MobileSearchButton />
         <h1>Занятия</h1>
-        <span>Остальные разделы</span>
+        <span>Задачи и карточки</span>
       </div>
       <div className="c-more-list">
         {items.map((it) => (

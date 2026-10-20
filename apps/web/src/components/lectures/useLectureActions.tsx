@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button, Icon, Menu, Modal, SubjectCover } from "../../ui";
+import type { MenuItem } from "../../ui";
 import { useToast } from "../ui/Toast";
 import { useUndo } from "../../lib/undoContext";
 import { useSemester } from "../../lib/semesterContext";
@@ -33,7 +34,14 @@ import {
 } from "../../lib/types";
 import { notifyLecturesChanged } from "../../lib/lecturesChanged";
 
-export function useLectureActions() {
+interface Options {
+  /** «Переименовать» вне списка (в открытой лекции — фокус на название); по умолчанию правка в строке. */
+  onRename?: (lecture: Lecture) => void;
+  /** После удаления (в открытой лекции — уйти на страницу предмета). */
+  onDeleted?: (lecture: Lecture) => void;
+}
+
+export function useLectureActions(options: Options = {}) {
   const navigate = useNavigate();
   const toast = useToast();
   const { scheduleDelete, isPending } = useUndo();
@@ -44,6 +52,8 @@ export function useLectureActions() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [moveFor, setMoveFor] = useState<Lecture | null>(null);
   const [deleteFor, setDeleteFor] = useState<Lecture | null>(null);
+  /** Лист меню на телефоне (долгое нажатие в списке, «···» в открытой лекции). */
+  const [sheetFor, setSheetFor] = useState<Lecture | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [picked, setPicked] = useState("");
 
@@ -86,6 +96,34 @@ export function useLectureActions() {
     [toast]
   );
 
+  /** Пункты меню (одни и те же на компьютере и в листе на телефоне). «Доступ» — волна C. */
+  const itemsFor = (lecture: Lecture): MenuItem[] => [
+      { label: "Переименовать", icon: <Icon name="edit" size={18} />, onClick: () => (options.onRename ? options.onRename(lecture) : setRenamingId(lecture.id)) },
+      {
+        label: "Перенести в предмет",
+        icon: <Icon name="folder" size={18} />,
+        onClick: () => {
+          setPicked("");
+          setMoveFor(lecture);
+        },
+      },
+      {
+        label: "Дублировать",
+        icon: <Icon name="copy" size={18} />,
+        onClick: () =>
+          void duplicateLecture(lecture)
+            .then((copy) =>
+              toast.show("Копия создана", {
+                label: "Открыть",
+                onClick: () => navigate(lectureHref({ ...copy, expand: lecture.expand }, semSlug)),
+              })
+            )
+            .catch(() => toast.show("Не удалось создать копию")),
+      },
+      { label: "Скачать, .md", icon: <Icon name="download" size={18} />, onClick: () => downloadLectureMarkdown(lecture) },
+      { label: "Удалить", icon: <Icon name="trash" size={18} />, danger: true, separatorBefore: true, onClick: () => setDeleteFor(lecture) },
+  ];
+
   const menu = (lecture: Lecture): ReactNode => (
     <Menu
       width={280}
@@ -106,32 +144,7 @@ export function useLectureActions() {
           <Icon name="dots" size={18} />
         </button>
       )}
-      items={[
-        { label: "Переименовать", icon: <Icon name="edit" size={18} />, onClick: () => setRenamingId(lecture.id) },
-        {
-          label: "Перенести в предмет",
-          icon: <Icon name="folder" size={18} />,
-          onClick: () => {
-            setPicked("");
-            setMoveFor(lecture);
-          },
-        },
-        {
-          label: "Дублировать",
-          icon: <Icon name="copy" size={18} />,
-          onClick: () =>
-            void duplicateLecture(lecture)
-              .then((copy) =>
-                toast.show("Копия создана", {
-                  label: "Открыть",
-                  onClick: () => navigate(lectureHref({ ...copy, expand: lecture.expand }, semSlug)),
-                })
-              )
-              .catch(() => toast.show("Не удалось создать копию")),
-        },
-        { label: "Скачать, .md", icon: <Icon name="download" size={18} />, onClick: () => downloadLectureMarkdown(lecture) },
-        { label: "Удалить", icon: <Icon name="trash" size={18} />, danger: true, separatorBefore: true, onClick: () => setDeleteFor(lecture) },
-      ]}
+      items={itemsFor(lecture)}
     />
   );
 
@@ -139,8 +152,41 @@ export function useLectureActions() {
   const currentCourseId = moveFor ? lectureCourseId(moveFor) : "";
   const currentCourse = courses.find((c) => c.id === currentCourseId);
 
+  const sheetCourse = sheetFor?.field ? sheetFor.expand?.field : undefined;
   const dialogs = (
     <>
+      <Modal open={!!sheetFor} onClose={() => setSheetFor(null)} title="Меню лекции" className="c-sheet-dialog c-lec-sheet" bare>
+        {sheetFor && (
+          <>
+            <h2 className="c-pick-title">{lectureTitle(sheetFor)}</h2>
+            <p className="c-pick-sub">
+              {[sheetFor.number ? `Лекция ${sheetFor.number}` : "", sheetCourse ? courseName(sheetCourse) : "Без предмета"]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+            <div className="c-lec-sheet-list" role="menu" aria-label="Действия">
+              {itemsFor(sheetFor).map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  role="menuitem"
+                  className={item.danger ? "bad" : undefined}
+                  onClick={() => {
+                    const lec = sheetFor;
+                    setSheetFor(null);
+                    void lec;
+                    item.onClick();
+                  }}
+                >
+                  {item.icon}
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </Modal>
+
       <Modal open={!!moveFor} onClose={() => setMoveFor(null)} title="Перенести в предмет" className="c-sheet-dialog c-move" bare>
         {moveFor && (
           <>
@@ -223,6 +269,7 @@ export function useLectureActions() {
                     await deleteLecture(lec.id);
                     notifyLecturesChanged();
                   });
+                  options.onDeleted?.(lec);
                 }}
               >
                 Удалить
@@ -239,6 +286,7 @@ export function useLectureActions() {
     cancelRename: () => setRenamingId(null),
     commitRename,
     menu,
+    openSheet: (lecture: Lecture) => setSheetFor(lecture),
     dialogs,
     move,
     isHidden: (lecture: Lecture) => isPending(`lecture:${lecture.id}`),

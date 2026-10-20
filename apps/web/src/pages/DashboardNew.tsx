@@ -11,6 +11,7 @@ import { useActivityHeatmap, heatmapDayKey } from "../hooks/useActivityHeatmap";
 import { useDecks } from "../hooks/useDecks";
 import { useRecentLectures } from "../hooks/useRecentLectures";
 import StartCard from "./dashboard/StartCard";
+import MobileSearchButton from "../components/MobileSearchButton";
 import {
   fetchScheduledLectures,
   fetchLecturesOfSubject,
@@ -164,6 +165,7 @@ export default function DashboardNew() {
             <Icon name="plus" size={18} />
             Новая лекция
           </Button>
+          <MobileSearchButton />
         </div>
 
         <div className="c-dash-cols">
