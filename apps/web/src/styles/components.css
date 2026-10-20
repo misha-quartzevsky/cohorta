@@ -3722,3 +3722,46 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
 .c-notfound .code { font-size: 56px; line-height: 64px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink-3); }
 .c-notfound h1 { margin: 0; font-size: 20px; line-height: 28px; font-weight: 600; }
 .c-notfound p { margin: 0 0 var(--space-3); font-size: 14px; line-height: 22px; color: var(--ink-2); }
+
+/* ---------- Формы создания (Screen-forms-create): ui/FormDialog ---------- */
+.c-form { display: flex; flex-direction: column; gap: var(--space-4); }
+.c-form-sub { margin: 0; font-size: 14px; line-height: 22px; color: var(--ink-2); }
+.c-form-lead { margin-right: auto; }
+.c-form-two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.c-form-two .c-field { min-width: 0; }
+.c-form-seg { display: flex; flex-direction: column; gap: 6px; }
+.c-form-seg > label { font-size: 14px; font-weight: 500; }
+.c-form-seg .c-seg { display: flex; width: 100%; box-sizing: border-box; }
+.c-form-seg .c-seg span { flex: 1; justify-content: center; text-align: center; }
+.c-form-err { margin: 0; font-size: 13px; line-height: 18px; color: var(--danger-text); }
+.c-form-cover {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--line-strong);
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ink-2);
+}
+.c-form-cover .c-cover, .c-form-cover .c-cover-empty { flex: none; }
+.c-form-notice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--sunken);
+}
+.c-form-notice strong { font-size: 14px; line-height: 22px; font-weight: 600; }
+.c-form-notice p { margin: 0; font-size: 14px; line-height: 22px; color: var(--ink-2); }
+.c-form-m { display: none; }
+@media (max-width: 639px) {
+  .c-form-d { display: none; }
+  .c-form-m { display: inline; }
+  .c-form-cover { border: 0; padding: 0; }
+}
+.c-tasks-head-end { display: flex; align-items: center; gap: var(--space-3); }
+.c-tasks-m-period { align-self: flex-start; margin-top: var(--space-2); }

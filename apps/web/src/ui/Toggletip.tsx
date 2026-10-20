@@ -6,10 +6,12 @@ interface Props {
   /** Текст подсказки. Не единственное место этой информации на экране. */
   children: ReactNode;
   label?: string;
+  /** К какому краю кнопки прижата подсказка (у правого края страницы — right). */
+  align?: "left" | "right";
 }
 
 /** Лампочка-подсказка (.c-bulb): открывается кликом и с клавиатуры (Enter/Space), закрывается Esc. */
-export default function Toggletip({ children, label = "Подсказка" }: Props) {
+export default function Toggletip({ children, label = "Подсказка", align = "left" }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useDismissable(open, ref, () => setOpen(false));
@@ -32,7 +34,7 @@ export default function Toggletip({ children, label = "Подсказка" }: Pr
           style={{
             position: "absolute",
             top: "calc(100% + 6px)",
-            left: 0,
+            ...(align === "right" ? { right: 0 } : { left: 0 }),
             zIndex: 20,
             padding: "12px 14px",
             width: 260,

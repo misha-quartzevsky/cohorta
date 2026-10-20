@@ -13,6 +13,7 @@
  * За флагом VITE_NEW_UI (App.tsx).
  */
 
+import { useForms } from "../lib/formsContext";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -262,6 +263,7 @@ function SubjectsTab({
   rows: ReturnType<typeof useLecturesOverview>["rows"];
 }) {
   const navigate = useNavigate();
+  const forms = useForms();
   const [pairs, setPairs] = useState<Record<string, number>>({});
   const [exams, setExams] = useState<Record<string, Exam>>({});
 
@@ -341,7 +343,7 @@ function SubjectsTab({
             />
           );
         })}
-        <button type="button" className="c-lec-add-subject" onClick={() => navigate(`/s/${semSlug}/courses`)}>
+        <button type="button" className="c-lec-add-subject" onClick={() => (forms ? forms.openSubjectForm() : navigate(`/s/${semSlug}/courses`))}>
           <Icon name="plus" size={18} />
           Новый предмет
         </button>

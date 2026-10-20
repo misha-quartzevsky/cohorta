@@ -15,6 +15,9 @@
  * дефолтным. Этот компонент не трогает их код.
  */
 
+import type { MouseEvent as ReactMouseEvent } from "react";
+import FormsProvider from "./forms/FormsProvider";
+import { useForms } from "../lib/formsContext";
 import { useLectureActions } from "./lectures/useLectureActions";
 import type { Lecture } from "../lib/types";
 import DraftCover from "./lectures/DraftCover";
@@ -211,11 +214,19 @@ function SidebarLectureToc({ courseSlug, onNavigate }: { courseSlug?: string; on
 function SidebarCourses({ semSlug, onNavigate }: { semSlug: string; onNavigate: () => void }) {
   const { courses, coursesLoading, countByCourse, draftsCount } = useCourseList();
   const addHref = `/s/${semSlug}/courses`;
+  const forms = useForms();
+  // Форма «Новый предмет» — окно поверх страницы (B3); без каркаса форм — прежняя страница.
+  const addSubject = (e: ReactMouseEvent) => {
+    if (!forms) return;
+    e.preventDefault();
+    onNavigate();
+    forms.openSubjectForm();
+  };
   return (
     <>
       <div className="c-shell-section">
         <span>Предметы</span>
-        <NavLink to={addHref} onClick={onNavigate} aria-label="Добавить предмет">
+        <NavLink to={addHref} onClick={addSubject} aria-label="Добавить предмет">
           <Icon name="plus" size={16} />
         </NavLink>
       </div>
@@ -234,7 +245,7 @@ function SidebarCourses({ semSlug, onNavigate }: { semSlug: string; onNavigate: 
           </NavLink>
         )}
         {courses.length === 0 && !coursesLoading && (
-          <NavLink to={addHref} onClick={onNavigate} className="c-shell-courses-empty">
+          <NavLink to={addHref} onClick={addSubject} className="c-shell-courses-empty">
             Добавь первый предмет
           </NavLink>
         )}
@@ -398,6 +409,7 @@ export default function AppShellNew() {
   const { lecture } = useLectureBySlug(lectureSlug ?? "");
 
   return (
+    <FormsProvider>
     <div className="c-shell">
       <Sidebar open={sidebarOpen} onClose={closeSidebar} />
       {/* Один набор данных «Твоё понимание темы» на колонку справа (компьютер)
@@ -415,5 +427,6 @@ export default function AppShellNew() {
       </UnderstandingScope>
       <MobileTabBar />
     </div>
+    </FormsProvider>
   );
 }

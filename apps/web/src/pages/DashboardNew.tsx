@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useForms } from "../lib/formsContext";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../hooks/useAuth";
@@ -72,6 +73,7 @@ function startOfWeekMon(d: Date): Date {
 
 export default function DashboardNew() {
   const navigate = useNavigate();
+  const forms = useForms();
   const { user } = useAuth();
   const { current, semesters, error: semError } = useSemester();
   const activeSemester = useMemo(() => current ?? pickActiveSemester(semesters), [current, semesters]);
@@ -175,7 +177,7 @@ export default function DashboardNew() {
                 hasSubjects={courses.length > 0}
                 hasPairs={slots.length > 0}
                 hasLectures={hasLectures}
-                onAddSubject={() => navigate(`/s/${semSlug}/courses`)}
+                onAddSubject={() => (forms ? forms.openSubjectForm() : navigate(`/s/${semSlug}/courses`))}
                 onAddPairs={() => navigate("/schedule?add=1")}
                 onStartNote={() => navigate("/note/new")}
               />

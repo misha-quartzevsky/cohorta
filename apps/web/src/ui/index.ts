@@ -16,6 +16,7 @@ export { default as Icon } from "./Icon";
 export type { IconName } from "./Icon";
 export { default as Checkbox } from "./Checkbox";
 export { default as Modal } from "./Modal";
+export { default as FormDialog } from "./FormDialog";
 export { default as Menu } from "./Menu";
 export type { MenuItem } from "./Menu";
 export { default as Pills } from "./Pills";

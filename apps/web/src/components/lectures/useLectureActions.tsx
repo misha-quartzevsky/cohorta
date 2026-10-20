@@ -5,6 +5,7 @@
  * Всё, что можно вернуть, даёт «Отменить» в тосте.
  */
 
+import { useForms } from "../../lib/formsContext";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -43,6 +44,7 @@ interface Options {
 
 export function useLectureActions(options: Options = {}) {
   const navigate = useNavigate();
+  const forms = useForms();
   const toast = useToast();
   const { scheduleDelete, isPending } = useUndo();
   const { semesters, current } = useSemester();
@@ -220,7 +222,8 @@ export function useLectureActions(options: Options = {}) {
                 className="new"
                 onClick={() => {
                   setMoveFor(null);
-                  navigate(`/s/${semSlug}/courses`);
+                  if (forms) forms.openSubjectForm();
+                  else navigate(`/s/${semSlug}/courses`);
                 }}
               >
                 <Icon name="plus" size={18} />

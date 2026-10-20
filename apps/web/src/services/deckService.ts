@@ -66,7 +66,16 @@ export async function fetchAllCards(): Promise<DeckCard[]> {
   return pb.collection("deck_cards").getFullList<DeckCard>();
 }
 
+/**
+ * Необязательная связь колоды с предметом (`decks.subject`). Поля в базе пока нет:
+ * миграция лежит в pocketbase/pb_migrations_pending и ждёт «ок» владелицы.
+ * Пока флаг выключен, в форме «Новая колода» нет поля «Предмет», а в запись оно не пишется.
+ */
+export const DECK_SUBJECT_SUPPORTED = false;
+
 export interface DeckPayload {
+  /** Только при DECK_SUBJECT_SUPPORTED. */
+  subject?: string;
   title: string;
   description?: string;
   color?: string;
@@ -86,6 +95,7 @@ export async function createDeck(payload: DeckPayload): Promise<Deck> {
       FIELDS.deckSlug,
       slugify(payload.title) || "deck"
     ),
+    ...(DECK_SUBJECT_SUPPORTED && payload.subject ? { subject: payload.subject } : {}),
   });
 }
 

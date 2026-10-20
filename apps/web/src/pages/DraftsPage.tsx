@@ -10,6 +10,7 @@
  * Маршрут `/s/:semesterSlug/drafts`.
  */
 
+import { useForms } from "../lib/formsContext";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -35,6 +36,7 @@ function formatDate(dateStr: string | undefined, month: "long" | "short"): strin
 
 export default function DraftsPage() {
   const navigate = useNavigate();
+  const forms = useForms();
   const phone = useMediaQuery("(max-width: 1023px)");
   const { semesters, current } = useSemester();
   const active = current ?? pickActiveSemester(semesters);
@@ -75,7 +77,7 @@ export default function DraftsPage() {
       label: "Новый предмет",
       icon: <Icon name="plus" size={18} />,
       separatorBefore: true,
-      onClick: () => navigate(`/s/${semSlug}/courses`),
+      onClick: () => (forms ? forms.openSubjectForm() : navigate(`/s/${semSlug}/courses`)),
     },
   ];
 
@@ -223,7 +225,8 @@ export default function DraftsPage() {
                 className="new"
                 onClick={() => {
                   setSheetFor(null);
-                  navigate(`/s/${semSlug}/courses`);
+                  if (forms) forms.openSubjectForm();
+                  else navigate(`/s/${semSlug}/courses`);
                 }}
               >
                 <Icon name="plus" size={18} />

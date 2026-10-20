@@ -28,11 +28,15 @@ export default function Modal({ open, onClose, title, children, footer, classNam
     if (!open) return;
     prevFocus.current = document.activeElement as HTMLElement | null;
     const panel = panelRef.current;
-    panel
-      ?.querySelector<HTMLElement>(
+    // Курсор сразу в первом поле формы (Screen-forms-create), иначе — первый управляющий элемент.
+    (
+      panel?.querySelector<HTMLElement>(
+        ".c-dialog-body input:not([type='hidden']), .c-dialog-body textarea, .c-dialog-body select"
+      ) ??
+      panel?.querySelector<HTMLElement>(
         "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"
       )
-      ?.focus();
+    )?.focus();
 
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {

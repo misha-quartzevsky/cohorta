@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useForms } from "../lib/formsContext";
 import { useNavigate } from "react-router-dom";
 import { useDecks } from "../hooks/useDecks";
 import { fetchAllCards } from "../services/deckService";
@@ -14,6 +15,7 @@ import { Button, EmptyState, Icon, List } from "../ui";
  */
 export default function CardsPageNew() {
   const navigate = useNavigate();
+  const forms = useForms();
   const { decks, loading, error } = useDecks();
   const [counts, setCounts] = useState<Map<string, number> | null>(null);
 
@@ -55,7 +57,7 @@ export default function CardsPageNew() {
       </div>
 
       <div className="c-cards-bar">
-        <Button onClick={() => navigate("/decks/new")}>
+        <Button onClick={() => (forms ? forms.openDeckForm() : navigate("/decks/new"))}>
           <Icon name="plus" size={16} />
           Новая колода
         </Button>
