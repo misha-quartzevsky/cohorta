@@ -26,7 +26,6 @@ import {
   courseSemesterId,
   lectureCourseId,
   lectureSlug,
-  lectureTitle,
   semesterLabel,
   semesterSlug,
 } from "../lib/types";
@@ -65,7 +64,6 @@ export default function SubjectLecturesPage() {
   const { slots } = useSchedule(courseSemester?.id);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
 
@@ -82,13 +80,11 @@ export default function SubjectLecturesPage() {
   );
 
   const filtered = useMemo(() => {
-    const q = phone ? "" : query.trim().toLowerCase();
     return courseRows.filter((row) => {
       if (statusFilter !== "all" && row.status.key !== statusFilter) return false;
-      if (q && !lectureTitle(row.lecture).toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [courseRows, statusFilter, query, phone]);
+  }, [courseRows, statusFilter]);
 
   if (courseLoading) return <LoadingState />;
   if (!course) {
@@ -138,7 +134,6 @@ export default function SubjectLecturesPage() {
           <Button
             variant="secondary"
             onClick={() => {
-              setQuery("");
               setStatusFilter("all");
             }}
           >
@@ -259,16 +254,6 @@ export default function SubjectLecturesPage() {
         />
         <div className="c-lec-filters-end">
           {courseSemester && <span className="c-lec-period static">{semesterLabel(courseSemester)}</span>}
-          <div className="c-lec-search c-lec-search-narrow">
-            <Icon name="search" size={18} />
-            <input
-              type="search"
-              placeholder="Искать по названию"
-              aria-label="Искать по названию"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
         </div>
       </div>
 

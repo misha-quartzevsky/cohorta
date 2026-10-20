@@ -37,11 +37,6 @@ async function login(p) {
   ok(notStarted <= total, `фильтр «Не начато»: ${notStarted} из ${total}`);
   await p.getByRole("tab", { name: /^Все/ }).click();
 
-  await p.fill('input[aria-label="Искать по названию"]', "zzzz-нет-такой");
-  ok(await p.getByText("Ничего не нашлось").isVisible(), "пустой результат фильтра: «Ничего не нашлось»");
-  await p.getByRole("button", { name: "Очистить поиск" }).click();
-  ok((await p.locator(".c-lec-list .c-row").count()) === total, "«Очистить поиск» возвращает список");
-
   await p.locator(".c-lec-list .c-row").first().click();
   await p.waitForURL(new RegExp(`/s/${SEM}/[^/]+/[^/]+$|/note/`), { timeout: 10000 });
   ok(true, `строка лекции открывает редактор: ${new URL(p.url()).pathname}`);

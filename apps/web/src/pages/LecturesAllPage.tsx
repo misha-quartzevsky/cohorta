@@ -30,7 +30,6 @@ import {
   courseSlug,
   examDate,
   lectureCourseId,
-  lectureTitle,
   semesterSlug,
   type Course,
   type Exam,
@@ -84,7 +83,6 @@ export default function LecturesAllPage() {
 
   const [tab, setTab] = useState<Tab>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [query, setQuery] = useState("");
 
   const periodRows = useMemo(() => rows.filter((r) => period.includes(r.lecture)), [rows, period]);
 
@@ -95,13 +93,11 @@ export default function LecturesAllPage() {
   }, [periodRows]);
 
   const filtered = useMemo(() => {
-    const q = phone ? "" : query.trim().toLowerCase();
     return periodRows.filter((row) => {
       if (statusFilter !== "all" && row.status.key !== statusFilter) return false;
-      if (q && !lectureTitle(row.lecture).toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [periodRows, statusFilter, query, phone]);
+  }, [periodRows, statusFilter]);
 
   const subjectCount = useMemo(
     () => new Set(periodRows.map((r) => lectureCourseId(r.lecture)).filter(Boolean)).size,
@@ -137,7 +133,6 @@ export default function LecturesAllPage() {
           <Button
             variant="secondary"
             onClick={() => {
-              setQuery("");
               setStatusFilter("all");
             }}
           >
@@ -247,16 +242,6 @@ export default function LecturesAllPage() {
         />
         <div className="c-lec-filters-end">
           <PeriodSelect popover options={period.options} value={period.value} onChange={period.setValue} />
-          <div className="c-lec-search">
-            <Icon name="search" size={18} />
-            <input
-              type="search"
-              placeholder="Искать по названию"
-              aria-label="Искать по названию"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
         </div>
       </div>
 

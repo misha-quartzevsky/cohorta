@@ -138,7 +138,7 @@ function MobileTabBar() {
           // Страница предмета, его лекции, пары и экзамен — тоже раздел «Лекции».
           activeWhen: /^\/s\/[^/]+\/(?!courses$|exams$|group$)[^/]+(\/.*)?$/,
         },
-        { to: "/more", icon: "dots", label: "Ещё", alsoActive: ["/tasks", "/decks"] },
+        { to: "/more", icon: "dots", label: "Занятия", alsoActive: ["/tasks", "/decks"] },
         profile,
       ];
   return <TabBar items={items} />;

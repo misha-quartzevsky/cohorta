@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useTasks } from "../hooks/useTasks";
 import { useDecks } from "../hooks/useDecks";
-import { useUiShell } from "../lib/uiShellContext";
 import { isOpen, isOverdue } from "../lib/taskView";
 import { pluralRu } from "../lib/format";
 import { Icon, StatusChip } from "../ui";
@@ -23,7 +22,6 @@ interface Item {
  */
 export default function MorePage() {
   const navigate = useNavigate();
-  const { openSearch } = useUiShell();
   const { tasks } = useTasks();
   const { decks } = useDecks();
 
@@ -49,18 +47,12 @@ export default function MorePage() {
       meta: `${decksN} ${pluralRu(decksN, ["колода", "колоды", "колод"])}`,
       onClick: () => navigate("/decks"),
     },
-    {
-      icon: "search",
-      title: "Поиск",
-      meta: "По всем лекциям и билетам",
-      onClick: openSearch,
-    },
   ];
 
   return (
     <div className="c-more">
       <div className="c-more-head">
-        <h1>Ещё</h1>
+        <h1>Занятия</h1>
         <span>Остальные разделы</span>
       </div>
       <div className="c-more-list">
