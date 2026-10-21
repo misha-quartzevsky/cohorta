@@ -64,7 +64,9 @@ function syncPreviewForLecture(app, lecture) {
   }
 
   const title = String(lecture.get("title") || "");
-  const previewText = stripHtml(lecture.get("content")).slice(0, PREVIEW_MAX);
+  // Для группы видно только название: текст лекции в превью не копируется
+  // (словарь: «предпросмотр — название, не текст», волна C, 21.10).
+  const previewText = "";
 
   if (row) {
     row.set("group", groupId);

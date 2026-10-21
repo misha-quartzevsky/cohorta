@@ -85,6 +85,18 @@ cronAdd("account_deletion", "30 3 * * *", () => {
   for (const req of due) {
     const uid = String(req.get("user"));
     try {
+      // За 14 дней человек мог стать владельцем группы с другими участниками:
+      // группу сначала надо передать, аккаунт пока остаётся.
+      const ownedGroups = $app.findRecordsByFilter("groups", "owner = {:u}", "", 50, 0, { u: uid });
+      let blocked = false;
+      for (const g of ownedGroups) {
+        const others = $app.countRecords("group_members", $dbx.exp("`group` = {:g} AND user != {:u}", { g: g.id, u: uid }));
+        if (others > 0) blocked = true;
+      }
+      if (blocked) {
+        console.log("[account_deletion] skipped, owner of a group with members:", uid);
+        continue;
+      }
       const wipe = (collection, field) => {
         const rows = $app.findRecordsByFilter(collection, `${field} = {:u}`, "", 10000, 0, { u: uid });
         for (const r of rows) $app.delete(r);

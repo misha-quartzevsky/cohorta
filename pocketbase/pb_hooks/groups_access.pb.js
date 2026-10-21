@@ -223,7 +223,11 @@ routerAdd(
       let user = null;
       try {
         const u = e.app.findRecordById("users", m.get("user"));
-        user = { id: u.id, name: u.get("name"), email: u.get("email") };
+        // Почту одногруппникам не отдаём: для подписи нужно имя (если его нет —
+        // часть почты до «@»), и аватар.
+        let label = String(u.get("name") || "").trim();
+        if (!label) label = String(u.get("email") || "").split("@")[0];
+        user = { id: u.id, name: label, avatar: String(u.get("avatar") || "") };
       } catch (err) {
         user = null;
       }
