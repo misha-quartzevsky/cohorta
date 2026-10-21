@@ -9,8 +9,7 @@
    "note": "",
    "entry": true,
    "terminal": false,
-   "virtual": true,
-   "route": "/ (HomeRedirect, ProtectedRoute); не вошёл → /login; онбординг не пройден → /onboarding"
+   "virtual": true
   },
   "login": {
    "id": "login",
@@ -18,35 +17,32 @@
    "area": "start",
    "mock": "Screen-login",
    "mobile": null,
-   "note": "«Забыли пароль?» ведёт на «Напиши в поддержку» (флаг VITE_AUTH_EMAIL выключен, пока нет почты)",
+   "note": "Есть «Забыли пароль?» и «Создать аккаунт»",
    "entry": true,
    "terminal": false,
-   "virtual": false,
-   "route": "/login (pages/auth/LoginPageNew.tsx)"
+   "virtual": false
   },
   "register": {
    "id": "register",
    "title": "Регистрация",
    "area": "start",
-   "mock": "Screen-register",
+   "mock": null,
    "mobile": null,
-   "note": "Почта, пароль, повтор пароля. Шаг «подтверди почту» подготовлен и выключен",
+   "note": "Не нарисована. Нужна почта, пароль, подтверждение почты или нет?",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/register (LoginPageNew, mode=register)"
+   "virtual": false
   },
   "reset": {
    "id": "reset",
    "title": "Восстановление пароля",
    "area": "start",
-   "mock": "Screen-auth-reset",
+   "mock": null,
    "mobile": null,
-   "note": "Экраны за флагом VITE_AUTH_EMAIL (выключен). Пока «Напиши в поддержку»; включить, когда появится почта",
+   "note": "Не нарисовано: запрос письма, письмо, новый пароль",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/reset, /reset/confirm/:token (pages/auth/ResetPages.tsx)"
+   "virtual": false
   },
   "policy": {
    "id": "policy",
@@ -57,32 +53,40 @@
    "note": "",
    "entry": false,
    "terminal": true,
-   "virtual": false,
-   "route": "/privacy (pages/auth/PolicyPageNew.tsx)"
+   "virtual": false
   },
   "onb": {
    "id": "onb",
-   "title": "Онбординг (4 шага)",
+   "title": "Онбординг (8 шагов)",
    "area": "start",
    "mock": "Screen-onboarding-1",
    "mobile": null,
-   "note": "Шаги: имя и фото; город и вуз; уровень и курс; периоды. Шага «Группа» нет; после онбординга Главная (Соло)",
+   "note": "Нарисованы шаги 1, 5 (Screen-onboarding-2) и 7. Шаги 2, 3, 4, 6 и 8 не нарисованы",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/onboarding (features/onboarding/OnboardingNew.tsx)"
+   "virtual": false
+  },
+  "onb_group": {
+   "id": "onb_group",
+   "title": "Онбординг, шаг «Группа»",
+   "area": "start",
+   "mock": "Screen-onboarding-3",
+   "mobile": null,
+   "note": "Можно пропустить",
+   "entry": false,
+   "terminal": false,
+   "virtual": false
   },
   "join_link": {
    "id": "join_link",
-   "title": "Ссылка-приглашение cohorta.ru/join/КОД",
+   "title": "Ссылка-приглашение cohorta.app/join/КОД",
    "area": "start",
    "mock": null,
    "mobile": null,
-   "note": "Не вошедшего ведёт на регистрацию и потом возвращает к подтверждению; автовступления нет",
+   "note": "Не вошедшего ведёт на вход и потом возвращает к подтверждению",
    "entry": true,
    "terminal": false,
-   "virtual": true,
-   "route": "/join/:code (JoinRoute); код хранится в localStorage"
+   "virtual": true
   },
   "home": {
    "id": "home",
@@ -93,8 +97,7 @@
    "note": "",
    "entry": true,
    "terminal": false,
-   "virtual": false,
-   "route": "/ → /s/:semesterSlug (pages/DashboardNew.tsx)"
+   "virtual": false
   },
   "home_new": {
    "id": "home_new",
@@ -105,8 +108,7 @@
    "note": "Блок «С чего начать»",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/s/:semesterSlug (та же страница, состояние «новичок»)"
+   "virtual": false
   },
   "lectures": {
    "id": "lectures",
@@ -117,32 +119,29 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/s/:semesterSlug/lectures (pages/LecturesAllPage.tsx)"
+   "virtual": false
   },
   "subject": {
    "id": "subject",
    "title": "Предмет: вкладка «Лекции»",
    "area": "learn",
-   "mock": "Screen-subject-lectures",
+   "mock": null,
    "mobile": null,
    "note": "Не нарисована. Нужна как цель клика по предмету в меню и по ряду предметов на телефоне",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/s/:semesterSlug/:courseSlug (pages/SubjectLecturesPage.tsx)"
+   "virtual": false
   },
   "subject_new": {
    "id": "subject_new",
    "title": "Новый предмет / правка предмета",
    "area": "learn",
-   "mock": "Screen-forms-create",
+   "mock": null,
    "mobile": null,
    "note": "Не нарисовано: название, обложка (генератор), семестр",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "окно useForms().openSubjectForm(), без своего маршрута"
+   "virtual": false
   },
   "pairs": {
    "id": "pairs",
@@ -153,20 +152,18 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/s/:semesterSlug/:courseSlug/pairs (pages/SubjectPairsPage.tsx)"
+   "virtual": false
   },
   "pair_edit": {
    "id": "pair_edit",
    "title": "Добавить / изменить пару",
    "area": "learn",
-   "mock": "Screen-forms-create",
+   "mock": null,
    "mobile": null,
    "note": "Не нарисовано: день, время, тип, аудитория, чётность",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "окно (components/schedule/SlotFormNew.tsx), `/schedule?add=1` открывает его сразу"
+   "virtual": false
   },
   "schedule": {
    "id": "schedule",
@@ -177,8 +174,7 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/schedule (pages/SchedulePageNew.tsx)"
+   "virtual": false
   },
   "lecture_new": {
    "id": "lecture_new",
@@ -189,8 +185,7 @@
    "note": "Новая лекция без названия. Куда попадает, если предмет не выбран, не решено",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/note/new → создаёт «Лекция N» в «Черновиках» и открывает /note/:lectureSlug/edit"
+   "virtual": false
   },
   "editor": {
    "id": "editor",
@@ -201,32 +196,29 @@
    "note": "Содержание лекции: Screen-editor-toc и Screen-m-editor-toc. Меню «/»: Screen-editor-slash",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/s/:semesterSlug/:courseSlug/:lectureSlug (и /edit); без предмета /note/:lectureSlug"
+   "virtual": false
   },
   "lecture_menu": {
    "id": "lecture_menu",
    "title": "Меню лекции «···»",
    "area": "learn",
-   "mock": "Screen-lecture-menu",
+   "mock": null,
    "mobile": null,
    "note": "Не нарисовано: переименовать, перенести, доступ, удалить",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "меню «···» в шапке лекции и в строках списков (components/lectures/useLectureActions.tsx)"
+   "virtual": false
   },
   "lecture_delete": {
    "id": "lecture_delete",
    "title": "Подтверждение удаления лекции",
    "area": "learn",
-   "mock": "Screen-m-lecture-delete",
+   "mock": null,
    "mobile": null,
    "note": "Не нарисовано",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "окно подтверждения; удаление кладёт в корзину (/trash) на 30 дней"
+   "virtual": false
   },
   "tasks": {
    "id": "tasks",
@@ -237,8 +229,7 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/tasks (pages/TasksPageNew.tsx)"
+   "virtual": false
   },
   "task_edit": {
    "id": "task_edit",
@@ -249,8 +240,7 @@
    "note": "Не нарисовано (быстрое добавление строкой есть)",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "нет отдельного экрана: правка в строке"
+   "virtual": false
   },
   "search": {
    "id": "search",
@@ -261,8 +251,7 @@
    "note": "Строка в шапке на каждом экране",
    "entry": true,
    "terminal": false,
-   "virtual": false,
-   "route": "оверлей (components/SearchOverlay.tsx), без маршрута; ⌘K / Ctrl+K"
+   "virtual": false
   },
   "settings": {
    "id": "settings",
@@ -270,35 +259,32 @@
    "area": "learn",
    "mock": "Screen-settings",
    "mobile": null,
-   "note": "Левый список — оглавление. «Начало недели» не сделано: в базе нет поля",
+   "note": "Аватар внизу меню, из любого экрана",
    "entry": true,
    "terminal": false,
-   "virtual": false,
-   "route": "/settings (pages/SettingsPage.tsx); на компьютере /profile → /settings"
+   "virtual": false
   },
   "settings_edit": {
    "id": "settings_edit",
    "title": "Правка поля профиля / учёбы",
    "area": "learn",
-   "mock": "Screen-settings-inline",
+   "mock": null,
    "mobile": null,
-   "note": "Строка превращается в поле, «Сохранить» / «Отмена»",
+   "note": "Не нарисовано: «Изменить», «Сменить фото»",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "на месте, один компонент ui/EditableRow; на телефоне шторка"
+   "virtual": false
   },
   "account_delete": {
    "id": "account_delete",
    "title": "Удаление аккаунта: подтверждение и выгрузка",
    "area": "learn",
-   "mock": "Screen-account-delete",
+   "mock": null,
    "mobile": null,
-   "note": "Через 14 дней серверная задача стирает данные; вход до этого показывает экран отмены",
+   "note": "Не нарисовано. В настройках обещано «попросим подтвердить и предложим выгрузить»",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "окно из /settings (components/settings/*): 1 предупреждение и ZIP, 2 подтверждение; 3 экран «Аккаунт будет удалён …» при входе (pages/PendingDeletionPage.tsx)"
+   "virtual": false
   },
   "understanding": {
    "id": "understanding",
@@ -309,20 +295,18 @@
    "note": "Три состояния: нет квиза, квиз создан, квиз пройден",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/s/:semesterSlug/:courseSlug/:lectureSlug (правая панель; телефон — шторка по кнопке «Понимание»)"
+   "virtual": false
   },
   "quiz_create": {
    "id": "quiz_create",
    "title": "Создание квиза (размер, загрузка, ошибка)",
    "area": "review",
-   "mock": "Screen-quiz-states",
-   "mobile": "Screen-m-quiz-1",
-   "note": "Нарисовано: размер, ожидание, ошибка, мало текста, лимит исчерпан",
+   "mock": null,
+   "mobile": null,
+   "note": "Размер квиза, ожидание генерации и ошибка ИИ не нарисованы",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "окно поверх лекции (components/quiz/QuizCreateDialog.tsx); POST /api/quiz/generate"
+   "virtual": false
   },
   "quiz_q": {
    "id": "quiz_q",
@@ -333,8 +317,7 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/quiz/:lectureId (pages/QuizPage.tsx)"
+   "virtual": false
   },
   "quiz_a": {
    "id": "quiz_a",
@@ -345,8 +328,7 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/quiz/:lectureId (тот же экран)"
+   "virtual": false
   },
   "quiz_sum": {
    "id": "quiz_sum",
@@ -357,20 +339,18 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/quiz/:lectureId (тот же экран, после последнего вопроса)"
+   "virtual": false
   },
   "quiz_exit": {
    "id": "quiz_exit",
    "title": "Выйти из квиза посередине",
    "area": "review",
-   "mock": "Screen-quiz-states (блок «квиз начат»)",
+   "mock": null,
    "mobile": null,
-   "note": "Прогресс сохраняется, «Продолжить» идёт с первого неотвеченного вопроса",
+   "note": "Не нарисовано: сохраняется ли прогресс",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/quiz/:lectureId, «Выйти» ведёт на лекцию"
+   "virtual": false
   },
   "cards": {
    "id": "cards",
@@ -381,8 +361,7 @@
    "note": "Вкладка «Расписание повторов» не нарисована",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/decks (pages/CardsPageNew.tsx)"
+   "virtual": false
   },
   "deck": {
    "id": "deck",
@@ -393,20 +372,18 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/decks/:slug (pages/DeckPageNew.tsx)"
+   "virtual": false
   },
   "deck_edit": {
    "id": "deck_edit",
    "title": "Новая колода / правка карточки",
    "area": "review",
-   "mock": "Screen-forms-create",
+   "mock": null,
    "mobile": null,
-   "note": "Окно «Новая колода» нарисовано; форма карточки и правка карточки ещё нет",
+   "note": "Не нарисовано",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "окна «Новая колода» и «Новая карточка» (components/forms/); правка карточки и /decks/new, /decks/:slug/edit — прежний DeckEditorPage"
+   "virtual": false
   },
   "cards_review": {
    "id": "cards_review",
@@ -417,8 +394,7 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/decks/:slug/review, /cards/review (pages/CardReviewPageNew.tsx)"
+   "virtual": false
   },
   "exam": {
    "id": "exam",
@@ -429,20 +405,18 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/s/:semesterSlug/:courseSlug/exam (pages/ExamHubPageNew.tsx)"
+   "virtual": false
   },
   "exam_new": {
    "id": "exam_new",
    "title": "Создать экзамен предмета",
    "area": "review",
-   "mock": "Screen-forms-create",
+   "mock": null,
    "mobile": null,
    "note": "Не нарисовано: дата, выбор предмета. Пустое состояние «экзамена нет» тоже",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "окно (components/forms/ExamFormDialog.tsx)"
+   "virtual": false
   },
   "ticket": {
    "id": "ticket",
@@ -453,20 +427,18 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/s/:semesterSlug/:courseSlug/exam/:number (pages/TicketPageNew.tsx)"
+   "virtual": false
   },
   "ticket_edit": {
    "id": "ticket_edit",
    "title": "Правка билета и привязка лекций",
    "area": "review",
-   "mock": "Screen-ticket-lecture-picker",
+   "mock": null,
    "mobile": null,
    "note": "Не нарисовано: «Изменить», «Привязать лекцию» (выбор лекции)",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/s/:semesterSlug/:courseSlug/exam/:number/edit; выбор лекций — окно LecturePickerDialog"
+   "virtual": false
   },
   "ticket_import": {
    "id": "ticket_import",
@@ -477,8 +449,7 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/s/:semesterSlug/:courseSlug/exam/import (pages/ExamImportPageNew.tsx)"
+   "virtual": false
   },
   "cheatsheet": {
    "id": "cheatsheet",
@@ -489,8 +460,7 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/s/:semesterSlug/:courseSlug/exam/cheatsheet (pages/CheatsheetPageNew.tsx)"
+   "virtual": false
   },
   "g_join": {
    "id": "g_join",
@@ -501,8 +471,7 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/s/:semesterSlug/group (прежний GroupPage, на макет не перенесён: волна C)"
+   "virtual": false
   },
   "g_join_ok": {
    "id": "g_join_ok",
@@ -513,8 +482,7 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/join (pages/auth/JoinGroupPage.tsx); без сайдбара, автовступления нет"
+   "virtual": false
   },
   "g_create": {
    "id": "g_create",
@@ -525,8 +493,7 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/s/:semesterSlug/group (прежний GroupPage, волна C)"
+   "virtual": false
   },
   "g_home": {
    "id": "g_home",
@@ -537,8 +504,7 @@
    "note": "",
    "entry": true,
    "terminal": false,
-   "virtual": false,
-   "route": "/s/:semesterSlug/group (прежний GroupPage, волна C)"
+   "virtual": false
   },
   "g_switch": {
    "id": "g_switch",
@@ -549,8 +515,7 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "нет (волна C)"
+   "virtual": false
   },
   "g_member": {
    "id": "g_member",
@@ -561,8 +526,7 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "нет (волна C)"
+   "virtual": false
   },
   "g_member_subj": {
    "id": "g_member_subj",
@@ -573,20 +537,18 @@
    "note": "Файл назван «thumbnails», но это список. Заголовок в макете «Курс одногруппника» надо заменить на «Предмет»",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "нет (волна C)"
+   "virtual": false
   },
   "g_read": {
    "id": "g_read",
    "title": "Чужая лекция, открытая тебе (чтение)",
    "area": "group",
-   "mock": "Screen-shared-lecture",
+   "mock": null,
    "mobile": null,
    "note": "Не нарисовано. Только чтение? Можно ли пройти квиз? Решение нужно",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "нет (волна C)"
+   "virtual": false
   },
   "g_closed": {
    "id": "g_closed",
@@ -597,8 +559,7 @@
    "note": "Кнопка «Запросить доступ»",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "нет (волна C)"
+   "virtual": false
   },
   "g_sent": {
    "id": "g_sent",
@@ -609,8 +570,7 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "нет (волна C)"
+   "virtual": false
   },
   "g_myaccess": {
    "id": "g_myaccess",
@@ -621,8 +581,7 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "нет (волна C); пункт «Доступ» в нижней панели не нажимается"
+   "virtual": false
   },
   "g_lecture_access": {
    "id": "g_lecture_access",
@@ -633,8 +592,7 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "нет (волна C)"
+   "virtual": false
   },
   "g_exams": {
    "id": "g_exams",
@@ -645,8 +603,7 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "/s/:semesterSlug/exams (прежний ExamsPage)"
+   "virtual": false
   },
   "g_exam": {
    "id": "g_exam",
@@ -657,68 +614,62 @@
    "note": "",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "нет (волна C)"
+   "virtual": false
   },
   "g_exam_new": {
    "id": "g_exam_new",
    "title": "Создать экзамен группы",
    "area": "group",
-   "mock": "Screen-forms-create",
+   "mock": null,
    "mobile": null,
    "note": "Не нарисовано",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "нет (волна C)"
+   "virtual": false
   },
   "g_sub_new": {
    "id": "g_sub_new",
    "title": "Новая подгруппа и приглашение",
    "area": "group",
-   "mock": "Screen-forms-create",
+   "mock": null,
    "mobile": null,
    "note": "Не нарисовано: выбор людей, подтверждение, «один человек: одна подгруппа»",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "нет (волна C)"
+   "virtual": false
   },
   "g_ticket": {
    "id": "g_ticket",
    "title": "Билет подгруппы (пишут вместе)",
    "area": "group",
-   "mock": "Screen-ticket-group",
+   "mock": null,
    "mobile": null,
    "note": "Не нарисовано: у билета несколько авторов, видно, кто над ним работает",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "нет (волна C)"
+   "virtual": false
   },
   "g_settings": {
    "id": "g_settings",
    "title": "Настройки группы: выйти, код, название",
    "area": "group",
-   "mock": "Screen-group-settings",
+   "mock": null,
    "mobile": null,
-   "note": "Выход из группы, передача владения, сброс ссылки, исключение",
+   "note": "Не нарисовано. «Сбросить код» есть на экране группы, «Выйти из группы» нигде нет",
    "entry": false,
    "terminal": false,
-   "virtual": false,
-   "route": "нет (волна C)"
+   "virtual": false
   },
   "offline": {
    "id": "offline",
    "title": "Нет связи",
    "area": "system",
-   "mock": "Screen-session-states (блок «нет связи»)",
+   "mock": "States-system",
    "mobile": null,
-   "note": "Очередь на устройстве только для текста лекции; остальное сохраняется сразу",
+   "note": "",
    "entry": true,
    "terminal": false,
-   "virtual": false,
-   "route": "полоса поверх страницы (components/SaveStatusBanner.tsx, lib/draftQueue.ts)"
+   "virtual": false
   },
   "error": {
    "id": "error",
@@ -729,90 +680,27 @@
    "note": "",
    "entry": true,
    "terminal": false,
-   "virtual": false,
-   "route": "components/ErrorBanner.tsx; в квизе — Screen-quiz-load-error"
+   "virtual": false
   },
   "gone": {
    "id": "gone",
    "title": "Лекции или группы больше нет / нет прав",
    "area": "system",
-   "mock": "Screen-session-states (блок «404»)",
+   "mock": null,
    "mobile": null,
    "note": "Не нарисовано: удалена лекция, исключён из группы, неверная ссылка (404)",
    "entry": true,
    "terminal": false,
-   "virtual": false,
-   "route": "* и «не найдено» внутри лекции (pages/NotFoundPage.tsx)"
+   "virtual": false
   },
   "expired": {
    "id": "expired",
    "title": "Сессия истекла",
    "area": "system",
-   "mock": "Screen-session-states (блок «сессия истекла»)",
+   "mock": null,
    "mobile": null,
-   "note": "Несохранённый текст лекции остаётся на устройстве",
+   "note": "Не нарисовано: возврат на вход и возврат на прежний экран",
    "entry": true,
-   "terminal": false,
-   "virtual": false,
-   "route": "окно поверх страницы (components/SessionGuard.tsx); после входа возврат на ту же страницу"
-  },
-  "more": {
-   "id": "more",
-   "title": "Занятия (телефон)",
-   "area": "start",
-   "mock": "Screen-m-more",
-   "mobile": null,
-   "note": "Нижняя панель, 4-е место: Задачи, Карточки",
-   "route": "/more (pages/MorePage.tsx)",
-   "entry": false,
-   "terminal": false,
-   "virtual": false
-  },
-  "profile": {
-   "id": "profile",
-   "title": "Профиль (телефон)",
-   "area": "start",
-   "mock": "Screen-m-profile",
-   "mobile": null,
-   "note": "Соло/Группа, профиль и данные, периоды, корзина, политика, выйти. Строка «Уведомления» скрыта: экрана настроек уведомлений в MVP нет. «Мой доступ» и «Настройки группы» — волна C",
-   "route": "/profile (pages/ProfilePage.tsx); на компьютере → /settings",
-   "entry": false,
-   "terminal": false,
-   "virtual": false
-  },
-  "settings_periods": {
-   "id": "settings_periods",
-   "title": "Периоды учёбы",
-   "area": "start",
-   "mock": "Screen-settings-periods",
-   "mobile": null,
-   "note": "Форма обучения, тип, количество, даты, «Сделать текущим». Автопереключения по датам нет",
-   "route": "/settings/periods (pages/SettingsPeriodsPage.tsx)",
-   "entry": false,
-   "terminal": false,
-   "virtual": false
-  },
-  "trash": {
-   "id": "trash",
-   "title": "Корзина",
-   "area": "start",
-   "mock": "Screen-trash",
-   "mobile": null,
-   "note": "Лекции и предметы, хранение 30 дней, «Восстановить», «Удалить навсегда», «Очистить корзину»",
-   "route": "/trash (pages/TrashPage.tsx); сервер /api/trash",
-   "entry": false,
-   "terminal": false,
-   "virtual": false
-  },
-  "drafts": {
-   "id": "drafts",
-   "title": "Черновики",
-   "area": "start",
-   "mock": "Screen-drafts",
-   "mobile": null,
-   "note": "Предмет по умолчанию для лекций без предмета",
-   "route": "/s/:semesterSlug/drafts (pages/DraftsPage.tsx)",
-   "entry": false,
    "terminal": false,
    "virtual": false
   }
@@ -882,6 +770,24 @@
    "from_": "policy",
    "to": "login",
    "how": "«Вход» / назад",
+   "note": ""
+  },
+  {
+   "from_": "onb",
+   "to": "onb_group",
+   "how": "шаг 7",
+   "note": ""
+  },
+  {
+   "from_": "onb_group",
+   "to": "home",
+   "how": "«Далее» или пропустить",
+   "note": ""
+  },
+  {
+   "from_": "onb_group",
+   "to": "g_join_ok",
+   "how": "введён код → подтверждение",
    "note": ""
   },
   {
@@ -1633,87 +1539,16 @@
    "to": "login",
    "how": "«Войти снова»",
    "note": "после входа вернуть на прежний экран"
-  },
-  {
-   "from_": "onb",
-   "to": "home_new",
-   "how": "после шага 4",
-   "note": ""
-  },
-  {
-   "from_": "onb",
-   "to": "g_join_ok",
-   "how": "пришёл по ссылке-приглашению: после онбординга экран группы",
-   "note": ""
-  },
-  {
-   "from_": "more",
-   "to": "tasks",
-   "how": "«Задачи»",
-   "note": ""
-  },
-  {
-   "from_": "more",
-   "to": "cards",
-   "how": "«Карточки»",
-   "note": ""
-  },
-  {
-   "from_": "profile",
-   "to": "settings",
-   "how": "«Профиль и данные»",
-   "note": ""
-  },
-  {
-   "from_": "profile",
-   "to": "settings_periods",
-   "how": "«Периоды учёбы»",
-   "note": ""
-  },
-  {
-   "from_": "profile",
-   "to": "trash",
-   "how": "«Корзина»",
-   "note": ""
-  },
-  {
-   "from_": "profile",
-   "to": "policy",
-   "how": "«Политика данных»",
-   "note": ""
-  },
-  {
-   "from_": "profile",
-   "to": "login",
-   "how": "«Выйти»",
-   "note": ""
-  },
-  {
-   "from_": "settings",
-   "to": "settings_periods",
-   "how": "«Периоды учёбы»",
-   "note": ""
-  },
-  {
-   "from_": "settings",
-   "to": "trash",
-   "how": "«Корзина»",
-   "note": ""
-  },
-  {
-   "from_": "lecture_delete",
-   "to": "trash",
-   "how": "в корзину на 30 дней",
-   "note": ""
-  },
-  {
-   "from_": "lectures",
-   "to": "drafts",
-   "how": "строка «Черновики»",
-   "note": ""
   }
  ],
  "gaps": [
+  {
+   "priority": 1,
+   "title": "Регистрация и восстановление пароля не нарисованы",
+   "screens": "register, reset",
+   "why": "Со входа есть ссылки «Создать аккаунт» и «Забыли пароль?», но за ними пусто. Нужно решить, подтверждается ли почта, и нарисовать: регистрация, письмо отправлено, новый пароль, пароль изменён.",
+   "need": "Решение Маргариты + макеты"
+  },
   {
    "priority": 1,
    "title": "Чужая лекция, открытая тебе: экрана нет",
@@ -1741,6 +1576,20 @@
    "screens": "g_home, g_settings",
    "why": "В инструкции (шаг A0.5) код видит только владелец группы. В макете «Группа МК-31» код и «Сбросить код» показаны обычному участнику (Анастасия не создавала группу). Нужно выбрать: код видят все участники (проще, но любой может сбросить) или только владелец. Заодно решить, есть ли у группы владелец и что с ним, если он выйдет.",
    "need": "Решение Маргариты"
+  },
+  {
+   "priority": 1,
+   "title": "Ссылка-приглашение у не вошедшего",
+   "screens": "join_link, login, onb",
+   "why": "Человек открывает cohorta.app/join/КОД, у него нет аккаунта: код должен пережить регистрацию, онбординг и вход, и в конце показать подтверждение вступления, а не главную. Это главный способ привлечь первых людей.",
+   "need": "Решение + реализация"
+  },
+  {
+   "priority": 1,
+   "title": "Онбординг: в макетах 8 шагов, нарисовано 3, в IA написано 6",
+   "screens": "onb",
+   "why": "Шаги 1, 5 и 7 нарисованы, шагов 2, 3, 4, 6 и 8 нет. Нужно договориться о списке шагов (предложение: имя, вуз и город, уровень, курс, семестры, начало недели, группа, предметы), нарисовать недостающие и поправить IA («6 шагов»).",
+   "need": "Решение + макеты"
   },
   {
    "priority": 2,
@@ -1779,6 +1628,20 @@
   },
   {
    "priority": 2,
+   "title": "Удаление аккаунта: подтверждение и выгрузка",
+   "screens": "account_delete",
+   "why": "В настройках обещано «попросим подтвердить и предложим выгрузить данные», экрана нет. Нужен для заявленной политики данных.",
+   "need": "Макет"
+  },
+  {
+   "priority": 2,
+   "title": "Служебные: сессия истекла, лекции или группы нет, неверная ссылка",
+   "screens": "expired, gone",
+   "why": "Не определено, что видит человек, если лекцию удалили, его исключили или сессия закончилась на середине конспекта. Незаписанный текст не должен пропасть.",
+   "need": "Макет + правило сохранения"
+  },
+  {
+   "priority": 2,
    "title": "Билет подгруппы (совместная правка)",
    "screens": "g_ticket",
    "why": "В тексте экрана «Билеты внутри подгруппы пишут вместе», но самого экрана билета подгруппы нет: кто сейчас пишет, что при одновременной правке, куда сохраняется ответ.",
@@ -1804,6 +1667,13 @@
    "screens": "cards",
    "why": "Заголовок вкладки есть, содержимого нет. Можно оставить на после запуска, убрав вкладку.",
    "need": "Решение"
+  },
+  {
+   "priority": 3,
+   "title": "Правка профиля и учёбы",
+   "screens": "settings_edit",
+   "why": "Рядом с каждым полем «Изменить». Окна простые, можно собрать из компонентов без отдельных макетов.",
+   "need": "Реализация по компонентам"
   }
  ]
 }
