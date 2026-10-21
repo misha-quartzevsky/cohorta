@@ -95,6 +95,30 @@ export default function ExamHubPageNew() {
   if (!exam) {
     return (
       <div className="c-exam">
+        <div className="c-exam-crumb">
+          <Link to={base}>{course ? courseName(course) : ""}</Link>
+          <Icon name="chev" size={14} />
+          <span className="current">Экзамен</span>
+        </div>
+        <div className="c-exam-head">
+          <div className="c-exam-head-tx">
+            <h1>Экзамен · {course ? courseName(course) : ""}</h1>
+          </div>
+        </div>
+        <div className="c-exam-tabs-d">
+          <SubjectTabs base={base} courseId={course?.id} active="exam" />
+        </div>
+        <div className="c-exam-m-crumb">
+          <Link to={base}>
+            <Icon name="chev" size={18} style={{ transform: "scaleX(-1)" }} />
+            Предмет
+          </Link>
+        </div>
+        <div className="c-exam-m-head">
+          <h1>Экзамен</h1>
+          <span className="meta">{course ? courseName(course) : ""}</span>
+          <SubjectTabs base={base} courseId={course?.id} active="exam" />
+        </div>
         <EmptyState
           icon="exam"
           title="Экзамена пока нет"
