@@ -1,0 +1,23 @@
+// Проверка: «Новая колода» создаёт колоду. node scripts/b5-deck-create.mjs
+import { chromium } from "playwright";
+import PocketBase from "pocketbase";
+const BASE = process.env.BASE ?? "http://127.0.0.1:5173";
+const b = await chromium.launch();
+const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+p.on("response", async (r) => { if (r.url().includes("/api/collections/decks") && r.request().method() === "POST") console.log("POST decks", r.status(), (await r.text()).slice(0, 400)); });
+await p.goto(`${BASE}/login`);
+await p.fill('input[type="email"]', "asyaobraz17@gmail.com");
+await p.fill('input[type="password"]', "12345678");
+await p.click('button[type="submit"]');
+await p.waitForURL(/\/s\//);
+await p.goto(`${BASE}/decks`);
+await p.getByRole("button", { name: "Новая колода" }).click();
+await p.getByLabel("Название").fill("Тест формы колоды");
+await p.getByRole("button", { name: "Создать", exact: true }).click();
+await p.waitForTimeout(1500);
+console.log("url", p.url());
+console.log("text", (await p.locator("[role=dialog]").allInnerTexts()).join("|").slice(0, 300));
+await b.close();
+const pb = new PocketBase("http://127.0.0.1:8090");
+await pb.collection("users").authWithPassword("asyaobraz17@gmail.com", "12345678");
+for (const d of await pb.collection("decks").getFullList({ filter: 'title="Тест формы колоды"' })) await pb.collection("decks").delete(d.id);

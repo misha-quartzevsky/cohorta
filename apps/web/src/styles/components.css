@@ -3845,6 +3845,9 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
 @media (max-width: 639px) {
   .c-form-dialog .c-dialog-foot { flex-wrap: wrap; }
   .c-form-dialog .c-dialog-foot > .c-form-lead:has(.c-form-link) { order: 2; flex: 1 1 100%; text-align: center; margin-right: 0; }
+  /* Две кнопки (Screen-m-form-card): главная сверху, вторая под ней, обе на всю ширину. */
+  .c-form-dialog .c-dialog-foot:has(.c-form-secondary) { flex-direction: column-reverse; align-items: stretch; }
+  .c-form-dialog .c-dialog-foot:has(.c-form-secondary) > .c-btn { flex: none; width: 100%; }
 }
 .c-picker-search { display: flex; align-items: center; gap: var(--space-2); height: var(--control-md); padding: 0 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-md); background: var(--surface); color: var(--ink-3); box-sizing: border-box; }
 .c-picker-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font: 400 14px/1 var(--font-sans); color: var(--ink); }

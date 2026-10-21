@@ -1,20 +1,23 @@
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useDeck } from "../hooks/useDecks";
 import { deckCardFront, deckSlug, deckTitle } from "../lib/types";
 import { extractText } from "../lib/extractText";
 import { pluralRu } from "../lib/format";
 import { Button, EmptyState, Icon, List } from "../ui";
+import CardFormDialog from "../components/forms/CardFormDialog";
 
 /**
  * Страница колоды (Screen-deck, Screen-m-deck). Без плашки «к повторению сегодня /
  * новых / выучено», фильтров и меток у карточек: расписания повторов нет
- * (решение владелицы, B5). «Добавить карточку» ведёт в существующий редактор колоды
- * (форма карточки в макетах не нарисована). Строки карточек пока не открываются.
+ * (решение владелицы, B5). «Добавить карточку» открывает окно «Новая карточка»
+ * (Screen-forms-create). Правка карточки в макетах не нарисована: строки не открываются.
  */
 export default function DeckPageNew() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { deck, cards, loading, error } = useDeck(slug ?? "");
+  const { deck, cards, loading, error, refetch } = useDeck(slug ?? "");
+  const [adding, setAdding] = useState(false);
 
   if (loading) return null;
   if (!deck) {
@@ -59,7 +62,7 @@ export default function DeckPageNew() {
       </div>
 
       <div className="c-cards-bar">
-        <Button onClick={() => navigate(`/decks/${deckSlug(deck)}/edit`)}>
+        <Button onClick={() => setAdding(true)}>
           <Icon name="plus" size={16} />
           Добавить карточку
         </Button>
@@ -81,6 +84,15 @@ export default function DeckPageNew() {
           ))}
         </List>
       )}
+
+      <CardFormDialog
+        open={adding}
+        onClose={() => setAdding(false)}
+        deckId={deck.id}
+        deckTitle={deckTitle(deck)}
+        cardCount={n}
+        onSaved={() => void refetch()}
+      />
     </div>
   );
 }

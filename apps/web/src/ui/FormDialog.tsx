@@ -15,7 +15,7 @@ interface Props {
   /** Возвращает false, если сохранять нельзя (ошибка показана в самой форме) — окно остаётся. */
   onSubmit: () => Promise<boolean | void> | boolean | void;
   /** Вторая кнопка рядом с главной (например «Сохранить и ещё»), тёмная по макету. */
-  secondary?: { label: string; onClick: () => Promise<boolean | void> | boolean | void };
+  secondary?: { label: ReactNode; onClick: () => Promise<boolean | void> | boolean | void };
   /** Слева в подвале, например «Удалить пару». */
   leading?: ReactNode;
   children: ReactNode;
@@ -69,7 +69,7 @@ export default function FormDialog({
             Отмена
           </Button>
           {secondary && (
-            <Button variant="secondary" disabled={busy} onClick={() => void run(secondary.onClick, false)}>
+            <Button variant="secondary" className="c-form-secondary" disabled={busy} onClick={() => void run(secondary.onClick, false)}>
               {secondary.label}
             </Button>
           )}

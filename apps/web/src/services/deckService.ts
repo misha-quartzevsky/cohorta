@@ -169,6 +169,15 @@ export async function persistDeckCardOrder(orderedIds: string[]): Promise<void> 
   }
 }
 
+/** Поставить карточку на место `position` (best-effort, как persistDeckCardOrder). */
+export async function setDeckCardPosition(cardId: string, position: number): Promise<void> {
+  try {
+    await pb.collection("deck_cards").update(cardId, { [FIELDS.deckCardPosition]: position });
+  } catch (e) {
+    console.warn("Не удалось сохранить место карточки:", e);
+  }
+}
+
 /** Delete a single card (e.g. removed while editing a deck). */
 export async function deleteDeckCard(cardId: string): Promise<void> {
   await pb.collection("deck_cards").delete(cardId);

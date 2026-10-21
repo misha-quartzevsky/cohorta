@@ -81,7 +81,16 @@ export function timeAgo(iso: string): string {
  * Единая точка для блоков `catch (e)`: Error → message, всё остальное → String().
  */
 export function errorMessage(e: unknown): string {
-  return e instanceof Error ? e.message : String(e);
+  const base = e instanceof Error ? e.message : String(e);
+  // Ошибка PocketBase «Failed to create record» без причины бесполезна: добавляем поля с замечаниями.
+  const data = (e as { response?: { data?: Record<string, { message?: string }> } } | null)?.response?.data;
+  const details =
+    data && typeof data === "object"
+      ? Object.entries(data)
+          .map(([k, v]) => `${k}: ${v?.message ?? ""}`.trim())
+          .join("; ")
+      : "";
+  return details ? `${base} (${details})` : base;
 }
 
 /**
