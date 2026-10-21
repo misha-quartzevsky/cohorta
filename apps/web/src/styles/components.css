@@ -4027,3 +4027,7 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
   .c-shell-sidebar.sheet .c-shell-toc-empty { padding: 4px 16px 16px; font-size: 14px; line-height: 22px; }
   .c-shell-toc-more { display: none; }
 }
+
+/* Подсказка в форме «Новый экзамен»: в группе уже есть экзамен по этому предмету (Screen-m-form-exam) */
+.c-form-group-hint { display: flex; align-items: flex-start; gap: var(--space-3); margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--sunken); font-size: 13px; line-height: 18px; color: var(--ink-2); }
+.c-form-group-hint svg { flex: none; margin-top: 1px; }

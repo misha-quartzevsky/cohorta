@@ -71,6 +71,9 @@ import {
   GroupMemberSubjectRoute,
   GroupJoinRoute,
   GroupLectureRoute,
+  GroupExamsRoute,
+  GroupExamRoute,
+  GroupTicketRoute,
   GroupCreatePage,
 } from "./pages/group/GroupRoutes";
 import OnboardingWizard from "./features/onboarding/OnboardingWizard";
@@ -216,6 +219,9 @@ function App() {
                   <Route path="/s/:semesterSlug/group/lecture/:lectureId" element={<GroupLectureRoute />} />
                   <Route path="/s/:semesterSlug/group/access" element={<GroupAccessRoute />} />
                   <Route path="/s/:semesterSlug/group/settings" element={<GroupSettingsRoute />} />
+                  <Route path="/s/:semesterSlug/group/exams" element={<GroupExamsRoute />} />
+                  <Route path="/s/:semesterSlug/group/exams/:examId" element={<GroupExamRoute />} />
+                  <Route path="/s/:semesterSlug/group/exams/:examId/ticket/:number" element={<GroupTicketRoute />} />
                   <Route path="/s/:semesterSlug/group/people/:userId" element={<GroupMemberRoute />} />
                   <Route path="/s/:semesterSlug/group/people/:userId/:courseKey" element={<GroupMemberSubjectRoute />} />
                 </>

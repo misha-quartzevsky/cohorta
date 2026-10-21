@@ -5,7 +5,7 @@ import { Ava, Crumbs, useSem } from "../../components/group/common";
 import { useGroupCtx } from "../../lib/groupCtx";
 import { useGroupData } from "../../hooks/useGroupData";
 import { pluralRu } from "../../lib/format";
-import { requestAccess, subjectsOf } from "../../services/groupApi";
+import { lectureLine, requestAccess, subjectsOf } from "../../services/groupApi";
 import { useAuth } from "../../hooks/useAuth";
 import { isLectureNew } from "../../lib/notifyCtx";
 
@@ -133,7 +133,7 @@ export function GroupMemberSubjectPage() {
               </span>
               <span className="tx">
                 <span className="t">{l.title || "Без названия"}</span>
-                <span className="m">{subject?.title}</span>
+                <span className="m">{lectureLine(l) || subject?.title}</span>
               </span>
               <span className="end">
                 {isOpen ? (

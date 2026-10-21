@@ -5,6 +5,7 @@ import LecturePickerDialog from "./LecturePickerDialog";
 import type { Course, Lecture } from "../../lib/types";
 import { courseName, lectureTitle } from "../../lib/types";
 import { fetchLecturesOpenedToMe } from "../../services/examService";
+import { fetchOpenedMeta, type OpenedMeta } from "../../services/groupApi";
 
 interface Props {
   lectures: Lecture[];
@@ -22,10 +23,14 @@ interface Props {
 export default function TicketSourcesPanel({ lectures, selectedIds, onChange, course, ticketNumber }: Props) {
   const [picking, setPicking] = useState(false);
   const [opened, setOpened] = useState<Lecture[]>([]);
+  const [meta, setMeta] = useState<Record<string, OpenedMeta>>({});
 
   useEffect(() => {
     void fetchLecturesOpenedToMe()
-      .then(setOpened)
+      .then(async (rows) => {
+        setOpened(rows);
+        setMeta(await fetchOpenedMeta(rows).catch(() => ({})));
+      })
       .catch(() => setOpened([]));
   }, []);
 
@@ -50,13 +55,14 @@ export default function TicketSourcesPanel({ lectures, selectedIds, onChange, co
       <div className="list" style={{ marginTop: 6 }}>
         {rows.map(({ id, lecture: l, course: c }) => (
           <div key={id} className="c-ticket-source-row">
-            {l ? <SubjectCover seed={c?.cover_seed} size={36} /> : <SubjectCover size={36} />}
+            {l ? <SubjectCover seed={c?.cover_seed ?? meta[id]?.coverSeed} size={36} /> : <SubjectCover size={36} />}
             <div className="c-ticket-source-tx">
               <span className="t">{l ? lectureTitle(l) : "Лекция недоступна"}</span>
               {l && (
                 <span className="m">
+                  {meta[id] ? `${meta[id].ownerName} · ` : ""}
                   {l.number ? `Лекция ${l.number}` : "Лекция"}
-                  {c ? ` · ${courseName(c)}` : ""}
+                  {c ? ` · ${courseName(c)}` : meta[id]?.courseTitle ? ` · ${meta[id].courseTitle}` : ""}
                 </span>
               )}
             </div>
@@ -84,6 +90,7 @@ export default function TicketSourcesPanel({ lectures, selectedIds, onChange, co
         mine={lectures}
         course={course}
         opened={opened}
+        openedMeta={meta}
         selectedIds={selectedIds}
         onSave={async (ids) => {
           await onChange(ids);

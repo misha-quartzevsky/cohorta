@@ -22,6 +22,7 @@ import { pb } from "../lib/pocketbase";
 import type { Course, Lecture, LecturePreview } from "../lib/types";
 import { FIELDS, courseName, lectureTitle } from "../lib/types";
 import { fetchMyGroups, fetchRoster } from "./groupService";
+import { fetchPreviews, fetchRosterPeople, fetchShares, subjectsOf } from "./groupApi";
 
 function currentUserId(): string {
   return String(pb.authStore.record?.id ?? "");
@@ -173,4 +174,88 @@ export function isSearchEmpty(result: SearchResult): boolean {
     result.courses.length === 0 &&
     result.classmates.length === 0
   );
+}
+
+// ---- поиск в режиме «Группа» ------------------------------------------------------------
+
+export interface GroupLectureHit {
+  id: string;
+  lecture: string;
+  title: string;
+  ownerId: string;
+  ownerName: string;
+  subject: string;
+  /** Ключ предмета автора для адреса «предмет одногруппника». */
+  courseKey: string;
+  /** Автор открыл мне эту лекцию: можно читать. Иначе видно только название. */
+  open: boolean;
+}
+export interface GroupSubjectHit {
+  key: string;
+  ownerId: string;
+  ownerName: string;
+  title: string;
+  coverSeed: number;
+  lectureCount: number;
+}
+export interface GroupPersonHit {
+  id: string;
+  name: string;
+  avatar: string;
+}
+export interface GroupSearchResult {
+  lectures: GroupLectureHit[];
+  subjects: GroupSubjectHit[];
+  people: GroupPersonHit[];
+}
+
+const GROUP_EMPTY: GroupSearchResult = { lectures: [], subjects: [], people: [] };
+
+export function isGroupSearchEmpty(r: GroupSearchResult): boolean {
+  return r.lectures.length === 0 && r.subjects.length === 0 && r.people.length === 0;
+}
+
+/**
+ * Поиск в выбранной группе: названия лекций одногруппников (только названия: текст чужих лекций не ищется и
+ * не отдаётся), их предметы и сами одногруппники. Данные приходят уже отфильтрованными правилами сервера:
+ * название видно, только если автор открыл предпросмотр для этой группы.
+ */
+export async function groupSearch(groupId: string, query: string, limit = 5): Promise<GroupSearchResult> {
+  const q = query.trim().toLowerCase();
+  if (q.length < 2 || !groupId) return GROUP_EMPTY;
+  const me = currentUserId();
+  const [roster, previews, shares] = await Promise.all([fetchRosterPeople(groupId), fetchPreviews(groupId), fetchShares(groupId)]);
+  const nameOf = (id: string) => roster.find((p) => p.id === id)?.name ?? "Одногруппник";
+  const open = new Set(shares.filter((s) => s.grantee === me && !s.suspended).map((s) => s.lecture));
+  const foreign = previews.filter((p) => p.owner !== me);
+
+  const lectures = foreign
+    .filter((p) => p.title.toLowerCase().includes(q))
+    .slice(0, limit)
+    .map((p) => ({
+      id: p.id,
+      lecture: p.lecture,
+      title: p.title || "Без названия",
+      ownerId: p.owner,
+      ownerName: nameOf(p.owner),
+      subject: p.courseTitle,
+      courseKey: p.course || "none",
+      open: open.has(p.lecture),
+    }));
+
+  const owners = [...new Set(foreign.map((p) => p.owner))];
+  const subjects: GroupSubjectHit[] = [];
+  for (const ownerId of owners) {
+    for (const sub of subjectsOf(foreign, shares, ownerId)) {
+      if (!sub.title.toLowerCase().includes(q)) continue;
+      subjects.push({ key: sub.key, ownerId, ownerName: nameOf(ownerId), title: sub.title, coverSeed: sub.coverSeed, lectureCount: sub.lectures.length });
+    }
+  }
+
+  const people = roster
+    .filter((p) => p.id !== me && p.name.toLowerCase().includes(q))
+    .slice(0, limit)
+    .map((p) => ({ id: p.id, name: p.name, avatar: p.avatar }));
+
+  return { lectures, subjects: subjects.slice(0, limit), people };
 }

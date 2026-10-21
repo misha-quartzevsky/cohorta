@@ -3,6 +3,7 @@ import { FormDialog, Segmented, SubjectCover } from "../../ui";
 import { Search } from "lucide-react";
 import type { Course, Lecture } from "../../lib/types";
 import { courseName, lectureTitle } from "../../lib/types";
+import type { OpenedMeta } from "../../services/groupApi";
 
 interface Props {
   open: boolean;
@@ -13,6 +14,8 @@ interface Props {
   course: Course | null;
   /** Чужие лекции, открытые мне. */
   opened: Lecture[];
+  /** Хозяин, предмет и обложка чужих лекций (предмет автора мне не виден): «Лена Орлова · Лекция 6 · Маркетинг». */
+  openedMeta?: Record<string, OpenedMeta>;
   selectedIds: string[];
   onSave: (ids: string[]) => Promise<void>;
 }
@@ -27,6 +30,7 @@ export default function LecturePickerDialog({
   mine,
   course,
   opened,
+  openedMeta,
   selectedIds,
   onSave,
 }: Props) {
@@ -53,8 +57,19 @@ export default function LecturePickerDialog({
   }
 
   function subtitle(l: Lecture) {
-    const c = tab === "mine" ? course : l.expand?.field;
-    return [l.number ? `Лекция ${l.number}` : "Лекция", c ? courseName(c) : ""].filter(Boolean).join(" · ");
+    const num = l.number ? `Лекция ${l.number}` : "Лекция";
+    if (tab === "opened") {
+      const m = openedMeta?.[l.id];
+      const c = l.expand?.field;
+      return [m?.ownerName, num, c ? courseName(c) : m?.courseTitle].filter(Boolean).join(" · ");
+    }
+    const c = l.expand?.field ?? course;
+    return [num, c ? courseName(c) : ""].filter(Boolean).join(" · ");
+  }
+
+  function coverSeed(l: Lecture): number | undefined {
+    if (tab === "opened") return l.expand?.field?.cover_seed ?? openedMeta?.[l.id]?.coverSeed;
+    return (l.expand?.field ?? course)?.cover_seed ?? undefined;
   }
 
   return (
@@ -106,7 +121,7 @@ export default function LecturePickerDialog({
                   <path d="M5 12l5 5 9-10" />
                 </svg>
               </span>
-              <SubjectCover seed={(tab === "mine" ? course : l.expand?.field)?.cover_seed} size={36} />
+              <SubjectCover seed={coverSeed(l)} size={36} />
               <span className="tx">
                 <span className="t">{lectureTitle(l)}</span>
                 <span className="m">{subtitle(l)}</span>

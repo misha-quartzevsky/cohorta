@@ -31,6 +31,9 @@ export interface PreviewRow {
   course: string;
   courseTitle: string;
   coverSeed: number;
+  /** Номер лекции в предмете и дата пары ("" / 0 — не заданы): «Лекция 5 · 11 окт». */
+  lectureNumber: number;
+  lectureDate: string;
   created: string;
 }
 
@@ -124,6 +127,8 @@ export async function fetchPreviews(groupId: string): Promise<PreviewRow[]> {
     course: String(r.course ?? ""),
     courseTitle: String(r.course_title ?? ""),
     coverSeed: Number(r.cover_seed ?? 0),
+    lectureNumber: Number(r.lecture_number ?? 0),
+    lectureDate: String(r.lecture_date ?? ""),
     created: String(r.created),
   }));
 }
@@ -293,6 +298,10 @@ export function subjectsOf(previews: PreviewRow[], shares: ShareRow[], ownerId: 
     if (open.has(p.lecture)) row.openedToMe += 1;
     map.set(key, row);
   }
+  // в предмете лекции идут от новой к старой: по номеру, а без номера по времени создания (как в Screen-group-thumbnails)
+  for (const row of map.values()) {
+    row.lectures.sort((x, y) => y.lectureNumber - x.lectureNumber || String(y.created).localeCompare(String(x.created)));
+  }
   return [...map.values()].sort((a, b) => a.title.localeCompare(b.title, "ru"));
 }
 
@@ -301,4 +310,56 @@ export function ruDate(iso: string): string {
   if (Number.isNaN(d.getTime())) return "";
   const m = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
   return `${d.getDate()} ${m[d.getMonth()]}`;
+}
+
+/** Короткая дата для строк списка: «11 окт». */
+export function shortDate(iso: string): string {
+  const d = new Date(String(iso).replace(" ", "T"));
+  if (!iso || Number.isNaN(d.getTime())) return "";
+  const m = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+  return `${d.getDate()} ${m[d.getMonth()]}`;
+}
+
+/** «Лекция 5 · 11 окт»; без номера и даты — пустая строка (вызывающий подставит предмет). */
+export function lectureLine(p: Pick<PreviewRow, "lectureNumber" | "lectureDate">): string {
+  const parts = [p.lectureNumber > 0 ? `Лекция ${p.lectureNumber}` : "", shortDate(p.lectureDate)].filter(Boolean);
+  return parts.join(" · ");
+}
+
+export interface OpenedMeta {
+  owner: string;
+  /** Имя хозяина лекции («Одногруппник», если он не из моих групп). */
+  ownerName: string;
+  /** Предмет автора из предпросмотра; пусто, если автор его не открыл. */
+  courseTitle: string;
+  coverSeed: number | undefined;
+}
+
+/**
+ * Хозяин и предмет чужих лекций, открытых мне: имя берётся из состава моих групп, предмет и обложка
+ * из предпросмотра (предмет автора мне не виден). Для окна привязки лекций к билету и строки «Связанные лекции».
+ */
+export async function fetchOpenedMeta(lectures: { id: string; owner?: string }[]): Promise<Record<string, OpenedMeta>> {
+  const out: Record<string, OpenedMeta> = {};
+  if (lectures.length === 0) return out;
+  const groups = await fetchGroupSummaries();
+  const names = new Map<string, string>();
+  const previews = new Map<string, PreviewRow>();
+  await Promise.all(
+    groups.map(async (gs) => {
+      const [people, rows] = await Promise.all([fetchRosterPeople(gs.group.id).catch(() => []), fetchPreviews(gs.group.id).catch(() => [])]);
+      for (const p of people) names.set(p.id, p.name);
+      for (const r of rows) if (!previews.has(r.lecture)) previews.set(r.lecture, r);
+    })
+  );
+  for (const l of lectures) {
+    const pv = previews.get(l.id);
+    out[l.id] = {
+      owner: String(l.owner ?? ""),
+      ownerName: names.get(String(l.owner ?? "")) ?? "Одногруппник",
+      courseTitle: pv?.courseTitle ?? "",
+      coverSeed: pv ? pv.coverSeed : undefined,
+    };
+  }
+  return out;
 }

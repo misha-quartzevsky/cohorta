@@ -119,6 +119,8 @@ export interface ExamPayload {
   title?: string;
   /** ISO-дата или "" — поле необязательное. */
   examDate?: string;
+  /** Экзамен группы: id группы, где состоит человек (сервер проверяет членство). */
+  groupId?: string;
 }
 
 /** Создать экзамен для курса. Владелец — текущий пользователь. */
@@ -130,7 +132,8 @@ export async function createExam(payload: ExamPayload): Promise<Exam> {
     [FIELDS.examTitle]: payload.title ?? "",
     [FIELDS.examDate]: payload.examDate ?? "",
     [FIELDS.examOwner]: owner,
-    [FIELDS.examMode]: "solo",
+    [FIELDS.examMode]: payload.groupId ? "group" : "solo",
+    ...(payload.groupId ? { group: payload.groupId } : {}),
   });
 }
 

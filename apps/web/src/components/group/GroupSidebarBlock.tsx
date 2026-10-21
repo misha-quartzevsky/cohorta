@@ -98,7 +98,7 @@ export default function GroupSidebarBlock({ semSlug, onNavigate }: { semSlug: st
           {requestsTotal > 0 && <span className="count">{requestsTotal}</span>}
           {dots.access && <i className="c-gr-dot" aria-label="Есть новое" />}
         </NavLink>
-        <NavLink to={`/s/${semSlug}/exams`} onClick={onNavigate} className={({ isActive }) => (isActive ? "on" : "")}>
+        <NavLink to={`/s/${semSlug}/group/exams`} onClick={onNavigate} className={({ isActive }) => (isActive ? "on" : "")}>
           <Icon name="exam" size={20} />
           <span className="label">Экзамены группы</span>
           {dots.exams && <i className="c-gr-dot" aria-label="Есть новое" />}

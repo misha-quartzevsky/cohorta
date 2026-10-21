@@ -4,6 +4,8 @@ import { Button, DateField, FormDialog, Select } from "../../ui";
 import { useSemester } from "../../lib/semesterContext";
 import { fetchCourses } from "../../services/courseService";
 import { createExam, fetchExamsForCourses } from "../../services/examService";
+import { fetchGroupMatches, joinGroupExam } from "../../services/groupExamApi";
+import { Icon } from "../../ui";
 import { courseName, courseSemesterId, courseSlug, semesterSlug } from "../../lib/types";
 import type { Course } from "../../lib/types";
 import { errorMessage } from "../../lib/format";
@@ -20,7 +22,8 @@ interface Props {
 /**
  * «Новый экзамен» (Screen-forms-create, Screen-m-form-exam): предмет и
  * необязательная дата. Один экзамен на предмет — предметы, у которых он уже
- * есть, в списке не показываются. Строка про экзамен группы появится в волне C.
+ * есть, в списке не показываются. Если в твоей группе уже есть экзамен по предмету с тем же названием,
+ * под полями подсказка, а созданный экзамен присоединяется к нему (билеты общие, ответы у каждого свои).
  */
 export default function ExamFormDialog({ open, onClose, defaultSubjectId, onAddSubject }: Props) {
   const navigate = useNavigate();
@@ -31,6 +34,22 @@ export default function ExamFormDialog({ open, onClose, defaultSubjectId, onAddS
   const [dateValid, setDateValid] = useState(true);
   const [dateError, setDateError] = useState("");
   const [error, setError] = useState("");
+  /** Групповой экзамен с тем же названием предмета (первый найденный) или null. */
+  const [match, setMatch] = useState<{ exam: string; group: string } | null>(null);
+
+  useEffect(() => {
+    if (!subject || !open) {
+      setMatch(null);
+      return;
+    }
+    let alive = true;
+    fetchGroupMatches(subject)
+      .then((rows) => alive && setMatch(rows[0] ?? null))
+      .catch(() => alive && setMatch(null));
+    return () => {
+      alive = false;
+    };
+  }, [subject, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -83,7 +102,14 @@ export default function ExamFormDialog({ open, onClose, defaultSubjectId, onAddS
       return false;
     }
     try {
-      await createExam({ courseId: course.id, examDate: date });
+      const created = await createExam({ courseId: course.id, examDate: date });
+      if (match) {
+        try {
+          await joinGroupExam(created.id, match.exam);
+        } catch {
+          /* экзамен создан; присоединиться можно позже, это не мешает открыть его */
+        }
+      }
       const sem = semesters.find((s) => s.id === courseSemesterId(course));
       navigate(`/s/${sem ? semesterSlug(sem) : ""}/${courseSlug(course)}/exam`);
     } catch (e) {
@@ -119,6 +145,12 @@ export default function ExamFormDialog({ open, onClose, defaultSubjectId, onAddS
         error={dateError || undefined}
         hint="Нужна для обратного отсчёта на главной."
       />
+      {match && (
+        <p className="c-form-group-hint">
+          <Icon name="people" size={16} />
+          <span>В твоей группе уже есть экзамен по этому предмету. Твой присоединится к нему: билеты общие, ответы у каждого свои.</span>
+        </p>
+      )}
     </FormDialog>
   );
 }

@@ -8,6 +8,9 @@ import GroupLecturePage from "./GroupLecturePage";
 import GroupJoinPage from "./GroupJoinPage";
 import { GroupMemberPage, GroupMemberSubjectPage } from "./GroupMemberPages";
 import GroupSettingsPage from "./GroupSettingsPage";
+import GroupExamsPage from "./GroupExamsPage";
+import GroupExamPage from "./GroupExamPage";
+import GroupTicketPage from "./GroupTicketPage";
 
 /** Обёртки адресов группы: открытие любого из них включает режим «Группа», человеку без группы — «Вступи в свою группу». */
 export const GroupHomeRoute = () => (
@@ -40,6 +43,18 @@ export const GroupLectureRoute = () => (
     <GroupLecturePage />
   </GroupGate>
 );
+export const GroupExamsRoute = () => (
+  <GroupGate>
+    <GroupExamsPage />
+  </GroupGate>
+);
+export const GroupExamRoute = () => (
+  <GroupGate>
+    <GroupExamPage />
+  </GroupGate>
+);
+/** Билет подгруппы режим не переключает: вне режима «Группа» он открывается в защищённом просмотре. */
+export const GroupTicketRoute = () => <GroupTicketPage />;
 export function GroupJoinRoute() {
   const { setMode } = useMode();
   useEffect(() => setMode("group"), [setMode]);

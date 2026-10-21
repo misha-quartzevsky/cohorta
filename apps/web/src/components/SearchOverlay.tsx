@@ -10,22 +10,24 @@
  * открытия общее (lib/uiShellContext.ts) — вход и из строки в шапке,
  * и с иконки на странице «Все лекции».
  *
- * Чужие лекции (lecture_previews) и одногруппники сейчас только
- * показываются — открыть чужую лекцию («закрыта, запросить доступ»)
- * и профиль одногруппника — экраны волны C, их ещё нет.
+ * В режиме «Группа» поиск идёт только по выбранной группе: лекции одногруппников по названию, их предметы,
+ * одногруппники. Открытая тебе лекция открывается на чтение, закрытая ведёт на предмет одногруппника,
+ * где есть «Запросить доступ».
  */
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useUiShell } from "../lib/uiShellContext";
+import { useMode } from "../lib/modeContext";
+import { useGroupCtxOptional } from "../lib/groupCtx";
 import { useSemester } from "../lib/semesterContext";
 import { pickActiveSemester } from "../lib/activeSemester";
 import { semesterSlug, lectureHref, courseSlug } from "../lib/types";
 import { pluralRu } from "../lib/format";
 import { highlightMatch } from "../lib/highlightMatch";
 import { useProductSearch } from "../hooks/useProductSearch";
-import { isSearchEmpty } from "../services/searchService";
+import { isGroupSearchEmpty, isSearchEmpty } from "../services/searchService";
 import { Icon, Button, EmptyState } from "../ui";
 import { List, ListRow } from "../ui";
 import { SubjectCover } from "../ui";
@@ -38,7 +40,12 @@ export default function SearchOverlay() {
   const semSlug = activeSemester ? semesterSlug(activeSemester) : "";
 
   const [query, setQuery] = useState("");
-  const { result, loading } = useProductSearch(query, searchOpen);
+  const { isGroup } = useMode();
+  const groupCtx = useGroupCtxOptional();
+  // В режиме «Группа» ищем только в выбранной группе (Screen-search: «в режиме Группа поле то же и на том же месте»).
+  const groupId = isGroup ? (groupCtx?.current?.group.id ?? "") : "";
+  const groupMode = isGroup && !!groupId;
+  const { result, groupResult, loading } = useProductSearch(query, searchOpen, groupId);
 
   useEffect(() => {
     if (!searchOpen) setQuery("");
@@ -57,7 +64,7 @@ export default function SearchOverlay() {
 
   const q = query.trim();
   const showResults = q.length >= 2;
-  const empty = showResults && !loading && isSearchEmpty(result);
+  const empty = showResults && !loading && (groupMode ? isGroupSearchEmpty(groupResult) : isSearchEmpty(result));
 
   return (
     <div className="c-search-overlay">
@@ -94,6 +101,82 @@ export default function SearchOverlay() {
                   </Button>
                 }
               />
+            ) : groupMode ? (
+              <>
+                {groupResult.lectures.length > 0 && (
+                  <section>
+                    <h2>
+                      Лекции<span className="n"> · {groupResult.lectures.length}</span>
+                    </h2>
+                    <List>
+                      {groupResult.lectures.map((hit) => (
+                        <ListRow
+                          key={hit.id}
+                          cover={<span className="c-search-preview-cover" aria-hidden="true" />}
+                          title={highlightMatch(hit.title, q)}
+                          meta={[hit.ownerName, hit.subject, hit.open ? "Открыта тебе" : "Нужен доступ"].filter(Boolean).join(" · ")}
+                          onClick={() => {
+                            closeSearch();
+                            navigate(
+                              hit.open
+                                ? `/s/${semSlug}/group/lecture/${hit.lecture}`
+                                : `/s/${semSlug}/group/people/${hit.ownerId}/${hit.courseKey}`
+                            );
+                          }}
+                        />
+                      ))}
+                    </List>
+                  </section>
+                )}
+
+                {groupResult.subjects.length > 0 && (
+                  <section>
+                    <h2>
+                      Предметы<span className="n"> · {groupResult.subjects.length}</span>
+                    </h2>
+                    <List>
+                      {groupResult.subjects.map((hit) => (
+                        <ListRow
+                          key={`${hit.ownerId}-${hit.key}`}
+                          cover={<SubjectCover seed={hit.coverSeed} size={32} />}
+                          title={highlightMatch(hit.title, q)}
+                          meta={`${hit.ownerName} · ${hit.lectureCount} ${pluralRu(hit.lectureCount, ["лекция", "лекции", "лекций"])}`}
+                          onClick={() => {
+                            closeSearch();
+                            navigate(`/s/${semSlug}/group/people/${hit.ownerId}/${hit.key}`);
+                          }}
+                        />
+                      ))}
+                    </List>
+                  </section>
+                )}
+
+                {groupResult.people.length > 0 && (
+                  <section>
+                    <h2>
+                      Одногруппники<span className="n"> · {groupResult.people.length}</span>
+                    </h2>
+                    <List>
+                      {groupResult.people.map((hit) => (
+                        <ListRow
+                          key={hit.id}
+                          cover={
+                            <span className="c-search-avatar" aria-hidden="true">
+                              {hit.name.slice(0, 2).toUpperCase()}
+                            </span>
+                          }
+                          title={highlightMatch(hit.name, q)}
+                          meta={groupCtx?.current?.group.name}
+                          onClick={() => {
+                            closeSearch();
+                            navigate(`/s/${semSlug}/group/people/${hit.id}`);
+                          }}
+                        />
+                      ))}
+                    </List>
+                  </section>
+                )}
+              </>
             ) : (
               <>
                 {result.lectures.length > 0 && (

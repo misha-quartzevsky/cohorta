@@ -133,7 +133,7 @@ function MobileTabBar() {
     ? [
         { to: `/s/${semSlug}/group`, icon: "people", label: "Люди", end: true, alsoActive: [`/s/${semSlug}/group/people`] },
         { to: `/s/${semSlug}/group/access`, icon: "lock", label: "Доступ", dot: dots.access },
-        { to: `/s/${semSlug}/exams`, icon: "exam", label: "Экзамены", dot: dots.exams },
+        { to: `/s/${semSlug}/group/exams`, icon: "exam", label: "Экзамены", dot: dots.exams },
         profile,
       ]
     : [

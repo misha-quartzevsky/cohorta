@@ -16,6 +16,7 @@ import {
   type RosterPerson,
   type ShareRow,
 } from "../../services/groupApi";
+import { fetchMySubgroup } from "../../services/groupExamApi";
 import type { Lecture } from "../../lib/types";
 
 interface Row {
@@ -26,11 +27,15 @@ interface Row {
   avatar?: string;
   ids: string[];
   allowCopy: boolean;
+  /** Подгруппа: id и состав («Ты и Лена»). */
+  subgroup?: string;
+  note?: string;
 }
 
 /**
  * «Доступ к лекции» (Screen-group-access): кто читает, добавить человека или подгруппу, запрос на доступ.
- * Открывается из меню лекции «Доступ в группе». «Разрешить копировать» хранится на каждом выданном доступе отдельно.
+ * Открывается из меню лекции «Доступ в группе». «Можно копировать» — галочка у каждого читателя, человека и подгруппы отдельно,
+ * по умолчанию выключена; хранится на выданном доступе. В списке «Добавить человека или подгруппу» своей галочки нет.
  */
 export default function LectureAccessDialog({ lecture, open, onClose }: { lecture: Lecture; open: boolean; onClose: () => void }) {
   const { current } = useGroupCtx();
@@ -41,7 +46,7 @@ export default function LectureAccessDialog({ lecture, open, onClose }: { lectur
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [subs, setSubs] = useState<{ id: string; name: string }[]>([]);
   const [adding, setAdding] = useState(false);
-  const [copyNext, setCopyNext] = useState(false);
+  const [subMembers, setSubMembers] = useState<Record<string, string[]>>({});
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
 
@@ -70,6 +75,9 @@ export default function LectureAccessDialog({ lecture, open, onClose }: { lectur
       );
       setRequests(rq.filter((x) => x.lecture === lecture.id && x.owner === me && x.status === "open"));
       setSubs(sg.map((x) => ({ id: x.id, name: String(x.name) })));
+      const ids = [...new Set(sh.filter((x) => x.subgroup).map((x) => String(x.subgroup)))];
+      const entries = await Promise.all(ids.map(async (id) => [id, (await fetchMySubgroup(id))?.members ?? []] as const));
+      setSubMembers(Object.fromEntries(entries));
     } catch {
       setError("Не удалось загрузить доступ. Проверь связь и попробуй ещё раз.");
     }
@@ -88,7 +96,17 @@ export default function LectureAccessDialog({ lecture, open, onClose }: { lectur
     if (s.subgroup) {
       let r = rows.find((x) => x.key === `s${s.subgroup}`);
       if (!r) {
-        r = { key: `s${s.subgroup}`, name: `Подгруппа «${subs.find((x) => x.id === s.subgroup)?.name ?? "…"}»`, sub: true, ids: [], allowCopy: s.allowCopy };
+        const first = (id: string) => (id === me ? "Ты" : (roster.find((x) => x.id === id)?.name ?? "Участник").split(" ")[0]);
+        const members = [...(subMembers[s.subgroup] ?? [])].sort((a, b) => (a === me ? -1 : b === me ? 1 : 0)).map(first);
+        r = {
+          key: `s${s.subgroup}`,
+          name: `Подгруппа «${subs.find((x) => x.id === s.subgroup)?.name ?? "…"}»`,
+          sub: true,
+          subgroup: s.subgroup,
+          ids: [],
+          allowCopy: s.allowCopy,
+          note: members.length ? members.slice(0, 3).join(members.length === 2 ? " и " : ", ") : "",
+        };
         rows.push(r);
       }
       r.ids.push(s.id);
@@ -124,7 +142,7 @@ export default function LectureAccessDialog({ lecture, open, onClose }: { lectur
   const requester = request ? roster.find((p) => p.id === request.requester) : undefined;
 
   return (
-    <Modal open={open} onClose={onClose} title="Доступ к лекции">
+    <Modal open={open} onClose={onClose} title="Доступ к лекции" className="c-gr-acc-dialog">
       <div className="c-gr-sheet-body c-gr-acc">
         <p className="c-gr-acc-sub">{lecture.title}</p>
         <span className="c-gr-over">Кто читает лекцию</span>
@@ -135,14 +153,18 @@ export default function LectureAccessDialog({ lecture, open, onClose }: { lectur
               {r.sub ? <span className="c-gr-ava sm">{groupInitials(r.name.replace(/^Подгруппа «|»$/g, ""))}</span> : <Ava id={r.userId ?? ""} name={r.name} avatar={r.avatar} size="sm" />}
               <div className="tx">
                 <span className="t">{r.name}</span>
-                <span className="m">
-                  Читает ·{" "}
-                  <button type="button" className="c-gr-linkbtn" onClick={() => void toggleCopy(r)} disabled={busy === r.key}>
-                    {r.allowCopy ? "копировать можно" : "разрешить копировать"}
-                  </button>
-                </span>
+                <span className="m">{r.sub && r.note ? r.note : "Читает"}</span>
               </div>
               <div className="acts">
+                <label className="c-gr-copy">
+                  <input type="checkbox" checked={r.allowCopy} disabled={busy === r.key} onChange={() => void toggleCopy(r)} />
+                  <span className="box" aria-hidden="true">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <path d="M5 12l5 5 9-10" />
+                    </svg>
+                  </span>
+                  Можно копировать
+                </label>
                 <Button variant="secondary" size="sm" loading={busy === `x${r.key}`} onClick={() => void run(`x${r.key}`, () => revokeShares(r.ids))}>
                   <Icon name="x" size={14} /> Убрать
                 </Button>
@@ -161,17 +183,13 @@ export default function LectureAccessDialog({ lecture, open, onClose }: { lectur
         </div>
         {adding && (
           <div className="c-gr-addlist">
-            <label className="c-gr-check">
-              <input type="checkbox" checked={copyNext} onChange={(e) => setCopyNext(e.target.checked)} />
-              Разрешить копировать
-            </label>
             {subsLeft.map((s) => (
-              <button key={s.id} type="button" className="it" onClick={() => void run(`a${s.id}`, async () => { await shareWithSubgroup(lecture.id, s.id, copyNext); })}>
+              <button key={s.id} type="button" className="it" onClick={() => void run(`a${s.id}`, async () => { await shareWithSubgroup(lecture.id, s.id, false); })}>
                 <span className="c-gr-ava xs">{groupInitials(s.name)}</span>Подгруппа «{s.name}»
               </button>
             ))}
             {peopleLeft.map((p) => (
-              <button key={p.id} type="button" className="it" onClick={() => void run(`a${p.id}`, () => grantLecture(lecture.id, p.id, groupId, copyNext))}>
+              <button key={p.id} type="button" className="it" onClick={() => void run(`a${p.id}`, () => grantLecture(lecture.id, p.id, groupId, false))}>
                 <Ava id={p.id} name={p.name} avatar={p.avatar} size="xs" />
                 {p.name}
               </button>

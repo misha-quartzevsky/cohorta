@@ -329,6 +329,13 @@ export interface ExamTicket extends PbRecord {
   sources?: string[];
   /** PocketBase relation → users. Задел на Group Mode. */
   author?: string;
+  /** Билет подгруппы экзамена группы ("" — личный или общий список). */
+  subgroup?: string;
+  /** Кто готовит билет (участники подгруппы). */
+  assignees?: string[];
+  /** Блокировка «Занят»: кто правит и до какого момента (30 секунд без действий). */
+  locked_by?: string;
+  locked_until?: string;
   expand?: {
     exam?: Exam & { expand?: { course?: Course } };
   };
