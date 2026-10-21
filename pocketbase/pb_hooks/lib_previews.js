@@ -52,6 +52,9 @@ function syncPreviewForLecture(app, lecture) {
 
   const info = courseInfo(app, lecture);
   const title = String(lecture.get("title") || "");
+  // номер и дата пары: не текст лекции, показываются в строке «Лекция 5 · 11 окт»
+  const number = Number(lecture.get("number") || 0);
+  const lectureDate = String(lecture.get("lecture_date") || "");
   const col = app.findCollectionByNameOrId("lecture_previews");
   for (const groupId of want) {
     const row = previewRow(app, lecture.id, groupId);
@@ -63,6 +66,8 @@ function syncPreviewForLecture(app, lecture) {
       row.set("course_title", info.title);
       row.set("course", info.id);
       row.set("cover_seed", info.seed);
+      row.set("lecture_number", number);
+      row.set("lecture_date", lectureDate);
       app.save(row);
     } else {
       app.save(
@@ -75,6 +80,8 @@ function syncPreviewForLecture(app, lecture) {
           course_title: info.title,
           course: info.id,
           cover_seed: info.seed,
+          lecture_number: number,
+          lecture_date: lectureDate,
         })
       );
     }

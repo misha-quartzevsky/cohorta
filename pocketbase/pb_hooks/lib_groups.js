@@ -185,7 +185,42 @@ function restorableCount(app, groupId, userId) {
   return restorableShares(app, groupId, userId).length;
 }
 
+// Экзамен группы для участника: название и обложка предмета берутся у автора (предмет автора
+// участникам не виден); своя подгруппа — только своя: чужих подгрупп и их числа человек не видит.
+function examCourseInfo(app, exam) {
+  try {
+    const c = app.findRecordById("courses", String(exam.get("course")));
+    return { title: String(c.get("name") || ""), seed: Number(c.get("cover_seed") || 0) };
+  } catch (err) {
+    return { title: "", seed: 0 };
+  }
+}
+
+function examView(app, exam, me) {
+  const info = examCourseInfo(app, exam);
+  const part = first(app, "exam_participants", "exam = {:x} && user = {:u}", { x: exam.id, u: me });
+  let mine = null;
+  const sid = part ? String(part.get("subgroup") || "") : "";
+  if (sid) {
+    try {
+      mine = { id: sid, name: String(app.findRecordById("exam_subgroups", sid).get("name") || "") };
+    } catch (err) {
+      mine = null;
+    }
+  }
+  return {
+    id: exam.id,
+    group: String(exam.get("group")),
+    owner: String(exam.get("owner")),
+    title: info.title,
+    cover_seed: info.seed,
+    exam_date: String(exam.get("exam_date") || ""),
+    my_subgroup: mine,
+  };
+}
+
 module.exports = {
+  examView,
   nowStr,
   inSeconds,
   norm,

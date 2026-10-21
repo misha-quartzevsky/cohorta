@@ -11,6 +11,8 @@
 //  POST /api/tickets/{id}/assign             {users[]}          назначить билет
 //  POST /api/tickets/{id}/lock | /unlock                         блокировка «Занят» (30 секунд)
 //  POST /api/tickets/{id}/take-my-answer     {source}           «Взять мой ответ»
+//  GET  /api/groups/{id}/exams                                  экзамены группы (предмет, дата, моя подгруппа)
+//  GET  /api/exams/{id}/group-info                              экзамен группы и кто уже в подгруппах (без названий)
 //  GET  /api/exams/group-match?course=                          групповые экзамены с тем же названием предмета
 //  POST /api/exams/{id}/join-group           {exam}             личный экзамен берёт список билетов группового
 //
@@ -393,6 +395,43 @@ routerAdd(
       n += 1;
     }
     return e.json(200, { added: n });
+  },
+  $apis.requireAuth()
+);
+
+// Экзамены группы для участника: название и обложка предмета берутся у автора (см. examView в lib_groups.js).
+routerAdd(
+  "GET",
+  "/api/groups/{id}/exams",
+  (e) => {
+    const g = require(`${__hooks}/lib_groups.js`);
+    const gid = e.request.pathValue("id");
+    if (!g.isMember(e.app, gid, e.auth.id)) throw new NotFoundError("Группа не найдена.");
+    const out = [];
+    for (const ex of g.all(e.app, "exams", "group = {:g}", { g: gid })) out.push(g.examView(e.app, ex, e.auth.id));
+    return e.json(200, out);
+  },
+  $apis.requireAuth()
+);
+
+// Один экзамен группы + кто из участников группы уже в подгруппе этого экзамена
+// (без имени подгруппы: чужая подгруппа остаётся скрытой).
+routerAdd(
+  "GET",
+  "/api/exams/{id}/group-info",
+  (e) => {
+    const g = require(`${__hooks}/lib_groups.js`);
+    let exam;
+    try {
+      exam = e.app.findRecordById("exams", e.request.pathValue("id"));
+    } catch (err) {
+      throw new NotFoundError("Экзамен не найден.");
+    }
+    const gid = String(exam.get("group") || "");
+    if (!gid || !g.isMember(e.app, gid, e.auth.id)) throw new NotFoundError("Экзамен не найден.");
+    const taken = [];
+    for (const p of g.all(e.app, "exam_participants", "exam = {:x} && subgroup != ''", { x: exam.id })) taken.push(String(p.get("user")));
+    return e.json(200, { exam: g.examView(e.app, exam, e.auth.id), taken });
   },
   $apis.requireAuth()
 );

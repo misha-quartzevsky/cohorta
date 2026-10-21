@@ -301,6 +301,36 @@ test.describe("группа: правила доступа", () => {
     expect(await previews(request, b, g1)).toEqual([]);
   });
 
+  test("номер и дата лекции в предпросмотре видны только там, где виден предпросмотр", async ({ request }) => {
+    const upd = await request.patch(`${PB}/api/collections/lectures/records/${l1}`, {
+      headers: h(a),
+      data: { number: 5, lecture_date: "2026-10-11 00:00:00.000Z" },
+    });
+    expect(upd.ok(), await upd.text()).toBeTruthy();
+    // предпросмотр выключен: ни строки, ни полей
+    expect(await previews(request, b, g1)).toEqual([]);
+    await setPreview(request, a, g1, true);
+    const row = (await previews(request, b, g1)).find((p) => p.lecture === l1) as Record<string, unknown>;
+    expect(row.lecture_number).toBe(5);
+    expect(String(row.lecture_date)).toContain("2026-10-11");
+    // правка лекции обновляет и превью
+    await request.patch(`${PB}/api/collections/lectures/records/${l1}`, { headers: h(a), data: { number: 6 } });
+    expect(((await previews(request, b, g1)).find((p) => p.lecture === l1) as Record<string, unknown>).lecture_number).toBe(6);
+    // не участник группы и участник другой группы не видят ни строки, ни полей
+    expect(await previews(request, c)).toEqual([]);
+    const direct = await request.get(`${PB}/api/collections/lecture_previews/records`, { headers: h(c), params: { fields: "lecture_number,lecture_date" } });
+    expect((await direct.json()).items).toEqual([]);
+    // чужой не может записать номер в превью
+    const forge = await request.patch(`${PB}/api/collections/lecture_previews/records/${(row as { id?: string }).id}`, {
+      headers: h(b),
+      data: { lecture_number: 99 },
+    });
+    expect(forge.ok(), "правка превью через API").toBeFalsy();
+    // выключили предпросмотр: строка, а с ней и поля, исчезли
+    await setPreview(request, a, g1, false);
+    expect(await previews(request, b, g1)).toEqual([]);
+  });
+
   test("человек в двух группах: предпросмотр у каждой группы свой", async ({ request }) => {
     await setPreview(request, a, g1, true); // только группа 1
     const both = [l1, l2].sort();

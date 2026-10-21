@@ -116,6 +116,28 @@ test.describe("экзамены группы и подгруппы", () => {
     }
   });
 
+  test("список экзаменов группы и экзамен: предмет автора, только своя подгруппа, чужих не видно", async ({ request }) => {
+    const rows = await (await request.get(`${PB}/api/groups/${g}/exams`, { headers: h(d) })).json();
+    expect(rows.map((r: any) => r.id)).toEqual([exam]);
+    expect(rows[0].title).toBe("Философия"); // название предмета автора видно участнику группы
+    expect(rows[0].my_subgroup).toBeNull();
+    const mineA = await (await request.get(`${PB}/api/groups/${g}/exams`, { headers: h(a) })).json();
+    expect(mineA[0].my_subgroup).toEqual({ id: s1, name: "Девчонки" });
+    // участник другой подгруппы своей видит только свою, число подгрупп нигде не отдаётся
+    const mineC = await (await request.get(`${PB}/api/groups/${g}/exams`, { headers: h(c) })).json();
+    expect(mineC[0].my_subgroup).toEqual({ id: s2, name: "Вторая" });
+    expect(JSON.stringify(mineC)).not.toContain("Девчонки");
+    // посторонний: 404, как будто группы нет
+    expect((await request.get(`${PB}/api/groups/${g}/exams`, { headers: h(x) })).status()).toBe(404);
+    expect((await request.get(`${PB}/api/exams/${exam}/group-info`, { headers: h(x) })).status()).toBe(404);
+    // «уже в подгруппе»: id людей, без названий подгрупп
+    const info = await (await request.get(`${PB}/api/exams/${exam}/group-info`, { headers: h(d) })).json();
+    expect(info.exam.id).toBe(exam);
+    expect([...info.taken].sort()).toEqual([a.id, b.id, c.id].sort());
+    expect(JSON.stringify(info)).not.toContain("Девчонки");
+    expect(JSON.stringify(info)).not.toContain("Вторая");
+  });
+
   test("блокировка «Занят» проверяется на сервере", async ({ request }) => {
     const t = sub1Tickets[0].id;
     const take = await request.post(`${PB}/api/tickets/${t}/lock`, { headers: h(a) });
