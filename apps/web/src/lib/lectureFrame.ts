@@ -34,6 +34,8 @@ export interface LectureFrameApi {
   tocVersion: number;
   /** Explicitly bump the TOC version (called when the lecture changes). */
   bumpToc: () => void;
+  /** Сохранить несохранённое сейчас (повтор по тапу на «Не сохранено» в верхней строке телефона). */
+  flushNow: () => Promise<void>;
   /** Статус сохранения («Сохранено» и др.) — публикует страница лекции, показывает верхняя полоса. */
   saveIndicator: SaveIndicatorState | null;
   setSaveIndicator: (s: SaveIndicatorState | null) => void;

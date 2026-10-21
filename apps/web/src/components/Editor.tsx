@@ -50,6 +50,8 @@ import { ImageBlock } from "./editor/ImageBlock";
 import { NodeTimestamp } from "./editor/NodeTimestamp";
 import { useImageUpload } from "./editor/useImageUpload";
 import { BubbleToolbar } from "./editor/BubbleToolbar";
+import { MobileFormatBar } from "./editor/MobileFormatBar";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import { TextMenu } from "./editor/TextMenu";
 import { TableMenu } from "./editor/TableMenu";
 
@@ -214,6 +216,9 @@ export default function Editor({
       },
       handleDrop,
       handlePaste: handlePasteCombined,
+      // Курсор не прячется под закреплённой верхней полосой и панелью форматирования.
+      scrollMargin: { top: 88, bottom: 112, left: 0, right: 0 },
+      scrollThreshold: { top: 88, bottom: 112, left: 0, right: 0 },
     }),
     [handleDrop, handlePasteCombined]
   );
@@ -314,6 +319,9 @@ export default function Editor({
       editor.commands.setContent(value, { emitUpdate: false });
     }
   }, [value, editor]);
+
+  // Телефон: своя панель Ж К Н • 1. H / над клавиатурой (Screen-m-editor).
+  const phone = useMediaQuery("(max-width: 1023px)");
 
   // The «…» text menu (Notion-style formatting of the selection).
   const [textMenuOpen, setTextMenuOpen] = useState(false);
@@ -443,6 +451,9 @@ export default function Editor({
       {/* Закреплена под текстом отдельной строкой (раздел B1 инструкции),
           не всплывает по выделению — BubbleToolbar теперь обычный блок
           в потоке документа (sticky снизу через CSS), не Tiptap BubbleMenu. */}
+      {phone ? (
+        <MobileFormatBar editor={editor} onSlash={openSlashMenu} />
+      ) : (
       <BubbleToolbar
         editor={editor}
         textMenuOpen={textMenuOpen}
@@ -450,6 +461,7 @@ export default function Editor({
         onOpenTextMenu={openTextMenu}
         onQuiz={onQuiz}
       />
+      )}
 
       {mathReq && (
         <MathEditorOverlay request={mathReq} onClose={() => mathBus.close()} />

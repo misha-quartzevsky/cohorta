@@ -3964,3 +3964,56 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
 .c-toc a.h3 { color: var(--ink-3); }
 .c-toc a.on { color: var(--ink); }
 .c-shell-profile { margin-top: auto; background: var(--surface); }
+
+/* ============================================================
+ *  Телефонный редактор лекции (Screen-m-editor, -toc, -lecture-menu; 21.10)
+ * ============================================================ */
+.c-shell-back-m, .c-shell-save-m { display: none; }
+.c-lecture-eyebrow-date { display: none; }
+
+/* Название — растущее поле: переносится по словам, ничего не обрезается */
+.c-lecture .lecture-title-input { resize: none; overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; box-sizing: border-box; }
+
+@media (max-width: 1023px) {
+  /* --- Верхняя строка --- */
+  .c-shell-topbar { height: 72px; padding: 0 var(--space-4); gap: var(--space-2); background: var(--bg); border-bottom: 0; }
+  .c-shell-back-m { display: inline-flex; align-items: center; gap: 2px; flex: 1; min-width: 0; min-height: 44px; font: 500 14px/1 var(--font-sans); color: var(--ink-2); text-decoration: none; }
+  .c-shell-save-m { display: inline-flex; align-items: center; position: absolute; left: 50%; transform: translateX(-50%); min-height: 44px; padding: 0 var(--space-2); border: 0; background: none; font: 400 13px/18px var(--font-sans); color: var(--ink-3); white-space: nowrap; }
+  .c-shell-save-m:disabled { cursor: default; }
+  .c-shell-save-m.error { color: var(--danger-text); font-weight: 500; cursor: pointer; }
+  .c-shell-topbar-gap { display: none; }
+  .c-shell-topbar .c-shell-burger, .c-shell-topbar .c-shell-more-m { display: inline-flex; width: 44px; height: 44px; border: 1px solid var(--line-strong); background: var(--surface); border-radius: var(--radius-md); }
+  .c-shell-topbar .c-shell-burger:active, .c-shell-topbar .c-shell-more-m:active { background: var(--sunken); }
+
+  /* --- Полотно: поля 16 px, без карточки; нижний отступ под панель форматирования --- */
+  .c-lecture-eyebrow { font: 400 13px/18px var(--font-sans); letter-spacing: 0; text-transform: none; margin-bottom: var(--space-2); }
+  .c-lecture-eyebrow-date { display: inline; }
+  .c-lecture .lecture-title-input { font-size: 28px !important; line-height: 36px; margin-bottom: var(--space-3); }
+  .c-lecture-meta { display: none; }
+  .c-lecture-body { margin-top: var(--space-3); padding-bottom: calc(var(--space-1) * 32); }
+  .c-lecture-body .tiptap-editor, .c-lecture-body .lecture-view-content { font-size: 17px; line-height: 26px; }
+  .c-lecture-body :is(h1, h2, h3) { scroll-margin-top: 88px; }
+  .c-lecture-body pre, .c-lecture-body .tiptap-editor pre { max-width: 100%; overflow-x: auto; }
+  .c-lecture-body table { display: block; max-width: 100%; overflow-x: auto; }
+  .c-lecture, .c-lecture-body { min-width: 0; max-width: 100%; }
+  .c-shell-content { padding-bottom: var(--space-4); }
+  .c-shell-content.with-aside .c-lecture-aside { display: none; }
+
+  /* --- Нижняя панель форматирования --- */
+  .c-mfmt { position: fixed; left: 0; right: 0; z-index: 40; display: flex; justify-content: space-between; gap: 6px; box-sizing: border-box; background: var(--surface); border-top: 1px solid var(--line); padding: 8px 12px calc(8px + max(env(safe-area-inset-bottom, 0px), 20px)); }
+  .c-mfmt.kb { padding-bottom: 8px; }
+  .c-mfmt button { width: 44px; height: 44px; border: 0; border-radius: var(--radius-md); background: none; color: var(--ink-2); font: 600 16px/1 var(--font-sans); cursor: pointer; }
+  .c-mfmt button.on { background: var(--sunken); color: var(--ink); }
+
+  /* --- Шторка «Содержание» (только содержание, без общего меню) --- */
+  .c-shell-sidebar.sheet { height: auto; max-height: 70vh; padding: 20px 8px calc(16px + env(safe-area-inset-bottom, 0px)); overflow: hidden; }
+  .c-shell-sidebar.sheet::before { content: ""; position: absolute; top: 8px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 2px; background: var(--line-strong); }
+  .c-shell-sidebar.sheet > .c-shell-logo, .c-shell-sidebar.sheet > .c-shell-side-search, .c-shell-sidebar.sheet > .c-shell-mode,
+  .c-shell-sidebar.sheet > .c-shell-nav, .c-shell-sidebar.sheet > .c-shell-profile, .c-shell-sidebar.sheet > .c-shell-back { display: none; }
+  .c-shell-sidebar.sheet > .c-shell-section { margin-top: 0; padding: 4px 16px 12px; font: 600 17px/24px var(--font-sans); letter-spacing: 0; text-transform: none; color: var(--ink); }
+  .c-shell-sidebar.sheet > .c-shell-section span:last-child { font: 400 13px/18px var(--font-sans); color: var(--ink-3); }
+  .c-shell-sidebar.sheet .c-toc a { min-height: 48px; font-size: 15px; }
+  .c-shell-sidebar.sheet .c-toc a.h3 { font-size: 14px; }
+  .c-shell-sidebar.sheet .c-shell-toc-empty { padding: 4px 16px 16px; font-size: 14px; line-height: 22px; }
+  .c-shell-toc-more { display: none; }
+}

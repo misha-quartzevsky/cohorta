@@ -44,6 +44,9 @@ export default function AppLayout() {
   const [tocVersion, setTocVersion] = useState(0);
   const [saveIndicator, setSaveIndicator] = useState<SaveIndicatorState | null>(null);
   const [tagsRequest, setTagsRequest] = useState(0);
+  const flushNow = useCallback(async () => {
+    await flushRef.current?.();
+  }, []);
   const requestTags = useCallback(() => setTagsRequest((n) => n + 1), []);
 
   // Mobile drawer state: the header burger toggles it, the sidebar + backdrop
@@ -74,12 +77,13 @@ export default function AppLayout() {
       tocContainerRef,
       tocVersion,
       bumpToc,
+      flushNow,
       saveIndicator,
       setSaveIndicator,
       tagsRequest,
       requestTags,
     }),
-    [registerFlush, setTitleCb, title, tocVersion, bumpToc, saveIndicator, tagsRequest, requestTags]
+    [registerFlush, setTitleCb, title, tocVersion, bumpToc, flushNow, saveIndicator, tagsRequest, requestTags]
   );
 
   const uiShell = useMemo<UIShellApi>(

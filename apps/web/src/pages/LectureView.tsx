@@ -277,6 +277,28 @@ function LectureView() {
     enabled: ready,
   });
 
+  // Название растёт по высоте и переносится по словам (раньше однострочное поле обрезало длинные названия).
+  const titleRef2 = useRef<HTMLTextAreaElement | null>(null);
+  useLayoutEffect(() => {
+    const el = titleRef2.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [title, ready]);
+  useEffect(() => {
+    const el = titleRef2.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    let w = el.clientWidth;
+    const ro = new ResizeObserver(() => {
+      if (el.clientWidth === w) return;
+      w = el.clientWidth;
+      el.style.height = "auto";
+      el.style.height = `${el.scrollHeight}px`;
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ready]);
+
   // Верхняя полоса (в каркасе) показывает «● Сохранено».
   useEffect(() => {
     if (!ready) return;
@@ -431,13 +453,26 @@ function LectureView() {
         {ready && (
           <article className="c-lecture">
             <header className="c-lecture-head">
-              <p className="c-lecture-eyebrow">{eyebrow}</p>
-              <input
+              <p className="c-lecture-eyebrow">
+                {eyebrow}
+                {lectureDay && <span className="c-lecture-eyebrow-date"> · {lectureDateLabel(lectureDay)}</span>}
+              </p>
+              <textarea
+                ref={titleRef2}
+                rows={1}
                 className="lecture-title-input"
                 value={title}
                 placeholder="Название записи"
                 aria-label="Название лекции"
                 onChange={(e) => updateTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  // Название в одну «строку» по смыслу: Enter не ставит перенос, а уходит в текст.
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    (e.target as HTMLTextAreaElement).blur();
+                    document.querySelector<HTMLElement>(".tiptap-editor")?.focus();
+                  }
+                }}
               />
               <p className="c-lecture-meta">
                 {status && <StatusChip tone={status.tone}>{status.label}</StatusChip>}

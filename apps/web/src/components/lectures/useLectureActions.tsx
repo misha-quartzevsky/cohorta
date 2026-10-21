@@ -42,6 +42,8 @@ interface Options {
   onDeleted?: (lecture: Lecture) => void;
   /** Дополнительные пункты (в открытой лекции: «Теги», «Квиз по лекции»), идут после «Перенести». */
   extraItems?: (lecture: Lecture) => MenuItem[];
+  /** Дополнительные пункты листа на телефоне (Screen-m-lecture-menu: «Теги» и «Квиз» там не нужны). */
+  sheetExtraItems?: (lecture: Lecture) => MenuItem[];
   /** После переноса в предмет (в открытой лекции — перейти на её новый адрес). */
   onMoved?: (lecture: Lecture, course: Course) => void;
 }
@@ -104,17 +106,17 @@ export function useLectureActions(options: Options = {}) {
   );
 
   /** Пункты меню (одни и те же на компьютере и в листе на телефоне). «Доступ» — волна C. */
-  const itemsFor = (lecture: Lecture): MenuItem[] => [
+  const itemsFor = (lecture: Lecture, phone = false): MenuItem[] => [
       { label: "Переименовать", icon: <Icon name="edit" size={18} />, onClick: () => (options.onRename ? options.onRename(lecture) : setRenamingId(lecture.id)) },
       {
-        label: lectureCourseId(lecture) ? "Перенести в предмет" : "Назначить предмет",
+        label: lectureCourseId(lecture) || phone ? "Перенести в предмет" : "Назначить предмет",
         icon: <Icon name="folder" size={18} />,
         onClick: () => {
           setPicked("");
           setMoveFor(lecture);
         },
       },
-      ...(options.extraItems?.(lecture) ?? []),
+      ...((phone ? options.sheetExtraItems : options.extraItems)?.(lecture) ?? []),
       {
         label: "Дублировать",
         icon: <Icon name="copy" size={18} />,
@@ -173,7 +175,7 @@ export function useLectureActions(options: Options = {}) {
                 .join(" · ")}
             </p>
             <div className="c-lec-sheet-list" role="menu" aria-label="Действия">
-              {itemsFor(sheetFor).map((item) => (
+              {itemsFor(sheetFor, true).map((item) => (
                 <button
                   key={item.label}
                   type="button"

@@ -44,7 +44,7 @@ import type { IconName, TocItem, TabBarItem } from "../ui";
 import {
   UnderstandingScope,
   UnderstandingAside,
-  UnderstandingButton,
+  useOpenUnderstandingSheet,
 } from "./quiz/UnderstandingScope";
 
 const MODE_OPTIONS: { value: Mode; label: string }[] = [
@@ -230,8 +230,8 @@ function SidebarLectureToc({ courseSlug, onNavigate }: { courseSlug?: string; on
       </div>
       {items.length === 0 ? (
         <p className="c-shell-toc-empty">
-          Добавь заголовок, и он появится здесь. Так удобно прыгать по
-          длинной лекции.
+          Добавь заголовок, и он появится здесь.
+          <span className="c-shell-toc-more"> Так удобно прыгать по длинной лекции.</span>
         </p>
       ) : (
         <div className={`c-shell-toc-wrap${more ? " more" : ""}`}>
@@ -408,7 +408,8 @@ function Topbar({ open, onBurger, lecture }: { open: boolean; onBurger: () => vo
   const { courseSlug } = useParams();
   const semSlug = useSemSlug();
   const { semesters } = useSemester();
-  const { saveIndicator, requestTags } = useLectureFrame();
+  const { saveIndicator, requestTags, flushNow } = useLectureFrame();
+  const openUnderstanding = useOpenUnderstandingSheet();
   const actions = useLectureActions({
     onRename: () => document.querySelector<HTMLInputElement>(".lecture-title-input")?.focus(),
     onDeleted: () => navigate(courseSlug ? `/s/${semSlug}/${courseSlug}` : `/s/${semSlug}/lectures`),
@@ -417,6 +418,8 @@ function Topbar({ open, onBurger, lecture }: { open: boolean; onBurger: () => vo
       { label: "Квиз по лекции", icon: <Icon name="task" size={18} />, onClick: () => navigate(`/quiz/${lec.id}`) },
     ],
     // Назначили предмет черновику — лекция уходит из «Черновиков», открываем её по новому адресу.
+    sheetExtraItems: () =>
+      openUnderstanding ? [{ label: "Понимание темы", icon: <Icon name="bulb" size={18} />, onClick: openUnderstanding }] : [],
     onMoved: (lec, course) => {
       const sem = semesters.find((x) => x.id === courseSemesterId(course));
       navigate(`/s/${sem ? semesterSlug(sem) : semSlug}/${courseSlugOf(course)}/${lectureSlug(lec)}`, { replace: true });
@@ -426,6 +429,28 @@ function Topbar({ open, onBurger, lecture }: { open: boolean; onBurger: () => vo
   const lectureLabel = lecture ? (lecture.number ? `Лекция ${lecture.number}` : lectureTitle(lecture)) : "";
   return (
     <header className="c-shell-topbar">
+      {/* Телефон (Screen-m-editor): «‹ Предмет» слева, «Сохранено» по центру, «≡» (только содержание) и «···» справа. */}
+      <Link className="c-shell-back-m" to={course ? `/s/${semSlug}/${courseSlugOf(course)}` : `/s/${semSlug}/drafts`}>
+        <Icon name="chev" size={18} style={{ transform: "rotate(180deg)" }} />
+        {course || !lecture ? "Предмет" : "Черновики"}
+      </Link>
+      {saveIndicator && (
+        <button
+          type="button"
+          className={`c-shell-save-m ${saveIndicator.state}`}
+          disabled={saveIndicator.state !== "error"}
+          onClick={() => void flushNow()}
+          aria-live="polite"
+        >
+          {saveIndicator.state === "saving"
+            ? "Сохраняю…"
+            : saveIndicator.state === "error"
+              ? "Не сохранено"
+              : saveIndicator.state === "queued"
+                ? "Сохранено на устройстве"
+                : "Сохранено"}
+        </button>
+      )}
       <button
         type="button"
         className="c-shell-burger"
@@ -480,7 +505,6 @@ function Topbar({ open, onBurger, lecture }: { open: boolean; onBurger: () => vo
           </span>
         </>
       )}
-      <UnderstandingButton />
       {actions.dialogs}
     </header>
   );
@@ -521,7 +545,7 @@ export default function AppShellNew() {
           <SearchOverlay />
         </div>
       </UnderstandingScope>
-      <MobileTabBar />
+      {!inLecture && <MobileTabBar />}
     </div>
     </FormsProvider>
   );
