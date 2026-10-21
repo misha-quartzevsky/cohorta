@@ -44,7 +44,7 @@ import type { IconName, TocItem, TabBarItem } from "../ui";
 import {
   UnderstandingScope,
   UnderstandingAside,
-  useOpenUnderstandingSheet,
+  UnderstandingButton,
 } from "./quiz/UnderstandingScope";
 
 const MODE_OPTIONS: { value: Mode; label: string }[] = [
@@ -110,9 +110,9 @@ function useSoloNavItems(): NavItem[] {
 
 /**
  * Нижняя панель телефона (Screen-m-profile-draft, CHANGES-2026-10-19).
- * Соло: Главная, Расписание, Лекции, Ещё, Профиль (кружок с аватаром).
+ * Соло: Главная, Расписание, Лекции, Занятия, Профиль (кружок с аватаром).
  * Группа: Люди, Доступ, Экзамены, Профиль. «Задачи» и «Карточки» живут
- * на экране «Ещё» (pages/MorePage.tsx), а не в панели.
+ * на экране «Занятия» (pages/MorePage.tsx), а не в панели.
  */
 function MobileTabBar() {
   const semSlug = useSemSlug();
@@ -409,7 +409,6 @@ function Topbar({ open, onBurger, lecture }: { open: boolean; onBurger: () => vo
   const semSlug = useSemSlug();
   const { semesters } = useSemester();
   const { saveIndicator, requestTags, flushNow } = useLectureFrame();
-  const openUnderstanding = useOpenUnderstandingSheet();
   const actions = useLectureActions({
     onRename: () => document.querySelector<HTMLInputElement>(".lecture-title-input")?.focus(),
     onDeleted: () => navigate(courseSlug ? `/s/${semSlug}/${courseSlug}` : `/s/${semSlug}/lectures`),
@@ -418,8 +417,6 @@ function Topbar({ open, onBurger, lecture }: { open: boolean; onBurger: () => vo
       { label: "Квиз по лекции", icon: <Icon name="task" size={18} />, onClick: () => navigate(`/quiz/${lec.id}`) },
     ],
     // Назначили предмет черновику — лекция уходит из «Черновиков», открываем её по новому адресу.
-    sheetExtraItems: () =>
-      openUnderstanding ? [{ label: "Понимание темы", icon: <Icon name="bulb" size={18} />, onClick: openUnderstanding }] : [],
     onMoved: (lec, course) => {
       const sem = semesters.find((x) => x.id === courseSemesterId(course));
       navigate(`/s/${sem ? semesterSlug(sem) : semSlug}/${courseSlugOf(course)}/${lectureSlug(lec)}`, { replace: true });
@@ -451,6 +448,7 @@ function Topbar({ open, onBurger, lecture }: { open: boolean; onBurger: () => vo
                 : "Сохранено"}
         </button>
       )}
+      <UnderstandingButton />
       <button
         type="button"
         className="c-shell-burger"

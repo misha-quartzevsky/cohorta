@@ -98,13 +98,7 @@ export function UnderstandingAside() {
   );
 }
 
-/** Открыть шторку «Твоё понимание темы» на телефоне (пункт меню лекции); вне страницы лекции — null. */
-export function useOpenUnderstandingSheet(): (() => void) | null {
-  const v = useUnderstanding();
-  return v ? () => v.setSheetOpen(true) : null;
-}
-
-/** Кнопка «Понимание» в шапке на телефоне (в телефонном макете редактора её нет — вход из «···»). */
+/** Кнопка «Понимание» в шапке лекции на телефоне (Screen-m-understanding): открывает шторку. */
 export function UnderstandingButton() {
   const v = useUnderstanding();
   if (!v) return null;

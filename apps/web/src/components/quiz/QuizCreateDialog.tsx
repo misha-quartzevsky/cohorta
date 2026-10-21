@@ -197,7 +197,7 @@ export default function QuizCreateDialog({ lecture, charCount, hasQuiz }: Props)
                 navigate(`/quiz/${lecture.id}`);
               }}
             >
-              Мои готовые квизы
+              Открыть квиз лекции
             </Button>
           )}
         </div>

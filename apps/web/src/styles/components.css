@@ -3981,6 +3981,10 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
   .c-shell-save-m { display: inline-flex; align-items: center; position: absolute; left: 50%; transform: translateX(-50%); min-height: 44px; padding: 0 var(--space-2); border: 0; background: none; font: 400 13px/18px var(--font-sans); color: var(--ink-3); white-space: nowrap; }
   .c-shell-save-m:disabled { cursor: default; }
   .c-shell-save-m.error { color: var(--danger-text); font-weight: 500; cursor: pointer; }
+  /* Рядом с кнопкой «Понимание» (Screen-m-understanding) для «Сохранено» места нет: обычное
+     состояние не показываем, сбои («Не сохранено», «Сохранено на устройстве») встают под строку. */
+  .c-shell-save-m.idle, .c-shell-save-m.saved, .c-shell-save-m.saving { display: none; }
+  .c-shell-save-m.error, .c-shell-save-m.queued { left: var(--space-4); bottom: 0; transform: none; min-height: 20px; padding: 0; }
   .c-shell-topbar-gap { display: none; }
   .c-shell-topbar .c-shell-burger, .c-shell-topbar .c-shell-more-m { display: inline-flex; width: 44px; height: 44px; border: 1px solid var(--line-strong); background: var(--surface); border-radius: var(--radius-md); }
   .c-shell-topbar .c-shell-burger:active, .c-shell-topbar .c-shell-more-m:active { background: var(--sunken); }
