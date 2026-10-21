@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import Icon from "./Icon";
 import { useDismissable } from "./useDismissable";
 
@@ -6,14 +6,21 @@ interface Props {
   /** Текст подсказки. Не единственное место этой информации на экране. */
   children: ReactNode;
   label?: string;
-  /** К какому краю кнопки прижата подсказка (у правого края страницы — right). */
+  /** К какому краю кнопки прижата подсказка. Без значения — слева, а у правого края экрана сама разворачивается влево. */
   align?: "left" | "right";
 }
 
 /** Лампочка-подсказка (.c-bulb): открывается кликом и с клавиатуры (Enter/Space), закрывается Esc. */
-export default function Toggletip({ children, label = "Подсказка", align = "left" }: Props) {
+export default function Toggletip({ children, label = "Подсказка", align }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const [flip, setFlip] = useState(false);
+  useLayoutEffect(() => {
+    if (!open || align || !ref.current) return;
+    const left = ref.current.getBoundingClientRect().left;
+    setFlip(left + 260 > window.innerWidth - 16);
+  }, [open, align]);
+  const toRight = align ? align === "right" : flip;
   useDismissable(open, ref, () => setOpen(false));
 
   return (
@@ -34,7 +41,7 @@ export default function Toggletip({ children, label = "Подсказка", alig
           style={{
             position: "absolute",
             top: "calc(100% + 6px)",
-            ...(align === "right" ? { right: 0 } : { left: 0 }),
+            ...(toRight ? { right: 0 } : { left: 0 }),
             zIndex: 20,
             padding: "12px 14px",
             width: 260,

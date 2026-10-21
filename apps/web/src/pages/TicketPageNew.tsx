@@ -24,7 +24,7 @@
  */
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { Button, Icon, StatusChip, Toggletip } from "../ui";
 import TicketSourcesPanel from "../components/exam/TicketSourcesPanel";
@@ -170,6 +170,17 @@ export default function TicketPageNew() {
     void refetch();
   }
 
+  /** Снять отметку «Готов»: билет возвращается в «В работе» (или «Не начат», если ответа нет). */
+  async function unmarkReady() {
+    const t = ticketRef.current;
+    if (!t) return;
+    const next = statusForAnswer(contentRef.current, "draft");
+    statusRef.current = next;
+    setStatus(next);
+    await updateTicket(t.id, { status: next });
+    void refetch();
+  }
+
   function startEdit() {
     setMode("edit");
     navigate(`${base}/exam/${numberParam}/edit`, { replace: true });
@@ -187,9 +198,9 @@ export default function TicketPageNew() {
   return (
     <div className="c-ticket">
       <div className="c-ticket-crumb">
-        {course ? courseName(course) : ""}
+        <Link to={base}>{course ? courseName(course) : ""}</Link>
         <Icon name="chev" size={14} />
-        Экзамен
+        <Link to={`${base}/exam`}>Экзамен</Link>
         <Icon name="chev" size={14} />
         <span className="current">Билет {ticketNumber(ticket)}</span>
       </div>
@@ -198,8 +209,8 @@ export default function TicketPageNew() {
         <h1>Билет {ticketNumber(ticket)}</h1>
         <div className="actions">
           <Toggletip>
-            Статус билета переключается вручную кнопкой «Отметить готовым» —
-            один лишь текст ответа билет готовым не делает.
+            Статус билета переключается вручную при редактировании: «Отметить готовым» и «Снять отметку «Готов»».
+            Один лишь текст ответа билет готовым не делает.
           </Toggletip>
           {mode === "view" && (
             <Button variant="secondary" onClick={startEdit}>
@@ -213,10 +224,20 @@ export default function TicketPageNew() {
               Следующий билет
             </Button>
           )}
-          {mode === "edit" && (
-            <Button variant="primary" onClick={() => void markReady()} disabled={status === "ready"}>
+          {mode === "edit" && status === "ready" && (
+            <>
+              <Button variant="secondary" onClick={() => void unmarkReady()}>
+                Снять отметку «Готов»
+              </Button>
+              <Button variant="primary" onClick={() => void markReady()}>
+                Готово
+              </Button>
+            </>
+          )}
+          {mode === "edit" && status !== "ready" && (
+            <Button variant="primary" onClick={() => void markReady()}>
               <Icon name="check" size={16} />
-              {status === "ready" ? "Готов" : "Отметить готовым"}
+              Отметить готовым
             </Button>
           )}
         </div>

@@ -92,9 +92,9 @@ export default function ExamImportPageNew() {
         </Link>
       </div>
       <div className="c-exam-crumb">
-        {course ? courseName(course) : ""}
+        <Link to={base}>{course ? courseName(course) : ""}</Link>
         <Icon name="chev" size={14} />
-        Экзамен
+        <Link to={`${base}/exam`}>Экзамен</Link>
         <Icon name="chev" size={14} />
         <span className="current">Импорт</span>
       </div>

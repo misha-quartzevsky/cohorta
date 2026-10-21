@@ -18,7 +18,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, MoreHorizontal } from "lucide-react";
 
-import { Button, Icon, Pills, StatusChip, Menu } from "../ui";
+import { Button, Icon, StatusChip, Menu, SubjectTabs } from "../ui";
 import SlotFormNew from "../components/schedule/SlotFormNew";
 import AttachLectureModal from "../components/schedule/AttachLectureModal";
 import { useCourseBySlug } from "../hooks/useCourseBySlug";
@@ -62,7 +62,6 @@ export default function SubjectPairsPage() {
 
   const { settings, slots, createSlot, updateSlot, deleteSlot } = useSchedule(activeSemester?.id);
   const [lectures, setLectures] = useState<Lecture[]>([]);
-  const [lectureCount, setLectureCount] = useState(0);
   const [links, setLinks] = useState<ScheduleSlotLecture[]>([]);
   const reloadLinks = () => fetchSlotLectureLinks().then(setLinks).catch(() => {});
 
@@ -70,7 +69,6 @@ export default function SubjectPairsPage() {
     if (!course) return;
     void fetchLecturesOfSubject(course.id).then((ls) => {
       setLectures(ls);
-      setLectureCount(ls.length);
     });
     void reloadLinks();
   }, [course]);
@@ -181,6 +179,8 @@ export default function SubjectPairsPage() {
         </span>
       </div>
 
+      <SubjectTabs base={`/s/${semSlug}/${courseSlug(course)}`} courseId={course.id} active="pairs" />
+
       <Button
         variant="primary"
         className="c-pairs-m-add"
@@ -193,19 +193,6 @@ export default function SubjectPairsPage() {
         Добавить пару
       </Button>
 
-      <Pills
-        aria-label="Раздел предмета"
-        value="pairs"
-        onChange={(v) => {
-          if (v === "lectures") navigate(`/s/${semSlug}/${courseSlug(course)}`);
-          if (v === "exam") navigate(`/s/${semSlug}/${courseSlug(course)}/exam`);
-        }}
-        options={[
-          { value: "lectures", label: "Лекции", count: lectureCount },
-          { value: "pairs", label: "Пары", count: subjectSlots.length },
-          { value: "exam", label: "Экзамен" },
-        ]}
-      />
 
       {subjectSlots.length === 0 ? (
         <p className="c-pairs-empty">У этого предмета пока нет пар в расписании.</p>

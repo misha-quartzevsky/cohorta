@@ -2869,11 +2869,11 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .c-exam-continue .tx .label { font: 600 12px/18px var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
 .c-exam-continue .tx .t { font-size: 15px; font-weight: 500; }
 
-.c-exam-map-grid { display: flex; gap: 8px; flex-wrap: wrap; }
-.c-exam-chip { width: 44px; height: 44px; border-radius: var(--radius-md); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-2); display: inline-flex; align-items: center; justify-content: center; font: 600 14px/1 var(--font-sans); font-variant-numeric: tabular-nums; box-sizing: border-box; text-decoration: none; }
+.c-exam-map-grid { display: flex; gap: calc(var(--space-1) * 1.5); flex-wrap: wrap; }
+.c-exam-chip { width: var(--control-sm); height: var(--control-sm); border-radius: calc(var(--radius-sm) + var(--space-1) / 2); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-2); display: inline-flex; align-items: center; justify-content: center; font: 600 13px/1 var(--font-sans); font-variant-numeric: tabular-nums; box-sizing: border-box; text-decoration: none; }
 .c-exam-chip.ready { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
 .c-exam-chip.draft { background: var(--accent-soft); color: var(--accent-strong); border-color: var(--accent-soft); }
-.c-exam-legend { display: flex; gap: 20px; font-size: 13px; color: var(--ink-2); }
+.c-exam-legend { display: flex; gap: var(--space-4); font-size: 13px; color: var(--ink-2); }
 .c-exam-legend-item { display: inline-flex; gap: 8px; align-items: center; }
 .c-exam-legend-swatch { width: 12px; height: 12px; border-radius: 4px; }
 .c-exam-legend-swatch.ready { background: var(--ink); }
@@ -2908,6 +2908,8 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .c-ticket { display: flex; flex-direction: column; gap: 28px; font-family: var(--font-sans); }
 .c-ticket-crumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-3); flex-wrap: wrap; }
 .c-ticket-crumb .current { color: var(--ink-2); }
+.c-ticket-crumb a { color: inherit; text-decoration: none; }
+.c-ticket-crumb a:hover, .c-exam-crumb a:hover { text-decoration: underline; }
 .c-ticket-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-5); flex-wrap: wrap; }
 .c-ticket-head h1 { margin: 0; font-size: 36px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; }
 .c-ticket-head .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
@@ -3875,3 +3877,34 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
   .c-import-m-cta { display: block; position: sticky; bottom: calc(var(--space-1) * 24); }
   .c-import-m-cta .c-btn { width: 100%; height: var(--control-lg); }
 }
+
+/* Вкладки предмета (ui/SubjectTabs): компьютер — сегмент-пилюля, телефон — ряд чипов 36 px */
+.c-subject-tabs { display: inline-flex; align-self: flex-start; padding: 4px; gap: 2px; background: var(--sunken); border-radius: var(--radius-pill); font-family: var(--font-sans); max-width: 100%; box-sizing: border-box; overflow-x: auto; scrollbar-width: none; }
+.c-subject-tabs::-webkit-scrollbar { display: none; }
+.c-subject-tabs a { flex: none; white-space: nowrap; height: var(--control-sm); padding: 0 16px; display: inline-flex; align-items: center; border-radius: var(--radius-pill); font: 500 14px/1 var(--font-sans); color: var(--ink-2); text-decoration: none; }
+.c-subject-tabs a.on { background: var(--ink); color: var(--on-ink); }
+.c-subject-tabs a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+@media (max-width: 1023px) {
+  .c-subject-tabs { display: flex; align-self: stretch; padding: 0; gap: var(--space-2); background: none; border-radius: 0; }
+  .c-subject-tabs a { background: var(--sunken); padding: 0 14px; }
+  .c-subject-tabs a.on { background: var(--ink); }
+}
+
+/* Карта билетов, компактная (Screen-exam 21.10): отступы 16/20, шапка и квадраты через 12 */
+.c-exam-map-card { padding: var(--space-4) calc(var(--space-1) * 5); flex-direction: column; gap: var(--space-3); }
+@media (min-width: 1024px) { .c-exam-map-card { display: flex; } }
+.c-exam-map-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+.c-exam-map-head h2 { margin: 0; font-size: 16px; line-height: 24px; font-weight: 600; }
+.c-exam-map-head .meta { display: block; font-size: 13px; line-height: 18px; color: var(--ink-3); }
+.c-exam-map-head .c-exam-legend { padding-top: var(--space-1); }
+.c-exam-tabs-d { display: none; }
+@media (min-width: 1024px) { .c-exam-tabs-d { display: block; } }
+
+/* Поле даты ДД.ММ.ГГГГ (ui/DateField) */
+.c-date-box { position: relative; }
+.c-date .c-date-box input:not(.c-date-native) { width: 100%; box-sizing: border-box; padding-right: calc(var(--control-md) + var(--space-1)); }
+.c-date-btn { position: absolute; top: 0; right: 0; width: var(--control-md); height: 100%; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; color: var(--ink-2); cursor: pointer; border-radius: var(--radius-md); }
+.c-date-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.c-date .c-date-native { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; padding: 0; border: 0; }
+.c-lec-m-tabs-row { padding-top: var(--space-3); }
+.c-exam-m-head .c-subject-tabs { margin-top: var(--space-3); margin-bottom: var(--space-2); }

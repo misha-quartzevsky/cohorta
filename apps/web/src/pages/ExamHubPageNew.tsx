@@ -19,7 +19,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { Button, Icon, StatusChip, Toggletip, EmptyState } from "../ui";
+import { Button, Icon, StatusChip, Toggletip, EmptyState, SubjectTabs } from "../ui";
 import AddTicketModal from "../components/exam/AddTicketModal";
 import { useForms } from "../lib/formsContext";
 import { useSemester } from "../lib/semesterContext";
@@ -116,7 +116,7 @@ export default function ExamHubPageNew() {
     <div className="c-exam">
       {/* Десктоп */}
       <div className="c-exam-crumb">
-        {course ? courseName(course) : ""}
+        <Link to={base}>{course ? courseName(course) : ""}</Link>
         <Icon name="chev" size={14} />
         <span className="current">Экзамен</span>
       </div>
@@ -156,6 +156,10 @@ export default function ExamHubPageNew() {
         </div>
       </div>
 
+      <div className="c-exam-tabs-d">
+        <SubjectTabs base={base} courseId={course?.id} active="exam" />
+      </div>
+
       {/* Телефон */}
       <div className="c-exam-m-crumb">
         <Link to={base}>
@@ -168,6 +172,7 @@ export default function ExamHubPageNew() {
         <span className="meta">
           {course ? courseName(course) : ""}
         </span>
+        <SubjectTabs base={base} courseId={course?.id} active="exam" />
         <div className="c-exam-m-readiness">
           <div className="row">
             <span>Готовность к экзамену</span>
@@ -213,23 +218,12 @@ export default function ExamHubPageNew() {
       )}
 
       <div className="c-exam-card c-exam-map-card">
-        <div className="c-exam-card-head">
-          <h2>Карта билетов</h2>
-          <span className="meta">
-            {total} {pluralRu(total, ["билет", "билета", "билетов"])}
-          </span>
-        </div>
-        <div className="c-exam-card-pad" style={{ paddingTop: 0, display: "flex", flexDirection: "column", gap: 16 }}>
-          <div className="c-exam-map-grid">
-            {tickets.map((t) => {
-              const status = ticketStatus(t);
-              const n = ticketNumber(t);
-              return (
-                <Link key={t.id} to={ticketHref(n, status)} className={`c-exam-chip ${STATUS_CSS[status]}`}>
-                  {n}
-                </Link>
-              );
-            })}
+        <div className="c-exam-map-head">
+          <div>
+            <h2>Карта билетов</h2>
+            <span className="meta">
+              {total} {pluralRu(total, ["билет", "билета", "билетов"])}
+            </span>
           </div>
           <div className="c-exam-legend">
             <span className="c-exam-legend-item">
@@ -245,6 +239,17 @@ export default function ExamHubPageNew() {
               Не начат
             </span>
           </div>
+        </div>
+        <div className="c-exam-map-grid">
+          {tickets.map((t) => {
+            const status = ticketStatus(t);
+            const n = ticketNumber(t);
+            return (
+              <Link key={t.id} to={ticketHref(n, status)} className={`c-exam-chip ${STATUS_CSS[status]}`}>
+                {n}
+              </Link>
+            );
+          })}
         </div>
       </div>
 

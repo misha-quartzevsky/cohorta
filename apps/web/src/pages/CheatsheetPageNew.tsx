@@ -79,7 +79,7 @@ export default function CheatsheetPageNew() {
   return (
     <div className="c-cheatsheet" ref={rootRef}>
       <div className="c-exam-crumb">
-        {course ? courseName(course) : ""}
+        <Link to={base}>{course ? courseName(course) : ""}</Link>
         <Icon name="chev" size={14} />
         <Link to={`${base}/exam`}>Экзамен</Link>
         <Icon name="chev" size={14} />

@@ -24,3 +24,6 @@ export type { PillOption } from "./Pills";
 export { default as EditableRow, PickField } from "./EditableRow";
 export { RowSaveError } from "./rowSaveError";
 export type { PickOption } from "./EditableRow";
+export { default as SubjectTabs } from "./SubjectTabs";
+export type { SubjectTab } from "./SubjectTabs";
+export { default as DateField } from "./DateField";

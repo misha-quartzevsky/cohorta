@@ -30,6 +30,16 @@ for (const [w, h] of [[1440, 900], [390, 844]]) {
 
   await go(`${withExam}/exam`);
   await shot("hub");
+  if (!phone) {
+    await p.getByRole("button", { name: "Подсказка" }).click();
+    await p.waitForTimeout(300);
+    await shot("hub-tip");
+    await p.keyboard.press("Escape");
+  }
+  await go(`${withExam}/pairs`);
+  await shot("pairs");
+  await go(`${withExam}`);
+  await shot("lectures");
 
   await go(`${withExam}/exam`);
   await p.getByRole("button", { name: "Добавить билет" }).first().click();

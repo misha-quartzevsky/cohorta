@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, FormDialog, Input, Select } from "../../ui";
+import { Button, DateField, FormDialog, Select } from "../../ui";
 import { useSemester } from "../../lib/semesterContext";
 import { fetchCourses } from "../../services/courseService";
 import { createExam, fetchExamsForCourses } from "../../services/examService";
@@ -28,11 +28,15 @@ export default function ExamFormDialog({ open, onClose, defaultSubjectId, onAddS
   const [courses, setCourses] = useState<Course[] | null>(null);
   const [subject, setSubject] = useState("");
   const [date, setDate] = useState("");
+  const [dateValid, setDateValid] = useState(true);
+  const [dateError, setDateError] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!open) return;
     setDate("");
+    setDateValid(true);
+    setDateError("");
     setError("");
     setCourses(null);
     void (async () => {
@@ -74,6 +78,10 @@ export default function ExamFormDialog({ open, onClose, defaultSubjectId, onAddS
       setError("Выбери предмет");
       return false;
     }
+    if (!dateValid) {
+      setDateError("Введи дату как 25.01.2027 или оставь поле пустым");
+      return false;
+    }
     try {
       await createExam({ courseId: course.id, examDate: date });
       const sem = semesters.find((s) => s.id === courseSemesterId(course));
@@ -100,11 +108,15 @@ export default function ExamFormDialog({ open, onClose, defaultSubjectId, onAddS
           </option>
         ))}
       </Select>
-      <Input
-        type="date"
+      <DateField
         label="Дата экзамена · необязательно"
         value={date}
-        onChange={(e) => setDate(e.target.value)}
+        onChange={(iso, valid) => {
+          setDate(iso);
+          setDateValid(valid);
+          setDateError("");
+        }}
+        error={dateError || undefined}
         hint="Нужна для обратного отсчёта на главной."
       />
     </FormDialog>

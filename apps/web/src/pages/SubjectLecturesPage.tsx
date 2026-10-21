@@ -18,7 +18,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useCourseBySlug } from "../hooks/useCourseBySlug";
 import { useLecturesOverview } from "../hooks/useLecturesOverview";
 import { useMediaQuery } from "../hooks/useMediaQuery";
-import { useSchedule } from "../hooks/useSchedule";
 import { useSemester } from "../lib/semesterContext";
 import {
   courseName,
@@ -32,7 +31,7 @@ import { pickActiveSemester } from "../lib/activeSemester";
 import { pluralRu } from "../lib/format";
 import { todayStr } from "../lib/localDate";
 import { createLectureInSubject } from "../services/scheduleService";
-import { Button, EmptyState, Icon, Pills } from "../ui";
+import { Button, EmptyState, Icon, SubjectTabs } from "../ui";
 import type { LectureListStatusKey } from "../lib/computeLectureReadiness";
 import LectureGroupList from "../components/lectures/LectureGroupList";
 import PeriodSelect from "../components/lectures/PeriodSelect";
@@ -43,7 +42,6 @@ import ErrorBanner from "../components/ErrorBanner";
 import NotFoundPage from "./NotFoundPage";
 
 type StatusFilter = "all" | LectureListStatusKey;
-type SubjectTab = "lectures" | "pairs" | "exam";
 
 const STATUS_LABELS: { key: StatusFilter; label: string }[] = [
   { key: "all", label: "Все" },
@@ -62,11 +60,27 @@ export default function SubjectLecturesPage() {
   const semSlug = activeSemester ? semesterSlug(activeSemester) : "";
   const { rows, loading, error } = useLecturesOverview();
   const courseSemester = semesters.find((s) => s.id === (course ? courseSemesterId(course) : ""));
-  const { slots } = useSchedule(courseSemester?.id);
   // Период запоминается отдельно для каждого предмета; по умолчанию — период самого предмета.
   const period = useLecturePeriod(`subject:${courseSlugParam}`, courseSemester?.id);
 
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  // Фильтр по статусу переживает переход между вкладками предмета.
+  const filterKey = `cohorta:subject-status:${courseSlugParam}`;
+  const [statusFilter, setStatusFilterState] = useState<StatusFilter>(() => {
+    try {
+      const saved = sessionStorage.getItem(filterKey);
+      return STATUS_LABELS.some((x) => x.key === saved) ? (saved as StatusFilter) : "all";
+    } catch {
+      return "all";
+    }
+  });
+  function setStatusFilter(next: StatusFilter) {
+    setStatusFilterState(next);
+    try {
+      sessionStorage.setItem(filterKey, next);
+    } catch {
+      /* без хранилища фильтр просто не запоминается */
+    }
+  }
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
 
@@ -97,7 +111,6 @@ export default function SubjectLecturesPage() {
   }
 
   const base = `/s/${semSlug}/${courseSlugParam}`;
-  const pairsCount = slots.filter((s) => s.subject === course.id).length;
   const periodText = courseSemester ? semesterLabel(courseSemester).toLowerCase() : "";
   const subtitle = `${courseRows.length} ${pluralRu(courseRows.length, ["лекция", "лекции", "лекций"])}${periodText ? ` · ${periodText}` : ""}`;
 
@@ -178,28 +191,15 @@ export default function SubjectLecturesPage() {
             </span>
           </div>
           <span className="c-lec-m-count">{subtitle}</span>
+          <div className="c-lec-m-tabs-row">
+            <SubjectTabs base={base} courseId={course.id} active="lectures" />
+          </div>
         </header>
 
         {message && <p className="c-lec-error">{message}</p>}
         <div className="c-lec-m-body">{list}</div>
 
         <div className="c-lec-m-bar">
-          <div className="c-seg c-lec-m-tabs" role="tablist" aria-label="Раздел предмета">
-            <span role="tab" aria-selected className="on" tabIndex={0}>
-              Лекции
-            </span>
-            <span
-              role="tab"
-              aria-selected={false}
-              tabIndex={0}
-              onClick={() => navigate(`${base}/pairs`)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") navigate(`${base}/pairs`);
-              }}
-            >
-              Пары и экзамен
-            </span>
-          </div>
           <div className="c-lec-m-filters">
             <PeriodSelect options={period.options} value={period.value} onChange={period.setValue} />
             <div className="c-lec-m-pills" role="tablist" aria-label="Статус">
@@ -223,11 +223,6 @@ export default function SubjectLecturesPage() {
   }
 
   /* ---------- Компьютер ---------- */
-  const tabs = [
-    { value: "lectures" as SubjectTab, label: "Лекции", count: courseRows.length },
-    { value: "pairs" as SubjectTab, label: "Пары", count: pairsCount },
-    { value: "exam" as SubjectTab, label: "Экзамен" },
-  ];
   return (
     <div className="c-lec">
       <div className="c-lec-head">
@@ -247,15 +242,7 @@ export default function SubjectLecturesPage() {
       </div>
 
       <div className="c-lec-filters">
-        <Pills<SubjectTab>
-          aria-label="Раздел предмета"
-          options={tabs}
-          value="lectures"
-          onChange={(v) => {
-            if (v === "pairs") navigate(`${base}/pairs`);
-            else if (v === "exam") navigate(`${base}/exam`);
-          }}
-        />
+        <SubjectTabs base={base} courseId={course.id} active="lectures" />
         <div className="c-lec-filters-end">
           <PeriodSelect popover accent={!period.isCurrent} options={period.options} value={period.value} onChange={period.setValue} />
         </div>

@@ -31,5 +31,23 @@ console.log("строк до/после привязки:", before, after);
 await p.getByRole("button", { name: /Отвязать|Убрать/ }).last().click(); // добавленная лекция идёт последней
 await p.waitForTimeout(1200);
 console.log("после снятия:", await p.locator(".c-ticket-source-row").count());
+// снять и вернуть отметку «Готов» у билета №1 (в конце он снова готов), крошки ведут назад
+await p.goto(`${BASE}/s/demo/math-analysis/exam/1`);
+await p.waitForTimeout(900);
+await p.getByRole("button", { name: "Изменить" }).click();
+await p.getByRole("button", { name: /Снять отметку/ }).click();
+await p.waitForTimeout(800);
+console.log("после снятия виден чип:", await p.locator(".c-ticket-meta-row .c-chip").innerText());
+await p.getByRole("button", { name: "Отметить готовым" }).click();
+await p.waitForTimeout(1000);
+console.log("после возврата чип:", await p.locator(".c-ticket-meta-row .c-chip").innerText());
+await p.getByRole("link", { name: "Экзамен", exact: true }).first().click();
+await p.waitForURL(/\/exam$/);
+console.log("крошка «Экзамен» ведёт на хаб:", p.url().endsWith("/exam"));
+await p.getByRole("link", { name: "Пары" }).click();
+await p.waitForURL(/\/pairs$/);
+await p.getByRole("link", { name: /^Лекции/ }).first().click();
+await p.waitForTimeout(500);
+console.log("вкладки работают:", p.url());
 console.log("не открылись:", bad, "ошибки консоли:", errors.length, errors.slice(0, 3));
 await b.close();
