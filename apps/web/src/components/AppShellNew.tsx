@@ -21,7 +21,7 @@ import { useForms } from "../lib/formsContext";
 import { useLectureActions } from "./lectures/useLectureActions";
 import type { Lecture } from "../lib/types";
 import DraftCover from "./lectures/DraftCover";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useNavigate, useParams } from "react-router-dom";
 
 import { useUiShell } from "../lib/uiShellContext";
@@ -30,7 +30,7 @@ import { useMode, type Mode } from "../lib/modeContext";
 import { useSemester } from "../lib/semesterContext";
 import { lastSemesterSlug } from "../lib/lastSemester";
 import { pickActiveSemester } from "../lib/activeSemester";
-import { semesterSlug, courseName, courseSlug as courseSlugOf, lectureCourseId } from "../lib/types";
+import { semesterSlug, courseName, courseSlug as courseSlugOf, courseSemesterId, lectureCourseId, lectureSlug, lectureTitle } from "../lib/types";
 import { useLectureFrame } from "../lib/lectureFrame";
 import { useLectures } from "../hooks/useLectures";
 import { useLectureBySlug } from "../hooks/useLectureBySlug";
@@ -39,7 +39,7 @@ import { useCourses } from "../hooks/useCourses";
 import { useAuth } from "../hooks/useAuth";
 import { useTocScan } from "../hooks/useTocScan";
 import { userName, nameInitials } from "../lib/format";
-import { Icon, Segmented, TabBar, LectureToc, SubjectCover } from "../ui";
+import { Icon, Menu, Segmented, TabBar, LectureToc, SubjectCover } from "../ui";
 import type { IconName, TocItem, TabBarItem } from "../ui";
 import {
   UnderstandingScope,
@@ -169,6 +169,31 @@ function SidebarLectureToc({ courseSlug, onNavigate }: { courseSlug?: string; on
   }));
   const activeId = activeIndex >= 0 ? String(activeIndex) : undefined;
 
+  // Список прокручивается сам; внизу тень, пока есть что листать; текущий пункт сам доезжает до видимой зоны.
+  const listRef = useRef<HTMLDivElement>(null);
+  const [more, setMore] = useState(false);
+  const updateMore = useCallback(() => {
+    const el = listRef.current;
+    setMore(!!el && el.scrollHeight - el.scrollTop - el.clientHeight > 4);
+  }, []);
+  useEffect(() => {
+    updateMore();
+    const el = listRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(updateMore);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [items.length, updateMore]);
+  useEffect(() => {
+    const list = listRef.current;
+    const active = list?.querySelector<HTMLElement>("a.on");
+    if (!list || !active) return;
+    const top = active.offsetTop;
+    const bottom = top + active.offsetHeight;
+    if (top < list.scrollTop) list.scrollTo({ top: top - 8, behavior: "smooth" });
+    else if (bottom > list.scrollTop + list.clientHeight) list.scrollTo({ top: bottom - list.clientHeight + 8, behavior: "smooth" });
+  }, [activeId]);
+
   return (
     <>
       {courseSlug && (
@@ -185,6 +210,20 @@ function SidebarLectureToc({ courseSlug, onNavigate }: { courseSlug?: string; on
           {course ? courseName(course) : "Предмет"}
         </button>
       )}
+      {!courseSlug && (
+        <button
+          type="button"
+          className="c-shell-back"
+          onClick={() => {
+            onNavigate();
+            navigate(`/s/${semSlug}/drafts`);
+          }}
+        >
+          <Icon name="chev" size={16} style={{ transform: "rotate(180deg)" }} />
+          <DraftCover size={18} />
+          Черновики
+        </button>
+      )}
       <div className="c-shell-section">
         <span>Содержание</span>
         <span>{items.length}</span>
@@ -195,14 +234,18 @@ function SidebarLectureToc({ courseSlug, onNavigate }: { courseSlug?: string; on
           длинной лекции.
         </p>
       ) : (
-        <LectureToc
-          items={items}
-          activeId={activeId}
-          onSelect={(id) => {
-            scrollTo(scanned[Number(id)]);
-            onNavigate();
-          }}
-        />
+        <div className={`c-shell-toc-wrap${more ? " more" : ""}`}>
+          <div className="c-shell-toc" ref={listRef} onScroll={updateMore}>
+            <LectureToc
+              items={items}
+              activeId={activeId}
+              onSelect={(id) => {
+                scrollTo(scanned[Number(id)]);
+                onNavigate();
+              }}
+            />
+          </div>
+        </div>
       )}
     </>
   );
@@ -347,7 +390,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
         ) : (
           <SidebarCourses semSlug={semSlug} onNavigate={onClose} />
         )}
-        <div className="c-shell-spacer" />
+        {!inLecture && <div className="c-shell-spacer" />}
         <SidebarProfile />
       </aside>
     </>
@@ -355,18 +398,32 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 }
 
 /**
- * Верхняя строка только на телефоне и только у открытой лекции: содержание, «···» (то же меню,
- * что долгое нажатие в списках, Screen-m-lecture-menu) и «Понимание». Строки поиска в шапке нет:
+ * Верхняя полоса открытой лекции. Компьютер (Screen-editor): слева крошки «Предмет › Лекция N»
+ * («Черновики › Лекция N» без предмета), справа «● Сохранено» и «···» с меню лекции.
+ * Телефон: содержание, «···» (лист меню, Screen-m-lecture-menu) и «Понимание». Строки поиска нет:
  * поиск глобальный (сайдбар на компьютере, лупа на корневых экранах телефона).
  */
 function Topbar({ open, onBurger, lecture }: { open: boolean; onBurger: () => void; lecture: Lecture | null }) {
   const navigate = useNavigate();
   const { courseSlug } = useParams();
   const semSlug = useSemSlug();
+  const { semesters } = useSemester();
+  const { saveIndicator, requestTags } = useLectureFrame();
   const actions = useLectureActions({
     onRename: () => document.querySelector<HTMLInputElement>(".lecture-title-input")?.focus(),
     onDeleted: () => navigate(courseSlug ? `/s/${semSlug}/${courseSlug}` : `/s/${semSlug}/lectures`),
+    extraItems: (lec) => [
+      { label: "Теги", icon: <Icon name="grid" size={18} />, onClick: requestTags },
+      { label: "Квиз по лекции", icon: <Icon name="task" size={18} />, onClick: () => navigate(`/quiz/${lec.id}`) },
+    ],
+    // Назначили предмет черновику — лекция уходит из «Черновиков», открываем её по новому адресу.
+    onMoved: (lec, course) => {
+      const sem = semesters.find((x) => x.id === courseSemesterId(course));
+      navigate(`/s/${sem ? semesterSlug(sem) : semSlug}/${courseSlugOf(course)}/${lectureSlug(lec)}`, { replace: true });
+    },
   });
+  const course = lecture && lectureCourseId(lecture) ? lecture.expand?.field : undefined;
+  const lectureLabel = lecture ? (lecture.number ? `Лекция ${lecture.number}` : lectureTitle(lecture)) : "";
   return (
     <header className="c-shell-topbar">
       <button
@@ -378,11 +435,50 @@ function Topbar({ open, onBurger, lecture }: { open: boolean; onBurger: () => vo
       >
         <Icon name={open ? "x" : "toc"} size={20} />
       </button>
-      <span className="c-shell-topbar-gap" />
       {lecture && (
-        <button type="button" className="c-shell-more" aria-label="Меню лекции" onClick={() => actions.openSheet(lecture)}>
-          <Icon name="dots" size={20} />
-        </button>
+        <nav className="c-shell-crumbs" aria-label="Путь">
+          {course ? (
+            <Link to={`/s/${semSlug}/${courseSlugOf(course)}`}>{courseName(course)}</Link>
+          ) : (
+            <Link to={`/s/${semSlug}/drafts`}>Черновики</Link>
+          )}
+          <Icon name="chev" size={14} />
+          <span className="cur">{lectureLabel}</span>
+        </nav>
+      )}
+      <span className="c-shell-topbar-gap" />
+      {saveIndicator && (
+        <span className={`c-shell-save ${saveIndicator.state}`} role="status">
+          <i aria-hidden="true" />
+          {saveIndicator.text}
+        </span>
+      )}
+      {lecture && (
+        <>
+          <button type="button" className="c-shell-more c-shell-more-m" aria-label="Меню лекции" onClick={() => actions.openSheet(lecture)}>
+            <Icon name="dots" size={20} />
+          </button>
+          <span className="c-shell-more-d">
+            <Menu
+              width={280}
+              aria-label={`Меню лекции «${lectureTitle(lecture)}»`}
+              trigger={(p) => (
+                <button
+                  type="button"
+                  className="c-shell-more"
+                  aria-label="Меню лекции"
+                  onClick={p.onClick}
+                  ref={p.ref}
+                  aria-expanded={p["aria-expanded"]}
+                  aria-haspopup={p["aria-haspopup"]}
+                >
+                  <Icon name="dots" size={20} />
+                </button>
+              )}
+              items={actions.itemsFor(lecture)}
+            />
+          </span>
+        </>
       )}
       <UnderstandingButton />
       {actions.dialogs}

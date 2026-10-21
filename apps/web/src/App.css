@@ -1500,6 +1500,14 @@ textarea.field {
   color: var(--accent-strong, var(--c-lilac));
 }
 
+.bubble-btn.bubble-text { font: 500 15px/1 var(--font-sans); width: 48px; color: var(--ink-2); }
+.bubble-btn.bubble-text.bold { font-weight: 700; color: var(--ink); }
+.bubble-btn.bubble-text.italic { font-style: italic; color: var(--ink); }
+.bubble-btn.bubble-word { font: 500 14px/1 var(--font-sans); width: auto; padding: 0 12px; color: var(--ink-2); }
+.bubble-btn.bubble-text.active, .bubble-btn.bubble-word.active { color: var(--accent-strong); }
+.bubble-quiz { height: 40px; padding: 0 16px; margin-left: 8px; border: 0; border-radius: var(--radius-md); background: var(--ink); color: var(--on-ink); font: 600 14px/1 var(--font-sans); cursor: pointer; }
+.bubble-quiz:hover { opacity: 0.9; }
+.bubble-quiz:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .bubble-sep {
   width: 1px;
   height: 24px;

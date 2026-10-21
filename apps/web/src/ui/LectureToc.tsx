@@ -33,7 +33,7 @@ export default function LectureToc({ items, activeId, onSelect, className }: Pro
             onSelect(item.id);
           }}
         >
-          {item.text}
+          <span title={item.text}>{item.text}</span>
         </a>
       ))}
     </nav>

@@ -3,146 +3,87 @@
  *  editor/BubbleToolbar.tsx — закреплённая панель форматирования
  * ============================================
  *
- * B1, 2026-10-19 (Screen-editor.dc.html): панель закреплена под текстом
- * отдельной строкой (sticky к низу вьюпорта, см. .bubble-menu в App.css),
- * не всплывает по выделению — обычный блок в потоке документа, не Tiptap
- * BubbleMenu/tippy. Раньше показывалась только при непустом выделении
- * (`shouldShow`); проп оставлен в сигнатуре (Editor.tsx его всё ещё
- * вычисляет для другой логики), но здесь больше не используется.
- *
- * bold / italic / link / highlight swatches / clear highlight / the «…»
- * button that opens the extended TextMenu.
+ * Screen-editor.dc.html: Aa, B, I, Маркер, «···», «+ Квиз». Закреплена под
+ * текстом отдельной строкой (sticky к низу вьюпорта, см. .bubble-menu).
+ * «Aa» открывает стили текста (заголовки, списки, цитата), «···» — остальное
+ * (диктовка, ссылка, цвета выделения, чек-лист, «Сделать задачей»).
  */
 
 import type { Editor as TiptapEditor } from "@tiptap/core";
-import type { BubbleMenuPluginProps } from "@tiptap/extension-bubble-menu";
-import { Bold, Eraser, Italic, Link2, ListChecks, Mic, MicOff, MoreHorizontal } from "lucide-react";
-import { HIGHLIGHT_COLORS, handleLink, toggleHighlight } from "./textCommands";
+import { HIGHLIGHT_COLORS, toggleHighlight } from "./textCommands";
 
 interface Props {
   editor: TiptapEditor;
-  shouldShow?: NonNullable<BubbleMenuPluginProps["shouldShow"]>;
-  /** Active state of the «…» popover (for the button highlight). */
+  /** Открыть меню у кнопки: «style» — Aa, «more» — «···». */
+  onOpenTextMenu: (section: "style" | "more", anchor: DOMRect) => void;
   textMenuOpen: boolean;
-  onOpenTextMenu: () => void;
-  /** Диктовка/запись (для пульса иконки микрофона). */
-  recording: boolean;
-  onToggleMic: () => void;
-  /** Когда задан — показываем «Сделать задачей» с текстом выделения. */
-  onMakeTask?: (text: string) => void;
+  textMenuSection: "style" | "more";
+  onQuiz?: () => void;
 }
 
-function selectedText(editor: TiptapEditor): string {
-  const { from, to } = editor.state.selection;
-  return editor.state.doc.textBetween(from, to, " ").trim();
-}
+const MARKER = HIGHLIGHT_COLORS[0];
 
-export function BubbleToolbar({
-  editor,
-  textMenuOpen,
-  onOpenTextMenu,
-  recording,
-  onToggleMic,
-  onMakeTask,
-}: Props) {
+export function BubbleToolbar({ editor, onOpenTextMenu, textMenuOpen, textMenuSection, onQuiz }: Props) {
+  const keepSelection = (e: React.MouseEvent) => e.preventDefault();
   return (
-    <div className="bubble-menu">
+    <div className="bubble-menu" role="toolbar" aria-label="Форматирование">
       <button
         type="button"
-        className={`bubble-btn${recording ? " recording" : ""}`}
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={onToggleMic}
-        title={recording ? "Остановить запись" : "Диктовка / диктофон"}
+        className={`bubble-btn bubble-text${textMenuOpen && textMenuSection === "style" ? " active" : ""}`}
+        onMouseDown={keepSelection}
+        onClick={(e) => onOpenTextMenu("style", e.currentTarget.getBoundingClientRect())}
+        aria-label="Стиль текста"
+        title="Стиль текста"
       >
-        {recording ? (
-          <MicOff size={15} />
-        ) : (
-          <Mic size={15} />
-        )}
+        Aa
       </button>
-      <span className="bubble-sep" />
       <button
         type="button"
-        className={`bubble-btn${editor.isActive("bold") ? " active" : ""}`}
-        onMouseDown={(e) => e.preventDefault()}
+        className={`bubble-btn bubble-text bold${editor.isActive("bold") ? " active" : ""}`}
+        onMouseDown={keepSelection}
         onClick={() => editor.chain().focus().toggleBold().run()}
+        aria-label="Жирный"
+        aria-pressed={editor.isActive("bold")}
         title="Жирный"
       >
-        <Bold size={15} />
+        B
       </button>
       <button
         type="button"
-        className={`bubble-btn${editor.isActive("italic") ? " active" : ""}`}
-        onMouseDown={(e) => e.preventDefault()}
+        className={`bubble-btn bubble-text italic${editor.isActive("italic") ? " active" : ""}`}
+        onMouseDown={keepSelection}
         onClick={() => editor.chain().focus().toggleItalic().run()}
+        aria-label="Курсив"
+        aria-pressed={editor.isActive("italic")}
         title="Курсив"
       >
-        <Italic size={15} />
+        I
       </button>
       <button
         type="button"
-        className={`bubble-btn${editor.isActive("link") ? " active" : ""}`}
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={() => handleLink(editor)}
-        title="Ссылка"
+        className={`bubble-btn bubble-word${editor.isActive("highlight") ? " active" : ""}`}
+        onMouseDown={keepSelection}
+        onClick={() => toggleHighlight(editor, MARKER)}
+        aria-pressed={editor.isActive("highlight")}
+        title="Маркер"
       >
-        <Link2 size={15} />
+        Маркер
       </button>
-      <span className="bubble-sep" />
-      {HIGHLIGHT_COLORS.map((color) => (
-        <button
-          key={color}
-          type="button"
-          className={`bubble-swatch${
-            editor.isActive("highlight", { color }) ? " active" : ""
-          }`}
-          style={{ background: color }}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => toggleHighlight(editor, color)}
-          title={`Выделить ${color}`}
-        />
-      ))}
-      {editor.isActive("highlight") && (
-        <>
-          <span className="bubble-sep" />
-          <button
-            type="button"
-            className="bubble-btn"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => editor.chain().focus().unsetHighlight().run()}
-            title="Снять выделение"
-          >
-            <Eraser size={15} />
-          </button>
-        </>
-      )}
-      {onMakeTask && (
-        <>
-          <span className="bubble-sep" />
-          <button
-            type="button"
-            className="bubble-btn"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => {
-              const text = selectedText(editor);
-              if (text) onMakeTask(text);
-            }}
-            title="Сделать задачей"
-          >
-            <ListChecks size={15} />
-          </button>
-        </>
-      )}
-      <span className="bubble-sep" />
       <button
         type="button"
-        className={`bubble-btn${textMenuOpen ? " active" : ""}`}
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={onOpenTextMenu}
+        className={`bubble-btn bubble-text${textMenuOpen && textMenuSection === "more" ? " active" : ""}`}
+        onMouseDown={keepSelection}
+        onClick={(e) => onOpenTextMenu("more", e.currentTarget.getBoundingClientRect())}
+        aria-label="Ещё"
         title="Ещё"
       >
-        <MoreHorizontal size={15} />
+        ···
       </button>
+      {onQuiz && (
+        <button type="button" className="bubble-quiz" onMouseDown={keepSelection} onClick={onQuiz}>
+          + Квиз
+        </button>
+      )}
     </div>
   );
 }

@@ -40,6 +40,10 @@ interface Options {
   onRename?: (lecture: Lecture) => void;
   /** После удаления (в открытой лекции — уйти на страницу предмета). */
   onDeleted?: (lecture: Lecture) => void;
+  /** Дополнительные пункты (в открытой лекции: «Теги», «Квиз по лекции»), идут после «Перенести». */
+  extraItems?: (lecture: Lecture) => MenuItem[];
+  /** После переноса в предмет (в открытой лекции — перейти на её новый адрес). */
+  onMoved?: (lecture: Lecture, course: Course) => void;
 }
 
 export function useLectureActions(options: Options = {}) {
@@ -90,25 +94,27 @@ export function useLectureActions(options: Options = {}) {
         toast.show("Не удалось перенести лекцию");
         return;
       }
+      options.onMoved?.(lecture, course);
       toast.show(`Перенесено в «${courseName(course)}»`, {
         label: "Отменить",
         onClick: () => void moveLecture(lecture.id, before),
       });
     },
-    [toast]
+    [toast, options]
   );
 
   /** Пункты меню (одни и те же на компьютере и в листе на телефоне). «Доступ» — волна C. */
   const itemsFor = (lecture: Lecture): MenuItem[] => [
       { label: "Переименовать", icon: <Icon name="edit" size={18} />, onClick: () => (options.onRename ? options.onRename(lecture) : setRenamingId(lecture.id)) },
       {
-        label: "Перенести в предмет",
+        label: lectureCourseId(lecture) ? "Перенести в предмет" : "Назначить предмет",
         icon: <Icon name="folder" size={18} />,
         onClick: () => {
           setPicked("");
           setMoveFor(lecture);
         },
       },
+      ...(options.extraItems?.(lecture) ?? []),
       {
         label: "Дублировать",
         icon: <Icon name="copy" size={18} />,
@@ -192,7 +198,7 @@ export function useLectureActions(options: Options = {}) {
       <Modal open={!!moveFor} onClose={() => setMoveFor(null)} title="Перенести в предмет" className="c-sheet-dialog c-move" bare>
         {moveFor && (
           <>
-            <h2 className="c-move-title">Перенести в предмет</h2>
+            <h2 className="c-move-title">{currentCourseId ? "Перенести в предмет" : "Назначить предмет"}</h2>
             <p className="c-move-sub">
               «{lectureTitle(moveFor)}».{" "}
               {currentCourse ? `Сейчас лекция в предмете «${courseName(currentCourse)}».` : "Сейчас лекция без предмета."}
@@ -244,7 +250,7 @@ export function useLectureActions(options: Options = {}) {
                   if (target) void move(lec, target);
                 }}
               >
-                Перенести
+                {currentCourseId ? "Перенести" : "Назначить"}
               </Button>
             </div>
           </>
@@ -290,6 +296,7 @@ export function useLectureActions(options: Options = {}) {
     commitRename,
     menu,
     openSheet: (lecture: Lecture) => setSheetFor(lecture),
+    itemsFor,
     dialogs,
     move,
     isHidden: (lecture: Lecture) => isPending(`lecture:${lecture.id}`),

@@ -23,7 +23,23 @@ export async function renameLecture(id: string, title: string): Promise<Lecture>
 
 /** Перенести в предмет; "" — снять предмет (откат переноса из «Черновиков»). */
 export async function moveLecture(id: string, courseId: string): Promise<Lecture> {
-  const updated = await pb.collection("lectures").update<Lecture>(id, { [FIELDS.lectureCourse]: courseId });
+  const patch: Record<string, unknown> = { [FIELDS.lectureCourse]: courseId };
+  // Черновик получает место в предмете: следующий номер, а «Лекция N» в названии переименовывается вслед.
+  if (courseId) {
+    const before = await pb.collection("lectures").getOne<Lecture>(id);
+    if (!before.field) {
+      const inCourse = await pb.collection("lectures").getFullList<Lecture>({
+        filter: pb.filter(`${FIELDS.lectureCourse} = {:c}`, { c: courseId }),
+        fields: "number",
+      });
+      const next = inCourse.reduce((m, l) => (typeof l.number === "number" && l.number > m ? l.number : m), 0) + 1;
+      patch[FIELDS.lectureNumber] = next;
+      if (typeof before.number === "number" && lectureTitle(before) === `Лекция ${before.number}`) {
+        patch[FIELDS.lectureTitle] = `Лекция ${next}`;
+      }
+    }
+  }
+  const updated = await pb.collection("lectures").update<Lecture>(id, patch);
   notifyLecturesChanged();
   return updated;
 }

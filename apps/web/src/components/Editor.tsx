@@ -16,7 +16,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Editor as TiptapEditor } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { FloatingMenu } from "@tiptap/react/menus";
-import type { BubbleMenuPluginProps } from "@tiptap/extension-bubble-menu";
 import type { FloatingMenuPluginProps } from "@tiptap/extension-floating-menu";
 import type { EditorView } from "@tiptap/pm/view";
 import { TextSelection } from "@tiptap/pm/state";
@@ -72,8 +71,10 @@ interface EditorProps {
    * просмотра — каретка встаёт в эту точку. Читается один раз при mount.
    */
   selectionCoords?: { left: number; top: number } | null;
-  /** Когда задан — в bubble-меню выделения появляется «Сделать задачей». */
+  /** Когда задан — в меню «···» панели форматирования появляется «Сделать задачей». */
   onMakeTask?: (text: string) => void;
+  /** Кнопка «+ Квиз» в панели форматирования (создать квиз или пройти готовый). */
+  onQuiz?: () => void;
 }
 
 export default function Editor({
@@ -85,6 +86,7 @@ export default function Editor({
   autoFocus = true,
   selectionCoords,
   onMakeTask,
+  onQuiz,
 }: EditorProps) {
   // Захватываем координаты клика один раз — последующие изменения игнорируем.
   const selectionCoordsRef = useRef(selectionCoords);
@@ -315,32 +317,25 @@ export default function Editor({
 
   // The «…» text menu (Notion-style formatting of the selection).
   const [textMenuOpen, setTextMenuOpen] = useState(false);
+  const [textMenuSection, setTextMenuSection] = useState<"style" | "more">("style");
   const [textMenuPos, setTextMenuPos] = useState<{
     top: number;
     left: number;
   } | null>(null);
 
-  const openTextMenu = () => {
-    const coords = editor.view.coordsAtPos(editor.state.selection.from);
+  // Меню открывается над кнопкой панели (панель закреплена внизу экрана).
+  const openTextMenu = (section: "style" | "more", anchor: DOMRect) => {
     const menuHeight = Math.min(380, Math.round(window.innerHeight * 0.6));
-    const fitsBelow = coords.bottom + 6 + menuHeight <= window.innerHeight;
+    const fitsAbove = anchor.top - 8 - menuHeight >= 8;
     setTextMenuPos({
-      top: fitsBelow
-        ? coords.bottom + 6
-        : Math.max(8, coords.top - menuHeight - 6),
-      left: Math.min(coords.left, window.innerWidth - 250),
+      top: fitsAbove ? anchor.top - 8 - menuHeight : Math.min(anchor.bottom + 8, window.innerHeight - menuHeight - 8),
+      left: Math.max(8, Math.min(anchor.left, window.innerWidth - 250)),
     });
+    setTextMenuSection(section);
     setTextMenuOpen(true);
   };
 
-  // shouldShow must be referentially stable: @tiptap/react menus dispatch an
-  // `updateOptions` transaction whenever the prop changes, and with
-  // shouldRerenderOnTransaction every transaction re-renders the component —
-  // unstable callbacks create a render → dispatch → render loop.
-  const shouldShowBubble = useCallback<
-    NonNullable<BubbleMenuPluginProps["shouldShow"]>
-  >(({ editor: current, state }) => current.isEditable && !state.selection.empty, []);
-
+  // shouldShow must be referentially stable (иначе цикл render → dispatch → render).
   const shouldShowFloating = useCallback<
     NonNullable<FloatingMenuPluginProps["shouldShow"]>
   >(
@@ -402,6 +397,8 @@ export default function Editor({
         <TextMenu
           editor={editor}
           pos={textMenuPos}
+          section={textMenuSection}
+          onMakeTask={onMakeTask}
           onClose={() => setTextMenuOpen(false)}
           canCapture={canCapture}
           recording={recording}
@@ -448,12 +445,10 @@ export default function Editor({
           в потоке документа (sticky снизу через CSS), не Tiptap BubbleMenu. */}
       <BubbleToolbar
         editor={editor}
-        shouldShow={shouldShowBubble}
         textMenuOpen={textMenuOpen}
+        textMenuSection={textMenuSection}
         onOpenTextMenu={openTextMenu}
-        recording={recording}
-        onToggleMic={toggle}
-        onMakeTask={onMakeTask}
+        onQuiz={onQuiz}
       />
 
       {mathReq && (

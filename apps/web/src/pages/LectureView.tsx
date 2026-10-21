@@ -6,7 +6,6 @@ import {
   useState,
 } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Trash2, ListChecks } from "lucide-react";
 
 import {
   courseName,
@@ -18,10 +17,8 @@ import {
   stripHtml,
   tagLectureIds,
 } from "../lib/types";
-import { formatDate } from "../lib/format";
 import { writeLastVisited } from "../lib/lastVisited";
 import {
-  deleteLecture,
   resolveFileTokens,
   tokenizePbFileUrls,
   updateLecture,
@@ -30,13 +27,15 @@ import {
 import { fetchTags } from "../services/tagService";
 import { createTaskFromLecture } from "../services/taskService";
 import { useToast } from "../components/ui";
-import ReadinessBadge from "../components/ReadinessBadge";
+import { Modal, StatusChip } from "../ui";
+import { lectureListStatus } from "../lib/computeLectureReadiness";
+import { lectureDateLabel, repeatedAgoLabel } from "../lib/lectureMeta";
+import { parsePbDate } from "../lib/format";
 import LinkedTicketsPlaque from "../components/LinkedTicketsPlaque";
 import { useLectureReadiness } from "../hooks/useLectureReadiness";
 import { fetchTicketsForLecture } from "../services/examService";
 import type { ExamTicket } from "../lib/types";
 import { useLectureBySlug } from "../hooks/useLectureBySlug";
-import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useAutosave } from "../hooks/useAutosave";
 import { classifySaveError, readDraft, removeDraft, saveDraft } from "../lib/draftQueue";
 import { setSaveStatus } from "../lib/saveStatus";
@@ -45,17 +44,12 @@ import { syncDrafts } from "../services/draftSync";
 import NotFoundPage from "./NotFoundPage";
 import { isNewUI } from "../lib/featureFlags";
 import { useLectureFrame } from "../lib/lectureFrame";
-import { useUndo } from "../lib/undoContext";
 
 import ErrorBanner from "../components/ErrorBanner";
-import ConfirmDialog from "../components/ConfirmDialog";
 import CardSkeleton from "../components/CardSkeleton";
 import Editor from "../components/Editor";
 import SpeechToText from "../components/SpeechToText";
 import TagEditor from "../components/TagEditor";
-import SaveIndicator from "../components/SaveIndicator";
-import ShareToGroupButton from "../components/ShareToGroupButton";
-import ShareAccessButton from "../components/ShareAccessButton";
 import { renderLatexInto } from "../components/math/renderLatex";
 
 /**
@@ -76,7 +70,7 @@ function LectureView() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { lecture, loading, error, refetch } = useLectureBySlug(
+  const { lecture, loading, error } = useLectureBySlug(
     lectureSlugParam ?? ""
   );
   const isCourseContext = !!courseSlug;
@@ -122,14 +116,14 @@ function LectureView() {
 
   const ready = !!lecture && loaded;
 
-  const confirm = useConfirmDialog();
-  const { scheduleDelete } = useUndo();
   const frame = useLectureFrame();
   const {
     setTitle: setCrumbTitle,
     registerFlush,
     tocContainerRef,
     bumpToc,
+    setSaveIndicator,
+    tagsRequest,
   } = frame;
 
   // При смене цели: сбрасываем «загружено», крошку и режим тела.
@@ -283,6 +277,23 @@ function LectureView() {
     enabled: ready,
   });
 
+  // Верхняя полоса (в каркасе) показывает «● Сохранено».
+  useEffect(() => {
+    if (!ready) return;
+    setSaveIndicator({ state: saveState, text: saveText });
+  }, [ready, saveState, saveText, setSaveIndicator]);
+  useEffect(() => () => setSaveIndicator(null), [setSaveIndicator]);
+
+  // «···» → «Теги»: окно с тегами (в самой лекции тегов нет, как в макете).
+  const [tagsOpen, setTagsOpen] = useState(false);
+  const seenTagsRequest = useRef(tagsRequest);
+  useEffect(() => {
+    if (tagsRequest !== seenTagsRequest.current) {
+      seenTagsRequest.current = tagsRequest;
+      setTagsOpen(true);
+    }
+  }, [tagsRequest]);
+
   // Навигация по сайдбару в лейауте сначала сбрасывает несохранённое.
   useEffect(() => {
     if (mode !== "live") {
@@ -327,22 +338,6 @@ function LectureView() {
     if (el.closest("a, input")) return;
     setClickCoords({ left: e.clientX, top: e.clientY });
     setMode("live");
-  };
-
-  const handleDelete = () => {
-    if (!lecture) return;
-    const id = lecture.id;
-    const name = lectureTitle(lecture);
-    confirm.ask("Удалить запись?", `Запись «${name}» будет удалена.`, () => {
-      scheduleDelete(`lecture:${id}`, `Запись «${name}» удалена`, () =>
-        deleteLecture(id)
-      );
-      navigate(
-        isCourseContext
-          ? `/s/${semesterSlug}/${courseSlug}`
-          : `/s/${semesterSlug}`
-      );
-    });
   };
 
   const unassigned = lecture ? !lectureCourseId(lecture) : false;
@@ -400,6 +395,23 @@ function LectureView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [highlightQuote, mode, content]);
 
+  // Строка над названием и под ним (Screen-editor): «ПРЕДМЕТ · ЛЕКЦИЯ N», статус и даты.
+  const course = lecture?.expand?.field;
+  const eyebrow = [
+    unassigned ? "Черновики" : course ? courseName(course) : "",
+    lecture?.number ? `Лекция ${lecture.number}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const status = readiness && readiness.percent !== null ? lectureListStatus(readiness) : null;
+  const lectureDay = lecture ? parsePbDate(lecture.lecture_date || lecture.created) : null;
+  const metaText = [
+    lectureDay ? lectureDateLabel(lectureDay) : "",
+    readiness?.lastActivityAt ? repeatedAgoLabel(readiness.lastActivityAt) : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   // Лекцию удалили или доступа нет: сервер отвечает «не найдено» (экран 404, B6).
   const notFound =
     !lecture && !loading && isNewUI() && (!error || /not found|wasn't found|не найден|404/i.test(error));
@@ -417,48 +429,25 @@ function LectureView() {
         {!lecture && loading && <CardSkeleton />}
 
         {ready && (
-          <article className="lecture-card">
-            <header className="lecture-card-head">
-              <p className="lecture-card-meta">
-                {formatDate(lecture.created)}
-                {unassigned && " · Не привязана к курсу"}
-              </p>
+          <article className="c-lecture">
+            <header className="c-lecture-head">
+              <p className="c-lecture-eyebrow">{eyebrow}</p>
               <input
                 className="lecture-title-input"
                 value={title}
                 placeholder="Название записи"
+                aria-label="Название лекции"
                 onChange={(e) => updateTitle(e.target.value)}
               />
-              <TagEditor selectedIds={tags} onChange={updateTags} />
-              <div className="lecture-card-actions">
-                <SaveIndicator state={saveState} text={saveText} />
-                <ReadinessBadge percent={readiness?.percent ?? null} />
-                <button
-                  className="icon-btn"
-                  type="button"
-                  onClick={() => navigate(`/quiz/${lecture.id}`)}
-                  title="Начать квиз по лекции"
-                  aria-label="Начать квиз по лекции"
-                >
-                  <ListChecks size={15} />
-                </button>
-                <ShareAccessButton lecture={lecture} />
-                <ShareToGroupButton lecture={lecture} onChanged={refetch} />
-                <button
-                  className="icon-btn danger"
-                  type="button"
-                  onClick={handleDelete}
-                  title="Удалить"
-                  aria-label="Удалить"
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
+              <p className="c-lecture-meta">
+                {status && <StatusChip tone={status.tone}>{status.label}</StatusChip>}
+                <span>{metaText}</span>
+              </p>
             </header>
 
             <LinkedTicketsPlaque tickets={linkedTickets} />
 
-            <div ref={contentWrapRef} className="lecture-card-body">
+            <div ref={contentWrapRef} className="c-lecture-body">
               {mode === "static" ? (
                 <div
                   ref={staticBodyRef}
@@ -482,6 +471,7 @@ function LectureView() {
                     onUploadImages={handleUploadImages}
                     selectionCoords={clickCoords}
                     onMakeTask={handleMakeTask}
+                    onQuiz={() => navigate(`/quiz/${lecture.id}`)}
                   />
                   {/* Речь + аудиозапись: регистрирует запись в SpeechProvider. */}
                   <SpeechToText lecture={lecture} onUpload={handleUploadImages} />
@@ -492,13 +482,9 @@ function LectureView() {
         )}
       </main>
 
-      <ConfirmDialog
-        open={confirm.open}
-        title={confirm.title}
-        message={confirm.message}
-        onConfirm={confirm.confirm}
-        onCancel={confirm.cancel}
-      />
+      <Modal open={tagsOpen} onClose={() => setTagsOpen(false)} title="Теги">
+        <TagEditor selectedIds={tags} onChange={updateTags} />
+      </Modal>
     </>
   );
 }

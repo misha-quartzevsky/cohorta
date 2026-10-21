@@ -98,5 +98,7 @@ export function useTocScan(
     item.el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  return { items, activeIndex, scrollTo };
+  // Пока ни один заголовок не в зоне наблюдения (верх документа) — текущий первый, как в макете.
+  const current = activeIndex >= 0 ? activeIndex : items.length > 0 ? 0 : -1;
+  return { items, activeIndex: current, scrollTo };
 }

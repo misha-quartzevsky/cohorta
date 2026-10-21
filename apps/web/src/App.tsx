@@ -24,8 +24,10 @@ import LecturesPage from "./pages/LecturesPage";
 import LecturesAllPage from "./pages/LecturesAllPage";
 import SubjectLecturesPage from "./pages/SubjectLecturesPage";
 import DraftsPage from "./pages/DraftsPage";
-import LectureView from "./pages/LectureView";
+import LectureViewNew from "./pages/LectureView";
+import LectureViewLegacy from "./pages/LectureViewLegacy";
 import NotesPage from "./pages/NotesPage";
+import NewDraftRedirect from "./pages/NewDraftRedirect";
 import NoteCreate from "./pages/NoteCreate";
 import CardLibraryPage from "./pages/CardLibraryPage";
 import CardStudyPage from "./pages/CardStudyPage";
@@ -144,6 +146,11 @@ function HomeRedirect() {
   return <Navigate to={`/s/${target}`} replace />;
 }
 
+/** Страница лекции: новая за флагом VITE_NEW_UI, прежняя пока флаг выключен (убрать в волне D). */
+function LectureViewRoute() {
+  return isNewUI() ? <LectureViewNew /> : <LectureViewLegacy />;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -213,7 +220,7 @@ function App() {
               <Route path="/settings/periods" element={<SettingsPeriodsPage />} />
               <Route path="/trash" element={<TrashPage />} />
               <Route path="/notes" element={<NotesPage />} />
-              <Route path="/note/new" element={<NoteCreate />} />
+              <Route path="/note/new" element={isNewUI() ? <NewDraftRedirect /> : <NoteCreate />} />
               {/* Lecture view + edit are ONE surface (Notion-style inline
                   editing): LectureView shows the record and mounts the editor
                   in place on first click. `/…/edit` stays as an alias that
@@ -223,20 +230,20 @@ function App() {
               <Route element={<LectureLayout />}>
                 <Route
                   path="/s/:semesterSlug/:courseSlug/:lectureSlug"
-                  element={<LectureView />}
+                  element={<LectureViewRoute />}
                 />
                 <Route
                   path="/s/:semesterSlug/:courseSlug/:lectureSlug/edit"
-                  element={<LectureView />}
+                  element={<LectureViewRoute />}
                 />
                 {/* Unassigned notes (no semester in URL) */}
                 <Route
                   path="/note/:lectureSlug"
-                  element={<LectureView />}
+                  element={<LectureViewRoute />}
                 />
                 <Route
                   path="/note/:lectureSlug/edit"
-                  element={<LectureView />}
+                  element={<LectureViewRoute />}
                 />
               </Route>
               {/* Exam Engine: экзамен — свойство курса, singleton внутри него.

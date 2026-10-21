@@ -11,7 +11,7 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { Editor as TiptapEditor } from "@tiptap/core";
-import { Eraser, Link2, Mic, MicOff, RemoveFormatting } from "lucide-react";
+import { Eraser, Link2, ListChecks, Mic, MicOff, RemoveFormatting } from "lucide-react";
 import {
   HIGHLIGHT_COLORS,
   TEXT_BLOCK_ITEMS,
@@ -31,9 +31,12 @@ interface Props {
   /** Идёт ли запись/диктовка. */
   recording: boolean;
   onToggleMic: () => void;
+  /** «style» — Aa (форматирование и блоки), «more» — «···» (диктовка, ссылка, цвета, задача). */
+  section: "style" | "more";
+  onMakeTask?: (text: string) => void;
 }
 
-export function TextMenu({ editor, pos, onClose, canCapture, recording, onToggleMic }: Props) {
+export function TextMenu({ editor, pos, onClose, canCapture, recording, onToggleMic, section, onMakeTask }: Props) {
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   // Закрытие по клику вне меню / Escape.
@@ -84,9 +87,15 @@ export function TextMenu({ editor, pos, onClose, canCapture, recording, onToggle
       className="text-menu"
       style={{ top: pos.top, left: pos.left }}
     >
-      <div className="text-menu-label">Форматирование</div>
-      {TEXT_MARK_ITEMS.map(renderTextMenuItem)}
-      {canCapture && (
+      {section === "style" && (
+        <>
+          <div className="text-menu-label">Форматирование</div>
+          {TEXT_MARK_ITEMS.map(renderTextMenuItem)}
+          <div className="text-menu-label">Блоки</div>
+          {TEXT_BLOCK_ITEMS.filter((i) => i.title !== "Чек-лист").map(renderTextMenuItem)}
+        </>
+      )}
+      {section === "more" && canCapture && (
         <>
           <span className="text-menu-sep" />
           <button
@@ -106,6 +115,7 @@ export function TextMenu({ editor, pos, onClose, canCapture, recording, onToggle
           </button>
         </>
       )}
+      {section === "more" && (<>
       <div className="text-menu-label">Ссылка</div>
       <button
         type="button"
@@ -147,9 +157,8 @@ export function TextMenu({ editor, pos, onClose, canCapture, recording, onToggle
           <Eraser size={13} />
         </button>
       </div>
-      <div className="text-menu-label">Блоки</div>
-      {TEXT_BLOCK_ITEMS.map(renderTextMenuItem)}
       <span className="text-menu-sep" />
+      {TEXT_BLOCK_ITEMS.filter((i) => i.title === "Чек-лист").map(renderTextMenuItem)}
       <button
         type="button"
         className="text-menu-item"
@@ -163,6 +172,26 @@ export function TextMenu({ editor, pos, onClose, canCapture, recording, onToggle
         </span>
         Очистить форматирование
       </button>
+      {onMakeTask && (
+        <button
+          type="button"
+          className="text-menu-item"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() =>
+            runTextCommand(() => {
+              const { from, to } = editor.state.selection;
+              const text = editor.state.doc.textBetween(from, to, " ").trim();
+              if (text) onMakeTask(text);
+            })
+          }
+        >
+          <span className="slash-icon">
+            <ListChecks size={15} />
+          </span>
+          Сделать задачей
+        </button>
+      )}
+      </>)}
     </div>,
     document.body
   );

@@ -10,6 +10,13 @@
  */
 
 import { createContext, useContext, type RefObject } from "react";
+import type { SaveState } from "../hooks/useAutosave";
+
+/** Состояние автосохранения лекции для верхней полосы редактора. */
+export interface SaveIndicatorState {
+  state: SaveState;
+  text: string;
+}
 
 export interface LectureFrameApi {
   /**
@@ -27,6 +34,12 @@ export interface LectureFrameApi {
   tocVersion: number;
   /** Explicitly bump the TOC version (called when the lecture changes). */
   bumpToc: () => void;
+  /** Статус сохранения («Сохранено» и др.) — публикует страница лекции, показывает верхняя полоса. */
+  saveIndicator: SaveIndicatorState | null;
+  setSaveIndicator: (s: SaveIndicatorState | null) => void;
+  /** Счётчик запросов «открыть теги» из меню «···»; страница лекции открывает окно при росте. */
+  tagsRequest: number;
+  requestTags: () => void;
 }
 
 export const LectureFrameContext = createContext<LectureFrameApi | null>(null);

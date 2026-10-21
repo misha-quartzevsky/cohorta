@@ -24,6 +24,7 @@ import DocumentScrollbar from "./scrollbar/DocumentScrollbar";
 import {
   LectureFrameContext,
   type LectureFrameApi,
+  type SaveIndicatorState,
 } from "../lib/lectureFrame";
 import { UIShellContext, type UIShellApi } from "../lib/uiShellContext";
 import { isNewUI } from "../lib/featureFlags";
@@ -41,6 +42,9 @@ export default function AppLayout() {
   const flushRef = useRef<(() => Promise<void>) | null>(null);
   const tocContainerRef = useRef<HTMLElement | null>(null);
   const [tocVersion, setTocVersion] = useState(0);
+  const [saveIndicator, setSaveIndicator] = useState<SaveIndicatorState | null>(null);
+  const [tagsRequest, setTagsRequest] = useState(0);
+  const requestTags = useCallback(() => setTagsRequest((n) => n + 1), []);
 
   // Mobile drawer state: the header burger toggles it, the sidebar + backdrop
   // render from it. On desktop (>=1024px) the sidebar is always visible.
@@ -70,8 +74,12 @@ export default function AppLayout() {
       tocContainerRef,
       tocVersion,
       bumpToc,
+      saveIndicator,
+      setSaveIndicator,
+      tagsRequest,
+      requestTags,
     }),
-    [registerFlush, setTitleCb, title, tocVersion, bumpToc]
+    [registerFlush, setTitleCb, title, tocVersion, bumpToc, saveIndicator, tagsRequest, requestTags]
   );
 
   const uiShell = useMemo<UIShellApi>(

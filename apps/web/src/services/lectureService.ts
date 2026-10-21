@@ -12,6 +12,7 @@ import { moveToTrash } from "./trashService";
 import type { Lecture } from "../lib/types";
 import { FIELDS, lectureFiles } from "../lib/types";
 import { slugify } from "../lib/slugify";
+import { todayStr } from "../lib/localDate";
 import { uniqueSlugForCollection } from "./genericService";
 import { applyLectureTags } from "./tagService";
 
@@ -125,6 +126,27 @@ export async function createUnassignedLecture(
       FIELDS.lectureSlug,
       slugify(title) || "lecture"
     ),
+  });
+}
+
+/**
+ * Новая лекция без предмета («Черновики»): «Лекция N» (N = max number среди черновиков + 1)
+ * с сегодняшней датой. Сохраняется сразу, дальше работает автосохранение редактора.
+ */
+export async function createDraftLecture(): Promise<Lecture> {
+  const drafts = await pb.collection("lectures").getFullList<Lecture>({
+    filter: `${FIELDS.lectureCourse} = ""`,
+    fields: "number",
+  });
+  const number = drafts.reduce((m, l) => (typeof l.number === "number" && l.number > m ? l.number : m), 0) + 1;
+  const title = `Лекция ${number}`;
+  return pb.collection("lectures").create<Lecture>({
+    [FIELDS.lectureTitle]: title,
+    [FIELDS.lectureContent]: "",
+    [FIELDS.lectureOwner]: currentUserId(),
+    [FIELDS.lectureDate]: todayStr(),
+    [FIELDS.lectureNumber]: number,
+    [FIELDS.lectureSlug]: await uniqueSlugForCollection("lectures", FIELDS.lectureSlug, slugify(title) || "lecture"),
   });
 }
 

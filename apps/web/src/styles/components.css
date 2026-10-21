@@ -3908,3 +3908,59 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
 .c-date .c-date-native { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; padding: 0; border: 0; }
 .c-lec-m-tabs-row { padding-top: var(--space-3); }
 .c-exam-m-head .c-subject-tabs { margin-top: var(--space-3); margin-bottom: var(--space-2); }
+
+/* ============================================================
+ *  Десктопный редактор лекции (Screen-editor, Screen-editor-toc, 21.10)
+ * ============================================================ */
+
+/* --- Верхняя полоса: крошки слева, «● Сохранено» и «···» справа --- */
+.c-shell-crumbs, .c-shell-save, .c-shell-more-d { display: none; }
+@media (min-width: 1024px) {
+  .c-shell-topbar { display: flex; height: 64px; padding: 0 var(--space-8); background: var(--bg); gap: var(--space-3); }
+  .c-shell-burger, .c-shell-more-m { display: none; }
+  .c-shell-more-d { display: inline-flex; }
+  .c-shell-crumbs { display: flex; align-items: center; gap: 8px; min-width: 0; font: 400 14px/20px var(--font-sans); color: var(--ink-3); }
+  .c-shell-crumbs a { color: inherit; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+  .c-shell-crumbs a:hover { text-decoration: underline; }
+  .c-shell-crumbs .cur { color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .c-shell-save { display: inline-flex; align-items: center; gap: 8px; font: 400 13px/18px var(--font-sans); color: var(--ink-2); }
+  .c-shell-save i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
+  .c-shell-save.saving i, .c-shell-save.queued i { background: var(--warn); }
+  .c-shell-save.error i { background: var(--danger-text); }
+  .c-shell-topbar .c-shell-more { width: var(--control-lg, 44px); height: var(--control-lg, 44px); border: 1px solid var(--line-strong); background: var(--surface); }
+  .c-shell-topbar .c-shell-more:hover { background: var(--sunken); }
+}
+
+/* --- Полотно: без карточки, колонка текста до 672 px по центру, справа панель 288 px --- */
+.c-lecture { max-width: 672px; margin: 0 auto; padding: 0 0 var(--space-8); box-sizing: border-box; }
+.c-lecture-eyebrow { margin: 0 0 var(--space-2); font: 600 12px/18px var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.c-lecture .lecture-title-input { display: block; margin: 0 0 var(--space-3); }
+.c-lecture-meta { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin: 0 0 var(--space-4); font: 400 13px/20px var(--font-sans); color: var(--ink-3); }
+.c-lecture-meta:empty { display: none; }
+.c-lecture .c-ticket-plaque { margin-bottom: var(--space-5); }
+.c-lecture-body { margin-top: var(--space-4); padding-bottom: calc(var(--space-1) * 8); }
+.c-lecture-body :is(h1, h2, h3) { scroll-margin-top: calc(64px + var(--space-6)); }
+@media (min-width: 1024px) {
+  .c-shell-content.with-aside { padding: var(--space-8) var(--space-8) 0 0; gap: 0; align-items: flex-start; }
+  .c-shell-content.with-aside .c-lecture-aside { width: 288px; position: sticky; top: calc(64px + var(--space-8)); }
+}
+@media (max-width: 1023px) {
+  .c-lecture { padding: 0; }
+}
+
+/* --- Сайдбар лекции: фиксированные блоки не сжимаются, содержание прокручивается само --- */
+.c-shell-sidebar > * { flex-shrink: 0; }
+.c-shell-sidebar > .c-shell-toc { flex: 1 1 auto; min-height: 0; }
+.c-shell-toc { position: relative; overflow-y: auto; scrollbar-width: none; overscroll-behavior: contain; }
+.c-shell-toc::-webkit-scrollbar { display: none; }
+.c-shell-toc .c-toc { width: 100%; }
+.c-shell-toc-wrap { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; position: relative; }
+.c-shell-toc-wrap::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 32px; pointer-events: none; opacity: 0; transition: opacity 0.15s ease; background: linear-gradient(to bottom, transparent, var(--surface)); }
+.c-shell-toc-wrap.more::after { opacity: 1; }
+.c-shell-toc-wrap > .c-shell-toc { flex: 1 1 auto; min-height: 0; }
+.c-toc a { min-width: 0; }
+.c-toc a > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.c-toc a { color: var(--ink-2); }
+.c-toc a.h3 { color: var(--ink-3); }
+.c-toc a.on { color: var(--ink); }
+.c-shell-profile { margin-top: auto; background: var(--surface); }
