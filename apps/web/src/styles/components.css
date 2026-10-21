@@ -3391,6 +3391,7 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
   font-family: var(--font-sans);
 }
 .c-auth-col { width: 420px; max-width: 100%; display: flex; flex-direction: column; gap: calc(var(--space-2) * 3); }
+.c-auth-col-narrow { width: calc(var(--space-1) * 100); }
 .c-auth-logo { height: 26px; width: auto; align-self: flex-start; display: block; }
 .c-auth-head { display: flex; flex-direction: column; gap: 8px; }
 .c-auth-head h1 { margin: 0; font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em; }
@@ -3420,6 +3421,7 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
   .c-auth-card { background: transparent; border: 0; padding: 0; }
   .c-auth-col { gap: calc(var(--space-1) * 5); }
   .c-auth-legal { font-size: 12px; }
+  .c-auth-sub-extra { display: none; }
 }
 
 .c-policy { min-height: 100vh; min-height: 100dvh; box-sizing: border-box; padding: var(--space-10) var(--space-4) var(--space-12); background: var(--bg); color: var(--ink); font-family: var(--font-sans); display: flex; justify-content: center; }
@@ -3587,24 +3589,25 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
 .c-delete-pending .c-auth-card { display: flex; flex-direction: column; gap: var(--space-4); }
 
 .c-periods { --s24: calc(var(--space-2) * 3); display: flex; flex-direction: column; gap: var(--space-4); }
-.c-periods-head { padding: var(--s24) var(--s24) var(--space-2); display: flex; flex-direction: column; gap: 6px; }
-.c-periods-head h2 { margin: 0; font-size: 20px; line-height: 28px; font-weight: 600; }
+.c-periods-head { padding: calc(var(--space-1) * 5) var(--s24) var(--space-2); display: flex; flex-direction: column; gap: 2px; }
+.c-periods-head h2 { margin: 0; font-size: 18px; line-height: 26px; font-weight: 600; }
 .c-periods-head p { margin: 0; font-size: 13px; line-height: 18px; color: var(--ink-3); }
-.c-periods-group { padding: var(--space-3) var(--s24) var(--space-2); display: flex; flex-direction: column; gap: 8px; }
+.c-periods-group { padding: 0 var(--s24); display: flex; flex-direction: column; gap: 8px; }
+.c-periods-group:has(+ .c-periods-rows) { padding-bottom: var(--space-1); }
 .c-periods-group > .lbl { font-size: 14px; font-weight: 500; }
 .c-periods-group > .hint { font-size: 13px; color: var(--ink-3); }
 .c-periods-count { display: flex; align-items: center; gap: var(--space-4); }
-.c-stepper { display: inline-flex; align-items: center; height: 46px; border: 1px solid var(--line-strong); border-radius: var(--radius-md); overflow: hidden; }
+.c-stepper { display: inline-flex; align-items: center; height: 44px; border: 1px solid var(--line-strong); border-radius: var(--radius-md); overflow: hidden; }
 .c-stepper button { width: 44px; height: 100%; border: 0; background: transparent; font: 500 18px/1 var(--font-sans); cursor: pointer; color: var(--ink); }
 .c-stepper button:disabled { color: var(--ink-3); cursor: default; }
-.c-stepper output { min-width: 44px; text-align: center; font-size: 16px; font-weight: 600; }
+.c-stepper output { min-width: 48px; text-align: center; font-size: 16px; font-weight: 600; }
 .c-periods-rows { border-top: 1px solid var(--line); }
 .c-period-row { display: flex; align-items: center; gap: var(--space-4); padding: 0 var(--s24); height: 73px; border-bottom: 1px solid var(--line); }
-.c-period-row .nm { flex: 1; min-width: 0; font-size: 16px; font-weight: 500; display: flex; align-items: center; gap: 12px; }
+.c-period-row .nm { flex: 1; min-width: 0; font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 12px; }
 .c-period-row .cur-btn { opacity: 0; font: 500 13px/1 var(--font-sans); color: var(--accent-strong); background: none; border: 0; cursor: pointer; padding: 4px 0; }
 .c-period-row:hover .cur-btn, .c-period-row:focus-within .cur-btn { opacity: 1; }
 .c-period-row .dates { display: flex; align-items: center; gap: 12px; color: var(--ink-3); }
-.c-period-row .dates input { width: 158px; height: 42px; padding: 0 14px; box-sizing: border-box; border-radius: var(--radius-md); border: 1px solid var(--line-strong); background: var(--surface); font: 400 15px/1 var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums; }
+.c-period-row .dates input { width: 158px; height: 40px; padding: 0 14px; box-sizing: border-box; border-radius: var(--radius-md); border: 1px solid var(--line-strong); background: var(--surface); font: 400 15px/1 var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums; }
 .c-period-row .dates input.bad { border-color: var(--danger); }
 .c-period-row .del { width: 36px; height: 36px; border: 0; background: transparent; color: var(--ink-3); cursor: pointer; border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; }
 .c-period-row .del:hover { background: var(--sunken); color: var(--danger-text); }

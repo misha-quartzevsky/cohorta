@@ -63,8 +63,9 @@ export default function LoginPageNew({ mode }: { mode: "login" | "register" }) {
 
   return (
     <AuthLayout
+      narrow={isRegister}
       title={isRegister ? "Регистрация в cohorta" : "Вход"}
-      subtitle="Конспекты, задачи и подготовка к экзаменам в одном месте."
+      subtitle={<>Конспекты, задачи и подготовка к экзаменам<span className="c-auth-sub-extra"> в одном месте</span>.</>}
       footer={
         <>
           <div className="c-auth-switch">
@@ -97,7 +98,6 @@ export default function LoginPageNew({ mode }: { mode: "login" | "register" }) {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Минимум 8 символов"
           autoComplete={isRegister ? "new-password" : "current-password"}
-          hint={isRegister ? "Минимум 8 символов" : undefined}
           error={errors.password}
         />
         {isRegister && (
