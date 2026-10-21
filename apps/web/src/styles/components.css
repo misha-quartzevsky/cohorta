@@ -3502,7 +3502,7 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
 .c-onb-unis button.manual { border-top: 1px dashed var(--line-strong); color: var(--ink-3); min-height: 44px; }
 .c-onb-link { align-self: flex-start; background: none; border: 0; padding: 0; font: 500 14px/1 var(--font-sans); color: var(--accent-strong); cursor: pointer; }
 .c-onb-chips { display: flex; flex-wrap: wrap; gap: 10px; }
-.c-onb-chip { height: var(--control-md); padding: 0 18px; border-radius: var(--radius-md); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font: 500 14px/1 var(--font-sans); cursor: pointer; }
+.c-onb-chip { height: var(--control-md); padding: 0 18px; border-radius: var(--radius-field); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font: 500 14px/1 var(--font-sans); cursor: pointer; }
 .c-onb-chip.on { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
 .c-onb-round { width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font: 500 14px/1 var(--font-sans); cursor: pointer; }
 .c-onb-round.on { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
@@ -3607,7 +3607,7 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
 .c-period-row .cur-btn { opacity: 0; font: 500 13px/1 var(--font-sans); color: var(--accent-strong); background: none; border: 0; cursor: pointer; padding: 4px 0; }
 .c-period-row:hover .cur-btn, .c-period-row:focus-within .cur-btn { opacity: 1; }
 .c-period-row .dates { display: flex; align-items: center; gap: 12px; color: var(--ink-3); }
-.c-period-row .dates input { width: 158px; height: 40px; padding: 0 14px; box-sizing: border-box; border-radius: var(--radius-md); border: 1px solid var(--line-strong); background: var(--surface); font: 400 15px/1 var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums; }
+.c-period-row .dates input { width: 158px; height: 40px; padding: 0 14px; box-sizing: border-box; border-radius: var(--radius-field); border: 1px solid var(--line-strong); background: var(--surface); font: 400 15px/1 var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums; }
 .c-period-row .dates input.bad { border-color: var(--danger); }
 .c-period-row .del { width: 36px; height: 36px; border: 0; background: transparent; color: var(--ink-3); cursor: pointer; border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; }
 .c-period-row .del:hover { background: var(--sunken); color: var(--danger-text); }
