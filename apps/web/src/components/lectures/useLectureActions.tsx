@@ -34,6 +34,9 @@ import {
   type Lecture,
 } from "../../lib/types";
 import { notifyLecturesChanged } from "../../lib/lecturesChanged";
+import { useGroupCtxOptional } from "../../lib/groupCtx";
+import LectureAccessDialog from "../group/LectureAccessDialog";
+import { pb } from "../../lib/pocketbase";
 
 interface Options {
   /** «Переименовать» вне списка (в открытой лекции — фокус на название); по умолчанию правка в строке. */
@@ -62,6 +65,11 @@ export function useLectureActions(options: Options = {}) {
   const [deleteFor, setDeleteFor] = useState<Lecture | null>(null);
   /** Лист меню на телефоне (долгое нажатие в списке, «···» в открытой лекции). */
   const [sheetFor, setSheetFor] = useState<Lecture | null>(null);
+  /** «Доступ в группе» (Screen-group-access): есть только у автора лекции, который состоит в группе. */
+  const [accessFor, setAccessFor] = useState<Lecture | null>(null);
+  const groupCtx = useGroupCtxOptional();
+  const inGroup = !!groupCtx && groupCtx.groups.length > 0;
+  const myId = String(pb.authStore.record?.id ?? "");
   const [courses, setCourses] = useState<Course[]>([]);
   const [picked, setPicked] = useState("");
 
@@ -130,6 +138,9 @@ export function useLectureActions(options: Options = {}) {
             )
             .catch(() => toast.show("Не удалось создать копию")),
       },
+      ...(inGroup && String(lecture.owner ?? "") === myId
+        ? [{ label: "Доступ в группе", icon: <Icon name="lock" size={18} />, onClick: () => setAccessFor(lecture) }]
+        : []),
       { label: "Скачать, .md", icon: <Icon name="download" size={18} />, onClick: () => downloadLectureMarkdown(lecture) },
       { label: "Удалить", icon: <Icon name="trash" size={18} />, danger: true, separatorBefore: true, onClick: () => setDeleteFor(lecture) },
   ];
@@ -165,6 +176,7 @@ export function useLectureActions(options: Options = {}) {
   const sheetCourse = sheetFor?.field ? sheetFor.expand?.field : undefined;
   const dialogs = (
     <>
+      {accessFor && <LectureAccessDialog lecture={accessFor} open onClose={() => setAccessFor(null)} />}
       <Modal open={!!sheetFor} onClose={() => setSheetFor(null)} title="Меню лекции" className="c-sheet-dialog c-lec-sheet" bare>
         {sheetFor && (
           <>

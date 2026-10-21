@@ -1,6 +1,8 @@
 export interface SegmentOption<T extends string = string> {
   value: T;
   label: string;
+  /** Точка о новом событии (на «Группа», пока не открыл группу). */
+  dot?: boolean;
 }
 
 interface Props<T extends string = string> {
@@ -51,6 +53,7 @@ export default function Segmented<T extends string = string>({
           style={{ cursor: "pointer" }}
         >
           {opt.label}
+          {opt.dot ? <i className="dot" aria-label="Есть новое" /> : null}
         </span>
       ))}
     </div>

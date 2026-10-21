@@ -15,15 +15,8 @@ migrate((app) => {
     "CREATE UNIQUE INDEX `idx_lecture_previews_lecture_group` ON `lecture_previews` (`lecture`, `group`)",
   ];
   app.save(c);
-  // Пересобираем превью по новому правилу (все лекции автора в группах с включённым предпросмотром).
-  try {
-    const lib = require(`${__hooks}/lib_previews.js`);
-    for (const m of app.findRecordsByFilter("group_members", "preview_enabled = true", "", 100000, 0, {})) {
-      lib.resyncUserGroupPreviews(app, String(m.get("group")), String(m.get("user")));
-    }
-  } catch (err) {
-    console.log("preview backfill skipped (rows appear when the owner toggles preview or edits a lecture):", err);
-  }
+  // Строки превью для лекций без привязки к группе появятся, когда автор переключит предпросмотр
+  // группы или отредактирует лекцию (в миграциях хелперы хуков недоступны).
 }, (app) => {
   const rows = app.findRecordsByFilter("lecture_previews", "1 = 1", "created", 100000, 0, {});
   const first = {};

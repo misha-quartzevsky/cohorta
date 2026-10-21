@@ -17,6 +17,10 @@
 
 import type { MouseEvent as ReactMouseEvent } from "react";
 import FormsProvider from "./forms/FormsProvider";
+import GroupProvider from "../lib/GroupProvider";
+import NotifyProvider from "../lib/NotifyProvider";
+import { useNotify } from "../lib/notifyCtx";
+import GroupSidebarBlock from "./group/GroupSidebarBlock";
 import { useForms } from "../lib/formsContext";
 import { useLectureActions } from "./lectures/useLectureActions";
 import type { Lecture } from "../lib/types";
@@ -47,7 +51,7 @@ import {
   UnderstandingButton,
 } from "./quiz/UnderstandingScope";
 
-const MODE_OPTIONS: { value: Mode; label: string }[] = [
+const MODE_OPTIONS: { value: Mode; label: string; dot?: boolean }[] = [
   { value: "solo", label: "Соло" },
   { value: "group", label: "Группа" },
 ];
@@ -118,17 +122,18 @@ function MobileTabBar() {
   const semSlug = useSemSlug();
   const { isGroup } = useMode();
   const { user } = useAuth();
+  const { dots } = useNotify();
   const profile: TabBarItem = {
     to: "/profile",
     label: "Профиль",
+    dot: !isGroup && dots.group,
     avatar: user ? nameInitials(userName(user)) : "",
   };
   const items: TabBarItem[] = isGroup
     ? [
-        { to: `/s/${semSlug}/group`, icon: "people", label: "Люди" },
-        // Экрана «Мой доступ» ещё нет (волна C, g_myaccess) — пункт виден, но не нажимается.
-        { to: "/", icon: "lock", label: "Доступ", disabled: true },
-        { to: `/s/${semSlug}/exams`, icon: "exam", label: "Экзамены" },
+        { to: `/s/${semSlug}/group`, icon: "people", label: "Люди", end: true, alsoActive: [`/s/${semSlug}/group/people`] },
+        { to: `/s/${semSlug}/group/access`, icon: "lock", label: "Доступ", dot: dots.access },
+        { to: `/s/${semSlug}/exams`, icon: "exam", label: "Экзамены", dot: dots.exams },
         profile,
       ]
     : [
@@ -335,6 +340,8 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const inLecture = !!lectureSlug;
   const { mode, setMode } = useMode();
   const { openSearch } = useUiShell();
+  const navigate = useNavigate();
+  const { dots } = useNotify();
 
   return (
     <>
@@ -362,14 +369,21 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
         <Segmented
           className="c-shell-mode"
           aria-label="Режим"
-          options={MODE_OPTIONS}
+          options={MODE_OPTIONS.map((o) => (o.value === "group" && mode === "solo" ? { ...o, dot: dots.group } : o))}
           value={mode}
-          onChange={setMode}
+          onChange={(m) => {
+            setMode(m);
+            onClose();
+            navigate(m === "group" ? `/s/${semSlug}/group` : `/s/${semSlug}`);
+          }}
         />
         {/* Основная навигация остаётся всегда — на странице лекции меняется
             только раздел «Предметы» ниже (Screen-editor.png: Главная/Задачи/
             Расписание/Все лекции/Карточки видны и там тоже). Раньше весь
             сайдбар подменялся оглавлением — расхождение с макетом. */}
+        {mode === "group" ? (
+          <GroupSidebarBlock semSlug={semSlug} onNavigate={onClose} />
+        ) : (
         <nav className="c-shell-nav" aria-label="Основная навигация">
           {items.map((item) => (
             <NavLink
@@ -385,12 +399,13 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
             </NavLink>
           ))}
         </nav>
-        {inLecture ? (
+        )}
+        {mode === "group" ? null : inLecture ? (
           <SidebarLectureToc courseSlug={courseSlug} onNavigate={onClose} />
         ) : (
           <SidebarCourses semSlug={semSlug} onNavigate={onClose} />
         )}
-        {!inLecture && <div className="c-shell-spacer" />}
+        {(mode === "group" || !inLecture) && <div className="c-shell-spacer" />}
         <SidebarProfile />
       </aside>
     </>
@@ -528,6 +543,8 @@ export default function AppShellNew() {
 
   return (
     <FormsProvider>
+    <GroupProvider>
+    <NotifyProvider>
     <div className="c-shell">
       <Sidebar open={sidebarOpen} onClose={closeSidebar} />
       {/* Один набор данных «Твоё понимание темы» на колонку справа (компьютер)
@@ -545,6 +562,8 @@ export default function AppShellNew() {
       </UnderstandingScope>
       {!inLecture && <MobileTabBar />}
     </div>
+    </NotifyProvider>
+    </GroupProvider>
     </FormsProvider>
   );
 }

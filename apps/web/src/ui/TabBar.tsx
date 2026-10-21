@@ -17,6 +17,8 @@ export interface TabBarItem {
   activeWhen?: RegExp;
   /** Места, у которых ещё нет экрана: пункт виден, но не нажимается. */
   disabled?: boolean;
+  /** Точка о новом событии группы (на кружке «Профиль» в Соло и в группе). */
+  dot?: boolean;
 }
 
 interface Props {
@@ -31,9 +33,14 @@ export default function TabBar({ items, className }: Props) {
     <nav className={`c-tabbar${className ? ` ${className}` : ""}`} aria-label="Основная навигация">
       {items.map((item) => {
         const glyph = item.avatar !== undefined ? (
-          <span className="av" aria-hidden="true">{item.avatar}</span>
+          <span className="av" aria-hidden="true">{item.avatar}{item.dot ? <i className="dot" /> : null}</span>
         ) : (
-          item.icon && <Icon name={item.icon} size={22} />
+          item.icon && (
+            <span className="ic">
+              <Icon name={item.icon} size={22} />
+              {item.dot ? <i className="dot" /> : null}
+            </span>
+          )
         );
         if (item.disabled) {
           return (

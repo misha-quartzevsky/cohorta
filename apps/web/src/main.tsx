@@ -39,6 +39,7 @@ import "./index.css";
 import "./App.css";
 import "./styles/tokens.css";
 import "./styles/components.css";
+import "./styles/group.css";
 import App from "./App.tsx";
 
 createRoot(document.getElementById("root")!).render(

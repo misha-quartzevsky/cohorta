@@ -1,7 +1,6 @@
 import { Navigate, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../hooks/useAuth";
-import { useMyGroups, useRoster } from "../hooks/useGroups";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { nameInitials, pluralRu, userName } from "../lib/format";
 import { lastSemesterSlug } from "../lib/lastSemester";
@@ -11,7 +10,10 @@ import { DEGREE_YEARS } from "../lib/studyPeriods";
 import type { DegreeLevel } from "../lib/types";
 import { TRASH_DAYS } from "../services/trashService";
 import { avatarUrl } from "../services/profileService";
-import { Icon, Segmented } from "../ui";
+import { Icon, Modal, Segmented } from "../ui";
+import { GroupList } from "../components/group/GroupSidebarBlock";
+import { useGroupCtx } from "../lib/groupCtx";
+import { useState } from "react";
 import type { IconName } from "../ui";
 
 const MODE_OPTIONS: { value: Mode; label: string }[] = [
@@ -40,9 +42,10 @@ export default function ProfilePage() {
   const { mode, setMode, isGroup } = useMode();
   const { current } = useSemester();
   const wide = useMediaQuery("(min-width: 1024px)");
-  const { groups } = useMyGroups(isGroup);
-  const group = groups[0];
-  const { roster } = useRoster(group?.id ?? "");
+  const { current: cur } = useGroupCtx();
+  const [switching, setSwitching] = useState(false);
+  const group = cur?.group;
+  const roster = { length: cur?.members ?? 0 };
 
   if (wide) return <Navigate to="/settings" replace />;
   if (!user) return null;
@@ -71,7 +74,19 @@ export default function ProfilePage() {
                   icon: "people" as IconName,
                   title: `Группа ${group.name}`,
                   sub: `${roster.length} ${pluralRu(roster.length, ["студент", "студента", "студентов"])} · переключить`,
-                  onClick: () => navigate(`/s/${lastSemesterSlug() || "1"}/group`),
+                  onClick: () => setSwitching(true),
+                },
+                {
+                  icon: "lock" as IconName,
+                  title: "Мой доступ",
+                  sub: "Кто что видит из твоих лекций",
+                  onClick: () => navigate(`/s/${lastSemesterSlug() || "1"}/group/access`),
+                },
+                {
+                  icon: "gear" as IconName,
+                  title: "Настройки группы",
+                  sub: "Ссылка, владелец, выход",
+                  onClick: () => navigate(`/s/${lastSemesterSlug() || "1"}/group/settings`),
                 },
               ]
             : []),
@@ -115,6 +130,9 @@ export default function ProfilePage() {
             ))}
           </div>
         ))}
+      <Modal open={switching} onClose={() => setSwitching(false)} title="Твои группы">
+        <GroupList semSlug={lastSemesterSlug() || "1"} onPick={() => setSwitching(false)} />
+      </Modal>
     </div>
   );
 }

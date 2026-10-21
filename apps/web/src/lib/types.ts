@@ -380,6 +380,8 @@ export interface Group extends PbRecord {
   owner: string;
   /** Код приглашения API не отдаёт (скрытое поле): владелец читает его через /api/groups/:id/invite. */
   invite_code?: string;
+  /** Ссылка-приглашение открыта (по умолчанию закрыта). */
+  invite_enabled?: boolean;
 }
 
 /** Членство «пользователь ↔ группа» (many-to-many). */

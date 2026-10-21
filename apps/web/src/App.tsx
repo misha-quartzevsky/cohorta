@@ -63,6 +63,16 @@ import LoginPageNew from "./pages/auth/LoginPageNew";
 import PolicyPageNew from "./pages/auth/PolicyPageNew";
 import { ResetEntryPage, ResetNewPasswordPage } from "./pages/auth/ResetPages";
 import { JoinRoute } from "./pages/auth/JoinGroupPage";
+import {
+  GroupHomeRoute,
+  GroupAccessRoute,
+  GroupSettingsRoute,
+  GroupMemberRoute,
+  GroupMemberSubjectRoute,
+  GroupJoinRoute,
+  GroupLectureRoute,
+  GroupCreatePage,
+} from "./pages/group/GroupRoutes";
 import OnboardingWizard from "./features/onboarding/OnboardingWizard";
 import OnboardingNew from "./features/onboarding/OnboardingNew";
 import LectureLayout from "./components/LectureLayout";
@@ -198,7 +208,18 @@ function App() {
               <Route path="/s/:semesterSlug/exams" element={<ExamsPage />} />
               {/* Экран «Моя группа» — статический сегмент "group"
                   (RESERVED_SLUGS), тоже до :courseSlug. */}
-              <Route path="/s/:semesterSlug/group" element={<GroupPage />} />
+              <Route path="/s/:semesterSlug/group" element={isNewUI() ? <GroupHomeRoute /> : <GroupPage />} />
+              {isNewUI() && (
+                <>
+                  <Route path="/s/:semesterSlug/group/join" element={<GroupJoinRoute />} />
+                  <Route path="/s/:semesterSlug/group/new" element={<GroupCreatePage />} />
+                  <Route path="/s/:semesterSlug/group/lecture/:lectureId" element={<GroupLectureRoute />} />
+                  <Route path="/s/:semesterSlug/group/access" element={<GroupAccessRoute />} />
+                  <Route path="/s/:semesterSlug/group/settings" element={<GroupSettingsRoute />} />
+                  <Route path="/s/:semesterSlug/group/people/:userId" element={<GroupMemberRoute />} />
+                  <Route path="/s/:semesterSlug/group/people/:userId/:courseKey" element={<GroupMemberSubjectRoute />} />
+                </>
+              )}
               {/* «Черновики» — предмет по умолчанию для лекций без предмета (B2). */}
               {isNewUI() && <Route path="/s/:semesterSlug/drafts" element={<DraftsPage />} />}
               <Route
