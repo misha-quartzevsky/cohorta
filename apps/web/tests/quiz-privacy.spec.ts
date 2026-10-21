@@ -144,12 +144,13 @@ test.describe("квиз: данные одного пользователя не
       const g = await request.post(`${PB}/api/groups/create`, { headers: h(a), data: { name: `quiz-${stamp}` } });
       expect(g.ok(), await g.text()).toBeTruthy();
       groupId = (await g.json()).id;
+      await request.post(`${PB}/api/groups/${groupId}/invite/enable`, { headers: h(a), data: { enabled: true } });
       const inv = await request.get(`${PB}/api/groups/${groupId}/invite`, { headers: h(a) });
       const joined = await request.post(`${PB}/api/groups/join`, { headers: h(b), data: { code: (await inv.json()).code } });
       expect(joined.ok(), await joined.text()).toBeTruthy();
       const share = await request.post(`${PB}/api/collections/lecture_shares/records`, {
         headers: h(a),
-        data: { lecture: lectureId, owner: a.id, grantee: b.id },
+        data: { lecture: lectureId, owner: a.id, grantee: b.id, group: groupId },
       });
       expect(share.ok(), await share.text()).toBeTruthy();
       shareId = (await share.json()).id;

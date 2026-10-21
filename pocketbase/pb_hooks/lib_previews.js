@@ -64,6 +64,21 @@ function syncPreviewForLecture(app, lecture) {
   }
 
   const title = String(lecture.get("title") || "");
+  // Название и обложка предмета для списка «предметы одногруппника».
+  let courseTitle = "";
+  let courseId = "";
+  let coverSeed = 0;
+  const cid = String(lecture.get("field") || "");
+  if (cid) {
+    try {
+      const c = app.findRecordById("courses", cid);
+      courseTitle = String(c.get("name") || "");
+      courseId = c.id;
+      coverSeed = Number(c.get("cover_seed") || 0);
+    } catch (err) {
+      /* предмета нет — лекция без предмета */
+    }
+  }
   // Для группы видно только название: текст лекции в превью не копируется
   // (словарь: «предпросмотр — название, не текст», волна C, 21.10).
   const previewText = "";
@@ -73,6 +88,9 @@ function syncPreviewForLecture(app, lecture) {
     row.set("owner", ownerId);
     row.set("title", title);
     row.set("preview_text", previewText);
+    row.set("course_title", courseTitle);
+    row.set("course", courseId);
+    row.set("cover_seed", coverSeed);
     app.save(row);
     return;
   }
@@ -84,6 +102,9 @@ function syncPreviewForLecture(app, lecture) {
     owner: ownerId,
     title: title,
     preview_text: previewText,
+    course_title: courseTitle,
+    course: courseId,
+    cover_seed: coverSeed,
   });
   app.save(fresh);
 }

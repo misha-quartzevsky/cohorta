@@ -14,6 +14,7 @@ import { pb } from "../lib/pocketbase";
 import type { LectureShare, GroupMember, User } from "../lib/types";
 import { FIELDS, memberUserId } from "../lib/types";
 import { userName } from "../lib/format";
+import { fetchRoster } from "./groupService";
 
 /** Id текущего пользователя ("" — не залогинен). */
 function currentUserId(): string {
@@ -37,15 +38,33 @@ export async function fetchShares(lectureId: string): Promise<LectureShare[]> {
  */
 export async function grantAccess(
   lectureId: string,
-  granteeId: string
+  granteeId: string,
+  groupId?: string
 ): Promise<void> {
   const owner = currentUserId();
   if (!owner) throw new Error("Нужно войти, чтобы выдать доступ.");
+  // Доступ выдаётся в рамках группы, где состоят оба; если группа не названа — первая общая.
+  let group = groupId ?? "";
+  if (!group) {
+    const mine = await pb.collection("group_members").getFullList<GroupMember>({
+      filter: pb.filter(`${FIELDS.memberUser} = {:u}`, { u: owner }),
+      fields: "group",
+    });
+    for (const m of mine) {
+      const roster = await fetchRoster(String(m.group));
+      if (roster.some((r) => memberUserId(r) === granteeId)) {
+        group = String(m.group);
+        break;
+      }
+    }
+  }
+  if (!group) throw new Error("Доступ можно выдать только участнику вашей группы.");
   try {
     await pb.collection("lecture_shares").create<LectureShare>({
       [FIELDS.shareLecture]: lectureId,
       [FIELDS.shareOwner]: owner,
       [FIELDS.shareGrantee]: granteeId,
+      group,
     });
   } catch (e) {
     // UNIQUE(lecture, grantee) — уже выдан, это не ошибка.

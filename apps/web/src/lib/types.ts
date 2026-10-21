@@ -251,6 +251,8 @@ export interface Tag extends PbRecord {
   color?: string;
   /** Multiple-relation к лекциям (поле живёт на стороне тегов). */
   lectures?: string[];
+  /** Владелец тега: видит и меняет только он. */
+  owner?: string;
 }
 
 export interface Deck extends PbRecord {

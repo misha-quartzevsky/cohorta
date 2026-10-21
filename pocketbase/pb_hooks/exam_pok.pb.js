@@ -30,8 +30,22 @@ onRecordEnrich((e) => {
       const lib = require(`${__hooks}/lib_exam.js`);
       const examId = String(e.record.get("exam") || "");
       const ownerId = lib.examOwnerId(e.app, examId);
+      // Билеты подгруппы видят только её участники — им ответы открыты целиком.
+      // В общем списке экзамена группы ответов нет: у каждого они свои.
+      const inSubgroup = String(e.record.get("subgroup") || "") !== "";
+      let groupExam = false;
+      try {
+        groupExam = String(e.app.findRecordById("exams", examId).get("group") || "") !== "";
+      } catch (err) {
+        groupExam = false;
+      }
 
-      if (uid !== ownerId && !lib.passedProofOfKnowledge(e.app, examId, uid)) {
+      if (inSubgroup) {
+        /* участникам отдаём как есть */
+      } else if (groupExam && uid !== ownerId) {
+        e.record.set("answer", "");
+        e.record.set("attachments", []);
+      } else if (uid !== ownerId && !lib.passedProofOfKnowledge(e.app, examId, uid)) {
         e.record.set("answer", "");
         e.record.set("attachments", []);
       }

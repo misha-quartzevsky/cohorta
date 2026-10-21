@@ -55,3 +55,15 @@ onRecordAfterUpdateSuccess((e) => {
   }
   e.next();
 }, "group_members");
+
+// Предмет переименовали или сменили обложку — обновляем превью его лекций.
+onRecordAfterUpdateSuccess((e) => {
+  try {
+    const p = require(`${__hooks}/lib_previews.js`);
+    const lectures = e.app.findRecordsByFilter("lectures", "field = {:c}", "", 500, 0, { c: e.record.id });
+    for (const lec of lectures) if (lec) p.syncPreviewForLecture(e.app, lec);
+  } catch (err) {
+    console.log("[lecture_previews] course sync failed:", err);
+  }
+  e.next();
+}, "courses");

@@ -37,29 +37,26 @@ routerAdd(
       throw new NotFoundError("Группа с таким кодом не найдена.");
     }
 
-    let membership = null;
-    try {
-      membership = e.app.findFirstRecordByFilter(
-        "group_members",
-        "group = {:g} && user = {:u}",
-        { g: group.id, u: e.auth.id }
-      );
-    } catch (err) {
-      membership = null;
-    }
-
-    if (!membership) {
+    const g = require(`${__hooks}/lib_groups.js`);
+    let restorable = 0;
+    if (!g.isMember(e.app, group.id, e.auth.id)) {
+      // Закрытая ссылка не раскрывает, что группа существует.
+      if (group.get("invite_enabled") !== true) {
+        throw new NotFoundError("Группа с таким кодом не найдена.");
+      }
       const collection = e.app.findCollectionByNameOrId("group_members");
       const record = new Record(collection);
       record.set("group", group.id);
       record.set("user", e.auth.id);
       e.app.save(record);
+      restorable = g.onRejoin(e.app, group.id, e.auth.id);
     }
 
     return e.json(200, {
       id: group.id,
       name: group.get("name"),
       slug: group.get("slug"),
+      restorable: restorable,
     });
   },
   $apis.requireAuth()
@@ -80,6 +77,9 @@ routerAdd(
     try {
       group = e.app.findFirstRecordByFilter("groups", "invite_code = {:code}", { code: code });
     } catch (err) {
+      throw new NotFoundError("Группа с таким кодом не найдена.");
+    }
+    if (group.get("invite_enabled") !== true) {
       throw new NotFoundError("Группа с таким кодом не найдена.");
     }
     let members = 0;

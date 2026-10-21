@@ -41,6 +41,7 @@ routerAdd(
     group.set("slug", slugBase + "-" + $security.randomStringWithAlphabet(4, alphabet));
     group.set("owner", e.auth.id);
     group.set("invite_code", $security.randomStringWithAlphabet(8, alphabet));
+    group.set("invite_enabled", false); // по умолчанию ссылка закрыта
     e.app.save(group);
 
     const members = e.app.findCollectionByNameOrId("group_members");
@@ -101,13 +102,101 @@ routerAdd(
   $apis.requireAuth()
 );
 
-// Выдать доступ к лекции можно только участнику общей с автором группы.
+routerAdd(
+  "POST",
+  "/api/groups/{id}/invite/enable",
+  (e) => {
+    const g = require(`${__hooks}/lib_groups.js`);
+    const group = g.ownerOnlyGroup(e);
+    const data = new DynamicModel({ enabled: false });
+    e.bindBody(data);
+    group.set("invite_enabled", !!data.enabled);
+    e.app.save(group);
+    return e.json(200, { enabled: !!data.enabled });
+  },
+  $apis.requireAuth()
+);
+
+// Выход: любой участник; владелец с другими участниками сначала передаёт группу.
+routerAdd(
+  "POST",
+  "/api/groups/{id}/leave",
+  (e) => {
+    const g = require(`${__hooks}/lib_groups.js`);
+    const group = e.app.findRecordById("groups", e.request.pathValue("id"));
+    if (!g.isMember(e.app, group.id, e.auth.id)) throw new NotFoundError("Группа не найдена.");
+    const data = new DynamicModel({ remember: false });
+    e.bindBody(data);
+    const others = e.app.countRecords("group_members", $dbx.exp("`group` = {:g} AND user != {:u}", { g: group.id, u: e.auth.id }));
+    if (group.get("owner") === e.auth.id && others > 0) {
+      return e.json(409, { code: "transfer_required", message: "Сначала передай группу." });
+    }
+    g.leaveGroupCore(e.app, group, e.auth.id, { remember: !!data.remember });
+    if (others === 0) e.app.delete(group); // последний участник ушёл — группы больше нет
+    return e.json(200, { ok: true });
+  },
+  $apis.requireAuth()
+);
+
+// Исключить участника: только владелец. Доступы в обе стороны удаляются, подгруппы он покидает.
+routerAdd(
+  "POST",
+  "/api/groups/{id}/kick",
+  (e) => {
+    const g = require(`${__hooks}/lib_groups.js`);
+    const group = g.ownerOnlyGroup(e);
+    const data = new DynamicModel({ user: "" });
+    e.bindBody(data);
+    const target = String(data.user || "");
+    if (!target || target === e.auth.id) throw new BadRequestError("Выбери другого участника.");
+    if (!g.isMember(e.app, group.id, target)) throw new BadRequestError("Этот человек не состоит в группе.");
+    g.leaveGroupCore(e.app, group, target, { kicked: true });
+    return e.json(200, { ok: true });
+  },
+  $apis.requireAuth()
+);
+
+// «Вернуть прежние доступы (N)»: включает приостановленные выданные мной доступы
+// тем, кто сейчас в группе.
+routerAdd(
+  "POST",
+  "/api/groups/{id}/restore-access",
+  (e) => {
+    const g = require(`${__hooks}/lib_groups.js`);
+    const groupId = e.request.pathValue("id");
+    if (!g.isMember(e.app, groupId, e.auth.id)) throw new NotFoundError("Группа не найдена.");
+    const rows = g.restorableShares(e.app, groupId, e.auth.id);
+    for (const sh of rows) {
+      sh.set("suspended", false);
+      e.app.save(sh);
+    }
+    return e.json(200, { restored: rows.length });
+  },
+  $apis.requireAuth()
+);
+
+// Сколько прежних доступов можно вернуть в этой группе.
+routerAdd(
+  "GET",
+  "/api/groups/{id}/restorable",
+  (e) => {
+    const g = require(`${__hooks}/lib_groups.js`);
+    const groupId = e.request.pathValue("id");
+    if (!g.isMember(e.app, groupId, e.auth.id)) throw new NotFoundError("Группа не найдена.");
+    return e.json(200, { count: g.restorableCount(e.app, groupId, e.auth.id) });
+  },
+  $apis.requireAuth()
+);
+
+// Доступ выдаётся в рамках группы, в которой состоят и автор, и получатель.
 onRecordCreateRequest((e) => {
   const g = require(`${__hooks}/lib_groups.js`);
   const owner = String(e.record.get("owner") || "");
   const grantee = String(e.record.get("grantee") || "");
-  if (!g.shareGroupId(e.app, owner, grantee)) {
+  const group = String(e.record.get("group") || "");
+  if (!group || !g.isMember(e.app, group, owner) || !g.isMember(e.app, group, grantee)) {
     throw new ForbiddenError("Доступ можно выдать только участнику вашей группы.");
   }
+  e.record.set("suspended", false);
   e.next();
 }, "lecture_shares");

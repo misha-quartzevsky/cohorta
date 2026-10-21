@@ -21,7 +21,9 @@ const PASS = process.env.SUPER_PASS ?? "SandboxPass12345";
 const REPO = path.resolve(import.meta.dirname, "..", "..", "..");
 const PB_BIN = process.env.PB_BIN ?? path.join(REPO, "pocketbase", "pocketbase.exe");
 const SANDBOX = process.env.SANDBOX_DIR ?? path.join(process.env.TEMP ?? tmpdir(), "pbsandbox", "pb_data");
-const SPEC = process.argv[2] ?? "tests/group-access.spec.ts";
+const SPEC = process.argv[2]
+  ? [process.argv[2]]
+  : ["tests/group-access.spec.ts", "tests/group-exams.spec.ts", "tests/group-lifecycle.spec.ts"];
 
 async function api(method, url, token, body) {
   const res = await fetch(`${PB}${url}`, {
@@ -37,11 +39,12 @@ const login = async () =>
   (await api("POST", "/api/collections/_superusers/auth-with-password", null, { identity: EMAIL, password: PASS })).token;
 
 function runTests(spec = SPEC) {
+  const specs = Array.isArray(spec) ? spec : [spec];
   const out = path.join(process.env.TEMP ?? tmpdir(), `c-mut-${Date.now()}.json`);
   try {
     execFileSync(
       "npx",
-      ["playwright", "test", spec, "--project=firefox", "--retries=0", "--reporter=json"],
+      ["playwright", "test", ...specs, "--project=firefox", "--retries=0", "--reporter=json"],
       {
         cwd: path.join(REPO, "apps", "web"),
         env: { ...process.env, PB_URL: PB, SUPER_EMAIL: EMAIL, SUPER_PASS: PASS, PLAYWRIGHT_JSON_OUTPUT_NAME: out },
@@ -85,7 +88,29 @@ const RULE_MUTATIONS = [
   ["users: чужие профили видны любому вошедшему", "users", { viewRule: OPEN, listRule: OPEN }, "вступление по коду"],
 ];
 
-// ---- мутации хуков: [название, файл, замена, фрагмент названия теста]
+// Правило как функция текущего: ослабляем конкретную часть.
+const NO_SUSPEND = (r) => String(r).replace(" && @collection.lecture_shares.suspended ?!= true", "");
+RULE_MUTATIONS.push(
+  ["lectures: приостановленный доступ продолжает работать", "lectures", { listRule: NO_SUSPEND, viewRule: NO_SUSPEND }, "выход:"],
+  ["exam_subgroups: подгруппы видны всем вошедшим", "exam_subgroups", { listRule: OPEN, viewRule: OPEN }, "подгруппу и её билеты видят только"],
+  ["exam_tickets: билеты подгруппы видны всем вошедшим", "exam_tickets", { listRule: OPEN, viewRule: OPEN }, "подгруппу и её билеты видят только"],
+  ["exam_tickets: записывать билет может любой вошедший", "exam_tickets", { updateRule: OPEN }, "блокировка"],
+  ["exam_participants: состав подгрупп виден всем вошедшим", "exam_participants", { listRule: OPEN, viewRule: OPEN }, "подгруппу и её билеты видят только"],
+  ["exam_participants: можно добавить в подгруппу напрямую", "exam_participants", { createRule: OPEN }, "один человек не может"],
+  ["exam_participants: можно переставить в другую подгруппу правкой", "exam_participants", { updateRule: OPEN }, "один человек не может"],
+  ["exam_participants: уникальность (экзамен, человек) снята", "exam_participants", { __indexes: [] }, "один человек не может"],
+  ["exams: экзамен группы виден всем вошедшим", "exams", { listRule: OPEN, viewRule: OPEN }, "подгруппу и её билеты видят только"],
+  ["exams: экзамен можно создать в чужой группе", "exams", { createRule: '@request.auth.id != "" && owner = @request.auth.id' }, "участник группы создаёт подгруппу"],
+  ["lecture_shares: доступы разных групп не различаются (индекс без группы)", "lecture_shares", { __indexes: ["CREATE UNIQUE INDEX `idx_lecture_shares_lecture_grantee` ON `lecture_shares` (`lecture`, `grantee`)"] }, "один и тот же человек получает доступ отдельно"],
+  ["lecture_shares: получатель сам меняет «разрешить копировать»", "lecture_shares", { updateRule: '@request.auth.id != "" && (owner = @request.auth.id || grantee = @request.auth.id)' }, "копировать можно"],
+  ["access_requests: запросы видны всем вошедшим", "access_requests", { listRule: OPEN, viewRule: OPEN }, "запросить можно только"],
+  ["access_requests: запрос создаётся напрямую", "access_requests", { createRule: OPEN }, "запросить можно только"],
+  ["access_requests: запрос меняется напрямую", "access_requests", { updateRule: OPEN }, "запросить можно только"],
+  ["access_requests: уникальность открытого запроса снята", "access_requests", { __indexes: [] }, "запросить можно только"],
+  ["tags: теги читает любой, даже без входа", "tags", { listRule: "", viewRule: "" }, "теги"],
+  ["tags: теги создаёт и удаляет любой", "tags", { createRule: "", updateRule: "", deleteRule: "" }, "теги"],
+);
+
 // ---- правила квиза: проверяются файлом quiz-privacy (гость не создаёт/не удаляет квиз, ответы личные)
 const QUIZ_SPEC = "tests/quiz-privacy.spec.ts";
 const QUIZ_MUTATIONS = [
@@ -97,13 +122,36 @@ const QUIZ_MUTATIONS = [
 ];
 
 const HOOK_MUTATIONS = [
-  ["hook: доступ можно выдать не члену группы", "groups_manage.pb.js", [/if \(!g\.shareGroupId\(e\.app, owner, grantee\)\) \{/, "if (false) {"], "доступ выдаёт и снимает только автор"],
+  ["hook: доступ можно выдать не члену группы", "groups_manage.pb.js", [/if \(!group \|\| !g\.isMember\(e\.app, group, owner\) \|\| !g\.isMember\(e\.app, group, grantee\)\) \{/, "if (false) {"], "один и тот же человек получает доступ отдельно"],
   ["hook: старый код после сброса продолжает работать", "groups_manage.pb.js", [/group\.set\("invite_code", \$security\.randomStringWithAlphabet\(8, alphabet\)\);\n    e\.app\.save\(group\);\n    return e\.json\(200, \{ code: String\(group\.get\("invite_code"\)\) \}\);/, 'return e.json(200, { code: String(group.get("invite_code")) });'], "код приглашения"],
   ["hook: передать группу можно не участнику", "groups_manage.pb.js", [/if \(!g\.isMember\(e\.app, group\.id, target\)\) \{/, "if (false) {"], "выйти и удалить аккаунт"],
   ["hook: участник видит код (ownerOnlyGroup пускает участников)", "lib_groups.js", [/throw new ForbiddenError\("Это может только владелец группы\."\);/, "return group;"], "код приглашения"],
   ["hook: в превью копируется текст лекции", "lib_previews.js", [/const previewText = "";/, 'const previewText = stripHtml(lecture.get("content")).slice(0, PREVIEW_MAX);'], "название чужой лекции"],
   ["hook: превью из корзины остаётся", "lib_previews.js", [/const inTrash = String\(lecture\.get\("deleted_at"\) \|\| ""\) !== "";/, "const inTrash = false;"], "в корзине"],
   ["hook: ростер отдаёт почту", "groups_access.pb.js", [/user = \{ id: u\.id, name: label, avatar: String\(u\.get\("avatar"\) \|\| ""\) \};/, 'user = { id: u.id, name: label, email: u.get("email") };'], "ростер"],
+  ["hook: запись билета занятого другим разрешена", "exam_groups.pb.js", [/if \(holder && holder !== me && until > g\.nowStr\(\)\) \{\n      throw new ApiError/, "if (false) {\n      throw new ApiError"], "блокировка"],
+  ["hook: маршрут блокировки не проверяет «Занят»", "exam_groups.pb.js", [/if \(holder && holder !== e\.auth\.id && until > g\.nowStr\(\)\) \{\n      return e\.json\(409, \{ code: "busy", locked_by: holder, locked_until: until \}\);/, 'if (false) {\n      return e.json(409, { code: "busy" });'], "блокировка"],
+  ["hook: «Взять мой ответ» перезаписывает занятый билет", "exam_groups.pb.js", [/if \(holder && holder !== e\.auth\.id && String\(t\.get\("locked_until"\) \|\| ""\) > g\.nowStr\(\)\) \{/, "if (false) {"], "Взять мой ответ"],
+  ["hook: человек попадает во вторую подгруппу (создание)", "exam_groups.pb.js", [/if \(part && String\(part\.get\("subgroup"\) \|\| ""\) !== ""\) \{\n        return e\.json\(409, \{ code: "already_in_subgroup", user: uid \}\);/, 'if (false) {\n        return e.json(409, { code: "already_in_subgroup", user: uid });'], "один человек не может"],
+  ["hook: человек попадает во вторую подгруппу (приглашение)", "exam_groups.pb.js", [/if \(part && String\(part\.get\("subgroup"\) \|\| ""\) !== ""\) \{\n      return e\.json\(409/, 'if (false) {\n      return e.json(409'], "один человек не может"],
+  ["hook: посторонний управляет чужой подгруппой", "lib_groups.js", [/if \(!first\(e\.app, "exam_participants", "subgroup = \{:s\} && user = \{:u\}", \{ s: sub\.id, u: e\.auth\.id \}\)\) \{\n    throw new NotFoundError/, 'if (false) {\n    throw new NotFoundError'], "подгруппу и её билеты видят только"],
+  // (запись билета чужой подгруппы закрыта и правилом, и хуком: ослабление одного хука красным не становится, правило ловится мутацией exam_tickets.updateRule)
+  ["hook: подгруппу создаёт не участник группы", "exam_groups.pb.js", [/if \(!groupId \|\| !g\.isMember\(e\.app, groupId, me\)\) throw new NotFoundError\("Экзамен не найден\."\);/, 'if (!groupId) throw new NotFoundError("Экзамен не найден.");'], "участник группы создаёт подгруппу"],
+  ["hook: исключение не убирает человека", "groups_manage.pb.js", [/g\.leaveGroupCore\(e\.app, group, target, \{ kicked: true \}\);/, "/* пропуск */"], "исключённый"],
+  ["hook: выход не убирает человека", "groups_manage.pb.js", [/g\.leaveGroupCore\(e\.app, group, e\.auth\.id, \{ remember: !!data\.remember \}\);/, "/* пропуск */"], "выход"],
+  ["hook: при выходе доступы не приостанавливаются", "lib_groups.js", [/sh\.set\("suspended", true\);/g, 'sh.set("suspended", false);'], "выход"],
+  ["hook: при возврате полученные доступы не включаются", "lib_groups.js", [/if \(isMember\(app, groupId, String\(sh\.get\("owner"\)\)\)\) \{/, "if (false) {"], "выход"],
+  ["hook: «Вернуть прежние доступы» ничего не возвращает", "groups_manage.pb.js", [/sh\.set\("suspended", false\);\n      e\.app\.save\(sh\);/, "/* пропуск */"], "выход"],
+  ["hook: владелец выходит без передачи группы", "groups_manage.pb.js", [/if \(group\.get\("owner"\) === e\.auth\.id && others > 0\) \{/, "if (false) {"], "владелец с участниками не может выйти"],
+  ["hook: закрытая ссылка пускает по коду", "groups_access.pb.js", [/if \(group\.get\("invite_enabled"\) !== true\) \{\n        throw/, "if (false) {\n        throw"], "закрыта"],
+  ["hook: запрос доступа к лекции без предпросмотра", "group_access.pb.js", [/String\(lecture\.get\("deleted_at"\) \|\| ""\) !== "" \|\| !preview\) \{/, 'String(lecture.get("deleted_at") || "") !== "") {'], "запросить можно только"],
+  ["hook: запрос доступа от не участника группы", "group_access.pb.js", [/if \(!g\.isMember\(e\.app, groupId, me\) \|\| !g\.isMember\(e\.app, groupId, owner\)\) \{/, "if (false) {"], "запросить можно только"],
+  ["hook: запрос решает не автор", "group_access.pb.js", [/if \(req\.get\("owner"\) !== e\.auth\.id\) throw new NotFoundError\("Запрос не найден\."\);/, "/* пропуск */"], "запросить можно только"],
+  ["hook: копирование без разрешения автора", "group_access.pb.js", [/if \(!shares\.some\(\(s\) => s\.get\("allow_copy"\) === true\)\) \{/, "if (false) {"], "копировать можно"],
+  ["hook: копия кладётся в чужой предмет", "group_access.pb.js", [/if \(!c \|\| c\.get\("owner"\) !== me\) throw/, "if (!c) throw"], "копировать можно"],
+  ["hook: доступ подгруппе выдаёт не её участник", "group_access.pb.js", [/if \(!g\.first\(e\.app, "exam_participants", "subgroup = \{:s\} && user = \{:u\}", \{ s: sub\.id, u: e\.auth\.id \}\)\) \{\n      throw new NotFoundError\("Подгруппа/, 'if (false) {\n      throw new NotFoundError("Подгруппа'], "доступ подгруппе"],
+  ["hook: билет назначается не участнику подгруппы", "exam_groups.pb.js", [/if \(!g\.first\(e\.app, "exam_participants", "subgroup = \{:s\} && user = \{:u\}", \{ s: String\(t\.get\("subgroup"\)\), u: uid \}\)\) \{/, "if (false) {"], "раздаются поровну"],
+  ["hook: присоединение к групповому экзамену без сверки названия", "exam_groups.pb.js", [/if \(nameOf\(mine\) !== nameOf\(target\)\) throw new BadRequestError\("Названия предметов не совпадают\."\);/, "/* пропуск */"], "личный экзамен присоединяется"],
   ["hook: удаление аккаунта владельцем группы разрешено", "account_deletion.pb.js", [/if \(others > 0\) \{\n        return e\.json\(409/, "if (false) {\n        return e.json(409"], "выйти и удалить аккаунт"],
 ];
 
@@ -121,7 +169,12 @@ for (const [title, collection, patch, expected, spec = SPEC] of [
 ]) {
   token = await login();
   const original = await api("GET", `/api/collections/${collection}`, token);
-  const body = { ...patch };
+  const body = {};
+  for (const [k, v] of Object.entries(patch)) body[k] = typeof v === "function" ? v(original[k]) : v;
+  if ("__indexes" in body) {
+    body.indexes = body.__indexes;
+    delete body.__indexes;
+  }
   let fields;
   if ("__hideInviteCode" in body) {
     fields = original.fields.map((f) => (f.name === "invite_code" ? { ...f, hidden: body.__hideInviteCode } : f));
@@ -132,6 +185,7 @@ for (const [title, collection, patch, expected, spec = SPEC] of [
   const failed = runTests(spec);
   const restore = { fields: original.fields };
   for (const k of ["listRule", "viewRule", "createRule", "updateRule", "deleteRule"]) restore[k] = original[k];
+  restore.indexes = original.indexes;
   token = await login();
   await api("PATCH", `/api/collections/${collection}`, token, restore);
   const caught = failed.some((t) => t.includes(expected));
@@ -173,14 +227,17 @@ async function startSandbox(hooksDir) {
   throw new Error("песочница не поднялась");
 }
 
-for (const [title, file, [re, repl], expected] of HOOK_MUTATIONS) {
+const ONLY = (process.env.ONLY ?? "").split(",").filter(Boolean);
+const wanted = (t) => ONLY.length === 0 || ONLY.some((o) => t.includes(o));
+for (const [title, file, [re, repl], expected] of HOOK_MUTATIONS.filter((m) => wanted(m[0]))) {
   const dir = mkdtempSync(path.join(process.env.TEMP ?? tmpdir(), "hooks-mut-"));
   cpSync(hooksSrc, dir, { recursive: true });
   const target = path.join(dir, file);
-  const src = readFileSync(target, "utf8");
+  const src = readFileSync(target, "utf8").split(String.fromCharCode(13,10)).join(String.fromCharCode(10));
   if (!re.test(src)) {
     console.log(`ПРОПУЩЕНО (шаблон не найден в ${file}): ${title}`);
     results.push({ title, caught: false, failed: ["шаблон не найден"] });
+    rmSync(dir, { recursive: true, force: true });
     continue;
   }
   writeFileSync(target, src.replace(re, repl));

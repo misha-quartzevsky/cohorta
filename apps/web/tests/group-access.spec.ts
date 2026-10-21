@@ -42,7 +42,11 @@ async function register(request: APIRequestContext, tag: string): Promise<Sessio
 async function createGroup(request: APIRequestContext, s: Session, name: string) {
   const r = await request.post(`${PB}/api/groups/create`, { headers: h(s), data: { name } });
   expect(r.ok(), await r.text()).toBeTruthy();
-  return (await r.json()) as { id: string; name: string };
+  const group = (await r.json()) as { id: string; name: string };
+  // новая группа создаётся с закрытой ссылкой; для вступления по коду владелец её открывает
+  const on = await request.post(`${PB}/api/groups/${group.id}/invite/enable`, { headers: h(s), data: { enabled: true } });
+  expect(on.ok(), await on.text()).toBeTruthy();
+  return group;
 }
 
 async function inviteCode(request: APIRequestContext, s: Session, groupId: string): Promise<string> {
@@ -116,10 +120,10 @@ async function previews(request: APIRequestContext, s: Session, groupId?: string
   return (await r.json()).items as { lecture: string; title: string; preview_text?: string }[];
 }
 
-async function grant(request: APIRequestContext, owner: Session, lectureId: string, grantee: Session) {
+async function grant(request: APIRequestContext, owner: Session, lectureId: string, grantee: Session, group = "") {
   return request.post(`${PB}/api/collections/lecture_shares/records`, {
     headers: h(owner),
-    data: { lecture: lectureId, owner: owner.id, grantee: grantee.id },
+    data: { lecture: lectureId, owner: owner.id, grantee: grantee.id, group },
   });
 }
 
@@ -246,24 +250,24 @@ test.describe("группа: правила доступа", () => {
   test("нельзя открыть себе чужую лекцию, создав выдачу доступа «от себя»", async ({ request }) => {
     const forged = await request.post(`${PB}/api/collections/lecture_shares/records`, {
       headers: h(c),
-      data: { lecture: l1, owner: c.id, grantee: c.id },
+      data: { lecture: l1, owner: c.id, grantee: c.id, group: g1 },
     });
     expect(forged.ok(), "подделанная выдача на чужую лекцию").toBeFalsy();
     const forged2 = await request.post(`${PB}/api/collections/lecture_shares/records`, {
       headers: h(b),
-      data: { lecture: l1, owner: b.id, grantee: c.id },
+      data: { lecture: l1, owner: b.id, grantee: c.id, group: g1 },
     });
     expect(forged2.ok(), "участник не автор лекции").toBeFalsy();
     const forged3 = await request.post(`${PB}/api/collections/lecture_shares/records`, {
       headers: h(b),
-      data: { lecture: l1, owner: a.id, grantee: b.id },
+      data: { lecture: l1, owner: a.id, grantee: b.id, group: g1 },
     });
     expect(forged3.ok(), "выдача «от имени автора»").toBeFalsy();
     // участник группы выдаёт доступ к чужой лекции другому участнику той же группы:
     // общая группа есть (хук пропустит), значит держит именно правило «лекция моя»
     const forged4 = await request.post(`${PB}/api/collections/lecture_shares/records`, {
       headers: h(b),
-      data: { lecture: l1, owner: b.id, grantee: w.id },
+      data: { lecture: l1, owner: b.id, grantee: w.id, group: g1 },
     });
     expect(forged4.ok(), "выдача на чужую лекцию участнику своей группы").toBeFalsy();
     expect(await canGetLecture(request, w, l1)).toBe(false);
@@ -313,7 +317,7 @@ test.describe("группа: правила доступа", () => {
   });
 
   test("доступ выдаёт и снимает только автор; читает автор и получатель", async ({ request }) => {
-    const ok = await grant(request, a, l1, b);
+    const ok = await grant(request, a, l1, b, g1);
     expect(ok.ok(), await ok.text()).toBeTruthy();
     const shareId = (await ok.json()).id as string;
 
@@ -341,12 +345,12 @@ test.describe("группа: правила доступа", () => {
       data: { grantee: c.id },
     });
     expect(upd2.ok(), "автор переписывает получателя").toBeFalsy();
-    expect((await grant(request, b, l1, c)).ok(), "получатель выдаёт дальше").toBeFalsy();
+    expect((await grant(request, b, l1, c, g1)).ok(), "получатель выдаёт дальше").toBeFalsy();
     expect(await canGetLecture(request, c, l1)).toBe(false);
     // не участнику группы автора выдать нельзя
-    expect((await grant(request, a, l1, c)).ok(), "выдача постороннему вне группы").toBeFalsy();
+    expect((await grant(request, a, l1, c, g1)).ok(), "выдача постороннему вне группы").toBeFalsy();
     // себе выдать нельзя
-    expect((await grant(request, a, l1, a)).ok(), "выдача самому себе").toBeFalsy();
+    expect((await grant(request, a, l1, a, g1)).ok(), "выдача самому себе").toBeFalsy();
 
     // автор снимает — получатель снова не видит
     const rm = await request.delete(`${PB}/api/collections/lecture_shares/records/${shareId}`, { headers: h(a) });
@@ -458,7 +462,7 @@ test.describe("группа: правила доступа", () => {
   });
 
   test("лекция в корзине закрыта для одногруппников, после восстановления снова доступна", async ({ request }) => {
-    const ok = await grant(request, a, l1, b);
+    const ok = await grant(request, a, l1, b, g1);
     expect(ok.ok(), await ok.text()).toBeTruthy();
     await setPreview(request, a, g1, true);
     expect(await canGetLecture(request, b, l1)).toBe(true);

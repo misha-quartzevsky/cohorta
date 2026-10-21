@@ -32,6 +32,8 @@ export async function createTag(name: string, color: string): Promise<Tag> {
   return pb.collection("tags").create<Tag>({
     [FIELDS.tagName]: name.trim(),
     [FIELDS.tagColor]: color,
+    // Тег принадлежит пользователю (правила закрыты по владельцу, волна C).
+    owner: String(pb.authStore.record?.id ?? ""),
   });
 }
 
