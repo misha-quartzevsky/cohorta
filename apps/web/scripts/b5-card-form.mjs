@@ -30,6 +30,10 @@ for (const [mode, vp, mobile] of [["desktop", { width: 1440, height: 900 }, fals
   console.log(mode, "после «ещё»: окно открыто =", await p.getByRole("dialog").count(), "вопрос очищен =", (await p.getByLabel("Вопрос").inputValue()) === "");
   await p.getByLabel("Вопрос").fill(`Тест ${mode}: второй?`);
   await p.getByLabel("Ответ").fill("Второй ответ");
+  const opts = await p.getByLabel(/^Лекция/).locator("option").allInnerTexts();
+  console.log(mode, "лекций в списке:", opts.length - 1, "первая:", opts[1]);
+  await p.screenshot({ path: `${out}/card-form-${mode}-lecture.png` });
+  if (opts.length > 1) await p.getByLabel(/^Лекция/).selectOption({ index: 1 });
   await p.getByRole("button", { name: /^Сохранить$/ }).click();
   await p.waitForTimeout(1000);
   console.log(mode, "окно закрыто =", (await p.getByRole("dialog").count()) === 0, "в списке:", await p.getByText(`Тест ${mode}`).count());
@@ -38,5 +42,6 @@ for (const [mode, vp, mobile] of [["desktop", { width: 1440, height: 900 }, fals
 }
 await b.close();
 const all = await pb.collection("deck_cards").getFullList({ filter: `deck="${deck.id}"`, sort: "position,created" });
+console.log("с лекцией:", all.filter((c) => c.lecture).length);
 console.log("было", before, "стало", all.length, "последние:", all.slice(-4).map((c) => `${c.position}:${c.front.slice(0, 25)}`).join(" | "));
 for (const c of all.filter((c) => c.front.includes("Тест desktop") || c.front.includes("Тест mobile"))) await pb.collection("deck_cards").delete(c.id);

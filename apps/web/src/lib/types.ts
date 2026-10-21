@@ -261,6 +261,8 @@ export interface Deck extends PbRecord {
   is_public?: boolean;
   /** PocketBase relation → users. "" у legacy/демо-записей. */
   owner?: string;
+  /** PocketBase relation → courses; поля в базе пока нет (см. DECK_SUBJECT_SUPPORTED). */
+  subject?: string;
 }
 
 export interface DeckCard extends PbRecord {
@@ -270,6 +272,8 @@ export interface DeckCard extends PbRecord {
   back: string;
   /** PocketBase relation → decks. */
   deck?: string;
+  /** PocketBase relation → lectures (необязательная, только своя лекция). "" — не привязана. */
+  lecture?: string;
   /** Файлы-вложения (картинки) карточки (поле "file" в PB). */
   attachments?: string | string[];
   /** Ручной порядок в колоде (drag-n-drop). Меньше — выше. */

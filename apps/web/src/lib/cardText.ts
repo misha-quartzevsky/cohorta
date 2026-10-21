@@ -8,3 +8,8 @@ export function plainToHtml(text: string): string {
     .map((l) => `<p>${esc(l)}</p>`)
     .join("");
 }
+
+/** Подпись лекции в списке формы карточки: «Лекция 5 · Заключение и расторжение договора». */
+export function lectureOptionLabel(l: { number?: number; title: string }): string {
+  return l.number ? `Лекция ${l.number} · ${l.title}` : l.title;
+}

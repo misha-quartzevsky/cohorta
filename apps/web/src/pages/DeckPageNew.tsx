@@ -19,7 +19,7 @@ export default function DeckPageNew() {
   const { deck, cards, loading, error, refetch } = useDeck(slug ?? "");
   const [adding, setAdding] = useState(false);
 
-  if (loading) return null;
+  if (loading && !deck) return null; // повторная загрузка после «Сохранить и ещё» не должна закрывать окно
   if (!deck) {
     return (
       <div className="c-cards">
@@ -90,6 +90,7 @@ export default function DeckPageNew() {
         onClose={() => setAdding(false)}
         deckId={deck.id}
         deckTitle={deckTitle(deck)}
+        subjectId={deck.subject || undefined}
         cardCount={n}
         onSaved={() => void refetch()}
       />

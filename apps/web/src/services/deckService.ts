@@ -129,12 +129,14 @@ export async function deleteDeck(deckId: string): Promise<void> {
 export async function createDeckCard(
   deckId: string,
   front: string,
-  back: string
+  back: string,
+  lectureId?: string
 ): Promise<DeckCard> {
   return pb.collection("deck_cards").create<DeckCard>({
     [FIELDS.deckCardDeck]: deckId,
     [FIELDS.deckCardFront]: front,
     [FIELDS.deckCardBack]: back,
+    ...(lectureId ? { lecture: lectureId } : {}),
   });
 }
 

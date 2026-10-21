@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
-import { FormDialog, Textarea } from "../../ui";
+import { FormDialog, Select, Textarea } from "../../ui";
 import { createDeckCard, setDeckCardPosition } from "../../services/deckService";
 import { errorMessage } from "../../lib/format";
-import { plainToHtml } from "../../lib/cardText";
+import { plainToHtml, lectureOptionLabel } from "../../lib/cardText";
+import { fetchAllLectures } from "../../services/lectureService";
+import { pb } from "../../lib/pocketbase";
+import { lectureCourseId, lectureTitle, type Lecture } from "../../lib/types";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   deckId: string;
   deckTitle: string;
+  /** Предмет колоды: если есть, в списке лекции только этого предмета; иначе все мои. */
+  subjectId?: string;
   /** Сколько карточек уже в колоде: новая встаёт в конец. */
   cardCount: number;
   /** После каждого сохранения (в том числе «Сохранить и ещё») — обновить список. */
@@ -16,16 +21,17 @@ interface Props {
 }
 
 /**
- * «Новая карточка» (Screen-forms-create, Screen-m-form-card): вопрос и ответ.
- * Поле «Лекция» из макета не выводится: связи карточки с лекцией в базе нет
- * (нужна миграция, ждёт решения владелицы).
+ * «Новая карточка» (Screen-forms-create, Screen-m-form-card): вопрос, ответ и необязательная
+ * лекция (`deck_cards.lecture`). В списке только свои лекции: правило базы чужую не примет.
  */
-export default function CardFormDialog({ open, onClose, deckId, deckTitle, cardCount, onSaved }: Props) {
+export default function CardFormDialog({ open, onClose, deckId, deckTitle, subjectId, cardCount, onSaved }: Props) {
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
   const [frontError, setFrontError] = useState("");
   const [backError, setBackError] = useState("");
   const [saved, setSaved] = useState(0);
+  const [lecture, setLecture] = useState("");
+  const [lectures, setLectures] = useState<Lecture[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -34,7 +40,16 @@ export default function CardFormDialog({ open, onClose, deckId, deckTitle, cardC
     setFrontError("");
     setBackError("");
     setSaved(0);
-  }, [open]);
+    setLecture("");
+    const me = String(pb.authStore.record?.id ?? "");
+    void fetchAllLectures()
+      .then((all) =>
+        setLectures(
+          all.filter((l) => String(l.owner ?? "") === me && (!subjectId || lectureCourseId(l) === subjectId))
+        )
+      )
+      .catch(() => setLectures([]));
+  }, [open, subjectId]);
 
   /** Записывает карточку; false — не вышло, ошибка показана в форме. */
   async function save(): Promise<boolean> {
@@ -44,7 +59,7 @@ export default function CardFormDialog({ open, onClose, deckId, deckTitle, cardC
     setBackError(a ? "" : "Введи ответ");
     if (!q || !a) return false;
     try {
-      const card = await createDeckCard(deckId, plainToHtml(q), plainToHtml(a));
+      const card = await createDeckCard(deckId, plainToHtml(q), plainToHtml(a), lecture || undefined);
       await setDeckCardPosition(card.id, cardCount + saved);
       onSaved();
       return true;
@@ -101,9 +116,22 @@ export default function CardFormDialog({ open, onClose, deckId, deckTitle, cardC
         }}
         placeholder="Короткий ответ"
         rows={4}
-        hint={saved > 0 ? `Сохранено карточек: ${saved}` : "Покажется на карточке при повторении."}
+        hint={saved > 0 ? `Сохранено карточек: ${saved}` : undefined}
         error={backError || undefined}
       />
+      <Select
+        label="Лекция · необязательно"
+        value={lecture}
+        onChange={(e) => setLecture(e.target.value)}
+        hint="Покажется на карточке при повторении."
+      >
+        <option value="">Без лекции</option>
+        {lectures.map((l) => (
+          <option key={l.id} value={l.id}>
+            {lectureOptionLabel({ number: l.number, title: lectureTitle(l) })}
+          </option>
+        ))}
+      </Select>
     </FormDialog>
   );
 }
