@@ -40,6 +40,7 @@ test.describe("квиз: данные одного пользователя не
   let quizId = "";
   let questionId = "";
   let answerId = "";
+  let groupId = "";
 
   test.beforeAll(async ({ request }) => {
     a = await register(request, "a");
@@ -79,6 +80,15 @@ test.describe("квиз: данные одного пользователя не
 
   test.afterAll(async ({ request }) => {
     if (lectureId) await request.delete(`${PB}/api/collections/lectures/records/${lectureId}`, { headers: h(a) });
+    // группу владелец сам удалить не может (правила закрыты) — убирает суперпользователь, если он задан
+    if (groupId && process.env.SUPER_EMAIL) {
+      const auth = await request.post(`${PB}/api/collections/_superusers/auth-with-password`, {
+        data: { identity: process.env.SUPER_EMAIL, password: process.env.SUPER_PASS ?? "" },
+      });
+      if (auth.ok()) {
+        await request.delete(`${PB}/api/collections/groups/records/${groupId}`, { headers: { Authorization: (await auth.json()).token } });
+      }
+    }
     for (const s of [a, b]) {
       if (s) await request.delete(`${PB}/api/collections/users/records/${s.id}`, { headers: h(s) });
     }
@@ -130,6 +140,13 @@ test.describe("квиз: данные одного пользователя не
     let guestAnswerId = "";
 
     test("после выдачи доступа гость видит квиз и вопросы владельца", async ({ request }) => {
+      // доступ можно выдать только участнику общей группы
+      const g = await request.post(`${PB}/api/groups/create`, { headers: h(a), data: { name: `quiz-${stamp}` } });
+      expect(g.ok(), await g.text()).toBeTruthy();
+      groupId = (await g.json()).id;
+      const inv = await request.get(`${PB}/api/groups/${groupId}/invite`, { headers: h(a) });
+      const joined = await request.post(`${PB}/api/groups/join`, { headers: h(b), data: { code: (await inv.json()).code } });
+      expect(joined.ok(), await joined.text()).toBeTruthy();
       const share = await request.post(`${PB}/api/collections/lecture_shares/records`, {
         headers: h(a),
         data: { lecture: lectureId, owner: a.id, grantee: b.id },

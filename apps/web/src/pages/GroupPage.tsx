@@ -31,6 +31,7 @@ import {
   createGroup,
   joinByInviteCode,
   joinGroupById,
+  fetchInviteCode,
   searchSimilarGroups,
   leaveGroup,
   setPreviewEnabled,
@@ -114,6 +115,19 @@ function GroupCard({ group, meId }: { group: Group; meId: string }) {
   const isOwner = groupOwnerId(group) === meId;
   const [openMember, setOpenMember] = useState<string | null>(null);
   const [savingPreview, setSavingPreview] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
+
+  // Код видит только владелец: сервер отдаёт его отдельным маршрутом.
+  useEffect(() => {
+    if (!isOwner) return;
+    let alive = true;
+    fetchInviteCode(group.id)
+      .then((c) => alive && setInviteCode(c))
+      .catch(() => alive && setInviteCode(""));
+    return () => {
+      alive = false;
+    };
+  }, [group.id, isOwner]);
 
   const myRow = roster.find((m) => memberUserId(m) === meId);
   const myPreviewOn = !!myRow?.preview_enabled;
@@ -148,14 +162,18 @@ function GroupCard({ group, meId }: { group: Group; meId: string }) {
         )}
       </div>
 
-      <div className="group-invite-row">
-        <span className="group-invite-label">Ссылка-приглашение</span>
-        <code className="group-invite-code">{inviteLink(group.invite_code)}</code>
-        <CopyButton text={inviteLink(group.invite_code)} label="Копировать" />
-      </div>
-      <p className="group-invite-bonus">
-        Когда приглашённый напишет первый конспект — 14 дней премиума вам обоим.
-      </p>
+      {isOwner && inviteCode && (
+        <>
+          <div className="group-invite-row">
+            <span className="group-invite-label">Ссылка-приглашение</span>
+            <code className="group-invite-code">{inviteLink(inviteCode)}</code>
+            <CopyButton text={inviteLink(inviteCode)} label="Копировать" />
+          </div>
+          <p className="group-invite-bonus">
+            Когда приглашённый напишет первый конспект — 14 дней премиума вам обоим.
+          </p>
+        </>
+      )}
 
       <label className="group-preview-toggle">
         <input

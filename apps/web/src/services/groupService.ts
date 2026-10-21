@@ -5,8 +5,9 @@
  *
  * Все обращения к коллекциям `groups` и `group_members`.
  *
- * Owner-scoped: создать группу может любой авторизованный
- * пользователь, `owner` проставляется на клиенте.
+ * Группы и членство создаются и меняются только серверными маршрутами
+ * (`pb_hooks/groups_manage.pb.js`, волна C): правила коллекций закрывают
+ * прямое создание и удаление.
  *
  * `groups.listRule`/`viewRule` ограничены участникам и владельцу
  * (A0.5, 2026-10-18) — найти ЧУЖУЮ группу по названию или коду
@@ -23,21 +24,10 @@
 import { pb } from "../lib/pocketbase";
 import type { Group, GroupMember, LecturePreview } from "../lib/types";
 import { FIELDS } from "../lib/types";
-import { slugify } from "../lib/slugify";
 
 /** Id текущего пользователя ("" — не залогинен). */
 function currentUserId(): string {
   return String(pb.authStore.record?.id ?? "");
-}
-
-/** Случайный invite-код: 8 символов a-z0-9. */
-function makeInviteCode(): string {
-  const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let s = "";
-  for (let i = 0; i < 8; i += 1) {
-    s += alphabet[Math.floor(Math.random() * alphabet.length)];
-  }
-  return s;
 }
 
 export interface GroupCandidate {
@@ -118,29 +108,35 @@ async function myMembership(groupId: string): Promise<GroupMember | null> {
 }
 
 /**
- * Создать группу. `owner` — текущий пользователь; сразу же
- * создаётся его строка членства.
+ * Создать группу. Идёт серверным маршрутом `/api/groups/create` (волна C):
+ * владелец — текущий пользователь, код приглашения ставит сервер, строку
+ * членства создаёт он же (прямое создание групп и членства закрыто правилами).
  */
 export async function createGroup(name: string): Promise<Group> {
   const uid = currentUserId();
   if (!uid) throw new Error("Нужно войти, чтобы создать группу.");
-
-  const base = slugify(name) || "group";
-  const rand = Math.random().toString(36).slice(2, 6);
-
-  const group = await pb.collection("groups").create<Group>({
-    [FIELDS.groupName]: name.trim(),
-    [FIELDS.groupSlug]: `${base}-${rand}`,
-    [FIELDS.groupOwner]: uid,
-    [FIELDS.groupInviteCode]: makeInviteCode(),
+  const created = await pb.send<{ id: string }>("/api/groups/create", {
+    method: "POST",
+    body: { name: name.trim() },
   });
+  return pb.collection("groups").getOne<Group>(created.id);
+}
 
-  await pb.collection("group_members").create<GroupMember>({
-    [FIELDS.memberGroup]: group.id,
-    [FIELDS.memberUser]: uid,
-  });
+/** Код приглашения группы. Отдаёт только владельцу (остальным ошибка). */
+export async function fetchInviteCode(groupId: string): Promise<string> {
+  const r = await pb.send<{ code: string }>(`/api/groups/${groupId}/invite`, { method: "GET" });
+  return r.code;
+}
 
-  return group;
+/** Сбросить код: старый перестаёт работать, участники остаются. Только владелец. */
+export async function resetInviteCode(groupId: string): Promise<string> {
+  const r = await pb.send<{ code: string }>(`/api/groups/${groupId}/invite/reset`, { method: "POST" });
+  return r.code;
+}
+
+/** Передать группу участнику. Только владелец. */
+export async function transferGroup(groupId: string, userId: string): Promise<void> {
+  await pb.send(`/api/groups/${groupId}/transfer`, { method: "POST", body: { user: userId } });
 }
 
 /**
@@ -171,24 +167,17 @@ export async function joinByInviteCode(code: string): Promise<void> {
 }
 
 /**
- * Вступить в группу по её id (из результатов fuzzy-поиска). Идемпотентно.
- * Членство создаётся за текущего пользователя — правило это разрешает
- * любому авторизованному.
+ * Вступить в группу по её id нельзя: вступление только по коду приглашения
+ * (волна C, раздел 5 инструкции). Функция оставлена, чтобы старый экран
+ * «Группа» не ломался при сборке; она всегда отказывает.
  */
-export async function joinGroupById(groupId: string): Promise<void> {
-  const uid = currentUserId();
-  if (!uid || !groupId) throw new Error("Нужно войти, чтобы вступить в группу.");
-  const existing = await myMembership(groupId);
-  if (existing) return;
-  await pb.collection("group_members").create<GroupMember>({
-    [FIELDS.memberGroup]: groupId,
-    [FIELDS.memberUser]: uid,
-  });
+export async function joinGroupById(_groupId: string): Promise<void> {
+  throw new Error("Вступить в группу можно только по коду приглашения.");
 }
 
 interface RosterEntry {
   id: string;
-  user: { id: string; name?: string; email?: string } | null;
+  user: { id: string; name?: string; avatar?: string } | null;
   joined_at?: string;
   preview_enabled: boolean;
 }
@@ -216,7 +205,7 @@ export async function fetchRoster(groupId: string): Promise<GroupMember[]> {
     joined_at: entry.joined_at,
     preview_enabled: entry.preview_enabled,
     expand: entry.user
-      ? { user: { id: entry.user.id, name: entry.user.name, email: entry.user.email } }
+      ? { user: { id: entry.user.id, name: entry.user.name, avatar: entry.user.avatar } }
       : undefined,
   })) as unknown as GroupMember[];
 }
