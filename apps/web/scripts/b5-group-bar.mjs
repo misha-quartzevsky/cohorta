@@ -1,0 +1,20 @@
+// Нижняя панель в режиме «Группа» на телефоне: node scripts/b5-group-bar.mjs <папка>
+import { chromium } from "playwright";
+const out = process.argv[2];
+const BASE = process.env.BASE ?? "http://127.0.0.1:5173";
+const b = await chromium.launch();
+const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+const p = await ctx.newPage();
+await p.goto(`${BASE}/login`);
+await p.fill('input[type="email"]', "asyaobraz17@gmail.com");
+await p.fill('input[type="password"]', "12345678");
+await p.click('button[type="submit"]');
+await p.waitForURL(/\/s\//, { timeout: 15000 });
+await p.goto(`${BASE}/profile`);
+await p.waitForTimeout(1200);
+await p.getByText("Группа", { exact: true }).last().tap();
+await p.waitForTimeout(1200);
+await p.screenshot({ path: `${out}/m-profile-group.png` });
+const labels = await p.locator("nav a, nav button, nav span").allInnerTexts();
+console.log(labels.join(" | "));
+await b.close();
