@@ -301,9 +301,9 @@
    "id": "quiz_create",
    "title": "Создание квиза (размер, загрузка, ошибка)",
    "area": "review",
-   "mock": null,
-   "mobile": null,
-   "note": "Размер квиза, ожидание генерации и ошибка ИИ не нарисованы",
+   "mock": "Screen-quiz-states",
+   "mobile": "Screen-m-quiz-1",
+   "note": "Нарисовано: размер, ожидание, ошибка, мало текста, лимит исчерпан",
    "entry": false,
    "terminal": false,
    "virtual": false
@@ -345,9 +345,9 @@
    "id": "quiz_exit",
    "title": "Выйти из квиза посередине",
    "area": "review",
-   "mock": null,
+   "mock": "Screen-quiz-states",
    "mobile": null,
-   "note": "Не нарисовано: сохраняется ли прогресс",
+   "note": "Прогресс сохраняется, панель лекции в состоянии «квиз начат»",
    "entry": false,
    "terminal": false,
    "virtual": false
@@ -380,7 +380,7 @@
    "area": "review",
    "mock": null,
    "mobile": null,
-   "note": "Не нарисовано",
+   "note": "Окно «Новая колода» нарисовано; форма карточки и правка карточки ещё нет",
    "entry": false,
    "terminal": false,
    "virtual": false
