@@ -152,6 +152,7 @@ const HOOK_MUTATIONS = [
   ["hook: доступ подгруппе выдаёт не её участник", "group_access.pb.js", [/if \(!g\.first\(e\.app, "exam_participants", "subgroup = \{:s\} && user = \{:u\}", \{ s: sub\.id, u: e\.auth\.id \}\)\) \{\n      throw new NotFoundError\("Подгруппа/, 'if (false) {\n      throw new NotFoundError("Подгруппа'], "доступ подгруппе"],
   ["hook: билет назначается не участнику подгруппы", "exam_groups.pb.js", [/if \(!g\.first\(e\.app, "exam_participants", "subgroup = \{:s\} && user = \{:u\}", \{ s: String\(t\.get\("subgroup"\)\), u: uid \}\)\) \{/, "if (false) {"], "раздаются поровну"],
   ["hook: присоединение к групповому экзамену без сверки названия", "exam_groups.pb.js", [/if \(nameOf\(mine\) !== nameOf\(target\)\) throw new BadRequestError\("Названия предметов не совпадают\."\);/, "/* пропуск */"], "личный экзамен присоединяется"],
+  ["hook: в общем списке экзамена группы ответ владельца виден прошедшему PoK", "exam_pok.pb.js", [/\} else if \(groupExam && uid !== ownerId\) \{/, "} else if (false) {"], "в общем списке экзамена группы"],
   ["hook: удаление аккаунта владельцем группы разрешено", "account_deletion.pb.js", [/if \(others > 0\) \{\n        return e\.json\(409/, "if (false) {\n        return e.json(409"], "выйти и удалить аккаунт"],
 ];
 

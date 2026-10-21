@@ -179,6 +179,11 @@ test.describe("экзамены группы и подгруппы", () => {
     expect((await list(request, d, "exam_tickets", `id="${common[0]}"`))[0].answer ?? "").toBe("");
     expect((await list(request, b, "exam_tickets", `id="${common[0]}"`))[0].answer ?? "").toBe("");
     expect((await list(request, a, "exam_tickets", `id="${common[0]}"`))[0].answer).toContain("ответ владельца");
+    // даже участник, прошедший «доказательство знания» (свой назначенный билет с ответом), чужих ответов в общем списке не видит
+    expect((await request.patch(`${PB}/api/collections/exam_tickets/records/${common[2]}`, { headers: h(a), data: { author: d.id } })).ok()).toBeTruthy();
+    const own = await request.patch(`${PB}/api/collections/exam_tickets/records/${common[2]}`, { headers: h(d), data: { answer: "<p>ответ D</p>" } });
+    expect(own.ok(), await own.text()).toBeTruthy();
+    expect((await list(request, d, "exam_tickets", `id="${common[0]}"`))[0].answer ?? "", "ответ владельца после PoK").toBe("");
     // участники группы не правят общий список
     const w = await request.patch(`${PB}/api/collections/exam_tickets/records/${common[1]}`, { headers: h(d), data: { question: "взлом" } });
     expect(w.ok()).toBeFalsy();
