@@ -100,7 +100,8 @@ routerAdd(
       throw new NotFoundError("Лекция не найдена.");
     }
     const owner = String(lecture.get("owner") || "");
-    const preview = g.first(e.app, "lecture_previews", "lecture = {:l}", { l: lecture.id });
+    // Название видно в той группе, где автор включил предпросмотр и ты состоишь.
+    const preview = g.all(e.app, "lecture_previews", "lecture = {:l}", { l: lecture.id }).find((p) => g.isMember(e.app, String(p.get("group")), me)) || null;
     // Запросить можно только то, что тебе видно по названию: общая группа и включённый предпросмотр.
     if (!owner || owner === me || String(lecture.get("deleted_at") || "") !== "" || !preview) {
       throw new NotFoundError("Лекция не найдена.");

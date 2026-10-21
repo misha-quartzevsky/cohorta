@@ -286,10 +286,11 @@ test.describe("группа: правила доступа", () => {
 
     await setPreview(request, a, g1, true);
     const seen = await previews(request, b, g1);
-    expect(seen.map((p) => p.lecture)).toEqual([l1]);
-    expect(seen[0].title).toBe("Секретная лекция группа 1");
+    // предпросмотр на группу: видны названия всех лекций автора (не только привязанных к группе)
+    expect(seen.map((p) => p.lecture).sort()).toEqual([l1, l2].sort());
+    expect(seen.find((p) => p.lecture === l1)?.title).toBe("Секретная лекция группа 1");
     // текст лекции в превью не попадает, сама лекция по-прежнему закрыта
-    expect(String(seen[0].preview_text ?? "")).toBe("");
+    expect(seen.every((p) => String(p.preview_text ?? "") === "")).toBeTruthy();
     expect(JSON.stringify(seen)).not.toContain("секретный текст");
     expect(await canGetLecture(request, b, l1)).toBe(false);
     // посторонний не видит и превью
@@ -302,16 +303,17 @@ test.describe("группа: правила доступа", () => {
 
   test("человек в двух группах: предпросмотр у каждой группы свой", async ({ request }) => {
     await setPreview(request, a, g1, true); // только группа 1
-    expect((await previews(request, b)).map((p) => p.lecture)).toEqual([l1]);
+    const both = [l1, l2].sort();
+    expect((await previews(request, b)).map((p) => p.lecture).sort()).toEqual(both);
     expect(await previews(request, d)).toEqual([]); // группа 2 не включена
 
     await setPreview(request, a, g2, true);
-    expect((await previews(request, d)).map((p) => p.lecture)).toEqual([l2]); // только своя группа
-    expect((await previews(request, b)).map((p) => p.lecture)).toEqual([l1]);
+    expect((await previews(request, d)).map((p) => p.lecture).sort()).toEqual(both); // своя группа
+    expect((await previews(request, b)).map((p) => p.lecture).sort()).toEqual(both);
 
     await setPreview(request, a, g1, false);
     expect(await previews(request, b)).toEqual([]);
-    expect((await previews(request, d)).map((p) => p.lecture)).toEqual([l2]);
+    expect((await previews(request, d)).map((p) => p.lecture).sort()).toEqual(both); // группа 2 включена независимо
     await setPreview(request, a, g2, false);
     expect(await previews(request, d)).toEqual([]);
   });
@@ -466,18 +468,18 @@ test.describe("группа: правила доступа", () => {
     expect(ok.ok(), await ok.text()).toBeTruthy();
     await setPreview(request, a, g1, true);
     expect(await canGetLecture(request, b, l1)).toBe(true);
-    expect((await previews(request, b, g1)).map((p) => p.lecture)).toEqual([l1]);
+    expect((await previews(request, b, g1)).map((p) => p.lecture)).toContain(l1);
 
     const del = await request.post(`${PB}/api/trash/delete`, { headers: h(a), data: { type: "lecture", id: l1 } });
     expect(del.ok(), await del.text()).toBeTruthy();
     expect(await canGetLecture(request, b, l1), "после удаления в корзину").toBe(false);
     expect(await lectureListIds(request, b)).not.toContain(l1);
-    expect(await previews(request, b, g1), "превью из корзины").toEqual([]);
+    expect((await previews(request, b, g1)).map((p) => p.lecture), "превью из корзины").not.toContain(l1);
 
     const restore = await request.post(`${PB}/api/trash/restore`, { headers: h(a), data: { type: "lecture", id: l1 } });
     expect(restore.ok(), await restore.text()).toBeTruthy();
     expect(await canGetLecture(request, b, l1), "после восстановления").toBe(true);
-    expect((await previews(request, b, g1)).map((p) => p.lecture)).toEqual([l1]);
+    expect((await previews(request, b, g1)).map((p) => p.lecture)).toContain(l1);
 
     // убираем за собой доступ и предпросмотр
     const shares = await (

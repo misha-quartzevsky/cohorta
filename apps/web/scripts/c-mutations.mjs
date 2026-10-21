@@ -126,7 +126,7 @@ const HOOK_MUTATIONS = [
   ["hook: старый код после сброса продолжает работать", "groups_manage.pb.js", [/group\.set\("invite_code", \$security\.randomStringWithAlphabet\(8, alphabet\)\);\n    e\.app\.save\(group\);\n    return e\.json\(200, \{ code: String\(group\.get\("invite_code"\)\) \}\);/, 'return e.json(200, { code: String(group.get("invite_code")) });'], "код приглашения"],
   ["hook: передать группу можно не участнику", "groups_manage.pb.js", [/if \(!g\.isMember\(e\.app, group\.id, target\)\) \{/, "if (false) {"], "выйти и удалить аккаунт"],
   ["hook: участник видит код (ownerOnlyGroup пускает участников)", "lib_groups.js", [/throw new ForbiddenError\("Это может только владелец группы\."\);/, "return group;"], "код приглашения"],
-  ["hook: в превью копируется текст лекции", "lib_previews.js", [/const previewText = "";/, 'const previewText = stripHtml(lecture.get("content")).slice(0, PREVIEW_MAX);'], "название чужой лекции"],
+  ["hook: в превью копируется текст лекции", "lib_previews.js", [/preview_text: "",/, "preview_text: String(lecture.get(String.fromCharCode(99,111,110,116,101,110,116)) || \"\"),"], "название чужой лекции"],
   ["hook: превью из корзины остаётся", "lib_previews.js", [/const inTrash = String\(lecture\.get\("deleted_at"\) \|\| ""\) !== "";/, "const inTrash = false;"], "в корзине"],
   ["hook: ростер отдаёт почту", "groups_access.pb.js", [/user = \{ id: u\.id, name: label, avatar: String\(u\.get\("avatar"\) \|\| ""\) \};/, 'user = { id: u.id, name: label, email: u.get("email") };'], "ростер"],
   ["hook: запись билета занятого другим разрешена", "exam_groups.pb.js", [/if \(holder && holder !== me && until > g\.nowStr\(\)\) \{\n      throw new ApiError/, "if (false) {\n      throw new ApiError"], "блокировка"],

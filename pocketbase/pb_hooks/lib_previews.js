@@ -3,131 +3,96 @@
 // ============================================================
 //  lib_previews.js — helpers для lecture_previews.pb.js
 //
-//  ВАЖНО (грабля PocketBase JSVM): каждый обработчик хука
-//  выполняется в ИЗОЛИРОВАННОМ scope — функции из верхнего
-//  уровня файла в него не видны (ReferenceError). Общие
-//  хелперы кладём отдельным .js-модулем и подключаем через
-//  require(`${__hooks}/lib_previews.js`) ВНУТРИ каждого
-//  обработчика.
+//  Предпросмотр хранится на членстве (group_members.preview_enabled) и у
+//  каждой группы свой: когда автор включил его для группы, в этой группе
+//  видны НАЗВАНИЯ всех его лекций (не текст) и название/обложка предмета.
+//  Строка превью — на пару (лекция, группа). Лекция в корзине не видна.
+//
+//  ВАЖНО (грабля PocketBase JSVM): обработчик хука выполняется в
+//  изолированном scope — общие функции подключаются через
+//  require(`${__hooks}/lib_previews.js`) ВНУТРИ обработчика.
 // ============================================================
 
-const PREVIEW_MAX = 400;
-
-/** HTML → plain text: убрать теги и токены картинок, схлопнуть пробелы. */
-function stripHtml(html) {
-  return String(html || "")
-    .replace(/\[\[file:[^\]]+\]\]/g, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+/** Группы автора, где он включил предпросмотр. */
+function enabledGroups(app, userId) {
+  if (!userId) return [];
+  const rows = app.findRecordsByFilter("group_members", "user = {:u} && preview_enabled = true", "", 200, 0, { u: userId });
+  return rows.map((m) => String(m.get("group")));
 }
 
-/** Включил ли пользователь `preview_enabled` для группы. */
-function memberPreviewEnabled(app, groupId, userId) {
-  if (!groupId || !userId) return false;
-  const rows = app.findRecordsByFilter(
-    "group_members",
-    "group = {:g} && user = {:u}",
-    "",
-    1,
-    0,
-    { g: groupId, u: userId }
-  );
-  const m = rows && rows[0];
-  return !!(m && m.get("preview_enabled"));
+function previewRow(app, lectureId, groupId) {
+  const rows = app.findRecordsByFilter("lecture_previews", "lecture = {:l} && group = {:g}", "", 1, 0, { l: lectureId, g: groupId });
+  return rows && rows[0] ? rows[0] : null;
 }
 
-/** Создать / обновить / удалить строку превью под текущее состояние лекции. */
-function syncPreviewForLecture(app, lecture) {
-  const lectureId = lecture.id;
-  const groupId = String(lecture.get("group") || "");
-  const ownerId = String(lecture.get("owner") || "");
-
-  const existing = app.findRecordsByFilter(
-    "lecture_previews",
-    "lecture = {:l}",
-    "",
-    1,
-    0,
-    { l: lectureId }
-  );
-  const row = existing && existing[0];
-
-  // Лекция в корзине (deleted_at) для группы не показывается.
-  const inTrash = String(lecture.get("deleted_at") || "") !== "";
-  const shouldShow =
-    !inTrash && groupId && ownerId && memberPreviewEnabled(app, groupId, ownerId);
-
-  if (!shouldShow) {
-    if (row) app.delete(row);
-    return;
-  }
-
-  const title = String(lecture.get("title") || "");
-  // Название и обложка предмета для списка «предметы одногруппника».
-  let courseTitle = "";
-  let courseId = "";
-  let coverSeed = 0;
+/** Название и обложка предмета лекции. */
+function courseInfo(app, lecture) {
   const cid = String(lecture.get("field") || "");
-  if (cid) {
-    try {
-      const c = app.findRecordById("courses", cid);
-      courseTitle = String(c.get("name") || "");
-      courseId = c.id;
-      coverSeed = Number(c.get("cover_seed") || 0);
-    } catch (err) {
-      /* предмета нет — лекция без предмета */
+  if (!cid) return { title: "", id: "", seed: 0 };
+  try {
+    const c = app.findRecordById("courses", cid);
+    return { title: String(c.get("name") || ""), id: c.id, seed: Number(c.get("cover_seed") || 0) };
+  } catch (err) {
+    return { title: "", id: "", seed: 0 };
+  }
+}
+
+/** Привести строки превью лекции к текущему состоянию: по строке на каждую группу с включённым предпросмотром. */
+function syncPreviewForLecture(app, lecture) {
+  const ownerId = String(lecture.get("owner") || "");
+  const inTrash = String(lecture.get("deleted_at") || "") !== "";
+  const want = inTrash || !ownerId ? [] : enabledGroups(app, ownerId);
+
+  // лишние строки (группа выключена, лекция в корзине) — удалить
+  const existing = app.findRecordsByFilter("lecture_previews", "lecture = {:l}", "", 200, 0, { l: lecture.id });
+  for (const row of existing) {
+    if (want.indexOf(String(row.get("group"))) < 0) app.delete(row);
+  }
+  if (want.length === 0) return;
+
+  const info = courseInfo(app, lecture);
+  const title = String(lecture.get("title") || "");
+  const col = app.findCollectionByNameOrId("lecture_previews");
+  for (const groupId of want) {
+    const row = previewRow(app, lecture.id, groupId);
+    // Для группы видно только название: текст лекции в превью не копируется.
+    if (row) {
+      row.set("owner", ownerId);
+      row.set("title", title);
+      row.set("preview_text", "");
+      row.set("course_title", info.title);
+      row.set("course", info.id);
+      row.set("cover_seed", info.seed);
+      app.save(row);
+    } else {
+      app.save(
+        new Record(col, {
+          lecture: lecture.id,
+          group: groupId,
+          owner: ownerId,
+          title: title,
+          preview_text: "",
+          course_title: info.title,
+          course: info.id,
+          cover_seed: info.seed,
+        })
+      );
     }
   }
-  // Для группы видно только название: текст лекции в превью не копируется
-  // (словарь: «предпросмотр — название, не текст», волна C, 21.10).
-  const previewText = "";
-
-  if (row) {
-    row.set("group", groupId);
-    row.set("owner", ownerId);
-    row.set("title", title);
-    row.set("preview_text", previewText);
-    row.set("course_title", courseTitle);
-    row.set("course", courseId);
-    row.set("cover_seed", coverSeed);
-    app.save(row);
-    return;
-  }
-
-  const col = app.findCollectionByNameOrId("lecture_previews");
-  const fresh = new Record(col, {
-    lecture: lectureId,
-    group: groupId,
-    owner: ownerId,
-    title: title,
-    preview_text: previewText,
-    course_title: courseTitle,
-    course: courseId,
-    cover_seed: coverSeed,
-  });
-  app.save(fresh);
 }
 
-/** Пересобрать превью всех лекций пользователя в группе (смена preview_enabled). */
+/** Пересобрать превью всех лекций пользователя (смена preview_enabled в одной из его групп). */
 function resyncUserGroupPreviews(app, groupId, userId) {
   if (!groupId || !userId) return;
-  const lectures = app.findRecordsByFilter(
-    "lectures",
-    "owner = {:u} && group = {:g}",
-    "",
-    500,
-    0,
-    { u: userId, g: groupId }
-  );
+  const lectures = app.findRecordsByFilter("lectures", "owner = {:u}", "", 5000, 0, { u: userId });
   for (const lec of lectures) {
     if (lec) syncPreviewForLecture(app, lec);
   }
+  // строки этой группы у лекций, которых нет в выборке (удалены физически), каскадом уйдут сами
 }
 
 module.exports = {
-  stripHtml,
-  memberPreviewEnabled,
+  enabledGroups,
   syncPreviewForLecture,
   resyncUserGroupPreviews,
 };
