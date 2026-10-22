@@ -473,8 +473,8 @@
    "title": "Импорт билетов",
    "area": "review",
    "mock": "Screen-ticket-import",
-   "mobile": null,
-   "note": "",
+   "mobile": "Screen-m-ticket-import",
+   "note": "Один билет на строку, цифры и маркеры в начале убираются, новые билеты получают следующие номера после существующих, пометка «Новый»; «Добавить N билетов» одна на экране и на виду при прокрутке. Тот же экран у экзамена группы (g_exam_import).",
    "entry": false,
    "terminal": false,
    "virtual": false,
@@ -815,6 +815,42 @@
    "entry": false,
    "terminal": false,
    "virtual": false
+  },
+  "ticket_add": {
+   "id": "ticket_add",
+   "title": "Добавить билет (окно)",
+   "area": "review",
+   "mock": "Screen-forms-create (раздел «Билеты экзамена»)",
+   "mobile": "Screen-m-ticket-add",
+   "note": "Название и необязательный ответ; одно окно у соло-экзамена и у экзамена группы, меняется только место сохранения. «Вставить список билетов сразу» отдельной строкой слева над кнопками (на телефоне под кнопкой).",
+   "entry": false,
+   "terminal": false,
+   "virtual": false,
+   "route": "окно (components/exam/AddTicketModal.tsx)"
+  },
+  "g_exam_import": {
+   "id": "g_exam_import",
+   "title": "Импорт билетов экзамена группы",
+   "area": "group",
+   "mock": "Screen-ticket-import",
+   "mobile": "Screen-m-ticket-import",
+   "note": "Отдельного группового макета нет: тот же экран в режиме «Группа» (крошки «МК-31 › Экзамены группы › предмет › Импорт», подпись «предмет · МК-31 · экзамен дата»). Билеты попадают в мою подгруппу, как у «Добавить билет». Импортирует участник подгруппы.",
+   "entry": false,
+   "terminal": false,
+   "virtual": false,
+   "route": "/s/:semesterSlug/group/exams/:examId/import (GroupExamImportRoute, pages/group/GroupExamImportPage.tsx)"
+  },
+  "g_sub_leave": {
+   "id": "g_sub_leave",
+   "title": "Выйти из подгруппы (окно)",
+   "area": "group",
+   "mock": "Screen-group-leave (нижний ряд)",
+   "mobile": null,
+   "note": "Видно только участнику подгруппы; красная кнопка, оранжевой нет. Из группы человек не выходит; пустая подгруппа исчезает. Телефонного макета группового экзамена нет, окно то же.",
+   "entry": false,
+   "terminal": false,
+   "virtual": false,
+   "route": "окно на /s/:semesterSlug/group/exams/:examId (pages/group/GroupExamPage.tsx)"
   }
  },
  "transitions": [
@@ -1367,7 +1403,7 @@
   {
    "from_": "exam",
    "to": "ticket_import",
-   "how": "«Добавить билет», импорт",
+   "how": "«Импорт»",
    "note": ""
   },
   {
@@ -1710,6 +1746,66 @@
    "from_": "lectures",
    "to": "drafts",
    "how": "строка «Черновики»",
+   "note": ""
+  },
+  {
+   "from_": "exam",
+   "to": "ticket_add",
+   "how": "«Добавить билет»",
+   "note": ""
+  },
+  {
+   "from_": "ticket_add",
+   "to": "exam",
+   "how": "«Добавить»",
+   "note": ""
+  },
+  {
+   "from_": "ticket_add",
+   "to": "ticket_import",
+   "how": "«Вставить список билетов сразу» (в соло-экзамене)",
+   "note": ""
+  },
+  {
+   "from_": "g_exam",
+   "to": "g_exam_import",
+   "how": "«Импорт»",
+   "note": ""
+  },
+  {
+   "from_": "g_exam",
+   "to": "ticket_add",
+   "how": "«Добавить билет»",
+   "note": ""
+  },
+  {
+   "from_": "ticket_add",
+   "to": "g_exam_import",
+   "how": "«Вставить список билетов сразу» (в экзамене группы)",
+   "note": ""
+  },
+  {
+   "from_": "ticket_add",
+   "to": "g_exam",
+   "how": "«Добавить»",
+   "note": ""
+  },
+  {
+   "from_": "g_exam_import",
+   "to": "g_exam",
+   "how": "«Добавить N билетов», назад",
+   "note": ""
+  },
+  {
+   "from_": "g_exam",
+   "to": "g_sub_leave",
+   "how": "«Выйти из подгруппы»",
+   "note": ""
+  },
+  {
+   "from_": "g_sub_leave",
+   "to": "g_exam",
+   "how": "«Выйти из подгруппы», «Отмена»",
    "note": ""
   }
  ],
