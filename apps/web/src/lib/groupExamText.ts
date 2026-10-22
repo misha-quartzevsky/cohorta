@@ -23,3 +23,12 @@ export function examWhen(iso: string, dateText: (iso: string) => string): string
   if (days === null) return "Дата не задана";
   return `${dateText(iso)} · ${daysLabel(days)}`;
 }
+
+const MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+
+/** «экзамен 12 января» или «дата экзамена не задана» (подпись под заголовком импорта и экзамена). */
+export function examDateLabel(iso: string | undefined | null): string {
+  const d = iso ? new Date(String(iso).replace(" ", "T")) : null;
+  if (!d || Number.isNaN(d.getTime())) return "дата экзамена не задана";
+  return `экзамен ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+}

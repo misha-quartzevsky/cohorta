@@ -73,6 +73,7 @@ import {
   GroupLectureRoute,
   GroupExamsRoute,
   GroupExamRoute,
+  GroupExamImportRoute,
   GroupTicketRoute,
   GroupCreatePage,
 } from "./pages/group/GroupRoutes";
@@ -221,6 +222,7 @@ function App() {
                   <Route path="/s/:semesterSlug/group/settings" element={<GroupSettingsRoute />} />
                   <Route path="/s/:semesterSlug/group/exams" element={<GroupExamsRoute />} />
                   <Route path="/s/:semesterSlug/group/exams/:examId" element={<GroupExamRoute />} />
+                  <Route path="/s/:semesterSlug/group/exams/:examId/import" element={<GroupExamImportRoute />} />
                   <Route path="/s/:semesterSlug/group/exams/:examId/ticket/:number" element={<GroupTicketRoute />} />
                   <Route path="/s/:semesterSlug/group/people/:userId" element={<GroupMemberRoute />} />
                   <Route path="/s/:semesterSlug/group/people/:userId/:courseKey" element={<GroupMemberSubjectRoute />} />

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { daysLabel, daysUntil, examWhen } from "./groupExamText";
+import { daysLabel, daysUntil, examDateLabel, examWhen } from "./groupExamText";
 
 const now = new Date(2026, 9, 21, 15, 0);
 
@@ -22,5 +22,10 @@ describe("groupExamText", () => {
   });
   it("строка экзамена", () => {
     expect(examWhen("", () => "")).toBe("Дата не задана");
+  });
+  it("подпись даты экзамена в импорте", () => {
+    expect(examDateLabel("2027-01-12 00:00:00.000Z")).toBe("экзамен 12 января");
+    expect(examDateLabel("")).toBe("дата экзамена не задана");
+    expect(examDateLabel(undefined)).toBe("дата экзамена не задана");
   });
 });

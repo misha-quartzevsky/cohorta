@@ -10,6 +10,7 @@ import { GroupMemberPage, GroupMemberSubjectPage } from "./GroupMemberPages";
 import GroupSettingsPage from "./GroupSettingsPage";
 import GroupExamsPage from "./GroupExamsPage";
 import GroupExamPage from "./GroupExamPage";
+import GroupExamImportPage from "./GroupExamImportPage";
 import GroupTicketPage from "./GroupTicketPage";
 
 /** Обёртки адресов группы: открытие любого из них включает режим «Группа», человеку без группы — «Вступи в свою группу». */
@@ -51,6 +52,11 @@ export const GroupExamsRoute = () => (
 export const GroupExamRoute = () => (
   <GroupGate>
     <GroupExamPage />
+  </GroupGate>
+);
+export const GroupExamImportRoute = () => (
+  <GroupGate>
+    <GroupExamImportPage />
   </GroupGate>
 );
 /** Билет подгруппы режим не переключает: вне режима «Группа» он открывается в защищённом просмотре. */

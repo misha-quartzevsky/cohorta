@@ -11,8 +11,12 @@ interface Props {
 }
 
 /**
- * «Добавить билет» (Screen-m-ticket-add): название и необязательный ответ,
- * номер назначается сам. Ссылка внизу ведёт на вставку списка.
+ * «Добавить билет» (Screen-forms-create, раздел «Билеты экзамена»; Screen-m-ticket-add): название и
+ * необязательный ответ, номер назначается сам. Один диалог для соло и для группы: меняется только то,
+ * куда сохраняется (`onCreate`) и куда ведёт «Вставить список билетов сразу» (`onImportList`).
+ *
+ * Десктоп: ссылка отдельной строкой слева под «Ответом», над кнопками «Отмена» и «Добавить» (справа).
+ * Телефон: шторка, ссылка под кнопкой «Добавить» (стили `.c-form-lead:has(.c-form-link)`).
  */
 export default function AddTicketModal({ open, onClose, onCreate, onImportList }: Props) {
   const [question, setQuestion] = useState("");
@@ -51,7 +55,7 @@ export default function AddTicketModal({ open, onClose, onCreate, onImportList }
       leading={
         <button
           type="button"
-          className="c-form-link"
+          className="c-form-link c-form-m"
           onClick={() => {
             onClose();
             onImportList();
@@ -79,6 +83,16 @@ export default function AddTicketModal({ open, onClose, onCreate, onImportList }
         onChange={(e) => setAnswer(e.target.value)}
         rows={3}
       />
+      <button
+        type="button"
+        className="c-form-link c-form-d c-form-link-row"
+        onClick={() => {
+          onClose();
+          onImportList();
+        }}
+      >
+        Вставить список билетов сразу
+      </button>
     </FormDialog>
   );
 }

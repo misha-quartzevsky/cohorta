@@ -287,6 +287,9 @@ export default function ExamHubPageNew() {
             <Button variant="ghost" onClick={() => navigate(`${base}/exam/cheatsheet`)}>
               Шпаргалка
             </Button>
+            <Button variant="ghost" onClick={() => navigate(`${base}/exam/import`)}>
+              Импорт
+            </Button>
             <Button variant="secondary" onClick={() => setAddOpen(true)}>
               <Icon name="plus" size={18} />
               Добавить билет

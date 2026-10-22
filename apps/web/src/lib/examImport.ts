@@ -3,55 +3,34 @@
  *  examImport.ts — разбор вставленного списка билетов
  * ============================================
  *
- * Студент вставляет список вопросов одним куском — из Word,
- * Google Docs, чата. Даёт два независимых пути разбора:
+ * Студент вставляет список вопросов одним куском — из Word, Google Docs, чата.
  *
- *  - `parseTicketsFromHtml` — ОСНОВНОЙ, в два захода. Сначала
- *    настоящий `<ol>`/`<ul>` (Google Docs, большинство сайтов
- *    отдают в буфер обмен именно так — один `<li>` = один билет,
- *    структура уже решена форматом). Если такого списка нет —
- *    **псевдо-список Word**: Word кладёт нумерованный список в
- *    `text/html` НЕ как `<ol>`/`<li>`, а как обычные `<p>` с
- *    `style="mso-list:l0 level1 lfo1"` и служебным
- *    `<span style="mso-list:Ignore">1.</span>` внутри — сама
- *    нумерация нарисована CSS-счётчиком, а не разметкой. Без
- *    этого второго захода ЛЮБАЯ вставка прямо из Word проваливает
- *    основной путь и уходит в хрупкий текстовый разбор (баг,
- *    найденный на реальном использовании — см. тест на реальном
- *    Word-clipboard HTML).
+ * Правила (решение владелицы 21.10):
+ *  - Один билет на строку (или один пункт списка). Все непустые строки становятся билетами,
+ *    ни одна не пропускается и не склеивается с соседней; одинаковые названия — два билета.
+ *  - Цифры в начале строк — не номера билетов: «1.», «1)», «1 –», «1:», табы, маркеры списка
+ *    убираются. Номера билетов назначаются при добавлении: следующие после уже существующих
+ *    (`numberAfter`), в порядке текста.
  *
- *  - `parseTicketList` — ЗАПАСНОЙ, когда структуры нет вообще
- *    (обычный plain-text вставили руками или скопировали из
- *    мессенджера). Строки с маркером номера (`1.`, `2)`, `№3`,
- *    `Билет 4`) начинают билет; строка без маркера — продолжение
- *    предыдущего вопроса (Word/PDF рвут длинные формулировки
- *    переносами).
+ * Пути разбора:
+ *  - `parseTicketsFromHtml` — настоящий `<ol>`/`<ul>` (Google Docs, сайты: один `<li>` = один
+ *    билет) и псевдо-список Word (`<p style="mso-list:…">` со служебным `<span mso-list:Ignore>`).
+ *    Нужен, потому что длинный вопрос внутри одного пункта может содержать перенос строки.
+ *  - `parseTicketList` — обычный текст: одна строка = один билет.
  *
- * Все три пути обязаны пройти через `cleanQuestionTail` — она
- * срезает `Ответственный: <Имя>` и отметку «✅», которыми
- * реальные списки билетов размечены прямо в тексте (ручной
- * учёт распределения билетов в общем документе). Без очистки
- * все билеты заканчивались бы чужим именем.
- *
- * Проверено на реальном списке билетов (философия, 40 вопросов):
- * настоящий `<ol>` даёт 40 из 40 без единой эвристики; тот же
- * список, сериализованный как Word кладёт его в буфер обмена
- * (псевдо-список), — тоже 40 из 40 через второй заход.
+ * Все пути проходят через `cleanQuestionTail`: она срезает `Ответственный: <Имя>` и отметку «✅»
+ * (ручной учёт распределения билетов в общем документе).
  */
 
 export interface ParsedTicket {
+  /** Позиция в тексте, с единицы. Настоящий номер билета назначает `numberAfter`. */
   number: number;
   question: string;
 }
 
 /**
- * Срезает служебный хвост «Ответственный: Имя» и завершающую «✅»,
- * схлопывает переносы строк и лишние пробелы в один пробел.
- *
- * Схлопывание нужно потому, что `textContent` не делает того, что
- * делает CSS-рендер: длинный вопрос, перенесённый Word'ом на вторую
- * строку внутри одного `<p>`, приходит с буквальным «\n» в исходной
- * HTML-разметке — без нормализации он протекает в текст билета.
+ * Срезает служебный хвост «Ответственный: Имя» и завершающую «✅», схлопывает переносы строк
+ * и лишние пробелы в один пробел.
  */
 export function cleanQuestionTail(raw: string): string {
   return raw
@@ -62,48 +41,72 @@ export function cleanQuestionTail(raw: string): string {
     .trim();
 }
 
+/** Маркеры списка в начале строки: • · ▪ ● ○ ◦ ■ □ * - – —. */
+const BULLET = /^[\s•·▪●○◦■□*\-–—]+(?=\S)/u;
+/** Номер с разделителем: «1.» «1)» «1]» «1:» «1 –» «1 -» «№3» «Билет 4» (и «билет №4.»). */
+const NUMBER_WITH_MARK = /^\s*(?:билет\s*)?(?:№\s*)?\d{1,3}\s*(?:[.)\]:]+\s*|[-–—]+\s+)/iu;
+/** Голый номер и пробел или таб: «12 Оферта». */
+const NUMBER_BARE = /^\s*\d{1,3}[\s\t]+(?=\S)/u;
+/** «Билет 4 Оферта», «№3 Оферта» без разделителя. */
+const NUMBER_WORD = /^\s*(?:билет\s+\d{1,3}|№\s*\d{1,3})\s+(?=\S)/iu;
+
 /**
- * Word кладёт нумерованный список в буфер обмена не как `<ol>`/`<li>`,
- * а как обычные `<p style="mso-list:l0 level1 lfo1">` — сама нумерация
- * нарисована служебным `<span style="mso-list:Ignore">1.</span>` внутри
- * абзаца, а не разметкой списка. Номер вытаскивается из этого span (он
- * же затем удаляется, чтобы не задвоился в тексте вопроса); когда номер
- * не читается — считается по порядку.
+ * Убирает ведущую нумерацию и маркеры. Голый номер с пробелом («12 Оферта») убирается только когда
+ * так начинается почти весь список (`bare`): иначе билет, чей текст сам начинается с числа
+ * («7 сил Портера»), потерял бы слово.
  */
+export function stripTicketNumbering(line: string, bare = false): string {
+  let s = line.trim();
+  for (let i = 0; i < 3; i += 1) {
+    const before = s;
+    s = s.replace(BULLET, "");
+    if (NUMBER_WITH_MARK.test(s)) s = s.replace(NUMBER_WITH_MARK, "");
+    else if (NUMBER_WORD.test(s)) s = s.replace(NUMBER_WORD, "");
+    else if (bare && NUMBER_BARE.test(s)) s = s.replace(NUMBER_BARE, "");
+    if (s === before) break;
+  }
+  return s.trim();
+}
+
+/** Список считается «пронумерованным голыми числами», если так начинаются почти все строки (от 2 строк, 70%). */
+function isBareNumbered(lines: string[]): boolean {
+  if (lines.length < 2) return false;
+  const hit = lines.filter((l) => NUMBER_BARE.test(l.replace(BULLET, ""))).length;
+  return hit / lines.length >= 0.7;
+}
+
+/** Нумерует по порядку, отбрасывает пустые. */
+function toTickets(questions: string[]): ParsedTicket[] {
+  const out: ParsedTicket[] = [];
+  for (const q of questions) {
+    const question = cleanQuestionTail(q);
+    if (question) out.push({ number: out.length + 1, question });
+  }
+  return out;
+}
+
+/** Word кладёт нумерованный список как `<p style="mso-list:…">` со служебным `<span mso-list:Ignore>1.</span>`. */
 function parseWordPseudoList(doc: Document): ParsedTicket[] | null {
-  const paragraphs = Array.from(doc.querySelectorAll<HTMLElement>("p")).filter(
-    (p) => /mso-list\s*:/i.test(p.getAttribute("style") || "")
+  const paragraphs = Array.from(doc.querySelectorAll<HTMLElement>("p")).filter((p) =>
+    /mso-list\s*:/i.test(p.getAttribute("style") || "")
   );
   if (paragraphs.length === 0) return null;
 
-  const tickets: ParsedTicket[] = [];
-  let auto = 1;
+  const raws: string[] = [];
   for (const p of paragraphs) {
     const clone = p.cloneNode(true) as HTMLElement;
-    const marker = Array.from(clone.querySelectorAll<HTMLElement>("span")).find(
-      (s) => /mso-list\s*:\s*ignore/i.test(s.getAttribute("style") || "")
-    );
-    let number = auto;
-    if (marker) {
-      const digits = /(\d{1,3})/.exec(marker.textContent || "");
-      if (digits) number = Number(digits[1]);
-      marker.remove();
-    }
-    const question = cleanQuestionTail(clone.textContent ?? "");
-    if (question) {
-      tickets.push({ number, question });
-      auto = number + 1;
-    }
+    Array.from(clone.querySelectorAll<HTMLElement>("span"))
+      .filter((s) => /mso-list\s*:\s*ignore/i.test(s.getAttribute("style") || ""))
+      .forEach((s) => s.remove());
+    raws.push(stripTicketNumbering(clone.textContent ?? ""));
   }
+  const tickets = toTickets(raws);
   return tickets.length > 0 ? tickets : null;
 }
 
 /**
- * Разбирает вставленный HTML: сначала настоящий `<ol>`/`<ul>`, затем
- * псевдо-список Word (см. `parseWordPseudoList`).
- *
- * @returns массив билетов, либо `null`, когда структуры в html нет
- *          вообще — вызывающий код тогда падает на текстовый разбор.
+ * Разбирает вставленный HTML: сначала настоящий `<ol>`/`<ul>`, затем псевдо-список Word.
+ * @returns билеты либо `null`, когда структуры в html нет — тогда разбор идёт по тексту.
  */
 export function parseTicketsFromHtml(html: string): ParsedTicket[] | null {
   const trimmed = html.trim();
@@ -112,80 +115,46 @@ export function parseTicketsFromHtml(html: string): ParsedTicket[] | null {
   const doc = new DOMParser().parseFromString(trimmed, "text/html");
   const list = doc.querySelector("ol, ul");
   if (list) {
-    // Только пункты ЭТОГО списка — без вложенных под-списков (у вложенных
-    // подвопросов своя нерешённая задача, см. заголовок файла плана).
     const items = Array.from(list.querySelectorAll(":scope > li"));
-    const tickets: ParsedTicket[] = [];
-    let number = 1;
+    const raws: string[] = [];
     for (const li of items) {
       const clone = li.cloneNode(true) as HTMLElement;
       clone.querySelectorAll("ol, ul").forEach((nested) => nested.remove());
-      const question = cleanQuestionTail(clone.textContent ?? "");
-      if (question) tickets.push({ number: number++, question });
+      raws.push(stripTicketNumbering(clone.textContent ?? ""));
     }
+    const tickets = toTickets(raws);
     if (tickets.length > 0) return tickets;
   }
 
   return parseWordPseudoList(doc);
 }
 
-/**
- * Строка начинается с маркера номера: `1.` `2)` `№3` `1 -` `Билет 4`.
- *
- * Голый номер (без «билет»/«№» впереди) обязан идти с разделителем
- * (`.` `)` `-` `:`) сразу после цифр — иначе билет, чей текст сам
- * начинается с числа («7 сил Портера», «12 друзей оушена»), ложно
- * считается маркером списка и рвёт разбор (найдено на реальном
- * списке, где не было явной нумерации вовсе). «Билет N» и «№N» —
- * самодостаточный маркер и без разделителя после числа.
- */
-const NUMBER_MARKER =
-  /^\s*(?:билет\s+(\d{1,3})|№\s*(\d{1,3})|(\d{1,3})\s*[.)\-:])\s*(.*)$/iu;
-
-/**
- * Запасной разбор: строки с маркером номера начинают билет,
- * строки без маркера — продолжение предыдущего.
- */
+/** Текстовый разбор: одна непустая строка = один билет, ведущая нумерация убирается. */
 export function parseTicketList(text: string): ParsedTicket[] {
   const lines = text
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter((l) => l.length > 0);
-
-  const hasAnyMarker = lines.some((l) => NUMBER_MARKER.test(l));
-
-  const tickets: ParsedTicket[] = [];
-  let auto = 1;
-
-  for (const line of lines) {
-    const m = hasAnyMarker ? NUMBER_MARKER.exec(line) : null;
-    if (m) {
-      const [, byBilet, byKnak, byDigit, rest] = m;
-      const numStr = byBilet ?? byKnak ?? byDigit;
-      tickets.push({ number: Number(numStr), question: cleanQuestionTail(rest) });
-    } else if (tickets.length > 0 && hasAnyMarker) {
-      // Строка без маркера следом за билетом — перенос длинного вопроса.
-      const last = tickets[tickets.length - 1];
-      last.question = cleanQuestionTail(`${last.question} ${line}`);
-    } else {
-      tickets.push({ number: auto++, question: cleanQuestionTail(line) });
-    }
-  }
-
-  return tickets.filter((t) => t.question.length > 0);
+  const bare = isBareNumbered(lines);
+  return toTickets(lines.map((l) => stripTicketNumbering(l, bare)));
 }
 
 /**
- * Точка входа для превью импорта: пробует HTML, откатывается на
- * текст. Возвращает ещё и то, какой путь сработал — превью
- * показывает это как факт («Распознан список: 40 пунктов» против
- * «Разобрано по строкам»), см. план §2.
+ * Назначает номера билетам: следующие после наибольшего из уже существующих, в порядке текста
+ * (были 1–3: новые получают 4, 5, 6…).
  */
+export function numberAfter(tickets: readonly ParsedTicket[], existingNumbers: Iterable<number>): ParsedTicket[] {
+  let max = 0;
+  for (const n of existingNumbers) if (Number.isFinite(n) && n > max) max = n;
+  return tickets.map((t, i) => ({ number: max + i + 1, question: t.question }));
+}
+
 export interface ImportResult {
   tickets: ParsedTicket[];
   source: "html-list" | "text-lines";
 }
 
+/** Точка входа для превью импорта: пробует HTML, откатывается на текст. */
 export function parseTicketsFromClipboard(html: string, text: string): ImportResult {
   const fromHtml = parseTicketsFromHtml(html);
   if (fromHtml) return { tickets: fromHtml, source: "html-list" };

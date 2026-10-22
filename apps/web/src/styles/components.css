@@ -2966,7 +2966,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .c-import-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-3); }
 .c-import-col > span.label { font-size: 14px; font-weight: 500; }
 .c-import-col .hint { font-size: 13px; color: var(--ink-3); }
-.c-import-textarea textarea { min-height: 200px; resize: vertical; }
+.c-import-textarea textarea { min-height: 200px; resize: none; overflow: hidden; }
 .c-import-preview { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; background: var(--surface); }
 .c-import-preview-row { display: flex; gap: 16px; align-items: center; min-height: 48px; padding: 8px 20px; border-top: 1px solid var(--line); }
 .c-import-preview .c-import-preview-row:first-child { border-top: 0; }
@@ -3843,7 +3843,8 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
 @media (max-width: 767px) { .c-task-suggested-row { padding: var(--space-1) var(--space-2) var(--space-1) var(--space-4); gap: var(--space-3); } }
 
 /* ---------- Экзамен: формы (B4 v2) ---------- */
-.c-form-link { background: none; border: 0; padding: 0; font: 500 14px/22px var(--font-sans); color: var(--accent-strong); cursor: pointer; }
+.c-form-link { background: none; border: 0; padding: 0; font: 500 14px/22px var(--font-sans); color: var(--accent-strong); cursor: pointer; white-space: nowrap; }
+.c-form-link-row { align-self: flex-start; text-align: left; }
 .c-form-link:hover { text-decoration: underline; }
 @media (max-width: 639px) {
   .c-form-dialog .c-dialog-foot { flex-wrap: wrap; }
@@ -4031,3 +4032,15 @@ button.c-cards-row:focus-visible { outline: 2px solid var(--ink); outline-offset
 /* Подсказка в форме «Новый экзамен»: в группе уже есть экзамен по этому предмету (Screen-m-form-exam) */
 .c-form-group-hint { display: flex; align-items: flex-start; gap: var(--space-3); margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--sunken); font-size: 13px; line-height: 18px; color: var(--ink-2); }
 .c-form-group-hint svg { flex: none; margin-top: 1px; }
+
+/* Импорт билетов: шапка с кнопкой остаётся на виду при прокрутке длинного списка */
+@media (min-width: 1024px) {
+  .c-import-head { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: var(--space-3) 0; }
+}
+.c-import-head h1 span { font: inherit; color: inherit; letter-spacing: inherit; }
+.c-form-dialog textarea { resize: none; }
+
+@media (max-width: 1023px) {
+  .c-import-cols { align-items: stretch; }
+  .c-import-col { width: 100%; }
+}

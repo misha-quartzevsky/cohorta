@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Button, EmptyState, FormDialog, Icon, Input, Popover, StatusChip, Toggletip } from "../../ui";
+import { Button, EmptyState, Icon, Modal, Popover, StatusChip, Toggletip } from "../../ui";
+import AddTicketModal from "../../components/exam/AddTicketModal";
 import { Ava, Crumbs, useSem } from "../../components/group/common";
 import SubgroupFormDialog from "../../components/forms/SubgroupFormDialog";
 import { useGroupCtx } from "../../lib/groupCtx";
@@ -15,6 +16,7 @@ import {
   fetchMySubgroup,
   fetchSubgroupTickets,
   inviteToSubgroup,
+  leaveSubgroup,
   type GroupExamInfo,
   type SubgroupInfo,
 } from "../../services/groupExamApi";
@@ -49,6 +51,8 @@ export default function GroupExamPage() {
   const [adding, setAdding] = useState(false);
   const [invite, setInvite] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [leaveError, setLeaveError] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -215,6 +219,9 @@ export default function GroupExamPage() {
                 ))}
               </div>
             </Popover>
+            <button type="button" className="c-gx-leave" onClick={() => setLeaving(true)}>
+              Выйти из подгруппы
+            </button>
           </section>
 
           <section className="c-exam-card c-gx-map">
@@ -247,6 +254,9 @@ export default function GroupExamPage() {
               <div className="actions">
                 <Button variant="ghost" disabled={busy || tickets.length === 0} onClick={() => void act(() => distributeTickets(sub.id), "Не удалось распределить.")}>
                   Распределить поровну
+                </Button>
+                <Button variant="ghost" onClick={() => navigate(`/s/${sem}/group/exams/${exam.id}/import`)}>
+                  Импорт
                 </Button>
                 <Button variant="secondary" onClick={() => setAdding(true)}>
                   <Icon name="plus" size={18} />
@@ -296,58 +306,49 @@ export default function GroupExamPage() {
         }}
       />
       {sub && (
-        <AddTicketDialog
-          open={adding}
-          onClose={() => setAdding(false)}
-          onAdd={async (q) => {
-            await addSubgroupTicket(sub.id, q);
-            await load();
-          }}
-        />
+        <>
+          <AddTicketModal
+            open={adding}
+            onClose={() => setAdding(false)}
+            onCreate={async (question, answer) => {
+              await addSubgroupTicket(sub.id, question, answer);
+              await load();
+            }}
+            onImportList={() => navigate(`/s/${sem}/group/exams/${exam.id}/import`)}
+          />
+          <Modal open={leaving} onClose={() => setLeaving(false)} title={`Выйти из подгруппы «${sub.name}»?`}>
+            <div className="c-gr-sheet-body">
+              <p>
+                Билеты подгруппы перестанут быть тебе видны, а лекции, которые открыли подгруппе, закроются. В группе ты
+                останешься. Вернуться можно, если тебя снова пригласят.
+              </p>
+              {leaveError ? <p className="c-gr-error">{leaveError}</p> : null}
+              <div className="c-gr-modal-actions">
+                <Button variant="ghost" onClick={() => setLeaving(false)}>
+                  Отмена
+                </Button>
+                <Button
+                  variant="danger"
+                  loading={busy}
+                  onClick={() => {
+                    setBusy(true);
+                    setLeaveError("");
+                    leaveSubgroup(sub.id)
+                      .then(async () => {
+                        setLeaving(false);
+                        await load();
+                      })
+                      .catch((e) => setLeaveError(`Не удалось выйти. ${errorMessage(e)}`))
+                      .finally(() => setBusy(false));
+                  }}
+                >
+                  Выйти из подгруппы
+                </Button>
+              </div>
+            </div>
+          </Modal>
+        </>
       )}
     </div>
-  );
-}
-
-function AddTicketDialog({ open, onClose, onAdd }: { open: boolean; onClose: () => void; onAdd: (question: string) => Promise<void> }) {
-  const [question, setQuestion] = useState("");
-  const [error, setError] = useState("");
-  useEffect(() => {
-    if (open) {
-      setQuestion("");
-      setError("");
-    }
-  }, [open]);
-  return (
-    <FormDialog
-      open={open}
-      onClose={onClose}
-      title="Добавить билет"
-      subtitle="Билет появится в списке подгруппы. Ответ напишете вместе."
-      submitLabel="Добавить"
-      onSubmit={async () => {
-        if (!question.trim()) {
-          setError("Введи вопрос билета");
-          return false;
-        }
-        try {
-          await onAdd(question);
-        } catch (e) {
-          setError("Не удалось добавить: " + errorMessage(e));
-          return false;
-        }
-      }}
-    >
-      <Input
-        label="Вопрос"
-        value={question}
-        error={error || undefined}
-        onChange={(e) => {
-          setQuestion(e.target.value);
-          setError("");
-        }}
-        autoFocus
-      />
-    </FormDialog>
   );
 }

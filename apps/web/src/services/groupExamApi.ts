@@ -103,8 +103,13 @@ export async function inviteToSubgroup(subgroupId: string, userId: string): Prom
 export async function leaveSubgroup(subgroupId: string): Promise<void> {
   await pb.send(`/api/subgroups/${subgroupId}/leave`, { method: "POST" });
 }
-export async function addSubgroupTicket(subgroupId: string, question: string): Promise<{ id: string; number: number }> {
-  return pb.send(`/api/subgroups/${subgroupId}/tickets`, { method: "POST", body: { question: question.trim() } });
+export async function addSubgroupTicket(subgroupId: string, question: string, answer = ""): Promise<{ id: string; number: number }> {
+  return pb.send(`/api/subgroups/${subgroupId}/tickets`, { method: "POST", body: { question: question.trim(), answer: answer.trim() } });
+}
+
+/** Импорт списка: одна строка — один билет, номера идут после существующих билетов подгруппы (считает сервер). */
+export async function importSubgroupTickets(subgroupId: string, questions: string[]): Promise<{ added: number; first: number }> {
+  return pb.send(`/api/subgroups/${subgroupId}/tickets/bulk`, { method: "POST", body: { questions } });
 }
 export async function distributeTickets(subgroupId: string): Promise<number> {
   const r = await pb.send<{ assigned: number }>(`/api/subgroups/${subgroupId}/distribute`, { method: "POST" });
