@@ -219,8 +219,18 @@ function examView(app, exam, me) {
   };
 }
 
+/** Следующий номер билета подгруппы: после наибольшего из уже существующих в ней (в пустой — 1). */
+function nextTicketNumber(app, sub) {
+  let max = 0;
+  for (const t of all(app, "exam_tickets", "subgroup = {:s}", { s: sub.id })) {
+    if (Number(t.get("number")) > max) max = Number(t.get("number"));
+  }
+  return max + 1;
+}
+
 module.exports = {
   examView,
+  nextTicketNumber,
   nowStr,
   inSeconds,
   norm,

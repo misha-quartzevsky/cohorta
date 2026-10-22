@@ -23,7 +23,7 @@ const PB_BIN = process.env.PB_BIN ?? path.join(REPO, "pocketbase", "pocketbase.e
 const SANDBOX = process.env.SANDBOX_DIR ?? path.join(process.env.TEMP ?? tmpdir(), "pbsandbox", "pb_data");
 const SPEC = process.argv[2]
   ? [process.argv[2]]
-  : ["tests/group-access.spec.ts", "tests/group-exams.spec.ts", "tests/group-lifecycle.spec.ts"];
+  : ["tests/group-access.spec.ts", "tests/group-exams.spec.ts", "tests/group-subgroup-leave.spec.ts", "tests/group-lifecycle.spec.ts"];
 
 async function api(method, url, token, body) {
   const res = await fetch(`${PB}${url}`, {
@@ -107,6 +107,7 @@ RULE_MUTATIONS.push(
   ["access_requests: запрос создаётся напрямую", "access_requests", { createRule: OPEN }, "запросить можно только"],
   ["access_requests: запрос меняется напрямую", "access_requests", { updateRule: OPEN }, "запросить можно только"],
   ["access_requests: уникальность открытого запроса снята", "access_requests", { __indexes: [] }, "запросить можно только"],
+  ["exam_tickets: билет подгруппы можно создать напрямую (в обход маршрута импорта)", "exam_tickets", { createRule: OPEN }, "импорт списка билетов"],
   ["tags: теги читает любой, даже без входа", "tags", { listRule: "", viewRule: "" }, "теги"],
   ["tags: теги создаёт и удаляет любой", "tags", { createRule: "", updateRule: "", deleteRule: "" }, "теги"],
 );
@@ -158,6 +159,18 @@ const HOOK_MUTATIONS = [
   ["hook: список экзаменов группы отдаётся не участнику", "exam_groups.pb.js", [/if \(!g\.isMember\(e\.app, gid, e\.auth\.id\)\) throw new NotFoundError\("Группа не найдена\."\);/, "/* пропуск */"], "список экзаменов группы"],
   ["hook: экзамен группы отдаётся не участнику", "exam_groups.pb.js", [/if \(!gid \|\| !g\.isMember\(e\.app, gid, e\.auth\.id\)\) throw new NotFoundError\("Экзамен не найден\."\);\n    const taken/, "const taken"], "список экзаменов группы"],
   ["hook: в экзамене группы показана чужая подгруппа", "lib_groups.js", [/const part = first\(app, "exam_participants", "exam = \{:x\} && user = \{:u\}", \{ x: exam\.id, u: me \}\);/, "const part = first(app, \"exam_participants\", \"exam = {:x} && subgroup != ''\", { x: exam.id });"], "список экзаменов группы"],
+  // импорт списка билетов в подгруппу
+  ["hook: импорт билетов принимает не участника подгруппы", "exam_groups.pb.js", [/const sub = g\.memberSubgroup\(e\);\n    const data = new DynamicModel\(\{ questions: \[\] \}\);/, 'const sub = e.app.findRecordById("exam_subgroups", e.request.pathValue("id"));\n    const data = new DynamicModel({ questions: [] });'], "импорт списка билетов"],
+  ["hook: импорт нумерует с единицы, не после существующих", "lib_groups.js", [/return max \+ 1;/, "return 1;"], "импорт списка билетов"],
+  ["hook: импорт сохраняет пустые строки", "exam_groups.pb.js", [/if \(text\) list\.push\(text\);/, "list.push(text);"], "импорт списка билетов"],
+  ["hook: импорт без ограничения длины списка", "exam_groups.pb.js", [/if \(list\.length > 500\)/, "if (false)"], "импорт списка билетов"],
+  // выход из подгруппы
+  ["hook: выход из подгруппы не убирает участие", "lib_groups.js", [/if \(part\) app\.delete\(part\);/, "/* пропуск */"], "после выхода билеты подгруппы"],
+  ["hook: выход не закрывает лекции, открытые подгруппе", "lib_groups.js", [/for \(const sh of all\(app, "lecture_shares", "grantee = \{:u\} && subgroup = \{:s\}", \{ u: userId, s: sub\.id \}\)\) app\.delete\(sh\);/, "/* пропуск */"], "лекция, открытая подгруппе, закрылась"],
+  ["hook: выход закрывает и лично открытые лекции", "lib_groups.js", [/for \(const sh of all\(app, "lecture_shares", "grantee = \{:u\} && subgroup = \{:s\}", \{ u: userId, s: sub\.id \}\)\) app\.delete\(sh\);/, 'for (const sh of all(app, "lecture_shares", "grantee = {:u}", { u: userId })) app.delete(sh);'], "лекция, открытая подгруппе, закрылась"],
+  ["hook: выход из подгруппы выводит и из группы", "lib_groups.js", [/if \(part\) app\.delete\(part\);/, 'if (part) app.delete(part);\n  for (const m of all(app, "group_members", "user = {:u}", { u: userId })) app.delete(m);'], "из группы человек не вышел"],
+  ["hook: пустая подгруппа не удаляется", "lib_groups.js", [/if \(app\.countRecords\("exam_participants", \$dbx\.hashExp\(\{ subgroup: sub\.id \}\)\) === 0\) \{/, "if (false) {"], "последний вышедший"],
+  ["hook: выйти из чужой подгруппы может любой", "exam_groups.pb.js", [/const sub = g\.memberSubgroup\(e\);\n    e\.app\.runInTransaction\(\(tx\) => g\.removeFromSubgroup/, 'const sub = e.app.findRecordById("exam_subgroups", e.request.pathValue("id"));\n    e.app.runInTransaction((tx) => g.removeFromSubgroup'], "посторонний и участник группы вне подгруппы"],
   ["hook: удаление аккаунта владельцем группы разрешено", "account_deletion.pb.js", [/if \(others > 0\) \{\n        return e\.json\(409/, "if (false) {\n        return e.json(409"], "выйти и удалить аккаунт"],
 ];
 
@@ -169,10 +182,10 @@ const baseline = [...runTests(), ...runTests(QUIZ_SPEC)];
 console.log(baseline.length === 0 ? "  все тесты зелёные" : `  КРАСНЫЕ: ${baseline.join("; ")}`);
 if (baseline.length) process.exit(1);
 
-for (const [title, collection, patch, expected, spec = SPEC] of [
-  ...RULE_MUTATIONS,
-  ...QUIZ_MUTATIONS.map((m) => [...m, QUIZ_SPEC]),
-]) {
+// SKIP_RULES=1 пропускает ослабления правил коллекций (быстрый повторный прогон только хуков через ONLY=…)
+for (const [title, collection, patch, expected, spec = SPEC] of process.env.SKIP_RULES
+  ? []
+  : [...RULE_MUTATIONS, ...QUIZ_MUTATIONS.map((m) => [...m, QUIZ_SPEC])]) {
   token = await login();
   const original = await api("GET", `/api/collections/${collection}`, token);
   const body = {};

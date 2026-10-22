@@ -134,22 +134,60 @@ routerAdd(
   (e) => {
     const g = require(`${__hooks}/lib_groups.js`);
     const sub = g.memberSubgroup(e);
-    const data = new DynamicModel({ question: "" });
+    const data = new DynamicModel({ question: "", answer: "" });
     e.bindBody(data);
     const question = String(data.question || "").trim();
     if (!question) throw new BadRequestError("Введите вопрос билета.");
-    let max = 0;
-    for (const t of g.all(e.app, "exam_tickets", "exam = {:x}", { x: String(sub.get("exam")) })) {
-      if (Number(t.get("number")) > max) max = Number(t.get("number"));
-    }
+    const answer = String(data.answer || "").trim();
     const rec = new Record(e.app.findCollectionByNameOrId("exam_tickets"));
+    const number = g.nextTicketNumber(e.app, sub);
     rec.set("exam", sub.get("exam"));
-    rec.set("number", max + 1);
+    rec.set("number", number);
     rec.set("question", question);
     rec.set("subgroup", sub.id);
-    rec.set("status", "empty");
+    rec.set("answer", answer);
+    rec.set("status", answer ? "draft" : "empty");
     e.app.save(rec);
-    return e.json(200, { id: rec.id, number: max + 1 });
+    return e.json(200, { id: rec.id, number });
+  },
+  $apis.requireAuth()
+);
+
+// Импорт списка билетов в подгруппу: одна строка списка = один билет, номера идут после существующих
+// билетов подгруппы, в порядке списка. Может любой участник подгруппы (как «Добавить билет»);
+// постороннему и участнику чужой подгруппы подгруппа не раскрывается (404).
+routerAdd(
+  "POST",
+  "/api/subgroups/{id}/tickets/bulk",
+  (e) => {
+    const g = require(`${__hooks}/lib_groups.js`);
+    const sub = g.memberSubgroup(e);
+    const data = new DynamicModel({ questions: [] });
+    e.bindBody(data);
+    const list = [];
+    for (const q of data.questions || []) {
+      const text = String(q || "").trim();
+      if (text) list.push(text);
+    }
+    if (list.length === 0) throw new BadRequestError("В списке нет ни одного билета.");
+    if (list.length > 500) throw new BadRequestError("Слишком длинный список: не больше 500 билетов за раз.");
+    let first = 0;
+    e.app.runInTransaction((tx) => {
+      const col = tx.findCollectionByNameOrId("exam_tickets");
+      let n = g.nextTicketNumber(tx, sub);
+      first = n;
+      for (const question of list) {
+        const rec = new Record(col);
+        rec.set("exam", sub.get("exam"));
+        rec.set("number", n);
+        rec.set("question", question);
+        rec.set("subgroup", sub.id);
+        rec.set("status", "empty");
+        tx.save(rec);
+        n += 1;
+      }
+    });
+    return e.json(200, { added: list.length, first });
   },
   $apis.requireAuth()
 );

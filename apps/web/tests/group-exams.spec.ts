@@ -138,6 +138,41 @@ test.describe("экзамены группы и подгруппы", () => {
     expect(JSON.stringify(info)).not.toContain("Вторая");
   });
 
+  test("импорт списка билетов в подгруппу: номера после существующих, порядок текста; посторонним и чужой подгруппе отказ", async ({ request }) => {
+    const before = await list(request, c, "exam_tickets", `subgroup="${s2}"`);
+    expect(before.map((t) => t.number).sort((p, q) => p - q)).toEqual([1, 2, 3]);
+    const questions = Array.from({ length: 27 }, (_, i) => `Импорт ${i + 1}`);
+    const r = await request.post(`${PB}/api/subgroups/${s2}/tickets/bulk`, { headers: h(c), data: { questions: ["  ", ...questions, ""] } });
+    expect(r.ok(), await r.text()).toBeTruthy();
+    expect(await r.json()).toMatchObject({ added: 27, first: 4 });
+    const after = (await list(request, c, "exam_tickets", `subgroup="${s2}"`)).sort((p, q) => p.number - q.number);
+    expect(after).toHaveLength(30);
+    expect(after.slice(3).map((t) => t.number)).toEqual(Array.from({ length: 27 }, (_, i) => i + 4));
+    expect(after.slice(3).map((t) => t.question)).toEqual(questions); // порядок текста, пустые строки пропущены
+    expect(after.slice(3).every((t) => t.status === "empty" && t.subgroup === s2)).toBeTruthy();
+    // билеты другой подгруппы и общий список не тронуты
+    expect((await list(request, a, "exam_tickets", `subgroup="${s1}"`)).length).toBeGreaterThanOrEqual(3);
+    expect((await list(request, a, "exam_tickets", `exam="${exam}" && subgroup=""`)).length).toBe(3);
+    // посторонний, участник группы вне подгрупп и участник ЧУЖОЙ подгруппы не импортируют: подгруппа для них не существует
+    for (const s of [x, d, a]) {
+      const w = await request.post(`${PB}/api/subgroups/${s2}/tickets/bulk`, { headers: h(s), data: { questions: ["взлом"] } });
+      expect(w.status(), "импорт без права").toBe(404);
+    }
+    expect((await list(request, c, "exam_tickets", `subgroup="${s2}"`)).length).toBe(30);
+    // пустой и слишком длинный списки
+    expect((await request.post(`${PB}/api/subgroups/${s2}/tickets/bulk`, { headers: h(c), data: { questions: ["", "  "] } })).status()).toBe(400);
+    expect((await request.post(`${PB}/api/subgroups/${s2}/tickets/bulk`, { headers: h(c), data: { questions: Array.from({ length: 501 }, () => "q") } })).status()).toBe(400);
+    // «Добавить билет» нумерует так же (после наибольшего номера подгруппы) и принимает ответ
+    const one = await request.post(`${PB}/api/subgroups/${s2}/tickets`, { headers: h(c), data: { question: "Один", answer: "<p>ответ</p>" } });
+    expect(one.ok(), await one.text()).toBeTruthy();
+    expect((await one.json()).number).toBe(31);
+    const rec = (await list(request, c, "exam_tickets", `subgroup="${s2}" && number=31`))[0];
+    expect(rec.status).toBe("draft");
+    // прямая запись билета в чужую подгруппу обходом маршрута тоже закрыта
+    const direct = await request.post(`${PB}/api/collections/exam_tickets/records`, { headers: h(d), data: { exam, number: 99, question: "обход", subgroup: s2, status: "empty" } });
+    expect(direct.ok(), "создание билета подгруппы напрямую").toBeFalsy();
+  });
+
   test("блокировка «Занят» проверяется на сервере", async ({ request }) => {
     const t = sub1Tickets[0].id;
     const take = await request.post(`${PB}/api/tickets/${t}/lock`, { headers: h(a) });
