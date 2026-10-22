@@ -228,8 +228,51 @@ function nextTicketNumber(app, sub) {
   return max + 1;
 }
 
+// Код приглашения: 8 знаков без путаемых 0/o и 1/i/l; на экране показывается как «7X4P-K9QM» (дефис только для глаз).
+const CODE_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyz";
+
+/** Код из ввода: регистр и дефис не важны («7x4p-k9qm» = «7X4PK9QM»). */
+function normalizeCode(s) {
+  return String(s || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function codeTaken(app, code) {
+  try {
+    app.findFirstRecordByFilter("groups", "invite_code = {:c}", { c: code });
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+/** Случайный код, которого ни у какой группы ещё нет (не по названию, не по счётчику). */
+function newInviteCode(app) {
+  for (let i = 0; i < 50; i += 1) {
+    const code = $security.randomStringWithAlphabet(8, CODE_ALPHABET);
+    if (!codeTaken(app, code)) return code;
+  }
+  throw new ApiError(503, "Не удалось подобрать код. Попробуй ещё раз.", {});
+}
+
+/** Лимит частоты на человека: не больше `max` запросов за `windowSec` секунд (в памяти сервера). */
+function rateLimit(app, key, max, windowSec) {
+  const now = Date.now();
+  const store = app.store();
+  const recent = (store.get(key) || []).filter((t) => now - t < windowSec * 1000);
+  if (recent.length >= max) throw new ApiError(429, "Слишком часто. Попробуй чуть позже.", {});
+  recent.push(now);
+  store.set(key, recent);
+}
+
 module.exports = {
   examView,
+  CODE_ALPHABET,
+  normalizeCode,
+  codeTaken,
+  newInviteCode,
+  rateLimit,
   nextTicketNumber,
   nowStr,
   inSeconds,

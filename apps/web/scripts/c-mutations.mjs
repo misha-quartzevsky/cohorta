@@ -23,7 +23,7 @@ const PB_BIN = process.env.PB_BIN ?? path.join(REPO, "pocketbase", "pocketbase.e
 const SANDBOX = process.env.SANDBOX_DIR ?? path.join(process.env.TEMP ?? tmpdir(), "pbsandbox", "pb_data");
 const SPEC = process.argv[2]
   ? [process.argv[2]]
-  : ["tests/group-access.spec.ts", "tests/group-exams.spec.ts", "tests/group-subgroup-leave.spec.ts", "tests/group-lifecycle.spec.ts"];
+  : ["tests/group-access.spec.ts", "tests/group-exams.spec.ts", "tests/group-subgroup-leave.spec.ts", "tests/group-lifecycle.spec.ts", "tests/group-code.spec.ts", "tests/group-exam-link.spec.ts"];
 
 async function api(method, url, token, body) {
   const res = await fetch(`${PB}${url}`, {
@@ -108,6 +108,9 @@ RULE_MUTATIONS.push(
   ["access_requests: запрос меняется напрямую", "access_requests", { updateRule: OPEN }, "запросить можно только"],
   ["access_requests: уникальность открытого запроса снята", "access_requests", { __indexes: [] }, "запросить можно только"],
   ["exam_tickets: билет подгруппы можно создать напрямую (в обход маршрута импорта)", "exam_tickets", { createRule: OPEN }, "импорт списка билетов"],
+  ["exam_tickets: личные билеты видны всем вошедшим", "exam_tickets", { listRule: OPEN, viewRule: OPEN }, "личные ответы не видны"],
+  ["exam_tickets: чужой личный ответ можно править", "exam_tickets", { updateRule: OPEN }, "личные ответы не видны"],
+  ["exams: личный экзамен виден всем вошедшим (ответы вместе с ним)", "exams", { listRule: OPEN, viewRule: OPEN }, "личные ответы не видны"],
   ["tags: теги читает любой, даже без входа", "tags", { listRule: "", viewRule: "" }, "теги"],
   ["tags: теги создаёт и удаляет любой", "tags", { createRule: "", updateRule: "", deleteRule: "" }, "теги"],
 );
@@ -124,7 +127,7 @@ const QUIZ_MUTATIONS = [
 
 const HOOK_MUTATIONS = [
   ["hook: доступ можно выдать не члену группы", "groups_manage.pb.js", [/if \(!group \|\| !g\.isMember\(e\.app, group, owner\) \|\| !g\.isMember\(e\.app, group, grantee\)\) \{/, "if (false) {"], "один и тот же человек получает доступ отдельно"],
-  ["hook: старый код после сброса продолжает работать", "groups_manage.pb.js", [/group\.set\("invite_code", \$security\.randomStringWithAlphabet\(8, alphabet\)\);\n    e\.app\.save\(group\);\n    return e\.json\(200, \{ code: String\(group\.get\("invite_code"\)\) \}\);/, 'return e.json(200, { code: String(group.get("invite_code")) });'], "код приглашения"],
+  ["hook: старый код после сброса продолжает работать", "groups_manage.pb.js", [/group\.set\("invite_code", g\.newInviteCode\(e\.app\)\);\n    e\.app\.save\(group\);\n    return e\.json\(200, \{ code: String\(group\.get\("invite_code"\)\) \}\);/, 'return e.json(200, { code: String(group.get("invite_code")) });'], "код приглашения"],
   ["hook: передать группу можно не участнику", "groups_manage.pb.js", [/if \(!g\.isMember\(e\.app, group\.id, target\)\) \{/, "if (false) {"], "выйти и удалить аккаунт"],
   ["hook: участник видит код (ownerOnlyGroup пускает участников)", "lib_groups.js", [/throw new ForbiddenError\("Это может только владелец группы\."\);/, "return group;"], "код приглашения"],
   ["hook: в превью копируется текст лекции", "lib_previews.js", [/preview_text: "",/, "preview_text: String(lecture.get(String.fromCharCode(99,111,110,116,101,110,116)) || \"\"),"], "название чужой лекции"],
@@ -171,6 +174,16 @@ const HOOK_MUTATIONS = [
   ["hook: выход из подгруппы выводит и из группы", "lib_groups.js", [/if \(part\) app\.delete\(part\);/, 'if (part) app.delete(part);\n  for (const m of all(app, "group_members", "user = {:u}", { u: userId })) app.delete(m);'], "из группы человек не вышел"],
   ["hook: пустая подгруппа не удаляется", "lib_groups.js", [/if \(app\.countRecords\("exam_participants", \$dbx\.hashExp\(\{ subgroup: sub\.id \}\)\) === 0\) \{/, "if (false) {"], "последний вышедший"],
   ["hook: выйти из чужой подгруппы может любой", "exam_groups.pb.js", [/const sub = g\.memberSubgroup\(e\);\n    e\.app\.runInTransaction\(\(tx\) => g\.removeFromSubgroup/, 'const sub = e.app.findRecordById("exam_subgroups", e.request.pathValue("id"));\n    e.app.runInTransaction((tx) => g.removeFromSubgroup'], "посторонний и участник группы вне подгруппы"],
+  // код приглашения при создании группы
+  ["hook: занятый код из формы оставляется (дубль кода у двух групп)", "groups_manage.pb.js", [/if \(!okFormat \|\| g\.codeTaken\(tx, code\)\) code = g\.newInviteCode\(tx\);/, "if (!okFormat) code = g.newInviteCode(tx);"], "занятый код заменяется"],
+  ["hook: лимит частоты запросов кода снят", "lib_groups.js", [/if \(recent\.length >= max\) throw new ApiError\(429/, "if (false) throw new ApiError(429"], "частота запросов ограничена"],
+  ["hook: в алфавите кода путаемые знаки (0, o, 1, i, l)", "lib_groups.js", [/const CODE_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyz";/, 'const CODE_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";'], "код создаётся"],
+  ["hook: дефис и регистр в коде при вступлении не обрабатываются", "lib_groups.js", [/\.replace\(\/\[\^a-z0-9\]\/g, ""\);/, '.replace(/[^a-z0-9-]/g, "");'], "после «Создать группу»"],
+  ["hook: код из формы не проверяется на формат (мусор становится кодом)", "groups_manage.pb.js", [/const okFormat = code\.length === 8 && code\.split\(""\)\.every\(\(ch\) => g\.CODE_ALPHABET\.indexOf\(ch\) >= 0\);/, "const okFormat = code.length > 0;"], "занятый код заменяется"],
+  // личный экзамен и экзамен группы
+  ["hook: присоединение затирает уже существующие личные билеты", "exam_groups.pb.js", [/if \(have\[String\(t\.get\("number"\)\)\]\) continue;/, "/* пропуск */"], "присоединение не теряет"],
+  ["hook: «Взять мой ответ» берёт чужой личный билет", "exam_groups.pb.js", [/if \(srcExam\.get\("owner"\) !== e\.auth\.id \|\| String\(src\.get\("subgroup"\) \|\| ""\) !== ""\) \{/, "if (false) {"], "личные ответы не видны"],
+  ["hook: присоединиться к групповому экзамену может не участник группы", "exam_groups.pb.js", [/const gid = String\(target\.get\("group"\) \|\| ""\);\n    if \(!gid \|\| !g\.isMember\(e\.app, gid, me\)\) throw/, 'const gid = String(target.get("group") || "");\n    if (!gid) throw'], "выход из подгруппы и из группы"],
   ["hook: удаление аккаунта владельцем группы разрешено", "account_deletion.pb.js", [/if \(others > 0\) \{\n        return e\.json\(409/, "if (false) {\n        return e.json(409"], "выйти и удалить аккаунт"],
 ];
 

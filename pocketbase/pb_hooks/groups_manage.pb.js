@@ -7,7 +7,8 @@
 //  `groups` и `group_members` закрывают create/delete для клиента
 //  (миграция 1790009000_group_access_rules.js).
 //
-//  POST /api/groups/create               {name}  → создать группу (владелец — я)
+//  POST /api/groups/new-code                     → свежий случайный код для формы «Новая группа» (с лимитом частоты)
+//  POST /api/groups/create               {name, code?} → создать группу (владелец — я); код из формы, если свободен, иначе новый
 //  GET  /api/groups/{id}/invite                  → код приглашения (только владелец)
 //  POST /api/groups/{id}/invite/reset            → новый код, участники остаются (только владелец)
 //  POST /api/groups/{id}/transfer        {user}  → передать группу участнику (только владелец)
@@ -18,11 +19,26 @@
 //  Постороннему (не участнику) группа не раскрывается: 404, а не 403.
 // ============================================================
 
+// Новый код приглашения для формы «Новая группа»: случайный, свободный на этот момент. Ничего не резервирует и
+// ничего не раскрывает (только свежий код; чужих кодов нет, «занят ли такой» не спросить), частота ограничена.
+routerAdd(
+  "POST",
+  "/api/groups/new-code",
+  (e) => {
+    const g = require(`${__hooks}/lib_groups.js`);
+    g.rateLimit(e.app, `newcode:${e.auth.id}`, 20, 600);
+    return e.json(200, { code: g.newInviteCode(e.app) });
+  },
+  $apis.requireAuth()
+);
+
 routerAdd(
   "POST",
   "/api/groups/create",
   (e) => {
-    const data = new DynamicModel({ name: "" });
+    const g = require(`${__hooks}/lib_groups.js`);
+    g.rateLimit(e.app, `create:${e.auth.id}`, 10, 600);
+    const data = new DynamicModel({ name: "", code: "" });
     e.bindBody(data);
     const name = String(data.name || "").trim();
     if (!name) throw new BadRequestError("Введите название группы.");
@@ -35,22 +51,30 @@ routerAdd(
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "") || "group";
 
-    const groups = e.app.findCollectionByNameOrId("groups");
-    const group = new Record(groups);
-    group.set("name", name);
-    group.set("slug", slugBase + "-" + $security.randomStringWithAlphabet(4, alphabet));
-    group.set("owner", e.auth.id);
-    group.set("invite_code", $security.randomStringWithAlphabet(8, alphabet));
-    group.set("invite_enabled", false); // по умолчанию ссылка закрыта
-    e.app.save(group);
+    let result = null;
+    e.app.runInTransaction((tx) => {
+      // Код из формы, если он годится и до сих пор свободен; иначе сервер подбирает новый и возвращает его (не падает).
+      let code = g.normalizeCode(data.code);
+      const okFormat = code.length === 8 && code.split("").every((ch) => g.CODE_ALPHABET.indexOf(ch) >= 0);
+      if (!okFormat || g.codeTaken(tx, code)) code = g.newInviteCode(tx);
 
-    const members = e.app.findCollectionByNameOrId("group_members");
-    const member = new Record(members);
-    member.set("group", group.id);
-    member.set("user", e.auth.id);
-    e.app.save(member);
+      const groups = tx.findCollectionByNameOrId("groups");
+      const group = new Record(groups);
+      group.set("name", name);
+      group.set("slug", slugBase + "-" + $security.randomStringWithAlphabet(4, alphabet));
+      group.set("owner", e.auth.id);
+      group.set("invite_code", code);
+      group.set("invite_enabled", false); // по умолчанию ссылка закрыта
+      tx.save(group);
 
-    return e.json(200, { id: group.id, name: group.get("name"), slug: group.get("slug") });
+      const members = tx.findCollectionByNameOrId("group_members");
+      const member = new Record(members);
+      member.set("group", group.id);
+      member.set("user", e.auth.id);
+      tx.save(member);
+      result = { id: group.id, name: group.get("name"), slug: group.get("slug"), code: code };
+    });
+    return e.json(200, result);
   },
   $apis.requireAuth()
 );
@@ -72,8 +96,7 @@ routerAdd(
   (e) => {
     const g = require(`${__hooks}/lib_groups.js`);
     const group = g.ownerOnlyGroup(e);
-    const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
-    group.set("invite_code", $security.randomStringWithAlphabet(8, alphabet));
+    group.set("invite_code", g.newInviteCode(e.app));
     e.app.save(group);
     return e.json(200, { code: String(group.get("invite_code")) });
   },

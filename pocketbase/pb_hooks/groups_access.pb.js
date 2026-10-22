@@ -23,7 +23,7 @@ routerAdd(
     const data = new DynamicModel({ code: "" });
     e.bindBody(data);
 
-    const code = String(data.code || "").trim().toLowerCase();
+    const code = require(`${__hooks}/lib_groups.js`).normalizeCode(data.code);
     if (!code) {
       throw new BadRequestError("Введите код приглашения.");
     }
@@ -69,7 +69,7 @@ routerAdd(
   "GET",
   "/api/groups/preview",
   (e) => {
-    const code = String(e.request.url.query().get("code") || "").trim().toLowerCase();
+    const code = require(`${__hooks}/lib_groups.js`).normalizeCode(e.request.url.query().get("code"));
     if (!code) {
       throw new BadRequestError("Введите код приглашения.");
     }
