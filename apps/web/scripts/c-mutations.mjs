@@ -175,7 +175,7 @@ const HOOK_MUTATIONS = [
   ["hook: пустая подгруппа не удаляется", "lib_groups.js", [/if \(app\.countRecords\("exam_participants", \$dbx\.hashExp\(\{ subgroup: sub\.id \}\)\) === 0\) \{/, "if (false) {"], "последний вышедший"],
   ["hook: выйти из чужой подгруппы может любой", "exam_groups.pb.js", [/const sub = g\.memberSubgroup\(e\);\n    e\.app\.runInTransaction\(\(tx\) => g\.removeFromSubgroup/, 'const sub = e.app.findRecordById("exam_subgroups", e.request.pathValue("id"));\n    e.app.runInTransaction((tx) => g.removeFromSubgroup'], "посторонний и участник группы вне подгруппы"],
   // код приглашения при создании группы
-  ["hook: занятый код из формы оставляется (дубль кода у двух групп)", "groups_manage.pb.js", [/if \(!okFormat \|\| g\.codeTaken\(tx, code\)\) code = g\.newInviteCode\(tx\);/, "if (!okFormat) code = g.newInviteCode(tx);"], "занятый код заменяется"],
+  ["hook: занятый код из формы оставляется (дубль кода у двух групп)", "groups_manage.pb.js", [/if \(!okFormat \|\| g\.codeTaken\(tx, code\)\) code = g\.newInviteCode\(tx\);/, "if (!okFormat) code = g.newInviteCode(tx);"], "два одновременных создания"],
   ["hook: лимит частоты запросов кода снят", "lib_groups.js", [/if \(recent\.length >= max\) throw new ApiError\(429/, "if (false) throw new ApiError(429"], "частота запросов ограничена"],
   ["hook: в алфавите кода путаемые знаки (0, o, 1, i, l)", "lib_groups.js", [/const CODE_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyz";/, 'const CODE_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";'], "код создаётся"],
   ["hook: дефис и регистр в коде при вступлении не обрабатываются", "lib_groups.js", [/\.replace\(\/\[\^a-z0-9\]\/g, ""\);/, '.replace(/[^a-z0-9-]/g, "");'], "после «Создать группу»"],
