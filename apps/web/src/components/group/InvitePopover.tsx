@@ -1,10 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Button, Icon, Popover } from "../../ui";
-import { fetchInvite, resetInvite, setInviteEnabled } from "../../services/groupApi";
+import { fetchInvite, formatCode, resetInvite, setInviteEnabled } from "../../services/groupApi";
 import { errorMessage } from "../../lib/format";
 
 export function inviteLink(code: string): string {
-  return `cohorta.ru/join/${code.toUpperCase()}`;
+  return `cohorta.ru/join/${formatCode(code)}`;
 }
 
 /** «Пригласить в …» (Screen-group-home): ссылка и код видны и копируются только владельцем. */
@@ -104,7 +104,7 @@ export default function InvitePopover({
           </div>
           <div className="code">
             <span>
-              Код <b>{code.toUpperCase()}</b>
+              Код <b>{formatCode(code)}</b>
             </span>
             <button type="button" className="c-gr-linkbtn" onClick={() => void reset()} disabled={busy}>
               Сбросить код

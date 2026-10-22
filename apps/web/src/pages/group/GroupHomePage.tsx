@@ -48,6 +48,8 @@ export default function GroupHomePage() {
   const [restoring, setRestoring] = useState(false);
 
   const g = current!;
+  /** Шестерёнка (Screen-group-home, Screen-m-group-people): настройки группы; из них путь обратно в «Люди». */
+  const openSettings = () => navigate(`/s/${sem}/group/settings`, { state: { from: "group" } });
   const isOwner = g.isOwner;
   const people = useMemo(() => buildPeople(data.roster, data.previews, data.shares, g.group.owner), [data.roster, data.previews, data.shares, g.group.owner]);
   const shown = filter === "open" ? people.filter((p) => p.previewEnabled) : people;
@@ -102,6 +104,9 @@ export default function GroupHomePage() {
           <Icon name="chevd" size={18} />
         </button>
         <div className="btns">
+          <button type="button" className="sq ghost" aria-label="Настройки группы" onClick={openSettings}>
+            <Icon name="gear" size={20} />
+          </button>
           {isOwner && (
             <InvitePopover
               groupId={g.group.id}
@@ -131,8 +136,11 @@ export default function GroupHomePage() {
           <h1 className="c-gr-title-d">{g.group.name}</h1>
           <span className="sub"><span className="d-only">{sub}</span><span className="m-only">{studentsLabel(g.members)}</span></span>
         </div>
-        {isOwner && (
-          <div className="acts">
+        <div className="acts">
+          <button type="button" className="c-gr-gear c-gr-gear-d" aria-label="Настройки группы" onClick={openSettings}>
+            <Icon name="gear" size={20} />
+          </button>
+          {isOwner && (
             <InvitePopover
               groupId={g.group.id}
               groupName={g.group.name}
@@ -143,8 +151,8 @@ export default function GroupHomePage() {
               onChanged={() => void refresh()}
               trigger={inviteBtn}
             />
-          </div>
-        )}
+          )}
+        </div>
       </header>
 
       <div className="c-gr-pills">

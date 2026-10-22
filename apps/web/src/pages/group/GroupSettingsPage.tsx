@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button, Icon, Input, Menu, Modal } from "../../ui";
 import { Ava, Crumbs, useSem } from "../../components/group/common";
 import { inviteLink } from "../../components/group/InvitePopover";
@@ -27,6 +27,7 @@ type Dialog = null | { kind: "leave" } | { kind: "transfer" } | { kind: "reset" 
  */
 export default function GroupSettingsPage() {
   const sem = useSem();
+  const fromGroup = (useLocation().state as { from?: string } | null)?.from === "group";
   const navigate = useNavigate();
   const { current, refresh, groups, select } = useGroupCtx();
   const { user } = useAuth();
@@ -96,6 +97,11 @@ export default function GroupSettingsPage() {
   return (
     <div className="c-gr-page c-gr-set">
       <Crumbs items={[{ label: g.group.name, to: `/s/${sem}/group` }, { label: "Настройки" }]} />
+      {/* телефон: «‹ Люди», если пришли шестерёнкой из группы, иначе «‹ Профиль» (Screen-m-group-settings) */}
+      <Link className="c-gx-back" to={fromGroup ? `/s/${sem}/group` : "/profile"}>
+        <Icon name="chev" size={18} className="c-gx-back-ic" />
+        {fromGroup ? "Люди" : "Профиль"}
+      </Link>
       <header className="c-gr-head">
         <div className="tx">
           <h1>Настройки группы</h1>
@@ -108,7 +114,7 @@ export default function GroupSettingsPage() {
 
       <section className="c-gr-section">
         <h2>Название</h2>
-        <p className="lead">Видно всем участникам.</p>
+        <p className="lead">{owner ? "Видно всем участникам." : "Меняет только владелец."}</p>
         <div className="row-line">
           {editing ? (
             <>
@@ -142,6 +148,24 @@ export default function GroupSettingsPage() {
           )}
         </div>
       </section>
+
+      {!owner && (
+        <section className="c-gr-section">
+          <h2>Ссылка-приглашение</h2>
+          <p className="lead">Ссылку видит и сбрасывает только владелец. Чтобы позвать человека, попроси владельца.</p>
+          {(() => {
+            const o = data.roster.find((p) => p.id === g.group.owner);
+            return o ? (
+              <div className="c-gr-prow" style={{ borderTop: 0 }}>
+                <Ava id={o.id} name={o.name} avatar={o.avatar} size="sm" />
+                <div className="tx">
+                  <span className="t">Владелец: {o.name}</span>
+                </div>
+              </div>
+            ) : null;
+          })()}
+        </section>
+      )}
 
       {owner && (
         <section className="c-gr-section">

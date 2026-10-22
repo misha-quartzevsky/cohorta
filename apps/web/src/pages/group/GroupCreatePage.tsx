@@ -3,15 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { Button, Input } from "../../ui";
 import { Crumbs, useSem } from "../../components/group/common";
 import { useGroupCtx } from "../../lib/groupCtx";
-import { createGroupApi } from "../../services/groupApi";
+import { createGroupApi, fetchNewGroupCode, formatCode } from "../../services/groupApi";
 import { errorMessage } from "../../lib/format";
 import { useEffect } from "react";
 import { useMode } from "../../lib/modeContext";
 
 /**
- * Новая группа (Screen-group-create). Код приглашения ставит сервер при создании,
- * поэтому до создания он не показывается; ссылка у новой группы закрыта, владелец открывает её
- * кнопкой «Пригласить» или в настройках.
+ * Новая группа (Screen-group-create). Код приглашения выдаёт сервер при открытии формы (случайный, свободный
+ * на этот момент) и показывается сразу; «Скопировать» копирует его. При «Создать группу» он становится кодом
+ * группы, а если за это время его заняла другая группа, сервер подбирает новый (владелец увидит его в «Пригласить»).
+ * Ссылка у новой группы закрыта, владелец открывает её в «Пригласить» или в настройках.
  */
 export default function GroupCreatePage() {
   const navigate = useNavigate();
@@ -22,6 +23,29 @@ export default function GroupCreatePage() {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [code, setCode] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetchNewGroupCode()
+      .then((c) => alive && setCode(c))
+      .catch(() => undefined); // без кода форма работает: сервер выдаст его при создании
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const copy = async () => {
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(formatCode(code));
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1000);
+    } catch {
+      setError("Не получилось скопировать. Выдели код и скопируй вручную.");
+    }
+  };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -29,7 +53,7 @@ export default function GroupCreatePage() {
     setBusy(true);
     setError("");
     try {
-      const g = await createGroupApi(name);
+      const g = await createGroupApi(name, code);
       await refresh();
       select(g.id);
       navigate(`/s/${sem}/group?invite=1`, { replace: true });
@@ -51,9 +75,9 @@ export default function GroupCreatePage() {
         <div className="c-gr-field">
           <label>Код для одногруппников</label>
           <div className="row">
-            <div className="c-gr-codebox mute">Появится после создания</div>
-            <Button variant="secondary" disabled>
-              Скопировать
+            <div className="c-gr-codebox">{code ? formatCode(code) : "…"}</div>
+            <Button variant="secondary" disabled={!code} onClick={() => void copy()}>
+              {copied ? "Скопировано" : "Скопировать"}
             </Button>
           </div>
         </div>

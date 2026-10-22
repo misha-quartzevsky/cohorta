@@ -244,8 +244,21 @@ export async function restoreAccess(groupId: string): Promise<number> {
 export async function renameGroup(groupId: string, name: string): Promise<void> {
   await pb.collection("groups").update(groupId, { name: name.trim() });
 }
-export async function createGroupApi(name: string): Promise<{ id: string }> {
-  return pb.send("/api/groups/create", { method: "POST", body: { name: name.trim() } });
+/** Свежий случайный код для формы «Новая группа»: свободен на этот момент, ничего не резервируется. */
+export async function fetchNewGroupCode(): Promise<string> {
+  const r = await pb.send<{ code: string }>("/api/groups/new-code", { method: "POST" });
+  return r.code;
+}
+
+/** Создаёт группу с кодом из формы; если код успели занять, сервер выдаёт другой (он приходит в ответе). */
+export async function createGroupApi(name: string, code = ""): Promise<{ id: string; code: string }> {
+  return pb.send("/api/groups/create", { method: "POST", body: { name: name.trim(), ...(code ? { code } : {}) } });
+}
+
+/** Код для глаз: «7x4pk9qm» → «7X4P-K9QM» (дефис только в показе, сервер его не хранит). */
+export function formatCode(code: string): string {
+  const c = code.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return c.length === 8 ? `${c.slice(0, 4)}-${c.slice(4)}` : c;
 }
 export async function joinGroupByCode(code: string): Promise<{ id: string; name: string; restorable: number }> {
   return pb.send("/api/groups/join", { method: "POST", body: { code: code.trim().toLowerCase() } });
