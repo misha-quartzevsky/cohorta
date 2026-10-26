@@ -7,7 +7,7 @@
  *   1. Открываем /login, вводим демо-доступы из сид-миграции.
  *   2. Редирект на /s/demo (демо-семестр из seed).
  *   3. Дашборд → курс «Математический анализ» → лекция «Предел
- *      последовательности» (открывается глобальный сайдбар + правый TOC).
+ *      последовательности» (открывается сайдбар с содержанием).
  *   4. Правый TOC-асид виден, его sticky-отступ сверху ровно 30px
  *      (getComputedStyle → top).
  */
@@ -21,35 +21,34 @@ test("демо-логин: редирект на /s/demo и TOC-асид с от
   await login(page, "demo");
 
   await page.waitForURL("**/s/demo");
-  await expect(page.locator(".hero-greeting")).toBeVisible();
-  await expect(page.locator(".global-sidebar")).toBeVisible();
+  await expect(page.locator(".c-dash-head h1")).toBeVisible();
+  await expect(page.locator(".c-shell-sidebar")).toBeVisible();
 
-  // Дашборд → курс (виджет «Курсы семестра»).
-  const courseTile = page.locator(".course-row", {
+  // Дашборд → предмет (список «Предметы» в сайдбаре).
+  const courseLink = page.locator(".c-shell-courses a", {
     hasText: "Математический анализ",
   });
-  await waitForStable(page, courseTile);
-  await courseTile.dispatchEvent("click");
+  await waitForStable(page, courseLink);
+  await courseLink.dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis");
 
   // Лекция → просмотр внутри LectureLayout.
-  // dispatchEvent вместо click: у плиток/карточек hover-transform
-  // (transition 0.18s), из-за которого штатный клик в headed-Firefox
-  // висит до таймаута. Приём уже применён в app-shell/lecture-workflow.
+  // dispatchEvent вместо click: у строк списка hover-transition, из-за
+  // которого штатный клик в headed-Firefox висит до таймаута. Приём уже
+  // применён в app-shell/lecture-workflow.
   await page
-    .locator(".tile-click", { hasText: "Предел последовательности" })
+    .locator(".c-lec-row", { hasText: "Предел последовательности" })
     .first()
     .dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis/limit-of-sequence");
 
-  // Оглавление живёт ТОЛЬКО в сайдбаре (правая колонка освобождена под
-  // будущую панель редактирования): секция + непустой список пунктов.
+  // Содержание живёт ТОЛЬКО в сайдбаре: секция + непустой список пунктов.
   await expect(
-    page.locator(".global-sidebar .sidebar-section-title", {
-      hasText: "Оглавление",
+    page.locator(".c-shell-sidebar .c-shell-section", {
+      hasText: "Содержание",
     })
   ).toBeVisible();
   await expect(
-    page.locator(".global-sidebar .toc-item").first()
+    page.locator(".c-shell-sidebar .c-toc a").first()
   ).toBeVisible();
 });

@@ -4,7 +4,7 @@
  * ============================================
  *
  * Новый аккаунт после регистрации попадает на /onboarding и не
- * видит приложения, пока не пройдёт мастер (8 экранов). Проверяем:
+ * видит приложения, пока не пройдёт мастер (4 шага). Проверяем:
  *  - полный проход → дашборд;
  *  - имя + формат адреса профиля (логин = поддомен);
  *  - коллизия логина;
@@ -19,57 +19,34 @@
 
 import { test, expect, type Page } from "@playwright/test";
 import {
-  LAST_SEMESTER_KEY,
   completeOnboardingFast,
+  expectAccountEmail,
+  onbChip,
+  onbNameAndUniversity,
   onbNext,
   onbPick,
+  registerBare,
 } from "./helpers";
-
-const PASSWORD = "test12345";
 
 /** Валидный логин-поддомен из метки. */
 const handle = (label: string) => `${label}-${Date.now().toString(36)}`;
 
-/** Регистрирует новый аккаунт и оставляет его на /onboarding. */
-async function registerBare(page: Page): Promise<string> {
-  const email = `onb-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@example.com`;
-  await page.addInitScript(
-    ({ key, slug }) => localStorage.setItem(key, slug),
-    { key: LAST_SEMESTER_KEY, slug: "1" }
-  );
-  await page.goto("/login");
-  await page.locator(".login-switch").dispatchEvent("click");
-  await page.locator('input[type="email"]').fill(email);
-  const pw = page.locator('input[type="password"]');
-  await pw.nth(0).fill(PASSWORD);
-  await pw.nth(1).fill(PASSWORD);
-  await pw.nth(1).press("Enter");
-  await page.waitForURL(/\/onboarding$/);
-  return email;
-}
-
-/** Экраны 1–3 (имя + логин + Москва + первый вуз), останавливается на «Ступени». */
-async function walkPastUniversity(page: Page, username: string): Promise<void> {
-  await page.locator("#onb-name").fill("Тестовый Пользователь");
-  await onbNext(page);
-  await page.locator("#onb-username").fill(username);
-  await onbNext(page);
-  await page.locator("#onb-city").fill("Москва");
-  await onbPick(
-    page,
-    '.onb-combo-item:not(.onb-combo-item--muted):has-text("Москва")'
-  );
-  await onbPick(page, ".onb-option:not(.onb-option--dashed)");
-  await onbNext(page);
+/**
+ * Шаги 1–2 (имя + Москва + первый вуз), останавливается на «Уровне и курсе».
+ * Параметр username остался от прежнего мастера (шаг «Адрес профиля»): в новом
+ * мастере логина нет, значение игнорируется, тесты на логин ждут решения.
+ */
+async function walkPastUniversity(page: Page, _username?: string): Promise<void> {
+  await onbNameAndUniversity(page, "Тестовый Пользователь");
 }
 
 test("после регистрации — редирект на /onboarding, приложение недоступно", async ({
   page,
 }) => {
   await registerBare(page);
-  await expect(page.locator(".onb-shell")).toBeVisible();
-  await expect(page.locator(".onb-progress")).toHaveText("Шаг 1 из 8");
-  await expect(page.locator("#onb-name")).toBeVisible();
+  await expect(page.locator(".c-onb")).toBeVisible();
+  await expect(page.locator(".c-onb-step")).toHaveText("Шаг 1 из 4");
+  await expect(page.getByLabel("Как тебя зовут")).toBeVisible();
 
   // Прямой заход на защищённый роут возвращает в мастер.
   await page.goto("/s/1");
@@ -78,12 +55,15 @@ test("после регистрации — редирект на /onboarding, �
 
 test("полный проход мастера → дашборд с периодами", async ({ page }) => {
   const email = await registerBare(page);
-  await completeOnboardingFast(page, { count: 3 });
+  await completeOnboardingFast(page);
 
-  await expect(page.locator(".profile-email")).toHaveText(email);
+  await expectAccountEmail(page, email);
   // Онбординг пройден — /onboarding больше не держит.
   await page.goto("/onboarding");
   await expect(page).toHaveURL(/\/s\//);
+  // Бакалавриат, 1 курс, семестры: 8 периодов (прежде число задавалось вручную).
+  await page.goto("/s/8");
+  await expect(page).toHaveURL(/\/s\/8$/);
 });
 
 test("имя обязательно, адрес профиля проверяет формат", async ({ page }) => {
@@ -133,37 +113,31 @@ test("коллизия логина", async ({ page, browser }) => {
 test("эскейп «вуз не найден» → ручной ввод", async ({ page }) => {
   await registerBare(page);
 
-  await page.locator("#onb-name").fill("Тест");
-  await onbNext(page);
-  await page.locator("#onb-username").fill(handle("esc"));
+  await page.getByLabel("Как тебя зовут").fill("Тест");
   await onbNext(page);
 
-  await page.locator("#onb-city").fill("Москва");
-  await onbPick(
-    page,
-    '.onb-combo-item:not(.onb-combo-item--muted):has-text("Москва")'
-  );
-  await onbPick(page, '.onb-option--dashed:has-text("Не нашёл")');
-  await page.locator("#onb-uni-custom").fill("Мой частный вуз");
+  await page.getByLabel("Город").fill("Москва");
+  const city = page.locator(".c-onb-sugg button", { hasText: "Москва" }).first();
+  await city.waitFor({ state: "visible" });
+  await city.dispatchEvent("click");
+  await page.locator(".c-onb-unis .manual").dispatchEvent("click");
+  await page.getByPlaceholder("Название вуза").fill("Мой частный вуз");
   await onbNext(page);
 
-  await expect(page.locator(".onb-progress")).toHaveText("Шаг 4 из 8");
+  await expect(page.locator(".c-onb-step")).toHaveText("Шаг 3 из 4");
 });
 
 test("смена ступени пересчитывает диапазон курса", async ({ page }) => {
   await registerBare(page);
-  await walkPastUniversity(page, handle("crs"));
+  await walkPastUniversity(page);
 
-  // Бакалавриат → 6 вариантов курса.
-  await onbPick(page, '.onb-option:has-text("Бакалавриат")');
-  await onbNext(page);
-  await expect(page.locator(".onb-pill")).toHaveCount(6);
+  // Бакалавриат → 6 вариантов курса (уровень и курс теперь на одном шаге).
+  await onbChip(page, "Бакалавриат");
+  await expect(page.locator(".c-onb-round")).toHaveCount(6);
 
-  // Назад → Магистратура → 2 варианта.
-  await page.locator('.onb-linkbtn:has-text("Назад")').dispatchEvent("click");
-  await onbPick(page, '.onb-option:has-text("Магистратура")');
-  await onbNext(page);
-  await expect(page.locator(".onb-pill")).toHaveCount(2);
+  // Магистратура → 2 варианта.
+  await onbChip(page, "Магистратура");
+  await expect(page.locator(".c-onb-round")).toHaveCount(2);
 });
 
 test("периоды: переименование и удаление", async ({ page }) => {
@@ -227,4 +201,13 @@ test("периоды: пересоздание набора не плодит д
   await expect(page).toHaveURL(/\/s\/2$/);
   await page.goto("/s/3");
   await expect(page.locator(".error-banner, .empty")).toBeVisible();
+});
+
+test("имя обязательно: без имени «Далее» недоступна (шаг 1 нового мастера)", async ({ page }) => {
+  await registerBare(page);
+  const next = page.getByRole("button", { name: "Далее" });
+
+  await expect(next).toBeDisabled();
+  await page.getByLabel("Как тебя зовут").fill("Даша");
+  await expect(next).toBeEnabled();
 });

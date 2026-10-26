@@ -4,11 +4,11 @@
  * ============================================
  *
  * 1. Неверные данные → ошибка «Не удалось войти…» на /login.
- * 2. Демо-доступы → редирект на /s/demo, в шапке — email пользователя.
+ * 2. Демо-доступы → редирект на /s/demo, в «Профиле и настройках» — email пользователя.
  */
 
 import { test, expect } from "@playwright/test";
-import { DEMO_EMAIL, login } from "./helpers";
+import { DEMO_EMAIL, expectAccountEmail, login } from "./helpers";
 
 test("неверные данные: ошибка на странице /login", async ({ page }) => {
   await page.goto("/login");
@@ -19,14 +19,14 @@ test("неверные данные: ошибка на странице /login",
   // завешивает headed-Firefox).
   await password.press("Enter");
 
-  await expect(page.locator(".login-error")).toContainText(
+  await expect(page.locator(".c-auth-error")).toContainText(
     "Не удалось войти"
   );
 });
 
-test("демо-доступы: редирект на /s/demo и email в шапке", async ({ page }) => {
+test("демо-доступы: редирект на /s/demo и email в профиле", async ({ page }) => {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
-  await expect(page.locator(".hero-greeting")).toBeVisible();
-  await expect(page.locator(".profile-email")).toHaveText(DEMO_EMAIL);
+  await expect(page.locator(".c-dash-head h1")).toBeVisible();
+  await expectAccountEmail(page, DEMO_EMAIL);
 });
