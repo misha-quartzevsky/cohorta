@@ -198,3 +198,71 @@ describe("lectureListStatus (Screen-lectures.dc.html)", () => {
     expect(lectureListStatus(r).key).toBe("learned");
   });
 });
+
+describe("computeLectureReadiness: последний квиз и темы", () => {
+  const now = new Date(2026, 9, 16, 12);
+  const q = (id: string, quiz: string, createdAt: Date, topic: string): ReadinessQuestion => ({
+    id,
+    quiz,
+    quizCreatedAt: createdAt,
+    topic,
+  });
+  const ans = (questionId: string, correct: boolean): ReadinessAnswer => ({
+    questionId,
+    correct,
+    answeredAt: now,
+  });
+  const older = new Date(2026, 9, 1, 10);
+  const newer = new Date(2026, 9, 10, 10);
+
+  it("покрытие считается по последнему квизу, ответы на старый квиз тоже учитываются", () => {
+    const oldQuiz = ["a1", "a2", "a3", "a4"].map((id) => q(id, "quizOld", older, "Тема"));
+    const newQuiz = ["b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8"].map((id) => q(id, "quizNew", newer, "Тема"));
+    const answers = oldQuiz.map((x) => ans(x.id, true));
+    const r = computeLectureReadiness([...oldQuiz, ...newQuiz], answers, now);
+    // отвечено 4 из 8 вопросов последнего квиза: точность 1, покрытие 0.5, свежесть 1
+    expect(r.percent).toBe(50);
+  });
+
+  it("все ответы на последний квиз верны и свежи — 100", () => {
+    const oldQuiz = ["a1", "a2"].map((id) => q(id, "quizOld", older, "Тема"));
+    const newQuiz = ["b1", "b2", "b3", "b4"].map((id) => q(id, "quizNew", newer, "Тема"));
+    const answers = newQuiz.map((x) => ans(x.id, true));
+    expect(computeLectureReadiness([...oldQuiz, ...newQuiz], answers, now).percent).toBe(100);
+  });
+
+  it("границы статуса темы: 0.5 — нейтральная, 0.8 — успех, 0.4 — опасная", () => {
+    const qs = [
+      ...["a1", "a2"].map((id) => q(id, "quiz1", quizDate, "А")),
+      ...["b1", "b2", "b3", "b4", "b5"].map((id) => q(id, "quiz1", quizDate, "Б")),
+      ...["c1", "c2", "c3", "c4", "c5"].map((id) => q(id, "quiz1", quizDate, "В")),
+    ];
+    const answers = [
+      ans("a1", true), ans("a2", false), // 0.5
+      ans("b1", true), ans("b2", true), ans("b3", true), ans("b4", true), ans("b5", false), // 0.8
+      ans("c1", true), ans("c2", true), ans("c3", false), ans("c4", false), ans("c5", false), // 0.4
+    ];
+    const r = computeLectureReadiness(qs, answers, now);
+    const status = (t: string) => r.topics.find((x) => x.topic === t)?.status;
+    expect(status("а")).toBe("neutral");
+    expect(status("б")).toBe("success");
+    expect(status("в")).toBe("danger");
+    // слабые: точность < 0.6, самая слабая первой
+    expect(r.weakTopics.map((t) => t.topic)).toEqual(["в", "а"]);
+  });
+
+  it("слабых тем не больше трёх", () => {
+    const qs = ["Т1", "Т2", "Т3", "Т4"].map((t, i) => q(`q${i}`, "quiz1", quizDate, t));
+    const answers = qs.map((x) => ans(x.id, false));
+    const r = computeLectureReadiness(qs, answers, now);
+    expect(r.topics).toHaveLength(4);
+    expect(r.weakTopics).toHaveLength(3);
+  });
+
+  it("темы с разным регистром и пробелами объединяются", () => {
+    const qs = [q("q1", "quiz1", quizDate, "Этика "), q("q2", "quiz1", quizDate, "этика")];
+    const r = computeLectureReadiness(qs, [ans("q1", true), ans("q2", true)], now);
+    expect(r.topics).toHaveLength(1);
+    expect(r.topics[0].total).toBe(2);
+  });
+});
