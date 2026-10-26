@@ -11,6 +11,7 @@
  * текст — только по выданному доступу.
  */
 
+import { MONTHS_GENITIVE, MONTHS_SHORT } from "../lib/format";
 import { pb, currentUserId } from "../lib/pocketbase";
 import type { Group } from "../lib/types";
 
@@ -320,16 +321,14 @@ export function subjectsOf(previews: PreviewRow[], shares: ShareRow[], ownerId: 
 export function ruDate(iso: string): string {
   const d = new Date(String(iso).replace(" ", "T"));
   if (Number.isNaN(d.getTime())) return "";
-  const m = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
-  return `${d.getDate()} ${m[d.getMonth()]}`;
+  return `${d.getDate()} ${MONTHS_GENITIVE[d.getMonth()]}`;
 }
 
 /** Короткая дата для строк списка: «11 окт». */
 export function shortDate(iso: string): string {
   const d = new Date(String(iso).replace(" ", "T"));
   if (!iso || Number.isNaN(d.getTime())) return "";
-  const m = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
-  return `${d.getDate()} ${m[d.getMonth()]}`;
+  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
 }
 
 /** «Лекция 5 · 11 окт»; без номера и даты — пустая строка (вызывающий подставит предмет). */

@@ -36,6 +36,12 @@ export function memberDisplayName(user: Pick<User, "name" | "email">): string {
   return local || "Участник";
 }
 
+/** Месяцы в родительном падеже: «12 января». */
+export const MONTHS_GENITIVE = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+
+/** Короткие названия месяцев: «12 янв». */
+export const MONTHS_SHORT = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+
 /** Русские формы множественного числа: [1, 2, 5] → ["материал","материала","материалов"]. */
 export function pluralRu(n: number, forms: [string, string, string]): string {
   const abs = Math.abs(n) % 100;

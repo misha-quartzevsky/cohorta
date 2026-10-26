@@ -8,6 +8,7 @@
  * админку PocketBase (new → done).
  */
 
+import { MONTHS_GENITIVE } from "../lib/format";
 import { pb, currentUserId } from "../lib/pocketbase";
 import type { PbRecord } from "../lib/types";
 
@@ -81,11 +82,9 @@ export async function cancelAccountDeletion(): Promise<void> {
   await pb.send("/api/account/delete-cancel", { method: "POST" });
 }
 
-const MONTHS_GEN = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
-
 /** "2 ноября" из "2026-11-02 09:30:00.000Z". */
 export function deletionDateLabel(scheduledFor: string): string {
   const d = new Date(scheduledFor.replace(" ", "T"));
   if (Number.isNaN(d.getTime())) return "";
-  return d.getDate() + " " + MONTHS_GEN[d.getMonth()];
+  return d.getDate() + " " + MONTHS_GENITIVE[d.getMonth()];
 }
