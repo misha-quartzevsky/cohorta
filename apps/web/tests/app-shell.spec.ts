@@ -1,6 +1,6 @@
 /**
  * ============================================
- *  tests/app-shell.spec.ts — глобальный каркас (AppLayout/GlobalSidebar)
+ *  tests/app-shell.spec.ts — глобальный каркас (AppShellNew: .c-shell*)
  * ============================================
  *
  * Проверяет новый app-shell:
@@ -12,23 +12,25 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { login, DEMO_EMAIL } from "./helpers";
+import { login, DEMO_EMAIL, expectAccountEmail } from "./helpers";
 
 test("профиль в сайдбаре; выход → редирект на /login", async ({ page }) => {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
 
   // App shell + профиль.
-  await expect(page.locator(".global-sidebar")).toBeVisible();
-  await expect(page.locator(".app-main")).toBeVisible();
-  await expect(page.locator(".profile-name")).toBeVisible();
-  await expect(page.locator(".profile-email")).toHaveText(DEMO_EMAIL);
+  await expect(page.locator(".c-shell-sidebar")).toBeVisible();
+  await expect(page.locator(".c-shell-main")).toBeVisible();
+  await expect(page.locator(".c-shell-profile .name")).toBeVisible();
+  // Email показан в «Профиле и настройках» (блок профиля в сайдбаре ведёт туда).
+  await expectAccountEmail(page, DEMO_EMAIL);
 
-  // Выход → защищённый layout уходит, мы на /login.
-  await page.locator(".profile-logout").click();
+  // Выход → защищённый layout уходит, мы на /login. Кнопка «Выйти» есть в
+  // макете настроек, но на десктопе в интерфейсе её нет (класс C, см. отчёт).
+  await page.getByText("Выйти", { exact: true }).click();
   await page.waitForURL("**/login");
   await expect(page.locator('input[type="email"]')).toBeVisible();
-  await expect(page.locator(".global-sidebar")).toHaveCount(0);
+  await expect(page.locator(".c-shell-sidebar")).toHaveCount(0);
 });
 
 test("переключатель семестров: попап открывается из сайдбара", async ({
@@ -85,13 +87,13 @@ test("роут /notes рендерится без краша сайдбара (c
   await page.waitForURL("**/notes");
 
   // Сайдбар жив (без error boundary при не-загруженных семестрах).
-  await expect(page.locator(".global-sidebar")).toBeVisible();
+  await expect(page.locator(".c-shell-sidebar")).toBeVisible();
   await expect(
-    page.locator(".sidebar-nav-item", { hasText: "Карточки" })
+    page.locator(".c-shell-nav a", { hasText: "Карточки" })
   ).toBeVisible();
 
-  // Ни одна ссылка НЕДАВНИЕ не должна остаться без href (сборка пути не падает).
-  const badHrefs = await page.locator(".sidebar-nav-item").evaluateAll((els) =>
+  // Ни одна ссылка основной навигации не должна остаться без href (сборка пути не падает).
+  const badHrefs = await page.locator(".c-shell-nav a").evaluateAll((els) =>
     els.filter((el) => !el.getAttribute("href")).length
   );
   expect(badHrefs).toBe(0);

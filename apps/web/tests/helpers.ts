@@ -158,6 +158,27 @@ export async function registerFresh(page: Page, prefix = "e2e"): Promise<string>
 }
 
 /**
+ * Переходит на лекцию через поиск (кнопка «Поиск» в сайдбаре): прямая SPA-навигация
+ * лекция → лекция без промежуточных страниц, как раньше из списка лекций в сайдбаре.
+ */
+export async function openLectureViaSearch(page: Page, query: string, title: string): Promise<void> {
+  await page.locator(".c-shell-side-search").dispatchEvent("click");
+  await page.getByPlaceholder("Лекции, предметы, одногруппники").fill(query);
+  const hit = page.locator(".c-search-results .c-row", { hasText: title }).first();
+  await hit.waitFor({ state: "visible" });
+  await hit.dispatchEvent("click");
+}
+
+/**
+ * Переходит на другую лекцию того же предмета: крошка «Предмет» → строка списка.
+ * В новом сайдбаре на лекции показано только содержание, списка лекций курса в нём нет.
+ */
+export async function openOtherLectureOfCourse(page: Page, course: string, title: string): Promise<void> {
+  await page.locator(".c-shell-crumbs a", { hasText: course }).dispatchEvent("click");
+  await page.locator(".c-lec-row", { hasText: title }).first().dispatchEvent("click");
+}
+
+/**
  * Проверяет email вошедшего пользователя. В новом интерфейсе он показан в
  * «Профиль и настройки» (/settings), куда ведёт блок профиля в сайдбаре.
  */
