@@ -40,7 +40,7 @@ function normalizeLecture(l: Lecture): Lecture {
 }
 
 /** Значения по умолчанию для времени пар (spec 2.1). */
-export const DEFAULT_PAIR_TIMES: PairTime[] = [
+const DEFAULT_PAIR_TIMES: PairTime[] = [
   { n: 1, start: "09:00", end: "10:30" },
   { n: 2, start: "10:40", end: "12:10" },
   { n: 3, start: "12:40", end: "14:10" },
@@ -49,7 +49,7 @@ export const DEFAULT_PAIR_TIMES: PairTime[] = [
 ];
 
 /** Настройки расписания пользователя или null, если ещё не созданы. */
-export async function fetchSettings(): Promise<ScheduleSettings | null> {
+async function fetchSettings(): Promise<ScheduleSettings | null> {
   try {
     const s = await pb
       .collection("schedule_settings")
@@ -63,7 +63,7 @@ export async function fetchSettings(): Promise<ScheduleSettings | null> {
 }
 
 /** Создать настройки со значениями по умолчанию (spec 2.1). */
-export async function createDefaultSettings(): Promise<ScheduleSettings> {
+async function createDefaultSettings(): Promise<ScheduleSettings> {
   const anchor = toDateStr(mondayOf(new Date()));
   const created = await pb.collection("schedule_settings").create<ScheduleSettings>({
     [FIELDS.scheduleOwner]: currentUserId(),

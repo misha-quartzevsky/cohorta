@@ -102,7 +102,7 @@ export async function createTaskFromLecture(
 }
 
 /** Обрезать по границе слова до max символов, без переносов строк. */
-export function truncateAtWord(text: string, max: number): string {
+function truncateAtWord(text: string, max: number): string {
   const flat = text.replace(/\s+/g, " ").trim();
   if (flat.length <= max) return flat;
   const slice = flat.slice(0, max);

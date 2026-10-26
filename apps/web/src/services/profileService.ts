@@ -15,7 +15,7 @@ function uid(): string {
 }
 
 /** Обновить поля своей записи; authStore обновляется сам. */
-export async function updateMyProfile(patch: Record<string, unknown>): Promise<User> {
+async function updateMyProfile(patch: Record<string, unknown>): Promise<User> {
   return withTimeout(pb.collection("users").update<User>(uid(), patch), "сохранение профиля");
 }
 

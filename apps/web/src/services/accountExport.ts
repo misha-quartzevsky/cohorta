@@ -40,7 +40,7 @@ function uniquePath(taken: Set<string>, folder: string, name: string, ext: strin
 }
 
 /** Собрать все данные в файлы архива. */
-export async function collectExport(onProgress?: (done: number, total: number) => void): Promise<ZipEntry[]> {
+async function collectExport(onProgress?: (done: number, total: number) => void): Promise<ZipEntry[]> {
   const uid = String(pb.authStore.record?.id ?? "");
   if (!uid) throw new Error("Нужно войти.");
   const own = pb.filter("owner = {:u}", { u: uid });

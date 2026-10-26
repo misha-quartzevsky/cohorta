@@ -44,7 +44,7 @@ export async function createTag(name: string, color: string): Promise<Tag> {
  * @param lectureIds — full list of lecture IDs for this tag
  * @returns The updated Tag record.
  */
-export async function updateTagLectures(
+async function updateTagLectures(
   tagId: string,
   lectureIds: string[]
 ): Promise<Tag> {

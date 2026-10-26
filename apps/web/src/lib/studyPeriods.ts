@@ -75,7 +75,7 @@ function toIso(d: Date): string {
 }
 
 /** Первый год учебного года, в котором мы сейчас (учебный год начинается 1 сентября). */
-export function academicYearStart(today: Date): number {
+function academicYearStart(today: Date): number {
   return today.getMonth() + 1 >= 9 ? today.getFullYear() : today.getFullYear() - 1;
 }
 

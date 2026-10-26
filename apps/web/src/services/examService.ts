@@ -213,7 +213,7 @@ export async function fetchTickets(examId: string): Promise<ExamTicket[]> {
 }
 
 /** Один билет по id. */
-export async function getTicket(ticketId: string): Promise<ExamTicket> {
+async function getTicket(ticketId: string): Promise<ExamTicket> {
   return pb.collection("exam_tickets").getOne<ExamTicket>(ticketId);
 }
 
