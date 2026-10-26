@@ -18,8 +18,7 @@
 }
 
 /* Фокус: контур 2px ink с отступом, виден на любом фоне (spec 1A.7). */
-.ds-root :focus-visible,
-.ds-focusable:focus-visible {
+.ds-root :focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
 }
@@ -342,28 +341,6 @@
 
 /* ---------- Tabs-pill (чёрная плашка в шапке) ---------- */
 
-.ds-tabs-pill {
-  display: inline-flex;
-  padding: var(--space-1);
-  gap: var(--space-1);
-  background: var(--color-ink);
-  border-radius: var(--radius-pill);
-}
-.ds-tabs-pill__item {
-  padding: var(--space-2) var(--space-4);
-  border: none;
-  background: transparent;
-  border-radius: var(--radius-pill);
-  font-size: var(--text-body);
-  font-weight: var(--weight-medium);
-  color: var(--color-on-ink-dim);
-  cursor: pointer;
-}
-.ds-tabs-pill__item--active {
-  background: var(--color-card);
-  color: var(--color-ink);
-}
-
 /* ---------- Checkbox (круглый) ---------- */
 
 .ds-checkbox {
@@ -631,25 +608,6 @@
 
 /* ---------- Avatar ---------- */
 
-.ds-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--color-neutral-soft);
-  color: var(--color-ink-2);
-  font-weight: var(--weight-medium);
-  font-size: var(--text-body);
-  overflow: hidden;
-}
-.ds-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 /* ---------- BottomTabBar (мобильная навигация, spec 1A.8) ---------- */
 
 .ds-bottombar {
@@ -810,10 +768,6 @@
   flex-direction: column;
   gap: 2px;
 }
-.ds-task__title {
-  color: var(--color-ink);
-  overflow-wrap: anywhere;
-}
 .ds-task__title--done {
   text-decoration: line-through;
   color: var(--color-ink-3);
@@ -870,10 +824,6 @@
 .ds-task__due--overdue {
   color: var(--color-danger-strong);
 }
-.ds-task__suggest {
-  font-size: var(--text-caption);
-  color: var(--color-ink-3);
-}
 
 .ds-quickadd {
   display: flex;
@@ -901,12 +851,6 @@
   display: grid;
   gap: var(--space-2);
   min-width: 640px;
-}
-.ds-grid__cell {
-  border: var(--border-width) solid var(--color-line);
-  border-radius: var(--radius-lg);
-  min-height: 72px;
-  padding: var(--space-2);
 }
 .ds-grid__time {
   font-size: var(--text-caption);
@@ -945,10 +889,6 @@
   cursor: pointer;
   overflow: hidden;
   position: relative;
-}
-.ds-slot--empty {
-  border: 1px dashed var(--color-line-strong);
-  background: transparent;
 }
 .ds-slot--note {
   border: var(--border-width) solid var(--color-line-strong);
@@ -1058,85 +998,6 @@
 }
 
 /* ---------- Квиз (spec 6.3) ---------- */
-
-.ds-quiz-screen {
-  min-height: 100dvh;
-  background: var(--color-canvas);
-  display: flex;
-  flex-direction: column;
-  padding: var(--space-5);
-}
-.ds-quiz-loading {
-  margin: auto;
-  width: min(100%, 420px);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  align-items: flex-start;
-}
-.ds-quiz-topbar {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
-}
-.ds-quiz-topbar > :first-child {
-  flex: 1;
-}
-.ds-quiz-body {
-  width: min(100%, 640px);
-  margin: var(--space-6) auto 0;
-  flex: 1;
-}
-.ds-quiz-options {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-.ds-quiz-option {
-  min-height: 48px;
-  text-align: left;
-  padding: var(--space-3) var(--space-4);
-  border: var(--border-width) solid var(--color-line-strong);
-  border-radius: var(--radius-md);
-  background: var(--color-card);
-  font: inherit;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3);
-}
-.ds-quiz-option:disabled {
-  cursor: default;
-}
-.ds-quiz-option--correct {
-  background: var(--color-success-soft);
-  border-color: var(--color-success);
-  color: var(--color-success-strong);
-}
-.ds-quiz-option--wrong {
-  background: var(--color-danger-soft);
-  border-color: var(--color-danger);
-  color: var(--color-danger-strong);
-}
-.ds-quiz-recall {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-.ds-quiz-footer {
-  width: min(100%, 640px);
-  margin: var(--space-6) auto 0;
-}
-@media (max-width: 767px) {
-  .ds-quiz-screen {
-    padding: var(--space-4);
-  }
-  .ds-quiz-option {
-    min-height: 48px;
-  }
-}
 
 /* ============================================================
  *  Дизайн-основа v3 — A1, 2026-10-18.
@@ -1290,11 +1151,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
 /* SubjectCover (генератор, раздел 2.3 инструкции) — единственное
    место с hsl/hsla вне токенов. civil/mkt/stat/phil — сиды старых
    предметов (A3), сохраняющие их прежний оттенок после переноса. */
-.c-cover,
-.cover-civil,
-.cover-mkt,
-.cover-stat,
-.cover-phil {
+.c-cover {
   --h: 20;
   border-radius: var(--radius-sm);
   background:
@@ -1303,10 +1160,6 @@ button.c-row.on:hover { background: var(--accent-soft); }
     radial-gradient(circle at 75% 90%, hsla(calc(var(--h) - 38), 38%, 78%, .7), transparent 50%),
     hsl(calc(var(--h) + 10), 40%, 91%);
 }
-.cover-civil { --h: 20; }
-.cover-mkt { --h: 335; }
-.cover-stat { --h: 135; }
-.cover-phil { --h: 212; }
 /* Модификаторы SubjectCover (A3, 2026-10-18): широкая полоса (баннер
    предмета) и заглушка без сида (конспекта ещё нет — не градиент). */
 .c-cover--wide { width: 100%; }
@@ -1466,18 +1319,6 @@ button.c-row.on:hover { background: var(--accent-soft); }
     max-height: 85vh;
   }
 }
-.c-toast {
-  display: inline-flex;
-  align-items: center;
-  gap: 16px;
-  height: 52px;
-  padding: 0 8px 0 18px;
-  border-radius: 14px;
-  background: var(--ink);
-  color: var(--on-ink);
-  font: 400 14px/1 var(--font-sans);
-}
-.c-toast b { padding: 0 14px; color: #FFC9A8; font-weight: 600; }
 .c-bulb {
   width: 44px;
   height: 44px;
@@ -1767,24 +1608,6 @@ button.c-row.on:hover { background: var(--accent-soft); }
   cursor: pointer;
 }
 .c-shell-more:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-.c-shell-search {
-  flex: 1;
-  max-width: 360px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: var(--control-md);
-  padding: 0 14px;
-  border-radius: var(--radius-pill);
-  background: var(--sunken);
-  color: var(--ink-3);
-  box-sizing: border-box;
-  border: none;
-  font: 400 14px/1 var(--font-sans);
-  cursor: pointer;
-  justify-content: flex-start;
-}
-.c-shell-search:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .c-shell-burger {
   display: none;
   width: 40px;
@@ -1819,8 +1642,6 @@ button.c-row.on:hover { background: var(--accent-soft); }
   .c-shell-main { margin-left: 0; }
   .c-shell-burger { display: inline-flex; }
   .c-shell-content { padding: var(--space-4) var(--space-4) calc(84px + var(--space-4)); }
-  .c-shell-search { max-width: none; }
-  .c-shell-topbar.hide-mobile { display: none; }
   .c-shell-backdrop { display: block; position: fixed; inset: 0; background: var(--color-scrim, rgba(27, 25, 22, .4)); z-index: 55; }
   /* .c-tabbar — ширина 390px из макета (Figma-фрейм); в реальной
      разметке растягивается на весь экран. */
@@ -2122,23 +1943,6 @@ button.c-row.on:hover { background: var(--accent-soft); }
 
 .c-lec-filters { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
 .c-lec-filters-end { display: flex; align-items: center; gap: var(--space-3); }
-.c-lec-search.c-lec-search-narrow { width: 260px; }
-
-.c-lec-search {
-  height: var(--control-md);
-  width: 300px;
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  border: 1px solid var(--input-border);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 14px;
-  box-sizing: border-box;
-  color: var(--ink-3);
-}
-.c-lec-search input { border: none; background: none; outline: none; flex: 1; min-width: 0; font: 400 14px/1 var(--font-sans); color: var(--ink); }
-.c-lec-search input::placeholder { color: var(--ink-3); }
 
 .c-lec-period {
   flex: none;
@@ -2224,7 +2028,6 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .c-lec-m-head { display: flex; flex-direction: column; gap: 2px; }
 .c-lec-m-head-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
 .c-lec-m-head-row h1 { margin: 0; font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em; }
-.c-lec-m-head-row .sub-back { display: inline-flex; }
 .c-lec-m-head-actions { display: flex; gap: 8px; }
 .c-lec-m-icon {
   width: 44px;
@@ -2600,9 +2403,6 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .c-schedule-grid { display: grid; gap: 4px 8px; align-items: stretch; }
 .c-schedule-dayhead { padding: 0 4px 8px; font-size: 13px; font-weight: 600; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
 .c-schedule-dayhead.today { color: var(--accent-strong); }
-.c-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
-.c-dot-accent { background: var(--accent); }
-.c-dot-danger { background: var(--danger); }
 .c-schedule-time { display: flex; flex-direction: column; justify-content: center; font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; line-height: 16px; }
 .c-schedule-time strong { font-size: 13px; color: var(--ink-2); }
 .c-schedule-cell { padding: 2px; min-height: 84px; }
@@ -2749,14 +2549,11 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .c-tasks-subject-row-name { display: flex; align-items: center; gap: 10px; }
 .c-tasks-subject-row-count { color: var(--ink-3); font-variant-numeric: tabular-nums; }
 
-.c-tasks-m-pills { display: none; }
-
 @media (max-width: 1023px) {
   .c-tasks-head { display: none; }
   .c-tasks-m-head { display: flex; }
   .c-tasks-aside { display: none; }
   .c-tasks-cols { flex-direction: column; align-items: stretch; }
-  .c-tasks-m-pills { display: flex; }
 }
 
 /* ============================================================
@@ -2934,9 +2731,6 @@ button.c-row.on:hover { background: var(--accent-soft); }
 .c-ticket-source-remove { flex: none; background: none; border: none; color: var(--ink-3); cursor: pointer; display: inline-flex; padding: 4px; border-radius: var(--radius-sm); }
 .c-ticket-source-remove:hover { background: var(--sunken); color: var(--ink); }
 .c-ticket-source-pick { position: relative; margin-top: var(--space-2); }
-.c-ticket-source-pick-input { width: 100%; height: var(--control-md); border: 1px solid var(--line-strong); border-radius: var(--radius-md); padding: 0 12px; font: 400 14px/1 var(--font-sans); box-sizing: border-box; background: var(--surface); color: var(--ink); }
-.c-ticket-source-pick-input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-.c-ticket-source-pick-menu.c-menu { position: absolute; top: calc(100% + 4px); left: 0; right: 0; width: auto; z-index: 10; max-height: 240px; overflow-y: auto; }
 
 @media (max-width: 1023px) {
   .c-ticket-cols { flex-direction: column; }
