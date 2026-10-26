@@ -4,6 +4,8 @@
  * поэтому доступны `updated`/`collectionId`/`collectionName` без
  * индексной сигнатуры `[key: string]: unknown`.
  */
+
+import { MS_PER_DAY } from "./localDate";
 export interface PbRecord {
   id: string;
   created: string;
@@ -790,7 +792,7 @@ export function examDaysLeft(e: Exam, now: Date = new Date()): number | null {
   if (Number.isNaN(target.getTime())) return null;
   const startOfDay = (d: Date) =>
     Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
-  return Math.round((startOfDay(target) - startOfDay(now)) / 86400000);
+  return Math.round((startOfDay(target) - startOfDay(now)) / MS_PER_DAY);
 }
 
 /** Статус билета с безопасным значением по умолчанию. */

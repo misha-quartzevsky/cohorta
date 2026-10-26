@@ -3,6 +3,9 @@
  * чтобы не ловить сдвиги часовых поясов. Недели — с понедельника.
  */
 
+/** Миллисекунд в сутках (для разностей дат; округление остаётся на стороне вызывающего). */
+export const MS_PER_DAY = 86_400_000;
+
 /** Сегодня в локальной зоне как YYYY-MM-DD. */
 export function todayStr(now: Date = new Date()): string {
   return toDateStr(now);
@@ -52,7 +55,7 @@ export function addDays(d: Date, days: number): Date {
 export function daysBetween(a: Date, b: Date): number {
   const ma = new Date(a.getFullYear(), a.getMonth(), a.getDate()).getTime();
   const mb = new Date(b.getFullYear(), b.getMonth(), b.getDate()).getTime();
-  return Math.round((mb - ma) / 86400000);
+  return Math.round((mb - ma) / MS_PER_DAY);
 }
 
 /** 1 = понедельник … 7 = воскресенье. */

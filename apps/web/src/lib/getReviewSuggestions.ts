@@ -7,7 +7,7 @@
  * семестру относится её предмет, так смена семестра не меняет её поведение.
  */
 
-import { toDateStr, addDays, fromDateStr } from "./localDate";
+import { toDateStr, addDays, fromDateStr, MS_PER_DAY } from "./localDate";
 
 export type SuggestionKind = "quiz_yesterday" | "review" | "stale";
 
@@ -52,7 +52,7 @@ const MAX_SUGGESTIONS = 3;
 function daysSince(dateStr: string | null, today: Date): number {
   if (!dateStr) return Infinity;
   const ms = today.getTime() - fromDateStr(dateStr).getTime();
-  return Math.round(ms / 86400000);
+  return Math.round(ms / MS_PER_DAY);
 }
 
 /**

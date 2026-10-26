@@ -16,6 +16,7 @@
 import { useRecentLectures } from "./useRecentLectures";
 import { parsePbDate } from "../lib/format";
 import { lectureCourseId } from "../lib/types";
+import { MS_PER_DAY } from "../lib/localDate";
 
 /** Окно, в пределах которого правка лекции считается «недавней». */
 export const ACTIVE_WINDOW_DAYS = 14;
@@ -44,7 +45,7 @@ export function useCourseProgress(
   // передаёт courses.map(...)), так что мемоизация по ссылке ничего бы не
   // сэкономила. Список лекций на дашборде — десятки записей, пересчёт дешёв.
   const wanted = new Set(courseIds);
-  const cutoff = Date.now() - ACTIVE_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+  const cutoff = Date.now() - ACTIVE_WINDOW_DAYS * MS_PER_DAY;
   const map: Record<string, CourseProgress> = {};
   for (const lec of lectures) {
     const courseId = lectureCourseId(lec);

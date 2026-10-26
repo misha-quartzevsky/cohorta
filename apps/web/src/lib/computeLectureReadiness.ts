@@ -3,6 +3,8 @@
  * квизам и повторениям этой лекции. Билеты в расчёт не входят.
  */
 
+import { MS_PER_DAY } from "./localDate";
+
 export interface ReadinessQuestion {
   id: string;
   /** relation → quizzes, нужно для определения «последнего квиза». */
@@ -61,7 +63,7 @@ function normalizeTopic(topic: string): string {
 
 function fullDaysBetween(from: Date, to: Date): number {
   const ms = to.getTime() - from.getTime();
-  return Math.max(0, Math.floor(ms / 86400000));
+  return Math.max(0, Math.floor(ms / MS_PER_DAY));
 }
 
 /** score вопроса: последние два ответа, 0.6·последний + 0.4·предпоследний. */
