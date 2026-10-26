@@ -4,6 +4,9 @@
  */
 import {
   computeLectureReadiness,
+  MAX_WEAK_TOPICS,
+  normalizeTopic,
+  WEAK_TOPIC_ACCURACY,
   type ReadinessAnswer,
   type ReadinessQuestion,
 } from "./computeLectureReadiness";
@@ -36,10 +39,8 @@ export interface AttemptStats {
   weak: AttemptTopic[];
 }
 
-export const WEAK_ACCURACY = 0.6;
-
 export function topicKey(topic: string): string {
-  return topic.toLowerCase().trim();
+  return normalizeTopic(topic);
 }
 
 /** Если вопрос в прохождении отвечали несколько раз, считается последний ответ. */
@@ -63,9 +64,9 @@ export function attemptStats(questions: QuestionRef[], answers: AnswerRef[]): At
   }
   const topics = Array.from(byTopic.values()).map((t) => ({ ...t, accuracy: t.correct / t.total }));
   const weak = topics
-    .filter((t) => t.accuracy < WEAK_ACCURACY)
+    .filter((t) => t.accuracy < WEAK_TOPIC_ACCURACY)
     .sort((a, b) => a.accuracy - b.accuracy)
-    .slice(0, 3);
+    .slice(0, MAX_WEAK_TOPICS);
   return { correct, total, topics, weak };
 }
 

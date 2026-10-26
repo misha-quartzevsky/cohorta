@@ -57,7 +57,11 @@ export function lectureStatus(percent: number | null): LectureStatus {
   return "done";
 }
 
-function normalizeTopic(topic: string): string {
+/** Тема «слабая» при доле верных ниже порога; в списке слабых тем не больше MAX_WEAK_TOPICS (панель, итог квиза). */
+export const WEAK_TOPIC_ACCURACY = 0.6;
+export const MAX_WEAK_TOPICS = 3;
+
+export function normalizeTopic(topic: string): string {
   return topic.toLowerCase().trim();
 }
 
@@ -181,9 +185,9 @@ export function computeLectureReadiness(
   );
 
   const weakTopics = [...topics]
-    .filter((t) => t.accuracy < 0.6)
+    .filter((t) => t.accuracy < WEAK_TOPIC_ACCURACY)
     .sort((a, b) => a.accuracy - b.accuracy)
-    .slice(0, 3);
+    .slice(0, MAX_WEAK_TOPICS);
 
   return { percent, topics, lastActivityAt, weakTopics };
 }

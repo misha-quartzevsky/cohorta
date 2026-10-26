@@ -7,6 +7,7 @@
  * семестру относится её предмет, так смена семестра не меняет её поведение.
  */
 
+import { READINESS_THRESHOLDS } from "./computeLectureReadiness";
 import { toDateStr, addDays, fromDateStr, MS_PER_DAY } from "./localDate";
 
 export type SuggestionKind = "quiz_yesterday" | "review" | "stale";
@@ -44,7 +45,8 @@ export interface ReviewSuggestion {
   href: string;
 }
 
-const REVIEW_THRESHOLD = 75;
+/** Порог «повторить» совпадает с порогом «Выучено» в готовности лекции: одно число на обоих экранах. */
+const REVIEW_THRESHOLD = READINESS_THRESHOLDS.done;
 const REVIEW_STALE_DAYS = 3;
 const NOT_OPENED_DAYS = 7;
 const MAX_SUGGESTIONS = 3;
