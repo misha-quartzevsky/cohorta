@@ -45,9 +45,6 @@ export interface UseActivityHeatmapResult {
   loading: boolean;
 }
 
-/** Number of days rendered in the heatmap grid (≈3 months). */
-export const HEATMAP_DAYS = 13 * 7;
-
 /**
  * На какие day-key атрибутируется запись: день создания и, если правка была
  * в другой день, ещё и день правки. Раньше created и updated считались

@@ -843,11 +843,6 @@ export function groupOwnerId(g: Group): string {
   return String(g.owner ?? "");
 }
 
-/** Id группы, к которой относится членство. */
-export function memberGroupId(m: GroupMember): string {
-  return String(m.group ?? "");
-}
-
 /** Id пользователя в записи членства. */
 export function memberUserId(m: GroupMember): string {
   return String(m.user ?? "");

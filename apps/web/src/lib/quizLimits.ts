@@ -18,8 +18,3 @@ export const QUIZ_SIZES: { size: QuizSize; minutes: number }[] = [
 ];
 
 export const QUIZ_DEFAULT_SIZE: QuizSize = 8;
-
-/** Сколько знаков не хватает до порога (0 — хватает). */
-export function charsMissing(charCount: number): number {
-  return Math.max(0, QUIZ_MIN_CHARS - charCount);
-}
