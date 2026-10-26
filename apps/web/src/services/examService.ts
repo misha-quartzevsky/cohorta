@@ -14,7 +14,7 @@
  * без него запись не примет.
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import type {
   Exam,
   Lecture,
@@ -24,11 +24,6 @@ import type {
 } from "../lib/types";
 import type { UploadedImage } from "./lectureService";
 import { FIELDS, ticketAttachmentNames, stripHtml } from "../lib/types";
-
-/** Id текущего пользователя ("" — не залогинен). */
-function currentUserId(): string {
-  return String(pb.authStore.record?.id ?? "");
-}
 
 // ---------------------------------------------------------------------------
 // Экзамен

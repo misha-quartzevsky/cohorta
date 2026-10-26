@@ -10,16 +10,11 @@
  * (= `String(order)`), уникальным в пределах пользователя.
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import type { PeriodType, Semester } from "../lib/types";
 import { FIELDS, semesterOrder } from "../lib/types";
 import { withTimeout } from "../lib/withTimeout";
 import { pbDateOnly } from "../lib/localDate";
-
-/** Id текущего пользователя ("" — не залогинен). */
-function currentUserId(): string {
-  return String(pb.authStore.record?.id ?? "");
-}
 
 /**
  * Загрузить периоды текущего пользователя, отсортированные по

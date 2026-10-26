@@ -6,7 +6,7 @@
  * «Начать конспект» (идемпотентное создание лекции для пары).
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import type {
   ScheduleSettings,
   ScheduleSlot,
@@ -19,10 +19,6 @@ import { slugify } from "../lib/slugify";
 import { uniqueSlugForCollection } from "./genericService";
 import { mondayOf, toDateStr, pbDateOnly } from "../lib/localDate";
 import { findLectureForOccurrence } from "../lib/weekParity";
-
-function currentUserId(): string {
-  return String(pb.authStore.record?.id ?? "");
-}
 
 /** См. taskService.normalizeTask: PocketBase отдаёт `date` полным ISO. */
 function normalizeSettings(s: ScheduleSettings): ScheduleSettings {

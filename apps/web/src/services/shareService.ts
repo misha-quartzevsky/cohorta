@@ -10,16 +10,11 @@
  * Кандидаты на выдачу — участники групп автора (ростеры).
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import type { LectureShare, GroupMember, User } from "../lib/types";
 import { FIELDS, memberUserId } from "../lib/types";
 import { userName } from "../lib/format";
 import { fetchRoster } from "./groupService";
-
-/** Id текущего пользователя ("" — не залогинен). */
-function currentUserId(): string {
-  return String(pb.authStore.record?.id ?? "");
-}
 
 /** Активные выдачи доступа к лекции (для автора). */
 export async function fetchShares(lectureId: string): Promise<LectureShare[]> {

@@ -4,14 +4,10 @@
  * ============================================
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import type { Task, TaskSource } from "../lib/types";
 import { FIELDS } from "../lib/types";
 import { todayStr, pbDateOnly } from "../lib/localDate";
-
-function currentUserId(): string {
-  return String(pb.authStore.record?.id ?? "");
-}
 
 /**
  * PocketBase отдаёт `due`/`done_at` полным ISO-datetime, хотя хранится

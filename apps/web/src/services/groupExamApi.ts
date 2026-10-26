@@ -8,11 +8,10 @@
  * клиенту не отдаются вовсе, поэтому здесь нет ни их числа, ни названий.
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import type { ExamTicket, Lecture } from "../lib/types";
 import { ticketAnswer } from "../lib/types";
 
-const me = () => String(pb.authStore.record?.id ?? "");
 
 export interface GroupExamRow {
   id: string;
@@ -142,7 +141,7 @@ export async function takeMyAnswer(ticketId: string, sourceTicketId: string): Pr
 export async function findMyAnswerSource(subjectTitle: string, ticketNumber: number): Promise<{ id: string; answer: string } | null> {
   const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
   const exams = await pb.collection("exams").getFullList({
-    filter: pb.filter("owner = {:u} && group = ''", { u: me() }),
+    filter: pb.filter("owner = {:u} && group = ''", { u: currentUserId() }),
     expand: "course",
   });
   const mine = exams.find((x) => norm(String((x.expand as { course?: { name?: string } } | undefined)?.course?.name ?? "")) === norm(subjectTitle));
@@ -169,7 +168,7 @@ export async function joinGroupExam(myExamId: string, groupExamId: string): Prom
 /** Мои лекции для окна привязки к билету («Мои»), с предметом. */
 export async function fetchMyLecturesForPicker(): Promise<Lecture[]> {
   return pb.collection("lectures").getFullList<Lecture>({
-    filter: pb.filter("owner = {:u} && deleted_at = ''", { u: me() }),
+    filter: pb.filter("owner = {:u} && deleted_at = ''", { u: currentUserId() }),
     expand: "field",
     sort: "-updated",
   });

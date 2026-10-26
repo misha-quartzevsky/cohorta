@@ -7,7 +7,7 @@
  * `lectures` collection.
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import { moveToTrash } from "./trashService";
 import type { Lecture } from "../lib/types";
 import { FIELDS, lectureFiles } from "../lib/types";
@@ -15,11 +15,6 @@ import { slugify } from "../lib/slugify";
 import { todayStr } from "../lib/localDate";
 import { uniqueSlugForCollection } from "./genericService";
 import { applyLectureTags } from "./tagService";
-
-/** Id текущего пользователя ("" — не залогинен). */
-function currentUserId(): string {
-  return String(pb.authStore.record?.id ?? "");
-}
 
 /**
  * Fetch a single lecture by its PocketBase ID.

@@ -8,7 +8,7 @@
  * админку PocketBase (new → done).
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import type { PbRecord } from "../lib/types";
 
 export interface DeletionRequest extends PbRecord {
@@ -28,10 +28,6 @@ export class GroupOwnerError extends Error {
     this.name = "GroupOwnerError";
     this.groupName = groupName;
   }
-}
-
-function currentUserId(): string {
-  return String(pb.authStore.record?.id ?? "");
 }
 
 /** Незакрытый запрос текущего пользователя, либо null. */

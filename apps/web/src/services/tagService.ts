@@ -8,7 +8,7 @@
  * so "tagging a lecture" means updating the tag records.
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import type { Tag } from "../lib/types";
 import { FIELDS, tagLectureIds } from "../lib/types";
 
@@ -33,7 +33,7 @@ export async function createTag(name: string, color: string): Promise<Tag> {
     [FIELDS.tagName]: name.trim(),
     [FIELDS.tagColor]: color,
     // Тег принадлежит пользователю (правила закрыты по владельцу, волна C).
-    owner: String(pb.authStore.record?.id ?? ""),
+    owner: currentUserId(),
   });
 }
 

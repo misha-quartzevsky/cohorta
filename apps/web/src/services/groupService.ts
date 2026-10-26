@@ -21,14 +21,9 @@
  * конспектов и точечного шеринга (это этап B+).
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import type { Group, GroupMember, LecturePreview } from "../lib/types";
 import { FIELDS } from "../lib/types";
-
-/** Id текущего пользователя ("" — не залогинен). */
-function currentUserId(): string {
-  return String(pb.authStore.record?.id ?? "");
-}
 
 export interface GroupCandidate {
   id: string;

@@ -11,14 +11,14 @@
 
 import { ClientResponseError } from "pocketbase";
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import type { DegreeLevel, User } from "../lib/types";
 import { FIELDS } from "../lib/types";
 import { withTimeout } from "../lib/withTimeout";
 
 /** Id текущего пользователя. Кидает, если сессии нет. */
 function requireUserId(): string {
-  const id = String(pb.authStore.record?.id ?? "");
+  const id = currentUserId();
   if (!id) throw new Error("Нет активной сессии.");
   return id;
 }

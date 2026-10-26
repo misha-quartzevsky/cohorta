@@ -22,3 +22,8 @@ export const pb = new PocketBase(url);
 // Отключаем "авто-отмену" запросов — иначе в dev-режиме React
 // (двойной вызов useEffect) отменяет наш запрос к курсам/лекциям.
 pb.autoCancellation(false);
+
+/** Id текущего пользователя ("" — не залогинен). */
+export function currentUserId(): string {
+  return String(pb.authStore.record?.id ?? "");
+}

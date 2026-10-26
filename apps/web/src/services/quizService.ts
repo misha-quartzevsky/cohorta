@@ -6,7 +6,7 @@
  * квиза и вопросов, запись ответов, «плохой вопрос» / скрыть.
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import { FIELDS } from "../lib/types";
 import type { Quiz, QuizQuestion, QuizAnswer, QuizQuestionType } from "../lib/types";
 import { extractText, normalizeText } from "../lib/extractText";
@@ -42,10 +42,6 @@ async function errorFrom(res: Response): Promise<QuizError> {
     limit: typeof data.limit === "number" ? data.limit : undefined,
     used: typeof data.used === "number" ? data.used : undefined,
   });
-}
-
-function currentUserId(): string {
-  return String(pb.authStore.record?.id ?? "");
 }
 
 /** Текст лекции и его хеш — используется и для кэша, и для запуска генерации. */

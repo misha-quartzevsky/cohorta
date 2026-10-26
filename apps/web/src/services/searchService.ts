@@ -18,15 +18,11 @@
  * сервера, не только в интерфейсе (раздел 5 инструкции).
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import type { Course, Lecture, LecturePreview } from "../lib/types";
 import { FIELDS, courseName, lectureTitle } from "../lib/types";
 import { fetchMyGroups, fetchRoster } from "./groupService";
 import { fetchPreviews, fetchRosterPeople, fetchShares, subjectsOf } from "./groupApi";
-
-function currentUserId(): string {
-  return String(pb.authStore.record?.id ?? "");
-}
 
 export interface SearchLectureHit {
   id: string;
