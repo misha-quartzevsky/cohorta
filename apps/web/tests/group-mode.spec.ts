@@ -14,29 +14,11 @@
  */
 
 import { test, expect, type Page } from "@playwright/test";
-import { LAST_SEMESTER_KEY, completeOnboardingFast } from "./helpers";
-
-/** Регистрирует нового пользователя и оставляет его залогиненным на /s/1. */
-async function registerFresh(page: Page): Promise<string> {
-  const email = `grp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@example.com`;
-  await page.addInitScript(
-    ({ key, slug }) => localStorage.setItem(key, slug),
-    { key: LAST_SEMESTER_KEY, slug: "1" }
-  );
-  await page.goto("/login");
-  await page.locator(".login-switch").dispatchEvent("click");
-  await page.locator('input[type="email"]').fill(email);
-  const pw = page.locator('input[type="password"]');
-  await pw.nth(0).fill("test12345");
-  await pw.nth(1).fill("test12345");
-  await pw.nth(1).press("Enter");
-  await completeOnboardingFast(page);
-  return email;
-}
+import { registerFresh } from "./helpers";
 
 async function switchToGroup(page: Page): Promise<void> {
   await page
-    .locator(".mode-toggle-btn", { hasText: "Группа" })
+    .locator(".c-shell-mode button", { hasText: "Группа" })
     .dispatchEvent("click");
   await page.waitForURL(/\/s\/[^/]+\/group$/);
 }
@@ -44,9 +26,9 @@ async function switchToGroup(page: Page): Promise<void> {
 test("по умолчанию Соло: нет пункта «Группа», /group редиректит", async ({
   page,
 }) => {
-  await registerFresh(page);
+  await registerFresh(page, "grp");
   await expect(
-    page.locator(".sidebar-nav-item", { hasText: "Группа" })
+    page.locator(".c-shell-nav a", { hasText: "Группа" })
   ).toHaveCount(0);
 
   await page.goto("/s/1/group");

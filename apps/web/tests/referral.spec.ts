@@ -25,7 +25,7 @@ async function registerFresh(page: Page, invite?: string): Promise<string> {
     { key: LAST_SEMESTER_KEY, slug: "1" }
   );
   await page.goto(invite ? `/login?invite=${invite}` : "/login");
-  await page.locator(".login-switch").dispatchEvent("click");
+  await page.locator(".c-auth-switch a").dispatchEvent("click");
   await page.locator('input[type="email"]').fill(email);
   const pw = page.locator('input[type="password"]');
   await pw.nth(0).fill(PASSWORD);
