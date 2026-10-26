@@ -38,11 +38,11 @@ test("1. точка входа экзамена на странице курса
 test("2. центр подготовки: hero, прогресс, карта чипов", async ({ page }) => {
   await loginDemo(page);
   await page.goto(EXAM_BASE);
-  await expect(page.locator(".exam-hero-title")).toContainText("Математический анализ");
-  await expect(page.locator(".exam-progress-text")).toHaveText("2 из 8 готовы");
-  await expect(page.locator(".exam-map-grid .exam-chip")).toHaveCount(8);
-  await expect(page.locator(".exam-chip.ready")).toHaveCount(2);
-  await expect(page.locator(".exam-chip.draft")).toHaveCount(1);
+  await expect(page.locator(".c-exam-head h1")).toContainText("Математический анализ");
+  await expect(page.locator(".c-exam-readiness").first()).toContainText("2 из 8 билетов готовы");
+  await expect(page.locator(".c-exam-map-grid .c-exam-chip")).toHaveCount(8);
+  await expect(page.locator(".c-exam-chip.ready")).toHaveCount(2);
+  await expect(page.locator(".c-exam-chip.draft")).toHaveCount(1);
 });
 
 test("3–4. импорт: разбор текста + пометка занятых номеров", async ({ page }) => {
@@ -68,9 +68,9 @@ test("5. шпаргалка: только ready-билеты, формула о�
 }) => {
   await loginDemo(page);
   await page.goto(`${EXAM_BASE}/cheatsheet`);
-  await expect(page.locator(".exam-cheatsheet-ticket")).toHaveCount(2);
+  await expect(page.locator(".c-cheatsheet-item")).toHaveCount(2);
   await expect(
-    page.locator(".exam-cheatsheet-ticket").first().locator("math-div.math-render")
+    page.locator(".c-cheatsheet-item").first().locator("math-div.math-render")
   ).toBeVisible({ timeout: 10000 });
 });
 
@@ -91,9 +91,11 @@ test("7. дашборд: блок «экзамен скоро» скрыт бе�
 }) => {
   await loginDemo(page);
   await page.goto("/s/demo");
-  await expect(page.locator(".resume-block")).toBeVisible();
-  await expect(page.locator(".resume-label")).not.toContainText("Экзамен через");
-  await expect(page.locator(".resume-label")).not.toContainText("Экзамен сегодня");
+  await expect(page.locator(".c-dash-head h1")).toBeVisible();
+  // Блок «Экзамен · …» на дашборде появляется только у экзамена с датой.
+  await expect(page.locator(".c-dash h2", { hasText: "Экзамен ·" })).toHaveCount(0);
+  await expect(page.locator(".c-dash")).not.toContainText("Экзамен через");
+  await expect(page.locator(".c-dash")).not.toContainText("Экзамен сегодня");
 });
 
 test("8. билет: empty → draft (автосейв) → ready (кнопка)", async ({
@@ -115,15 +117,17 @@ test("8. билет: empty → draft (автосейв) → ready (кнопка)
 
     // статус сам стал draft — на карте чипов теперь 2 draft (#3 + #4)
     await page.goto(EXAM_BASE);
-    await expect(page.locator(".exam-chip.draft")).toHaveCount(2);
+    await expect(page.locator(".c-exam-chip.draft")).toHaveCount(2);
 
-    // ручное повышение до ready → markReady уводит на хаб, готовых 2 → 3
+    // ручное повышение до ready → markReady уводит на просмотр билета
+    // (раньше на хаб), на хабе готовых становится 2 → 3
     await page.goto(`${EXAM_BASE}/4/edit`);
     await page
       .locator("button", { hasText: "Отметить готовым" })
       .dispatchEvent("click");
-    await page.waitForURL(/\/exam$/, { timeout: 15000 });
-    await expect(page.locator(".exam-progress-text")).toHaveText("3 из 8 готовы");
+    await page.waitForURL(/\/exam\/4$/, { timeout: 15000 });
+    await page.goto(EXAM_BASE);
+    await expect(page.locator(".c-exam-readiness").first()).toContainText("3 из 8 билетов готовы");
   } finally {
     await restoreTicket(request, 4);
   }
