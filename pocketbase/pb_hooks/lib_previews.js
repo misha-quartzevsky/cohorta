@@ -99,7 +99,6 @@ function resyncUserGroupPreviews(app, groupId, userId) {
 }
 
 module.exports = {
-  enabledGroups,
   syncPreviewForLecture,
   resyncUserGroupPreviews,
 };

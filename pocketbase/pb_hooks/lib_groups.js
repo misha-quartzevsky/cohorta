@@ -31,16 +31,6 @@ function isMember(app, groupId, userId) {
   return !!first(app, "group_members", "group = {:g} && user = {:u}", { g: groupId, u: userId });
 }
 
-/** Id первой общей группы двух людей или "" (нет общей группы). */
-function shareGroupId(app, userA, userB) {
-  if (!userA || !userB || userA === userB) return "";
-  for (const m of all(app, "group_members", "user = {:u}", { u: userA })) {
-    const gid = String(m.get("group"));
-    if (isMember(app, gid, userB)) return gid;
-  }
-  return "";
-}
-
 /**
  * Группа из пути маршрута, только для владельца. Не участнику группа не
  * раскрывается (404), участнику-не-владельцу — 403.
@@ -280,7 +270,6 @@ module.exports = {
   first,
   all,
   isMember,
-  shareGroupId,
   ownerOnlyGroup,
   memberSubgroup,
   subgroupGroupId,
