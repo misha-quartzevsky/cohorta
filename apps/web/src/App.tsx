@@ -63,7 +63,6 @@ import {
   GroupTicketRoute,
   GroupCreatePage,
 } from "./pages/group/GroupRoutes";
-import OnboardingWizard from "./features/onboarding/OnboardingWizard";
 import OnboardingNew from "./features/onboarding/OnboardingNew";
 import LectureLayout from "./components/LectureLayout";
 import AppLayout from "./components/AppLayout";
@@ -168,7 +167,7 @@ function App() {
           )}
           <Route element={<ProtectedRoute />}>
             {/* Мастер онбординга — фуллскрин, без сайдбара, вне AppLayout. */}
-            <Route path="/onboarding" element={isNewUI() ? <OnboardingNew /> : <OnboardingWizard />} />
+            <Route path="/onboarding" element={<OnboardingNew />} />
             {/* Квиз — фуллскрин, без сайдбара и нижней панели (spec 6.3). */}
             <Route path="/quiz/:lectureId" element={<QuizPage />} />
             <Route element={<AppLayout />}>
