@@ -236,6 +236,68 @@
 
 Тема 5 не начиналась. Рекомендация: 22 красных закрыты, участки семестра, карточек, экзаменов и реферала снова под защитой; без защиты остаются экран группы (Д9) и микрофон (Д11).
 
+### Запуск 4 (28.10): тема 5, удаление старого UI и флага VITE_NEW_UI
+Перед запуском (решения к запуску 3): `group-mode` «Соло: прямой заход на /group» переписан под экран «Вступи в свою группу» (Screen-group-join, fixme снят); микрофон (Д11) и Д9 остаются fixme; Д5 и «Премиум до» не добавлялись; `scripts/probe-dom.mjs` удалён. Тестов fixme теперь 6 (Д9: 5, Д11: 1).
+
+**Базовая линия (до правок):** tsc чисто, oxlint 11, vitest 301/301, build проходит, Playwright 125 прошли / 6 fixme / 0 красных. Скриншоты «до»: 20 маршрутов × 1440 и 390 (42 файла, вне репозитория, `%TEMP%\cohorta-shotsase3`, снимались со старого кода в отдельном worktree на коммите b8b604f).
+
+**Коммиты (16, диапазон b8b604f..HEAD):**
+| Коммит | Шаг |
+|---|---|
+| 066d31b | 5.1 `isNewUI()` всегда true (точка отката) |
+| dcf95af | 5.2 `Toast` перенесён в `ui/` |
+| f9096ad | 5.3a дашборд: `Dashboard`, `pages/dashboard/*` (кроме `StartCard`), `useActivityTimeline`, `useCourseProgress` |
+| e431e92 | 5.3b лекции: `LectureViewLegacy`, `LecturesPage`, `LectureEditor`, `ReadinessBadge`, `ShareAccessButton`, `ShareDialog`, `ShareToGroupButton` |
+| 4558b0f | 5.3c `Login`, `PrivacyPage` |
+| e63ee73 | 5.3d `GroupPage`, `useGroups`; из `groupService.ts` убраны экспорты старого экрана |
+| 174099e | 5.3e `NoteCreate`, `SchedulePage`, `SlotForm`, `TasksPage`, `TaskRow` |
+| c044a6f | 5.3f `ExamHubPage`, `ExamImportPage`, `TicketView`, `TicketEdit`, `CheatsheetPage`, `ExamParticipantsPanel`, `LinkedLecturesField`, осиротевший `shareService` |
+| 37bffc3 | 5.3g `CardLibraryPage`, `CardStudyPage`, `FlashcardPlayer` |
+| 58ced67 | 5.3h `OnboardingWizard`, `steps/*`, `labels` |
+| 183fac7 | 5.4 старый каркас: `GlobalSidebar`, `BottomTabBar`, `DocumentScrollbar`/`ScrollBar`, `TableOfContents`, `ModeToggle`, `AccountActions`, `useLectureSearch` |
+| a3cf52e | 5.5 `components/ui/` (14 файлов), `DesignPage`, `subjectPalette.ts` |
+| 71dad30 | 5.6 флаг: `isNewUI`, ветки в `App.tsx`, `LectureView`, `.env.example`, комментарии; `Header` явно `return null` |
+| 25d6221 | 5.7a мёртвые CSS-правила: `App.css` −314 класса, `components.css` −113 |
+| b2742b4 | 5.7b `App.css` слит в `styles/components.css`, файл удалён |
+| c572012 | 5.8 `*New` → без суффикса (16 файлов, `LectureViewNew` → `LectureView`) |
+
+**Размер:** 112 файлов, +4829 / −18687 (в плюсе в основном перенос `App.css` в `components.css`, ~3100 строк; `src` без учёта этого: удалено 75 файлов). `App.tsx` 336 → ~230 строк.
+
+**Остаётся из-за бэклога (по графу импортов, удалять нельзя):** страницы `NotesPage`, `ExamsPage`, `CoursesPage`, `MorePage`, `DeckEditorPage`; от них зависят только они: `components/AddTile`, `ConfirmDialog`, `CourseCard`, `CourseFormTile`, `CourseTile`, `ExamCourseCard`, `InlineEditor`, `KebabMenu`, `LectureTile`; `hooks/useConfirmDialog`, `useCourseForm`; `lib/courseGradient`, `lib/tileActions`. `lib/colors.ts` и `courseService.randomCourseColor` живы и без бэклога (`SubjectFormDialog`). Остались по решению: `Header` (`return null`, тело и микрофон сохранены, комментарий «см. бэклог: голосовой ввод»), `SpeechProvider`, `useSpeech`, `VerifyEmailPage`, `VITE_AUTH_EMAIL`, заготовки волны C (`joinGroupByCode`, `fetchCommonTickets`, `resetInviteCode`, `transferGroup`, маршруты `assign` и `DELETE share-subgroup`), поле `courses.color`, миграции, API-правила.
+
+**Отступления от плана (и почему):**
+- `groupService.ts` не удалён целиком: им пользуются живые `AccountDeleteFlow`, `JoinGroupPage`, `searchService`. Удалены только экспорты, которыми пользовался старый экран группы; остались `fetchMyGroups`, `fetchRoster`, `joinByInviteCode`, `fetchGroupPreview`, `GroupPreview`, `resetInviteCode`, `transferGroup`.
+- `StepCityUniversity`, `StepPeriods`, `labels`, `steps/*` оказались не нужны новому онбордингу и настройкам: удалены.
+- `DesignPage` удалена (dev-страница `/_design` старых `ds-*`, держала `components/ui` и `subjectPalette`).
+- Шрифт Inter 700 оставлен: `font-weight: 700/800` используется в редакторе и лекции (`components.css`). Комментарий в `main.tsx` обновлён.
+- При слиянии `App.css` в `components.css` из его `:root` убраны 28 переменных, которые `tokens.css` и раньше переопределял (итоговые значения те же); 23 App-only переменные остались. Порядок каскада сохранён (бывший `App.css` идёт первым в файле).
+
+**Проверки (после каждого коммита):** tsc, oxlint (11), vitest 301/301, build, Playwright затронутых спеков; ни один коммит не оставил красных. Финал: tsc чисто, oxlint 11, vitest 301/301, build проходит, **Playwright 125 прошли / 6 fixme / 0 красных**.
+
+**Скриншоты 20 × 2:** `final` против `base3`: 39 из 42 совпадают побайтно. Различаются `d-groupnew`, `m-groupnew` (случайный код приглашения на экране) и `d-lecture` (подпись в шапке «Сохранено» / «Обновлено только что»: зависит от того, успел ли сработать автосейв лекции при съёмке; в промежуточных снимках `mid3`, `css2` на тех же файлах CSS она совпадала). Визуальных расхождений от удаления кода и CSS нет.
+
+**Заключение ревьюера (независимый субагент, правок не вносил): можно принимать, блокеров нет.** Потерянных экспортов, сломанных импортов, осиротевших файлов нет; все файлы из списка «остаётся» на месте и достижимы; из 437 удалённых CSS-классов ни один не используется динамически, правила Tiptap, ProseMirror, excalidraw, math и `cover-*` не затронуты; `var(--x)` без определения нет; в `Header.tsx` тело и микрофон сохранены. Находки, требующие вашего решения или внимания:
+- **Потеряно удаление колоды карточек (важно).** `deleteDeck` в `deckService.ts` теперь нигде не вызывается: его вызывал только удалённый `CardLibraryPage` (с подтверждением «Удалить колоду?»). В `CardsPage`, `DeckPage`, `DeckEditorPage` есть только удаление карточки. В макетах и `docs` решения об этом нет (удаление билета, для сравнения, записано в `decisions.md` как открытый вопрос). Нужно решение: вернуть удаление колоды в новый экран или принять потерю.
+- **`framer-motion` больше не используется** (его импортировал только удалённый `FlashcardPlayer`). Удаление из `package.json` и lock-файла не делал, нужно ваше слово.
+- **Функции без вызывающих после запуска** (кандидаты на уборку в теме 1/10, не удалялись): `setExamMode`, `fetchParticipants`, `addParticipant`, `removeParticipant`, `deleteTicket` (`examService.ts`); `showLectureToGroup`, `hideLectureFromGroup`, `createUnassignedLecture` (`lectureService.ts`); `requestDeletion` (`deletionService.ts`); `lectureOwnerId`, `lectureGroupId`, `groupOwnerId`, `memberUserId`, типы `LectureShare`, `PremiumGrant` (`lib/types.ts`); `transferGroup` и `resetInviteCode` (заготовки волны C, по решению остаются).
+- **Поиск похожих групп** (защита от фрагментации потока) исчез вместе со старым экраном; `GroupCreatePage` его не вызывает. Серверный маршрут `/api/groups/search` жив (его вызывает только `tests/group-access.spec.ts`). Осознанная потеря или вернуть в новый экран, решаете вы.
+- **Устаревшие комментарии** с именами удалённого (`GlobalSidebar`, `TableOfContents`, `App.css`, `*New.tsx`): `Header.tsx:1-12, 11`, `AppLayout.tsx:34`, `LectureLayout.tsx:14`, `lectureFrame.ts:51`, `uiShellContext.ts:8`, `AppShell.tsx:72, 156`, `useTocScan.ts`, `useProductSearch.ts`, `useLectures.ts`, `tokens.css`, `src/DESIGN.md`, `components.css` (несколько мест), `.clinerules` (почти целиком про удалённый код). Не правились.
+- **Легаси-алиасы в `tokens.css:191-215`** («удалить вместе с App.css»): часть не читается нигде (`--brand-1-hover`, `--brand-wash`, `--success-ink`, `--success-soft`, `--warning`, `--warning-ink`, `--warning-soft`), остальные ещё используются. Уборка отдельным шагом.
+- `tests/group-mode.spec.ts` обращается к 53 селекторам удалённого экрана группы в fixme-тестах (Д9): при написании новых UI-тестов их переписать, не оживлять.
+
+**Что не удалось проверить:**
+- Экраны, которых нет среди 20 маршрутов (квиз, мастер онбординга, сброс пароля, вход по ссылке `/join`, билет, шпаргалка, импорт билетов, плеер карточек, окна форм): только Playwright-спеками, снимков «до/после» нет. CSS для них чистился по `css-unused.mjs` (учитывает шаблонные префиксы и классы из БД), но пиксельной сверки нет.
+- Страницы `/schedule` и `/tasks` не покрыты спеками, только скриншотом.
+- Прод-значение `VITE_NEW_UI` в Cloudflare не проверялось (A0 закрыт решением владельца: новый UI единственный). Локальный `apps/web/.env` (вне git) по-прежнему содержит `VITE_NEW_UI=true`: переменная больше ничего не читает, её можно удалить.
+- Первая пара снимков со старого кода показала расхождение в `/schedule` («0 пар» вместо 13) из-за гонки загрузки при ожидании 700 мс; при ожидании 2,5 с оба кода дают одинаковый результат. Это особенность скрипта съёмки, не кода.
+
+**Нашёл по пути (запуск 4):**
+- `Header.tsx`: после явного `return null` остаётся недостижимый код; Firefox пишет предупреждение «unreachable code after return statement» в консоль. На oxlint не влияет (11).
+- Зависимости `framer-motion`, `lucide-react` и др. могли остаться без пользователей после удаления старого UI: `package.json` не трогался, проверка в теме 10.
+- `docs/design/ia/userflow.json`, `docs/decisions.md` содержат старые имена (`LoginPageNew`, `AppShellNew`, `LectureViewLegacy`, `ExamParticipantsPanel`): документы не правились.
+- `/login?invite=` работал только в старом `Login.tsx`; в новом интерфейсе приглашение идёт через `/join/КОД`.
+- `scripts/refactor-shots.mjs` и `scripts/css-unused.mjs` не закоммичены (ждут вашего ответа: коммитить или удалить).
+
 ## Разбор Playwright (27.10)
 
 Метод: песочница на копии `pocketbase/pb_data` (теперь `apps/web/scripts/e2e-sandbox.mjs`), красные спеки запускались по одной (`--workers=1`, trace и скриншот при падении, таймаут 15–40 с), для каждого записана первая упавшая строка и селектор, скриншот сверен с реальным экраном. Класс по доказательству: A (старый селектор или ожидание, продукт работает), B (окружение), C (дефект продукта, воспроизведён скриптом), D (тест проверяет то, чего в новом интерфейсе нет, ждёт решения). Код продукта не менялся.
