@@ -14,11 +14,11 @@
  */
 
 import { test, expect, type Page } from "@playwright/test";
-import { registerFresh } from "./helpers";
+import { LAST_SEMESTER_KEY, registerFresh } from "./helpers";
 
 async function switchToGroup(page: Page): Promise<void> {
   await page
-    .locator(".c-shell-mode button", { hasText: "Группа" })
+    .locator(".c-shell-mode [role=\"radio\"]", { hasText: "Группа" })
     .dispatchEvent("click");
   await page.waitForURL(/\/s\/[^/]+\/group$/);
 }
