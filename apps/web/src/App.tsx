@@ -29,14 +29,9 @@ import CardLibraryPage from "./pages/CardLibraryPage";
 import CardStudyPage from "./pages/CardStudyPage";
 import DeckEditorPage from "./pages/DeckEditorPage";
 import ExamsPage from "./pages/ExamsPage";
-import ExamHubPage from "./pages/ExamHubPage";
 import ExamHubPageNew from "./pages/ExamHubPageNew";
-import ExamImportPage from "./pages/ExamImportPage";
 import ExamImportPageNew from "./pages/ExamImportPageNew";
-import TicketView from "./pages/TicketView";
-import TicketEdit from "./pages/TicketEdit";
 import TicketPageNew from "./pages/TicketPageNew";
-import CheatsheetPage from "./pages/CheatsheetPage";
 import CheatsheetPageNew from "./pages/CheatsheetPageNew";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MorePage from "./pages/MorePage";
@@ -267,23 +262,23 @@ function App() {
                   со слагом "exam" туда не попадёт (см. RESERVED_SLUGS). */}
               <Route
                 path="/s/:semesterSlug/:courseSlug/exam"
-                element={isNewUI() ? <ExamHubPageNew /> : <ExamHubPage />}
+                element={<ExamHubPageNew />}
               />
               <Route
                 path="/s/:semesterSlug/:courseSlug/exam/import"
-                element={isNewUI() ? <ExamImportPageNew /> : <ExamImportPage />}
+                element={<ExamImportPageNew />}
               />
               <Route
                 path="/s/:semesterSlug/:courseSlug/exam/cheatsheet"
-                element={isNewUI() ? <CheatsheetPageNew /> : <CheatsheetPage />}
+                element={<CheatsheetPageNew />}
               />
               <Route
                 path="/s/:semesterSlug/:courseSlug/exam/:number"
-                element={isNewUI() ? <TicketPageNew /> : <TicketView />}
+                element={<TicketPageNew />}
               />
               <Route
                 path="/s/:semesterSlug/:courseSlug/exam/:number/edit"
-                element={isNewUI() ? <TicketPageNew /> : <TicketEdit />}
+                element={<TicketPageNew />}
               />
               {/* Flashcards: cards module (not semester-scoped) */}
               <Route path="/decks" element={isNewUI() ? <CardsPageNew /> : <CardLibraryPage />} />
