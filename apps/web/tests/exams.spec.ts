@@ -27,12 +27,15 @@ async function loginDemo(page: Page): Promise<void> {
   await page.waitForURL("**/s/demo");
 }
 
-test("1. точка входа экзамена на странице курса", async ({ page }) => {
+test("1. точка входа экзамена: вкладка «Экзамен» на странице предмета", async ({ page }) => {
   await loginDemo(page);
   await page.goto("/s/demo/math-analysis");
-  const entry = page.locator(".exam-entry");
-  await expect(entry).toBeVisible();
-  await expect(entry.locator(".exam-entry-meta")).toHaveText("2 из 8 готовы");
+  // Вкладки предмета «Лекции N | Пары N | Экзамен» (Screen-exam): последняя ведёт в центр подготовки.
+  const tab = page.locator(".c-subject-tabs").getByRole("link", { name: "Экзамен", exact: true });
+  await expect(tab).toBeVisible();
+  await tab.click();
+  await expect(page).toHaveURL(/\/s\/demo\/math-analysis\/exam$/);
+  await expect(page.locator(".c-exam-readiness").first()).toContainText("2 из 8 билетов готовы");
 });
 
 test("2. центр подготовки: hero, прогресс, карта чипов", async ({ page }) => {
@@ -45,22 +48,22 @@ test("2. центр подготовки: hero, прогресс, карта ч�
   await expect(page.locator(".c-exam-chip.draft")).toHaveCount(1);
 });
 
-test("3–4. импорт: разбор текста + пометка занятых номеров", async ({ page }) => {
+test("3–4. импорт: разбор текста, номера убираются, билеты идут в конец", async ({ page }) => {
   await loginDemo(page);
   await page.goto(`${EXAM_BASE}/import`);
-  await page
-    .locator(".exam-import-textarea")
-    .fill("1. Первый вопрос\n2. Второй вопрос\n3. Третий вопрос");
-  await page.locator("button", { hasText: "Разобрать текст" }).click();
+  await page.getByLabel("Список билетов").fill("1. Первый вопрос\n2. Второй вопрос\n3. Третий вопрос");
 
-  const source = page.locator(".exam-import-source");
-  await expect(source).toContainText("Разобрано по строкам: 3");
-  await expect(source).toContainText("будут пропущены: 1, 2, 3");
-  // все три номера заняты → сохранять нечего
-  await expect(
-    page.locator("button", { hasText: "Сохранить" })
-  ).toBeDisabled();
-  await expect(page.locator(".exam-preview-row")).toHaveCount(3);
+  // Screen-ticket-import: «Найдено 3 билета», предпросмотр без номеров из текста — новые билеты
+  // получают следующие номера после существующих (в сиде занято 1–8), кнопка «Добавить 3 билета».
+  await expect(page.locator(".c-import-col .hint.c-form-d")).toContainText("Найдено 3 билета");
+  const rows = page.locator(".c-import-preview-row");
+  await expect(rows).toHaveCount(3);
+  await expect(rows.nth(0).locator(".num")).toHaveText("9");
+  await expect(rows.nth(0).locator(".q")).toHaveText("Первый вопрос");
+  await expect(rows.nth(2).locator(".num")).toHaveText("11");
+  await expect(rows.locator("text=Новый")).toHaveCount(3);
+  // Не сохраняем: читающий тест не мутирует сид.
+  await expect(page.getByRole("button", { name: "Добавить 3 билета" }).first()).toBeEnabled();
 });
 
 test("5. шпаргалка: только ready-билеты, формула отрендерена", async ({
@@ -74,16 +77,14 @@ test("5. шпаргалка: только ready-билеты, формула о�
   ).toBeVisible({ timeout: 10000 });
 });
 
-test("6. сайдбар: строка «Экзамен N/M» в ветке курса", async ({ page }) => {
+test("6. счётчик готовности на хабе совпадает со списком билетов", async ({ page }) => {
   await loginDemo(page);
-  await page.goto("/s/demo/math-analysis");
-  const branch = page.locator(".sidebar-course", {
-    hasText: "Математический анализ",
-  });
-  await branch.locator(".sidebar-course-toggle").dispatchEvent("click");
-  const examRow = branch.locator(".sidebar-exam-row");
-  await expect(examRow).toBeVisible();
-  await expect(examRow.locator(".sidebar-exam-count")).toHaveText("2/8");
+  await page.goto(EXAM_BASE);
+  // Счётчик «2 из 8» (Screen-exam): в шапке хаба и в списке билетов — те же 2 готовых из 8.
+  await expect(page.locator(".c-exam-readiness").first()).toContainText("2 из 8 билетов готовы");
+  const rows = page.locator(".c-exam-ticket-row");
+  await expect(rows).toHaveCount(8);
+  await expect(rows.locator(".c-chip.ok", { hasText: "Готов" })).toHaveCount(2);
 });
 
 test("7. дашборд: блок «экзамен скоро» скрыт без даты экзамена", async ({
