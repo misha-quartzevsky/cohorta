@@ -178,18 +178,11 @@ export async function expectAccountEmail(page: Page, email: string): Promise<voi
   await expect(page.locator(".c-settings-me .e")).toHaveText(email);
 }
 
-/**
- * Выход из аккаунта. В новом интерфейсе кнопка «Выйти» есть только в «Профиле»
- * на узкой ширине (/profile), на десктопе её нет (см. «Разбор Playwright», класс C),
- * поэтому выходим через узкую ширину и возвращаем прежний размер окна.
- */
+/** Выход из аккаунта: строка «Аккаунт · Выйти» в /settings (на телефоне та же кнопка в «Профиле»). */
 export async function logout(page: Page): Promise<void> {
-  const size = page.viewportSize();
-  await page.setViewportSize({ width: 800, height: 900 });
-  await page.goto("/profile");
-  await page.getByText("Выйти", { exact: true }).dispatchEvent("click");
+  await page.goto("/settings");
+  await page.getByRole("button", { name: "Выйти", exact: true }).click();
   await page.waitForURL("**/login");
-  if (size) await page.setViewportSize(size);
 }
 
 /**

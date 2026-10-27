@@ -1,62 +1,39 @@
 /**
  * ============================================
- *  tests/navigation.spec.ts — переключение семестров
+ *  tests/navigation.spec.ts — выбор периода
  * ============================================
  *
- * Переключатель семестра в GlobalSidebar (попап из `.sidebar-semester-btn`)
- * меняет URL и список курсов:
- *   1. Семестр demo (seed): в «Курсах» виден «Математический анализ».
- *   2. Семестр «1» (миграции): секция «Курсы» показывает другой список —
- *      «Математический анализ» из demo отсутствует.
- *   3. Возврат на demo: курсы снова на месте.
+ * Фильтр «Период» в «Все лекции» (Screen-lectures-period) меняет список лекций
+ * (отдельного переключателя семестра в сайдбаре нет, решение Д3):
+ *   1. Период «Демо-семестр» (seed): среди лекций есть предмет «Математический анализ».
+ *   2. Период «Семестр 1»: лекций этого предмета нет.
+ *   3. Возврат на «Демо-семестр»: лекции снова на месте.
  */
 
 import { test, expect } from "@playwright/test";
-import { login, waitForStable } from "./helpers";
+import { login } from "./helpers";
 
-test("переключение семестра в сайдбаре меняет список курсов", async ({
-  page,
-}) => {
+test("выбор периода меняет список лекций", async ({ page }) => {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
-  await expect(page.locator(".hero-greeting")).toBeVisible();
+  await page.goto("/s/demo/lectures");
 
-  const courses = page.locator(".courses-widget");
-  const demoCourse = courses.locator(".course-row", {
-    hasText: "Математический анализ",
-  });
-  await waitForStable(page, demoCourse);
-  await expect(demoCourse).toBeVisible();
+  const demoLecture = page.locator(".c-lec-row", { hasText: "Математический анализ" });
+  await expect(demoLecture.first()).toBeVisible();
 
-  async function switchSemester(slug: string): Promise<void> {
-    // dispatchEvent, а не click: кнопка семестра в сайдбаре не «успокаивается»
-    // для headed-Firefox (hover/content-in анимации), штатный клик висит до
-    // таймаута. Тот же приём уже используется в app-shell.spec для этой кнопки.
-    await page.locator(".sidebar-semester-btn").dispatchEvent("click");
-    await page
-      .locator(".sidebar-semester-item", { hasText: `${slug} семестр` })
-      .first()
-      .dispatchEvent("click");
-    await page.waitForURL(`**/s/${slug}`);
+  async function pickPeriod(name: string | RegExp): Promise<void> {
+    await page.locator(".c-lec-period.wide").click();
+    await page.locator(".c-lec-period-list").getByRole("option", { name }).click();
+    await expect(page.locator(".c-lec-period-list")).toHaveCount(0);
   }
 
-  // Семестр «1» (миграции; на локальной БД там могут лежать legacy-курсы):
-  // список курсов ДРУГОЙ — «Математический анализ» из demo в секции «Курсы»
-  // отсутствует. Проверяем именно смену списка, а не пустоту семестра.
-  await switchSemester("1");
-  await expect(page.locator(".hero-greeting")).toBeVisible();
-  await expect(
-    page
-      .locator(".courses-widget")
-      .locator(".course-row", { hasText: "Математический анализ" })
-  ).toHaveCount(0);
+  // «Семестр 1» (миграции; на локальной БД там могут лежать legacy-лекции):
+  // лекций «Математического анализа» из demo там нет. Проверяем именно смену списка.
+  await pickPeriod(/^Семестр 1$/);
+  await expect(page.locator(".c-lec-period.wide")).toContainText("Семестр 1");
+  await expect(demoLecture).toHaveCount(0);
 
-  // Обратно на demo: курсы снова на месте.
-  await switchSemester("demo");
-  await expect(page.locator(".hero-greeting")).toBeVisible();
-  await expect(
-    page.locator(".courses-widget .course-row", {
-      hasText: "Математический анализ",
-    })
-  ).toBeVisible();
+  // Обратно на «Демо-семестр»: лекции снова на месте.
+  await pickPeriod(/^Демо-семестр/);
+  await expect(demoLecture.first()).toBeVisible();
 });
