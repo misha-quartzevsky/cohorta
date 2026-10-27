@@ -19,12 +19,10 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import DashboardNew from "./pages/DashboardNew";
 import CoursesPage from "./pages/CoursesPage";
-import LecturesPage from "./pages/LecturesPage";
 import LecturesAllPage from "./pages/LecturesAllPage";
 import SubjectLecturesPage from "./pages/SubjectLecturesPage";
 import DraftsPage from "./pages/DraftsPage";
 import LectureViewNew from "./pages/LectureView";
-import LectureViewLegacy from "./pages/LectureViewLegacy";
 import NotesPage from "./pages/NotesPage";
 import NewDraftRedirect from "./pages/NewDraftRedirect";
 import NoteCreate from "./pages/NoteCreate";
@@ -159,11 +157,6 @@ function HomeRedirect() {
   return <Navigate to={`/s/${target}`} replace />;
 }
 
-/** Страница лекции: новая за флагом VITE_NEW_UI, прежняя пока флаг выключен (убрать в волне D). */
-function LectureViewRoute() {
-  return isNewUI() ? <LectureViewNew /> : <LectureViewLegacy />;
-}
-
 function App() {
   return (
     <BrowserRouter>
@@ -231,7 +224,7 @@ function App() {
               {isNewUI() && <Route path="/s/:semesterSlug/drafts" element={<DraftsPage />} />}
               <Route
                 path="/s/:semesterSlug/:courseSlug"
-                element={isNewUI() ? <SubjectLecturesPage /> : <LecturesPage />}
+                element={<SubjectLecturesPage />}
               />
               {/* «Пары предмета» (B3, pages/SubjectPairsPage.tsx) — новый
                   экран, статический сегмент "pairs" (RESERVED_SLUGS), до
@@ -258,20 +251,20 @@ function App() {
               <Route element={<LectureLayout />}>
                 <Route
                   path="/s/:semesterSlug/:courseSlug/:lectureSlug"
-                  element={<LectureViewRoute />}
+                  element={<LectureViewNew />}
                 />
                 <Route
                   path="/s/:semesterSlug/:courseSlug/:lectureSlug/edit"
-                  element={<LectureViewRoute />}
+                  element={<LectureViewNew />}
                 />
                 {/* Unassigned notes (no semester in URL) */}
                 <Route
                   path="/note/:lectureSlug"
-                  element={<LectureViewRoute />}
+                  element={<LectureViewNew />}
                 />
                 <Route
                   path="/note/:lectureSlug/edit"
-                  element={<LectureViewRoute />}
+                  element={<LectureViewNew />}
                 />
               </Route>
               {/* Exam Engine: экзамен — свойство курса, singleton внутри него.
