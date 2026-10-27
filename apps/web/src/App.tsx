@@ -75,7 +75,6 @@ import SchedulePageNew from "./pages/SchedulePageNew";
 import TasksPageNew from "./pages/TasksPageNew";
 import SubjectPairsPage from "./pages/SubjectPairsPage";
 import QuizPage from "./pages/QuizPage";
-import DesignPage from "./pages/DesignPage";
 import {
   useSemester,
   LAST_SEMESTER_KEY,
@@ -289,9 +288,6 @@ function App() {
                   остальные перенесённые экраны волны B. */}
               <Route path="/schedule" element={<SchedulePageNew />} />
               <Route path="/tasks" element={<TasksPageNew />} />
-              {import.meta.env.DEV && (
-                <Route path="/_design" element={<DesignPage />} />
-              )}
             </Route>
           </Route>
           <Route path="*" element={isNewUI() ? <NotFoundPage /> : <Navigate to="/" replace />} />
