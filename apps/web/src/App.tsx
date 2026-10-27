@@ -17,7 +17,6 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-import Dashboard from "./pages/Dashboard";
 import DashboardNew from "./pages/DashboardNew";
 import CoursesPage from "./pages/CoursesPage";
 import LecturesPage from "./pages/LecturesPage";
@@ -196,7 +195,7 @@ function App() {
               <Route path="/" element={<HomeRedirect />} />
               <Route
                 path="/s/:semesterSlug"
-                element={isNewUI() ? <DashboardNew /> : <Dashboard />}
+                element={<DashboardNew />}
               />
               <Route path="/s/:semesterSlug/courses" element={<CoursesPage />} />
               {/* «Все лекции» (B2, pages/LecturesAllPage.tsx) — свой адрес,
