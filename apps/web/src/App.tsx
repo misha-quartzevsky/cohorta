@@ -54,8 +54,6 @@ import LoadingState from "./components/LoadingState";
 import ErrorBanner from "./components/ErrorBanner";
 import Header from "./components/Header";
 import { useAuth } from "./hooks/useAuth";
-import Login from "./pages/Login";
-import PrivacyPage from "./pages/PrivacyPage";
 import LoginPageNew from "./pages/auth/LoginPageNew";
 import PolicyPageNew from "./pages/auth/PolicyPageNew";
 import { ResetEntryPage, ResetNewPasswordPage } from "./pages/auth/ResetPages";
@@ -166,8 +164,8 @@ function App() {
         <SemesterProvider>
         <ToastProvider>
         <Routes>
-          <Route path="/login" element={isNewUI() ? <LoginPageNew mode="login" /> : <Login />} />
-          <Route path="/privacy" element={isNewUI() ? <PolicyPageNew /> : <PrivacyPage />} />
+          <Route path="/login" element={<LoginPageNew mode="login" />} />
+          <Route path="/privacy" element={<PolicyPageNew />} />
           {/* Вход, регистрация, восстановление пароля и ссылка-приглашение
               (B6). Старый интерфейс держит всё на /login (Login.tsx). */}
           {isNewUI() && (
