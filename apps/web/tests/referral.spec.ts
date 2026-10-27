@@ -4,27 +4,33 @@
  * ============================================
  *
  * Единая ссылка: реф-ссылка ≡ ссылка на вступление в группу
- * (`/login?invite=<invite_code>`). Реферер = owner группы.
+ * (`/join/<invite_code>`). Реферер = owner группы.
  *
  * Награда — НЕ за регистрацию, а за активацию: первая написанная
  * лекция приглашённого даёт двусторонний бонус (14 дней премиума
  * + строка premium_grants) приглашённому и владельцу группы.
  * Повторно (вторая лекция) — не начисляется.
+ *
+ * Подготовка (аккаунт организатора, группа, лекции) идёт через API: экраны
+ * группы и создания заметки переписаны. Регистрация приглашённого — через
+ * интерфейс, вступление по коду — через API (по ссылке /join/КОД автовступления нет). Показ «Премиум до» в профиле не проверяется:
+ * в новом интерфейсе его нет (решение владельца отложено).
  */
 
 import { test, expect, type Page, type APIRequestContext } from "@playwright/test";
 import { LAST_SEMESTER_KEY, completeOnboardingFast } from "./helpers";
+import { cleanup, createGroup, createLecture, inviteCode, join, register, type Session } from "./group-api";
 
 const PB = "http://127.0.0.1:8090";
 const PASSWORD = "test12345";
 
-async function registerFresh(page: Page, invite?: string): Promise<string> {
+async function registerFresh(page: Page): Promise<string> {
   const email = `ref-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@example.com`;
   await page.addInitScript(
     ({ key, slug }) => localStorage.setItem(key, slug),
     { key: LAST_SEMESTER_KEY, slug: "1" }
   );
-  await page.goto(invite ? `/login?invite=${invite}` : "/login");
+  await page.goto("/login");
   await page.locator(".c-auth-switch a").dispatchEvent("click");
   await page.locator('input[type="email"]').fill(email);
   const pw = page.locator('input[type="password"]');
@@ -79,89 +85,55 @@ const premiumUntil = (
 const isFuture = (d: string) =>
   !!d && new Date(d.replace(" ", "T")).getTime() > Date.now();
 
-/** Создаёт заметку по заголовку, возвращает slug. */
-async function createNote(page: Page, title: string): Promise<string> {
-  await page.goto("/note/new");
-  const t = page.locator(".lecture-title-input");
-  await t.click();
-  await t.pressSequentially(title, { delay: 15 });
-  await expect(t).toHaveValue(title);
-  const save = page.locator(".btn-primary", { hasText: "Сохранить заметку" });
-  await expect(save).toBeEnabled();
-  await save.dispatchEvent("click");
-  await page.waitForURL(/\/note\/(?!new$)[^/]+$/);
-  return page.url().match(/\/note\/([^/?#]+)/)?.[1] ?? "";
-}
-
 test("бонус за активацию: начисляется обоим после первой лекции, не повторяется", async ({
   browser,
   request,
 }) => {
-  // A: организатор, создаёт группу
-  const ctxA = await browser.newContext();
-  const pageA = await ctxA.newPage();
-  const emailA = await registerFresh(pageA);
-  await pageA
-    .locator(".mode-toggle-btn", { hasText: "Группа" })
-    .dispatchEvent("click");
-  await pageA.waitForURL(/\/s\/1\/group$/);
-  await pageA.locator("#group-name-input").fill(`Ref Поток ${Date.now()}`);
-  // Кнопка недоступна, пока не отработал fuzzy-поиск; клик — через
-  // dispatchEvent (обычный .click() по этой кнопке завешивает headed-Firefox).
-  const createBtn = pageA.locator(".group-primary-btn", {
-    hasText: "Создать группу",
-  });
-  await expect(createBtn).toBeEnabled({ timeout: 5000 });
-  await createBtn.dispatchEvent("click");
-  await expect(pageA.locator(".group-card")).toBeVisible();
-  const inviteText = await pageA.locator(".group-invite-code").textContent();
-  const code = (inviteText ?? "").split("invite=")[1]?.trim() ?? "";
+  // A: организатор. Подготовка через API: аккаунт, группа с открытой ссылкой.
+  const sa = await register(request, "ref-a");
+  const group = await createGroup(request, sa, `Ref Поток ${Date.now()}`);
+  const code = await inviteCode(request, sa, group.id);
   expect(code.length).toBeGreaterThan(3);
 
-  // B: регистрируется по реф-ссылке → автовступление в группу
-  const ctxB = await browser.newContext();
-  const pageB = await ctxB.newPage();
-  const emailB = await registerFresh(pageB, code);
+  try {
+    // B: регистрируется через интерфейс и вступает по коду (через API: в новом интерфейсе ссылка
+    // /join/КОД открывает подтверждение, автовступления нет, Screen-group-join-confirm)
+    const ctxB = await browser.newContext();
+    const pageB = await ctxB.newPage();
+    const emailB = await registerFresh(pageB);
+    const b = await api(request, emailB);
+    const sb: Session = { id: b.id, token: b.token, email: emailB };
+    const joined = await join(request, sb, code);
+    expect(joined.ok(), await joined.text()).toBeTruthy();
 
-  const a = await api(request, emailA);
-  const b = await api(request, emailB);
+    // автовступление + реферальная атрибуция (хук на group_members) завершились
+    await expect
+      .poll(() => userField(request, b.token, b.id, "invited_by"), { timeout: 10000 })
+      .toBe(sa.id);
 
-  // автовступление + реферальная атрибуция (хук на group_members) завершились
-  await expect
-    .poll(() => userField(request, b.token, b.id, "invited_by"), {
-      timeout: 10000,
-    })
-    .toBe(a.id);
+    // бонус НЕ за регистрацию/вступление
+    expect(await grantCount(request, b.token)).toBe(0);
+    expect(await grantCount(request, sa.token)).toBe(0);
+    expect(isFuture(await premiumUntil(request, b.token, b.id))).toBe(false);
 
-  // бонус НЕ за регистрацию/вступление
-  expect(await grantCount(request, b.token)).toBe(0);
-  expect(await grantCount(request, a.token)).toBe(0);
-  expect(isFuture(await premiumUntil(request, b.token, b.id))).toBe(false);
+    // B пишет первую лекцию (через API) → бонус обоим
+    await createLecture(request, sb, `Первый конспект ${Date.now()}`);
+    await expect
+      .poll(() => grantCount(request, b.token), { timeout: 15000 })
+      .toBe(1);
+    expect(await grantCount(request, sa.token)).toBe(1);
+    expect(isFuture(await premiumUntil(request, b.token, b.id))).toBe(true);
+    expect(isFuture(await premiumUntil(request, sa.token, sa.id))).toBe(true);
 
-  // B пишет первую лекцию → бонус обоим
-  await createNote(pageB, `Первый конспект ${Date.now()}`);
-  await expect
-    .poll(() => grantCount(request, b.token), { timeout: 15000 })
-    .toBe(1);
-  expect(await grantCount(request, a.token)).toBe(1);
-  expect(isFuture(await premiumUntil(request, b.token, b.id))).toBe(true);
-  expect(isFuture(await premiumUntil(request, a.token, a.id))).toBe(true);
+    // вторая лекция бонус не повторяет
+    await createLecture(request, sb, `Второй конспект ${Date.now()}`);
+    await pageB.waitForTimeout(500);
+    expect(await grantCount(request, b.token)).toBe(1);
+    expect(await grantCount(request, sa.token)).toBe(1);
 
-  // индикатор премиума в профиле — после свежего входа B
-  await pageB.locator(".profile-logout").dispatchEvent("click");
-  await pageB.waitForURL("**/login");
-  await pageB.locator('input[type="email"]').fill(emailB);
-  const pw = pageB.locator('input[type="password"]');
-  await pw.fill(PASSWORD);
-  await pw.press("Enter");
-  await pageB.waitForURL(/\/s\//);
-  await expect(pageB.locator(".profile-premium")).toContainText("Премиум до");
-
-  // вторая лекция бонус не повторяет
-  await createNote(pageB, `Второй конспект ${Date.now()}`);
-  await pageB.waitForTimeout(500);
-  expect(await grantCount(request, b.token)).toBe(1);
-
-  await ctxA.close();
-  await ctxB.close();
+    await ctxB.close();
+    await cleanup(request, [sb], []);
+  } finally {
+    await cleanup(request, [sa], [group.id]);
+  }
 });
