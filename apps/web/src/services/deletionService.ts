@@ -8,7 +8,7 @@
  * админку PocketBase (new → done).
  */
 
-import { MONTHS_GENITIVE, parsePbDate } from "../lib/format";
+import { formatDayMonth, parsePbDate } from "../lib/format";
 import { pb, currentUserId } from "../lib/pocketbase";
 import type { PbRecord } from "../lib/types";
 
@@ -86,5 +86,5 @@ export async function cancelAccountDeletion(): Promise<void> {
 export function deletionDateLabel(scheduledFor: string): string {
   const d = parsePbDate(scheduledFor);
   if (!d) return "";
-  return d.getDate() + " " + MONTHS_GENITIVE[d.getMonth()];
+  return formatDayMonth(d);
 }

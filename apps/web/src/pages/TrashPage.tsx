@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { MONTHS_GENITIVE, parsePbDate, pluralRu } from "../lib/format";
+import { formatDayMonth, parsePbDate, pluralRu } from "../lib/format";
 import {
   emptyTrash,
   fetchTrash,
@@ -16,7 +16,7 @@ import { Button, EmptyState, Icon, Modal, SubjectCover } from "../ui";
 function deletedOn(deletedAt: string, female: boolean): string {
   const d = parsePbDate(deletedAt);
   if (!d) return "";
-  return `${female ? "удалена" : "удалён"} ${d.getDate()} ${MONTHS_GENITIVE[d.getMonth()]}`;
+  return `${female ? "удалена" : "удалён"} ${formatDayMonth(d)}`;
 }
 
 function daysLabel(n: number): string {

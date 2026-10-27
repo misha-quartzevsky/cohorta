@@ -6,7 +6,7 @@
  */
 
 import { parsePbDate } from "./format";
-import { MS_PER_DAY } from "./localDate";
+import { calendarDaysUntil } from "./localDate";
 export interface PbRecord {
   id: string;
   created: string;
@@ -787,13 +787,7 @@ export function examDate(e: Exam): string {
  *          либо null, когда дата не задана или не разбирается
  */
 export function examDaysLeft(e: Exam, now: Date = new Date()): number | null {
-  const raw = examDate(e);
-  if (!raw) return null;
-  const target = new Date(raw);
-  if (Number.isNaN(target.getTime())) return null;
-  const startOfDay = (d: Date) =>
-    Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
-  return Math.round((startOfDay(target) - startOfDay(now)) / MS_PER_DAY);
+  return calendarDaysUntil(examDate(e), now);
 }
 
 /** Статус билета с безопасным значением по умолчанию. */

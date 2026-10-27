@@ -3,6 +3,8 @@
  * чтобы не ловить сдвиги часовых поясов. Недели — с понедельника.
  */
 
+import { parsePbDate } from "./format";
+
 /** Миллисекунд в сутках (для разностей дат; округление остаётся на стороне вызывающего). */
 export const MS_PER_DAY = 86_400_000;
 
@@ -56,6 +58,17 @@ export function daysBetween(a: Date, b: Date): number {
   const ma = new Date(a.getFullYear(), a.getMonth(), a.getDate()).getTime();
   const mb = new Date(b.getFullYear(), b.getMonth(), b.getDate()).getTime();
   return Math.round((mb - ma) / MS_PER_DAY);
+}
+
+/**
+ * Календарных дней от `now` до даты PocketBase (через границу суток по локальному времени):
+ * 0 — сегодня, отрицательное — дата прошла. null — даты нет или она не разбирается.
+ */
+export function calendarDaysUntil(iso: string | null | undefined, now: Date = new Date()): number | null {
+  const target = parsePbDate(iso);
+  if (!target) return null;
+  const startOfDay = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  return Math.round((startOfDay(target) - startOfDay(now)) / MS_PER_DAY);
 }
 
 /** 1 = понедельник … 7 = воскресенье. */

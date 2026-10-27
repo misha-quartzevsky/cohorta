@@ -1,14 +1,8 @@
 import { useState } from "react";
 import { Modal, List, ListRow, EmptyState } from "../../ui";
 import type { Lecture } from "../../lib/types";
+import { formatLocaleDayMonth } from "../../lib/format";
 import { lectureTitle } from "../../lib/types";
-
-function formatDateRu(dateStr?: string): string {
-  if (!dateStr) return "";
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
-}
 
 interface Props {
   open: boolean;
@@ -53,7 +47,7 @@ export default function AttachLectureModal({ open, onClose, lectures, onAttach }
               key={l.id}
               title={lectureTitle(l)}
               meta={
-                [l.number ? `Лекция ${l.number}` : null, formatDateRu(l.lecture_date) || null]
+                [l.number ? `Лекция ${l.number}` : null, formatLocaleDayMonth(l.lecture_date, "long") || null]
                   .filter(Boolean)
                   .join(" · ") || undefined
               }

@@ -42,6 +42,22 @@ export const MONTHS_GENITIVE = ["января", "февраля", "марта", 
 /** Короткие названия месяцев: «12 янв». */
 export const MONTHS_SHORT = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
 
+/** «12 января» (long) или «12 янв» (short) по локальному времени. */
+export function formatDayMonth(d: Date, style: "long" | "short" = "long"): string {
+  return `${d.getDate()} ${(style === "long" ? MONTHS_GENITIVE : MONTHS_SHORT)[d.getMonth()]}`;
+}
+
+/**
+ * День и месяц из строки даты через Intl: «26 октября» (long) или «26 окт» (short, без точки).
+ * Пусто, если даты нет или она не разбирается. Для списков лекций (строка читается как есть).
+ */
+export function formatLocaleDayMonth(dateStr: string | undefined, month: "long" | "short"): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("ru-RU", { day: "numeric", month }).replace(".", "");
+}
+
 /** Русские формы множественного числа: [1, 2, 5] → ["материал","материала","материалов"]. */
 export function pluralRu(n: number, forms: [string, string, string]): string {
   const abs = Math.abs(n) % 100;
@@ -60,7 +76,9 @@ export function pluralRu(n: number, forms: [string, string, string]): string {
 export function parsePbDate(value: string | null | undefined): Date | null {
   if (!value) return null;
   const iso = String(value).trim().replace(" ", "T");
-  const withZone = /[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : `${iso}Z`;
+  const hasZone = /[zZ]|[+-]\d\d:?\d\d$/.test(iso);
+  // Дата без времени («2026-10-26») — полночь UTC, как у `new Date("2026-10-26")`.
+  const withZone = hasZone ? iso : /^\d{4}-\d{2}-\d{2}$/.test(iso) ? `${iso}T00:00:00Z` : `${iso}Z`;
   const date = new Date(withZone);
   return Number.isNaN(date.getTime()) ? null : date;
 }
