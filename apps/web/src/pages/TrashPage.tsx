@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { pluralRu } from "../lib/format";
+import { MONTHS_GENITIVE, pluralRu } from "../lib/format";
 import {
   emptyTrash,
   fetchTrash,
@@ -13,12 +13,10 @@ import {
 } from "../services/trashService";
 import { Button, EmptyState, Icon, Modal, SubjectCover } from "../ui";
 
-const MONTHS_GEN = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
-
 function deletedOn(deletedAt: string, female: boolean): string {
   const d = new Date(deletedAt.replace(" ", "T"));
   if (Number.isNaN(d.getTime())) return "";
-  return `${female ? "удалена" : "удалён"} ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`;
+  return `${female ? "удалена" : "удалён"} ${d.getDate()} ${MONTHS_GENITIVE[d.getMonth()]}`;
 }
 
 function daysLabel(n: number): string {

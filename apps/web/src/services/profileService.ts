@@ -4,18 +4,18 @@
  * ============================================
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import type { DegreeLevel, University, User } from "../lib/types";
 import { withTimeout } from "../lib/withTimeout";
 
 function uid(): string {
-  const id = String(pb.authStore.record?.id ?? "");
+  const id = currentUserId();
   if (!id) throw new Error("Нет активной сессии.");
   return id;
 }
 
 /** Обновить поля своей записи; authStore обновляется сам. */
-export async function updateMyProfile(patch: Record<string, unknown>): Promise<User> {
+async function updateMyProfile(patch: Record<string, unknown>): Promise<User> {
   return withTimeout(pb.collection("users").update<User>(uid(), patch), "сохранение профиля");
 }
 

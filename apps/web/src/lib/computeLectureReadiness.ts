@@ -3,6 +3,8 @@
  * квизам и повторениям этой лекции. Билеты в расчёт не входят.
  */
 
+import { MS_PER_DAY } from "./localDate";
+
 export interface ReadinessQuestion {
   id: string;
   /** relation → quizzes, нужно для определения «последнего квиза». */
@@ -55,13 +57,17 @@ export function lectureStatus(percent: number | null): LectureStatus {
   return "done";
 }
 
-function normalizeTopic(topic: string): string {
+/** Тема «слабая» при доле верных ниже порога; в списке слабых тем не больше MAX_WEAK_TOPICS (панель, итог квиза). */
+export const WEAK_TOPIC_ACCURACY = 0.6;
+export const MAX_WEAK_TOPICS = 3;
+
+export function normalizeTopic(topic: string): string {
   return topic.toLowerCase().trim();
 }
 
 function fullDaysBetween(from: Date, to: Date): number {
   const ms = to.getTime() - from.getTime();
-  return Math.max(0, Math.floor(ms / 86400000));
+  return Math.max(0, Math.floor(ms / MS_PER_DAY));
 }
 
 /** score вопроса: последние два ответа, 0.6·последний + 0.4·предпоследний. */
@@ -179,9 +185,9 @@ export function computeLectureReadiness(
   );
 
   const weakTopics = [...topics]
-    .filter((t) => t.accuracy < 0.6)
+    .filter((t) => t.accuracy < WEAK_TOPIC_ACCURACY)
     .sort((a, b) => a.accuracy - b.accuracy)
-    .slice(0, 3);
+    .slice(0, MAX_WEAK_TOPICS);
 
   return { percent, topics, lastActivityAt, weakTopics };
 }

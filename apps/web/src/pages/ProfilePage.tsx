@@ -2,6 +2,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../hooks/useAuth";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { useSignOut } from "../hooks/useSignOut";
 import { nameInitials, pluralRu, userName } from "../lib/format";
 import { lastSemesterSlug } from "../lib/lastSemester";
 import { useMode, type Mode } from "../lib/modeContext";
@@ -38,7 +39,8 @@ interface Row {
  */
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const signOut = useSignOut();
   const { mode, setMode, isGroup } = useMode();
   const { current } = useSemester();
   const wide = useMediaQuery("(min-width: 1024px)");
@@ -59,10 +61,7 @@ export default function ProfilePage() {
     icon: "logout",
     title: "Выйти",
     danger: true,
-    onClick: () => {
-      logout();
-      navigate("/login", { replace: true });
-    },
+    onClick: signOut,
   };
 
   const lists: Row[][] = isGroup

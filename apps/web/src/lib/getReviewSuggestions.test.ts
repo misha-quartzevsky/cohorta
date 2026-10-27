@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { getReviewSuggestions, type SuggestionLecture } from "./getReviewSuggestions";
+import { READINESS_THRESHOLDS, lectureStatus } from "./computeLectureReadiness";
 
 function lecture(partial: Partial<SuggestionLecture> & { id: string }): SuggestionLecture {
   return {
@@ -183,5 +184,21 @@ describe("getReviewSuggestions", () => {
     const [first, second] = getReviewSuggestions([q, stale], "2026-10-20");
     expect(first).toMatchObject({ kind: "quiz_yesterday", subjectId: "c1", href: "/quiz/a" });
     expect(second).toMatchObject({ kind: "stale", subjectId: "c2", href: "/s/3/phil/lec-2" });
+  });
+});
+
+describe("порог повторения и статус «Выучено»", () => {
+  const stale = (readinessPercent: number) =>
+    lecture({ id: "l1", hasQuiz: true, readinessPercent, lastActivityDate: "2026-10-10" });
+
+  it("лекция ниже порога «Выучено» попадает в «Повторить», на пороге — нет", () => {
+    const below = READINESS_THRESHOLDS.done - 1;
+    expect(getReviewSuggestions([stale(below)], "2026-10-20")[0]?.kind).toBe("review");
+    expect(getReviewSuggestions([stale(READINESS_THRESHOLDS.done)], "2026-10-20").filter((s) => s.kind === "review")).toHaveLength(0);
+  });
+
+  it("на пороге статус готовности — «done»", () => {
+    expect(lectureStatus(READINESS_THRESHOLDS.done)).toBe("done");
+    expect(lectureStatus(READINESS_THRESHOLDS.done - 1)).not.toBe("done");
   });
 });

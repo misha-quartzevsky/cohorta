@@ -6,14 +6,14 @@
  * в трёх сценариях:
  *   1. холодный deep-link на лекцию (первичная загрузка страницы);
  *   2. hard reload (перезагрузка браузера на лекции — когда раньше ломался dev SW);
- *   3. переключение «A → B → A» из сайдбара (SPA‑навигация без reload).
+ *   3. переключение «A → B → A» через список предмета (SPA‑навигация без reload).
  *
  * Съёмный dev-сервис-worker отключён в main.tsx (PROD only), поэтому
  * reload всегда идёт на чистый dev‑сервер.
  */
 
 import { test, expect } from "@playwright/test";
-import { login } from "./helpers";
+import { login, openOtherLectureOfCourse } from "./helpers";
 
 const LECTURE = "/s/demo/math-analysis/limit-of-sequence";
 
@@ -72,21 +72,11 @@ test("переключение туда-обратно рендерит форм
   await expect(page.locator(".lecture-title-input")).toHaveValue(
     "Предел последовательности"
   );
-  // Переключаемся на другую лекцию из сайдбара и возвращаемся. Целимся явно
-  // в лекцию курса (не в «Рабочий стол» из группы ОСНОВНОЕ, который теперь
-  // первый `.sidebar-nav-item` в сайдбаре на лекции).
-  const other = page
-    .locator(".global-sidebar .sidebar-note-row:not(.active)")
-    .filter({ hasText: "Производная функции" })
-    .first();
-  await expect(other).toBeVisible();
-  await other.dispatchEvent("click");
+  // Переключаемся на другую лекцию курса и возвращаемся (SPA-навигация без reload).
+  // Списка лекций курса в сайдбаре больше нет: идём через крошку «Предмет» и список.
+  await openOtherLectureOfCourse(page, "Математический анализ", "Производная функции");
   await page.waitForURL((url) => !url.pathname.endsWith("limit-of-sequence"));
-  await page
-    .locator(".global-sidebar .sidebar-note-row", {
-      hasText: "Предел последовательности",
-    })
-    .dispatchEvent("click");
+  await openOtherLectureOfCourse(page, "Математический анализ", "Предел последовательности");
   await page.waitForURL("**/limit-of-sequence");
   await expect(page.locator(".lecture-title-input")).toHaveValue(
     "Предел последовательности"

@@ -2,7 +2,7 @@
  * SaveIndicator.tsx — autosave status chip.
  *
  * Rendered from the `saveState` / `saveText` returned by useAutosave.
- * Styling lives in App.css (`.save-indicator` + `.saved` / `.error` / `.spin`).
+ * Styling lives in styles/components.css (`.save-indicator` + `.saved` / `.error` / `.spin`).
  */
 
 import { Loader2 } from "lucide-react";

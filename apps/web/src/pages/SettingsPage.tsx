@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import AccountDeleteFlow from "../components/settings/AccountDeleteFlow";
 import { useAuth } from "../hooks/useAuth";
+import { useSignOut } from "../hooks/useSignOut";
 import { nameInitials, pluralRu, userName } from "../lib/format";
 import { useSemester } from "../lib/semesterContext";
 import { dateRangeLabel } from "../lib/studyPeriods";
@@ -114,6 +115,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { hash } = useLocation();
   const { user } = useAuth();
+  const signOut = useSignOut();
   const { semesters, current } = useSemester();
   const [active, setActive] = useState("profile");
   const [uniName, setUniName] = useState("");
@@ -330,6 +332,15 @@ export default function SettingsPage() {
           <button type="button" className="act" onClick={() => void download()}>
             Скачать
           </button>
+        </div>
+        <div className="c-erow">
+          <div className="tx">
+            <span className="lbl">Аккаунт</span>
+            <span className="val">Вход выполнен: {user.email}</span>
+          </div>
+          <Button variant="secondary" onClick={signOut}>
+            Выйти
+          </Button>
         </div>
       </section>
 

@@ -26,8 +26,7 @@ import {
 } from "../services/lectureService";
 import { fetchTags } from "../services/tagService";
 import { createTaskFromLecture } from "../services/taskService";
-import { useToast } from "../components/ui";
-import { Modal, StatusChip } from "../ui";
+import { Modal, StatusChip, useToast } from "../ui";
 import { lectureListStatus } from "../lib/computeLectureReadiness";
 import { lectureDateLabel, repeatedAgoLabel } from "../lib/lectureMeta";
 import { parsePbDate } from "../lib/format";
@@ -42,7 +41,6 @@ import { setSaveStatus } from "../lib/saveStatus";
 import { pb } from "../lib/pocketbase";
 import { syncDrafts } from "../services/draftSync";
 import NotFoundPage from "./NotFoundPage";
-import { isNewUI } from "../lib/featureFlags";
 import { useLectureFrame } from "../lib/lectureFrame";
 
 import ErrorBanner from "../components/ErrorBanner";
@@ -436,7 +434,7 @@ function LectureView() {
 
   // Лекцию удалили или доступа нет: сервер отвечает «не найдено» (экран 404, B6).
   const notFound =
-    !lecture && !loading && isNewUI() && (!error || /not found|wasn't found|не найден|404/i.test(error));
+    !lecture && !loading && (!error || /not found|wasn't found|не найден|404/i.test(error));
 
   return (
     <>

@@ -6,19 +6,19 @@
  * Сценарий (seed-only — проходит и на свежей БД после `npm run seed`):
  *   1. Дашборд семестра demo → курс «Математический анализ» →
  *      лекция «Предел последовательности».
- *   2. Замер boundingBox .app-header (y, height).
- *   3. Переход на другую лекцию из сайдбара
- *      (.lecture-side-item:not(.active)).
+ *   2. Замер boundingBox .c-shell-topbar (y, height).
+ *   3. Переход на другую лекцию курса через поиск (списка лекций в новом
+ *      сайдбаре нет).
  *   4. Повторный замер. Сдвиг y или height более чем на 0.5px
  *      падает с «Layout Shift detected in Header».
  */
 
 import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { login, waitForStable } from "./helpers";
+import { login, openLectureViaSearch, waitForStable } from "./helpers";
 
 async function measureHeader(page: Page) {
-  const box = await page.locator(".app-header").boundingBox();
+  const box = await page.locator(".c-shell-topbar").boundingBox();
   expect(box).not.toBeNull();
   return box!;
 }
@@ -28,10 +28,10 @@ test("шапка не «дёргается» при переключении л�
 }) => {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
-  await expect(page.locator(".hero-greeting")).toBeVisible();
+  await expect(page.locator(".c-dash-head h1")).toBeVisible();
 
   // Дашборд → курс «Математический анализ» → лекция «Предел последовательности».
-  const courseTile = page.locator(".course-row", {
+  const courseTile = page.locator(".c-shell-courses a", {
     hasText: "Математический анализ",
   });
   await waitForStable(page, courseTile);
@@ -41,25 +41,19 @@ test("шапка не «дёргается» при переключении л�
   await courseTile.dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis");
   await page
-    .locator(".tile-click", { hasText: "Предел последовательности" })
+    .locator(".c-lec-row", { hasText: "Предел последовательности" })
     .first()
     .dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis/limit-of-sequence");
   await expect(page.locator(".lecture-title-input")).toHaveValue(
     "Предел последовательности"
   );
-  await expect(page.locator(".global-sidebar .toc-item").first()).toBeVisible();
+  await expect(page.locator(".c-shell-sidebar .c-toc a").first()).toBeVisible();
 
   const before = await measureHeader(page);
 
-  // Быстрый переход на другую лекцию из сайдбара. Целимся ЯВНО в запись курса
-  // (`.sidebar-note-row`): `.sidebar-nav-item` — это глобальная навигация.
-  const other = page
-    .locator(".global-sidebar .sidebar-note-row:not(.active)")
-    .filter({ hasText: "Производная функции" })
-    .first();
-  await expect(other).toBeVisible();
-  await other.dispatchEvent("click");
+  // Переход на другую лекцию курса через поиск (прямая SPA-навигация лекция → лекция).
+  await openLectureViaSearch(page, "Производная функции", "Производная функции");
 
   await page.waitForURL((url) => !url.pathname.endsWith("limit-of-sequence"));
   const title = page.locator(".lecture-title-input");

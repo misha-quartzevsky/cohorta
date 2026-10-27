@@ -18,7 +18,7 @@ interface Props {
  * Модальное окно (.c-dialog, spec 1A.7): на широком экране центр,
  * на телефоне выезжает снизу (переключение чисто по CSS). Esc закрывает,
  * фокус захватывается, клик по фону закрывает. Без window.confirm —
- * подтверждения живут внутри (см. components/schedule/SlotFormNew.tsx).
+ * подтверждения живут внутри (см. components/schedule/SlotForm.tsx).
  */
 export default function Modal({ open, onClose, title, children, footer, className, bare }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);

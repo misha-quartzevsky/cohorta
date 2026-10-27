@@ -12,43 +12,25 @@
  * Это ожидаемый dev-артефакт.
  */
 
-import { test, expect, type Page } from "@playwright/test";
-import { LAST_SEMESTER_KEY, completeOnboardingFast } from "./helpers";
+import { test, expect } from "@playwright/test";
+import {
+  LAST_SEMESTER_KEY,
+  completeOnboardingFast,
+  expectAccountEmail,
+  logout,
+  openRegister,
+  submitRegister,
+} from "./helpers";
 
 const PASSWORD = "test12345";
-
-/** Открывает /login и переключает форму в режим регистрации. */
-async function openRegister(page: Page): Promise<void> {
-  await page.addInitScript(
-    ({ key, slug }) => localStorage.setItem(key, slug),
-    { key: LAST_SEMESTER_KEY, slug: "1" }
-  );
-  await page.goto("/login");
-  // dispatchEvent — тот же приём, что для сайдбара: обходит click-флак headed-Firefox.
-  await page.locator(".login-switch").dispatchEvent("click");
-  await expect(page.locator(".login-title")).toHaveText("Регистрация в Cohorta");
-}
-
-async function fillForm(
-  page: Page,
-  email: string,
-  password: string,
-  confirm: string
-): Promise<void> {
-  await page.locator('input[type="email"]').fill(email);
-  const pw = page.locator('input[type="password"]');
-  await pw.nth(0).fill(password);
-  await pw.nth(1).fill(confirm);
-}
 
 test("новый email: автологин и попадание на дашборд", async ({ page }) => {
   const email = `reg-${Date.now()}@example.com`;
   await openRegister(page);
-  await fillForm(page, email, PASSWORD, PASSWORD);
-  await page.locator('input[type="password"]').nth(1).press("Enter");
+  await submitRegister(page, email, PASSWORD, PASSWORD);
 
   await completeOnboardingFast(page);
-  await expect(page.locator(".profile-email")).toHaveText(email);
+  await expectAccountEmail(page, email);
 });
 
 test("стухшая чужая сессия не подменяет профиль после регистрации", async ({
@@ -82,50 +64,45 @@ test("стухшая чужая сессия не подменяет профи�
 
   const email = `reg-ghost-${Date.now()}@example.com`;
   await page.goto("/login");
-  await page.locator(".login-switch").dispatchEvent("click");
-  await fillForm(page, email, PASSWORD, PASSWORD);
-  await page.locator('input[type="password"]').nth(1).press("Enter");
+  await page.locator(".c-auth-switch a").dispatchEvent("click");
+  await submitRegister(page, email, PASSWORD, PASSWORD);
 
   await completeOnboardingFast(page);
-  await expect(page.locator(".profile-email")).toHaveText(email);
+  await expectAccountEmail(page, email);
 });
 
 test("короткий пароль: ошибка", async ({ page }) => {
   await openRegister(page);
-  await fillForm(page, `reg-short-${Date.now()}@example.com`, "short", "short");
-  await page.locator('input[type="password"]').nth(1).press("Enter");
+  await submitRegister(page, `reg-short-${Date.now()}@example.com`, "short", "short");
 
-  await expect(page.locator(".login-error")).toContainText("не короче");
+  // Ошибка теперь стоит под полем пароля, а не одной строкой над формой.
+  await expect(page.locator(".c-field.err")).toContainText("Минимум 8 символов");
 });
 
 test("несовпадение подтверждения: ошибка", async ({ page }) => {
   await openRegister(page);
-  await fillForm(
+  await submitRegister(
     page,
     `reg-mismatch-${Date.now()}@example.com`,
     PASSWORD,
     "test99999"
   );
-  await page.locator('input[type="password"]').nth(1).press("Enter");
 
-  await expect(page.locator(".login-error")).toContainText("не совпадают");
+  await expect(page.locator(".c-field.err")).toContainText("не совпадают");
 });
 
 test("повторная регистрация того же email: ошибка", async ({ page }) => {
   const email = `reg-dup-${Date.now()}@example.com`;
 
   await openRegister(page);
-  await fillForm(page, email, PASSWORD, PASSWORD);
-  await page.locator('input[type="password"]').nth(1).press("Enter");
+  await submitRegister(page, email, PASSWORD, PASSWORD);
   await completeOnboardingFast(page);
 
-  // Выходим через профиль сайдбара и пробуем зарегистрировать тот же email.
-  await page.locator(".profile-logout").dispatchEvent("click");
-  await page.waitForURL("**/login");
+  // Выходим и пробуем зарегистрировать тот же email.
+  await logout(page);
 
-  await page.locator(".login-switch").dispatchEvent("click");
-  await fillForm(page, email, PASSWORD, PASSWORD);
-  await page.locator('input[type="password"]').nth(1).press("Enter");
+  await page.locator(".c-auth-switch a").dispatchEvent("click");
+  await submitRegister(page, email, PASSWORD, PASSWORD);
 
-  await expect(page.locator(".login-error")).toContainText("уже зарегистрирован");
+  await expect(page.locator(".c-auth-error")).toContainText("уже зарегистрирован");
 });

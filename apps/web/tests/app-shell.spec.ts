@@ -1,76 +1,73 @@
 /**
  * ============================================
- *  tests/app-shell.spec.ts — глобальный каркас (AppLayout/GlobalSidebar)
+ *  tests/app-shell.spec.ts — глобальный каркас (AppShell: .c-shell*)
  * ============================================
  *
  * Проверяет новый app-shell:
  *   1. Профиль пользователя виден в сайдбаре (имя + email); выход →
  *      редирект на /login.
- *   2. Переключатель семестров живёт в сайдбаре: попап открывается.
- *   3. Смена семестра — чистая SPA-навигация: URL и контент меняются
- *      БЕЗ полной перезагрузки страницы (window сохраняется).
+ *   2. Период выбирается фильтром «Период» в «Все лекции» (отдельного
+ *      переключателя семестра в сайдбаре нет): список открывается и закрывается.
+ *   3. Смена периода — чистая SPA-навигация: контент меняется БЕЗ полной
+ *      перезагрузки страницы (window сохраняется).
  */
 
-import { test, expect } from "@playwright/test";
-import { login, DEMO_EMAIL } from "./helpers";
+import { test, expect, type Page } from "@playwright/test";
+import { login, DEMO_EMAIL, expectAccountEmail } from "./helpers";
 
 test("профиль в сайдбаре; выход → редирект на /login", async ({ page }) => {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
 
   // App shell + профиль.
-  await expect(page.locator(".global-sidebar")).toBeVisible();
-  await expect(page.locator(".app-main")).toBeVisible();
-  await expect(page.locator(".profile-name")).toBeVisible();
-  await expect(page.locator(".profile-email")).toHaveText(DEMO_EMAIL);
+  await expect(page.locator(".c-shell-sidebar")).toBeVisible();
+  await expect(page.locator(".c-shell-main")).toBeVisible();
+  await expect(page.locator(".c-shell-profile .name")).toBeVisible();
+  // Email показан в «Профиле и настройках» (блок профиля в сайдбаре ведёт туда).
+  await expectAccountEmail(page, DEMO_EMAIL);
 
-  // Выход → защищённый layout уходит, мы на /login.
-  await page.locator(".profile-logout").click();
+  // Выход (строка «Аккаунт · Выйти» в настройках) → защищённый layout уходит, мы на /login.
+  await page.getByRole("button", { name: "Выйти", exact: true }).click();
   await page.waitForURL("**/login");
   await expect(page.locator('input[type="email"]')).toBeVisible();
-  await expect(page.locator(".global-sidebar")).toHaveCount(0);
+  await expect(page.locator(".c-shell-sidebar")).toHaveCount(0);
 });
 
-test("переключатель семестров: попап открывается из сайдбара", async ({
-  page,
-}) => {
+/** «Все лекции» → кнопка «Период» (Screen-lectures-period): отдельного переключателя семестра в сайдбаре нет (Д3). */
+async function openPeriodList(page: Page) {
+  await page.locator(".c-lec-period.wide").click();
+  const list = page.locator(".c-lec-period-list");
+  await expect(list).toBeVisible();
+  return list;
+}
+
+test("фильтр «Период» в «Все лекции»: список открывается под кнопкой", async ({ page }) => {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
+  await page.goto("/s/demo/lectures");
 
-  const btn = page.locator(".sidebar-semester-btn");
+  const btn = page.locator(".c-lec-period.wide");
   await expect(btn).toBeVisible();
-  await expect(btn).toContainText("demo семестр");
+  const list = await openPeriodList(page);
 
-  // dispatchEvent обходит headed-Firefox click-stability флак (элемент в
-  // сайдбаре не «успокаивается» из-за hover/content-in анимаций).
-  await btn.dispatchEvent("click");
-  await expect(page.locator(".sidebar-semester-popup")).toBeVisible();
-  // Активный семестр помечен, остальных несколько (1..12 + demo).
-  await expect(page.locator(".sidebar-semester-item.active")).toContainText(
-    "demo семестр"
-  );
-  const count = await page.locator(".sidebar-semester-item").count();
-  expect(count).toBeGreaterThan(1);
+  // Выбран и помечен «текущий» период; кроме него есть другие и «Все периоды».
+  await expect(list.locator('[role="option"][aria-selected="true"]')).toContainText("текущий");
+  expect(await list.locator('[role="option"]').count()).toBeGreaterThan(2);
+  await expect(list.getByRole("option", { name: "Все периоды" })).toBeVisible();
 
-  // Попап — настоящий fixed-overlay на left:240px (поверх контента), а НЕ
-  // in-flow элемент, расширяющий сайдбар и добавляющий горизонтальный скролл.
-  const popupStyle = await page
-    .locator(".sidebar-semester-popup")
-    .evaluate((el) => {
-      const cs = getComputedStyle(el);
-      return { position: cs.position, left: cs.left };
-    });
-  expect(popupStyle.position).toBe("fixed");
-  expect(popupStyle.left).toBe("240px");
+  // Список не раздувает сайдбар и не даёт горизонтальной прокрутки страницы.
   const noHOverflow = await page.evaluate(() => {
-    const sb = document.querySelector(".global-sidebar") as HTMLElement;
-    return sb.scrollWidth <= sb.clientWidth;
+    const sb = document.querySelector(".c-shell-sidebar") as HTMLElement;
+    return sb.scrollWidth <= sb.clientWidth && document.documentElement.scrollWidth <= window.innerWidth;
   });
   expect(noHOverflow).toBe(true);
 
-  // Клик по фону закрывает попап.
-  await page.locator(".sidebar-semester-backdrop").dispatchEvent("click");
-  await expect(page.locator(".sidebar-semester-popup")).toHaveCount(0);
+  // Клик мимо списка и Escape закрывают его.
+  await page.locator(".c-shell-main h1, .c-shell-main").first().click({ position: { x: 5, y: 5 } });
+  await expect(page.locator(".c-lec-period-list")).toHaveCount(0);
+  await openPeriodList(page);
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".c-lec-period-list")).toHaveCount(0);
 });
 
 test("роут /notes рендерится без краша сайдбара (current=null)", async ({
@@ -85,42 +82,39 @@ test("роут /notes рендерится без краша сайдбара (c
   await page.waitForURL("**/notes");
 
   // Сайдбар жив (без error boundary при не-загруженных семестрах).
-  await expect(page.locator(".global-sidebar")).toBeVisible();
+  await expect(page.locator(".c-shell-sidebar")).toBeVisible();
   await expect(
-    page.locator(".sidebar-nav-item", { hasText: "Карточки" })
+    page.locator(".c-shell-nav a", { hasText: "Карточки" })
   ).toBeVisible();
 
-  // Ни одна ссылка НЕДАВНИЕ не должна остаться без href (сборка пути не падает).
-  const badHrefs = await page.locator(".sidebar-nav-item").evaluateAll((els) =>
+  // Ни одна ссылка основной навигации не должна остаться без href (сборка пути не падает).
+  const badHrefs = await page.locator(".c-shell-nav a").evaluateAll((els) =>
     els.filter((el) => !el.getAttribute("href")).length
   );
   expect(badHrefs).toBe(0);
 });
 
-test("смена семестра через сайдбар = SPA (URL и контент, без reload)", async ({
-  page,
-}) => {
-
+test("смена периода в «Все лекции» = SPA (контент меняется, без reload)", async ({ page }) => {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
-  await expect(page.locator(".hero-greeting")).toBeVisible();
+  await page.goto("/s/demo/lectures");
+  await expect(page.locator(".c-lec-row").first()).toBeVisible();
 
-  // Метка на window. Если при смене семестра произойдёт полный reload,
-  // window пересоздастся и метка пропадёт → waitForFunction не дождётся.
+  // Метка на window. Если при смене периода произойдёт полный reload,
+  // window пересоздастся и метка пропадёт.
   const marker = "spa-" + Date.now();
   await page.evaluate((m) => {
     (window as unknown as Record<string, unknown>).__spaNavMarker = m;
   }, marker);
 
-  await page.locator(".sidebar-semester-btn").dispatchEvent("click");
-  await page
-    .locator(".sidebar-semester-item", { hasText: "1 семестр" })
-    .first()
-    .click();
+  const btn = page.locator(".c-lec-period.wide");
+  await expect(btn).toContainText("Демо-семестр");
+  const list = await openPeriodList(page);
+  await list.getByRole("option", { name: "Все периоды" }).click();
 
-  await page.waitForURL("**/s/1");
-  await expect(page.locator(".hero-greeting")).toBeVisible();
-  await expect(page.locator(".sidebar-semester-btn")).toContainText("1 семестр");
+  await expect(btn).toContainText("Все периоды");
+  await expect(page).toHaveURL(/\/s\/demo\/lectures$/);
+  await expect(page.locator(".c-lec-row").first()).toBeVisible();
 
   // SPA: тот же window, что и до клика (никакого hard reload).
   await page.waitForFunction(

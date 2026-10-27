@@ -6,72 +6,51 @@
  * Минимальная гигиена аккаунта:
  *  - /privacy открывается (в т.ч. без авторизации), ссылка в
  *    подвале /login туда ведёт;
- *  - из профиля можно запросить удаление аккаунта → строка
- *    deletion_requests, разлогин, уведомление на /login;
- *  - повторный вход показывает «Запрос отправлен».
+ *  - из «Профиля и настроек» можно запросить удаление аккаунта → строка
+ *    deletion_requests, разлогин;
+ *  - повторный вход показывает «Аккаунт будет удалён …» с отменой.
  */
 
-import { test, expect, type Page } from "@playwright/test";
-import { LAST_SEMESTER_KEY, completeOnboardingFast } from "./helpers";
+import { test, expect } from "@playwright/test";
+import { registerFresh } from "./helpers";
 
 const PASSWORD = "test12345";
-
-async function registerFresh(page: Page): Promise<string> {
-  const email = `hyg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@example.com`;
-  await page.addInitScript(
-    ({ key, slug }) => localStorage.setItem(key, slug),
-    { key: LAST_SEMESTER_KEY, slug: "1" }
-  );
-  await page.goto("/login");
-  await page.locator(".login-switch").dispatchEvent("click");
-  await page.locator('input[type="email"]').fill(email);
-  const pw = page.locator('input[type="password"]');
-  await pw.nth(0).fill(PASSWORD);
-  await pw.nth(1).fill(PASSWORD);
-  await pw.nth(1).press("Enter");
-  await completeOnboardingFast(page);
-  return email;
-}
 
 test("страница политики данных доступна и без входа + ссылка из /login", async ({
   page,
 }) => {
   await page.goto("/privacy");
-  await expect(page.locator(".privacy-title")).toHaveText("Политика данных");
+  await expect(page.locator(".c-policy h1")).toHaveText("Политика данных");
 
   await page.goto("/login");
-  await page.locator(".login-footer-link", { hasText: "Политика данных" }).click();
+  await page.locator(".c-auth-legal a", { hasText: "политикой данных" }).click();
   await expect(page).toHaveURL(/\/privacy$/);
-  await expect(page.locator(".privacy-title")).toBeVisible();
+  await expect(page.locator(".c-policy h1")).toBeVisible();
 });
 
-test("запрос на удаление аккаунта: подтверждение → разлогин → уведомление", async ({
+test("запрос на удаление аккаунта: подтверждение → разлогин → экран «будет удалён»", async ({
   page,
 }) => {
-  const email = await registerFresh(page);
+  const email = await registerFresh(page, "hyg");
 
-  // из профиля сайдбара
-  await page
-    .locator(".sidebar-account-link", { hasText: "Удалить аккаунт и данные" })
-    .click();
-  await expect(page.locator(".confirm-title")).toHaveText(
-    "Удалить аккаунт и данные"
-  );
-  await page.locator(".btn-primary", { hasText: "Отправить запрос" }).click();
+  // из «Профиля и настроек»
+  await page.locator(".c-shell-profile").dispatchEvent("click");
+  await page.getByRole("button", { name: "Удалить аккаунт", exact: true }).click();
+  const dialog = page.locator(".c-delete-dialog");
+  await expect(dialog).toContainText("Удалить аккаунт?");
+  await dialog.getByRole("button", { name: "Продолжить" }).click();
+  await expect(dialog).toContainText("Подтверди удаление");
+  await dialog.getByLabel("Подтверждение").fill("удалить");
+  await dialog.getByRole("button", { name: "Удалить аккаунт", exact: true }).click();
 
-  // разлогинен, на /login — уведомление
+  // разлогинен, на /login
   await page.waitForURL(/\/login\?deletion=1/);
-  await expect(page.locator(".login-notice")).toContainText(
-    "Запрос на удаление аккаунта принят"
-  );
 
-  // повторный вход → в профиле «Запрос отправлен»
+  // повторный вход → экран «Аккаунт будет удалён …» с кнопкой отмены
   await page.locator('input[type="email"]').fill(email);
   const pw = page.locator('input[type="password"]');
   await pw.fill(PASSWORD);
   await pw.press("Enter");
-  await page.waitForURL(/\/s\//);
-  await expect(
-    page.locator(".sidebar-account-note", { hasText: "Запрос на удаление отправлен" })
-  ).toBeVisible({ timeout: 8000 });
+  await expect(page.locator(".c-delete-pending h1")).toContainText("Аккаунт будет удалён", { timeout: 8000 });
+  await expect(page.getByRole("button", { name: "Отменить удаление" })).toBeVisible();
 });

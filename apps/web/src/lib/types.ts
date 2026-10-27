@@ -4,6 +4,8 @@
  * поэтому доступны `updated`/`collectionId`/`collectionName` без
  * индексной сигнатуры `[key: string]: unknown`.
  */
+
+import { MS_PER_DAY } from "./localDate";
 export interface PbRecord {
   id: string;
   created: string;
@@ -790,7 +792,7 @@ export function examDaysLeft(e: Exam, now: Date = new Date()): number | null {
   if (Number.isNaN(target.getTime())) return null;
   const startOfDay = (d: Date) =>
     Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
-  return Math.round((startOfDay(target) - startOfDay(now)) / 86400000);
+  return Math.round((startOfDay(target) - startOfDay(now)) / MS_PER_DAY);
 }
 
 /** Статус билета с безопасным значением по умолчанию. */
@@ -841,11 +843,6 @@ export function groupName(g: Group): string {
 /** PocketBase id владельца группы. */
 export function groupOwnerId(g: Group): string {
   return String(g.owner ?? "");
-}
-
-/** Id группы, к которой относится членство. */
-export function memberGroupId(m: GroupMember): string {
-  return String(m.group ?? "");
 }
 
 /** Id пользователя в записи членства. */

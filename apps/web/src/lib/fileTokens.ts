@@ -64,17 +64,3 @@ export function tokenizeFileUrlsFor(
     }
   );
 }
-
-/**
- * Превращает «голый» URL файла PocketBase, оказавшийся в тексте,
- * в настоящий `<img>`. URL, уже стоящие внутри `src`/`href`,
- * не трогаются — их отсекает negative lookbehind по кавычке/`=`.
- */
-export function embedBareFileUrls(html: string): string {
-  const fileUrl = String.raw`(?:https?:\/\/[^\s'"<>]*)?\/api\/files\/[A-Za-z0-9_]+\/[A-Za-z0-9]+\/[^\s'"<>]+`;
-  const re = new RegExp(`(?<![A-Za-z0-9_'"=])(${fileUrl})`, "g");
-  return html.replace(re, (_m, url: string) => {
-    const escaped = url.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
-    return `<img src="${escaped}" alt="" class="card-inline-img" />`;
-  });
-}

@@ -11,7 +11,8 @@
  * текст — только по выданному доступу.
  */
 
-import { pb } from "../lib/pocketbase";
+import { MONTHS_GENITIVE, MONTHS_SHORT } from "../lib/format";
+import { pb, currentUserId } from "../lib/pocketbase";
 import type { Group } from "../lib/types";
 
 export interface RosterPerson {
@@ -66,7 +67,6 @@ export interface GroupSummary {
   isOwner: boolean;
 }
 
-const me = () => String(pb.authStore.record?.id ?? "");
 
 /** Значок группы: «МК-31» → «МК», «Моя группа» → «МГ». */
 export function groupInitials(name: string): string {
@@ -76,7 +76,7 @@ export function groupInitials(name: string): string {
 }
 
 export async function fetchGroupSummaries(): Promise<GroupSummary[]> {
-  const uid = me();
+  const uid = currentUserId();
   if (!uid) return [];
   const memberships = await pb.collection("group_members").getFullList({
     filter: pb.filter("user = {:u}", { u: uid }),
@@ -149,7 +149,7 @@ function toShare(r: Record<string, unknown>): ShareRow {
 
 /** Доступы, выданные мне или мной в этой группе (читают автор и получатель). */
 export async function fetchShares(groupId: string): Promise<ShareRow[]> {
-  const uid = me();
+  const uid = currentUserId();
   const rows = await pb.collection("lecture_shares").getFullList({
     filter: pb.filter("group = {:g} && (owner = {:u} || grantee = {:u})", { g: groupId, u: uid }),
     sort: "-created",
@@ -158,7 +158,7 @@ export async function fetchShares(groupId: string): Promise<ShareRow[]> {
 }
 
 export async function fetchRequests(groupId: string): Promise<RequestRow[]> {
-  const uid = me();
+  const uid = currentUserId();
   const rows = await pb.collection("access_requests").getFullList({
     filter: pb.filter("group = {:g} && (owner = {:u} || requester = {:u})", { g: groupId, u: uid }),
     sort: "-created",
@@ -185,7 +185,7 @@ export async function resolveRequest(id: string, action: "grant" | "decline", al
 /** Включить или выключить предпросмотр для группы (у каждой группы свой). */
 export async function setGroupPreview(groupId: string, enabled: boolean): Promise<void> {
   const rows = await pb.collection("group_members").getFullList({
-    filter: pb.filter("group = {:g} && user = {:u}", { g: groupId, u: me() }),
+    filter: pb.filter("group = {:g} && user = {:u}", { g: groupId, u: currentUserId() }),
     fields: "id",
   });
   if (rows[0]) await pb.collection("group_members").update(rows[0].id, { preview_enabled: enabled });
@@ -198,7 +198,7 @@ export async function revokeShares(shareIds: string[]): Promise<void> {
 export async function grantLecture(lectureId: string, granteeId: string, groupId: string, allowCopy: boolean): Promise<void> {
   await pb.collection("lecture_shares").create({
     lecture: lectureId,
-    owner: me(),
+    owner: currentUserId(),
     grantee: granteeId,
     group: groupId,
     allow_copy: allowCopy,
@@ -275,7 +275,7 @@ export interface PersonCard extends RosterPerson {
 }
 
 export function buildPeople(roster: RosterPerson[], previews: PreviewRow[], shares: ShareRow[], ownerId: string): PersonCard[] {
-  const uid = me();
+  const uid = currentUserId();
   const mine = shares.filter((s) => s.grantee === uid && !s.suspended);
   return roster
     .filter((p) => p.id !== uid)
@@ -301,7 +301,7 @@ export interface SubjectGroupRow {
 }
 
 export function subjectsOf(previews: PreviewRow[], shares: ShareRow[], ownerId: string): SubjectGroupRow[] {
-  const uid = me();
+  const uid = currentUserId();
   const open = new Set(shares.filter((s) => s.grantee === uid && !s.suspended).map((s) => s.lecture));
   const map = new Map<string, SubjectGroupRow>();
   for (const p of previews.filter((x) => x.owner === ownerId)) {
@@ -321,16 +321,14 @@ export function subjectsOf(previews: PreviewRow[], shares: ShareRow[], ownerId: 
 export function ruDate(iso: string): string {
   const d = new Date(String(iso).replace(" ", "T"));
   if (Number.isNaN(d.getTime())) return "";
-  const m = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
-  return `${d.getDate()} ${m[d.getMonth()]}`;
+  return `${d.getDate()} ${MONTHS_GENITIVE[d.getMonth()]}`;
 }
 
 /** Короткая дата для строк списка: «11 окт». */
 export function shortDate(iso: string): string {
   const d = new Date(String(iso).replace(" ", "T"));
   if (!iso || Number.isNaN(d.getTime())) return "";
-  const m = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
-  return `${d.getDate()} ${m[d.getMonth()]}`;
+  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
 }
 
 /** «Лекция 5 · 11 окт»; без номера и даты — пустая строка (вызывающий подставит предмет). */

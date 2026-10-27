@@ -14,7 +14,7 @@
  * без него запись не примет.
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import type {
   Exam,
   Lecture,
@@ -24,11 +24,6 @@ import type {
 } from "../lib/types";
 import type { UploadedImage } from "./lectureService";
 import { FIELDS, ticketAttachmentNames, stripHtml } from "../lib/types";
-
-/** Id текущего пользователя ("" — не залогинен). */
-function currentUserId(): string {
-  return String(pb.authStore.record?.id ?? "");
-}
 
 // ---------------------------------------------------------------------------
 // Экзамен
@@ -213,7 +208,7 @@ export async function fetchTickets(examId: string): Promise<ExamTicket[]> {
 }
 
 /** Один билет по id. */
-export async function getTicket(ticketId: string): Promise<ExamTicket> {
+async function getTicket(ticketId: string): Promise<ExamTicket> {
   return pb.collection("exam_tickets").getOne<ExamTicket>(ticketId);
 }
 

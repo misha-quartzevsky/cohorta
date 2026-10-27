@@ -24,16 +24,16 @@ async function openLimitLecture(page: import("@playwright/test").Page) {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
 
-  const courseTile = page.locator(".course-row", {
+  const courseTile = page.locator(".c-shell-courses a", {
     hasText: "Математический анализ",
   });
   await waitForStable(page, courseTile);
   await courseTile.dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis");
-  // dispatchEvent, а не click: у `.tile-click` hover-transform (transition
-  // 0.18s), из-за которого штатный клик в headed-Firefox висит до таймаута.
+  // dispatchEvent, а не click: у строк списка hover-transition, из-за которого
+  // штатный клик в headed-Firefox висит до таймаута.
   await page
-    .locator(".tile-click", { hasText: "Предел последовательности" })
+    .locator(".c-lec-row", { hasText: "Предел последовательности" })
     .first()
     .dispatchEvent("click");
   await page.waitForURL("**/s/demo/math-analysis/limit-of-sequence");
@@ -78,7 +78,7 @@ test("формула видна сразу; клик в тело открыва�
   await page.keyboard.type(marker);
 
   // Ждём автосохранение (debounce ~1.2 с + запрос) → «Обновлено только что».
-  await expect(page.locator(".save-indicator.saved")).toContainText(
+  await expect(page.locator(".c-shell-save.saved")).toContainText(
     "Обновлено только что",
     { timeout: 20000 }
   );
@@ -95,12 +95,13 @@ test("шапка записи показывает человекочитаем�
 }) => {
   await openLimitLecture(page);
 
-  const meta = page.locator(".lecture-card-meta").first();
+  const meta = page.locator(".c-lecture-meta").first();
   await expect(meta).toBeVisible({ timeout: 15000 });
   const text = ((await meta.textContent()) ?? "").trim();
 
-  // Русская дата вида «15 января 2026 г.» — есть день, слово-месяц и год.
-  expect(text).toMatch(/\d{1,2}\s+\p{L}+\s+\d{4}/u);
+  // Русская дата вида «12 октября» (год добавляется, только если не текущий:
+  // lib/lectureMeta.ts) — есть день и слово-месяц.
+  expect(text).toMatch(/\d{1,2}\s+\p{L}+(\s+\d{4})?/u);
   // И никакого «Invalid Date» или сырого ISO с разделителем-пробелом/‘Z’.
   expect(text).not.toContain("Invalid");
   expect(text).not.toMatch(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/);

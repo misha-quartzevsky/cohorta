@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link2, Trash2, MoreHorizontal } from "lucide-react";
 import type { Course, Task } from "../../lib/types";
 import { courseName } from "../../lib/types";
-import { Checkbox, SubjectCover, Menu } from "../ui";
+import { Checkbox, SubjectCover, Menu } from "../../ui";
 import { isOpen, isOverdue, dueLabel } from "../../lib/taskView";
 import { todayStr } from "../../lib/localDate";
 import { openSelect } from "../../lib/openSelect";
@@ -50,13 +50,13 @@ export default function TaskRow({
   }
 
   return (
-    <div className="ds-task">
+    <div className="c-task-row">
       <Checkbox checked={done} onChange={onToggle} label={`Задача «${task.title}»`} />
-      <div className="ds-task__main">
+      <div className="c-task-row-main">
         {editing ? (
           <input
             ref={inputRef}
-            className="ds-task__title-input"
+            className="c-task-row-title-input"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onBlur={commit}
@@ -71,43 +71,38 @@ export default function TaskRow({
         ) : (
           <button
             type="button"
-            className={`ds-task__title-input${done ? " ds-task__title--done" : ""}`}
-            style={{ textAlign: "left", cursor: "text" }}
+            className={`c-task-row-title${done ? " done" : ""}`}
             onClick={() => setEditing(true)}
           >
             {task.title}
           </button>
         )}
         {(subject || lecture || courses.length > 0) && (
-          <div className="ds-task__meta">
-            <button
-              type="button"
-              className="ds-task__subject-btn"
-              onClick={() => openSelect(subjectRef.current)}
-            >
+          <div className="c-task-row-meta">
+            <button type="button" className="c-task-row-subject" onClick={() => openSelect(subjectRef.current)}>
               {subject ? (
                 <>
-                  <SubjectCover subjectId={subject.id} paletteKey={subject.color} size={16} />
+                  <SubjectCover seed={subject.cover_seed} size={16} />
                   <span>{courseName(subject)}</span>
                 </>
               ) : (
-                <span className="ds-subtle-text">+ Предмет</span>
+                <span className="muted">+ Предмет</span>
               )}
             </button>
             {lecture && (
-              <>
+              <span className="c-task-row-lecture">
                 <Link2 size={13} aria-hidden="true" />
-                <span>Лекция{lecture.number ? ` ${lecture.number}` : ""}</span>
-              </>
+                Лекция{lecture.number ? ` ${lecture.number}` : ""}
+              </span>
             )}
           </div>
         )}
       </div>
 
-      <div style={{ position: "relative" }}>
+      <div className="c-task-row-due-wrap" style={{ position: "relative" }}>
         <button
           type="button"
-          className={`ds-task__due${overdue ? " ds-task__due--overdue" : ""}`}
+          className={`c-task-row-due${overdue ? " overdue" : ""}`}
           onClick={() => dueRef.current?.showPicker?.() ?? dueRef.current?.focus()}
         >
           {task.due ? dueLabel(task.due) : "Срок"}
@@ -117,34 +112,16 @@ export default function TaskRow({
           type="date"
           value={task.due ?? ""}
           onChange={(e) => onDue(e.target.value || null)}
-          style={{
-            position: "absolute",
-            opacity: 0,
-            width: 1,
-            height: 1,
-            bottom: 0,
-            right: 0,
-            pointerEvents: "none",
-          }}
+          className="c-task-row-hidden-input"
           tabIndex={-1}
           aria-hidden="true"
         />
-        {/* Скрытый select открывается программно пунктом меню «Изменить
-            предмет» — тот же приём, что и для срока выше. */}
         <select
           ref={subjectRef}
           value={task.subject ?? ""}
           onChange={(e) => onSubject(e.target.value || null)}
           aria-label="Предмет задачи"
-          style={{
-            position: "absolute",
-            opacity: 0,
-            width: 1,
-            height: 1,
-            bottom: 0,
-            right: 0,
-            pointerEvents: "none",
-          }}
+          className="c-task-row-hidden-input"
           tabIndex={-1}
         >
           <option value="">Без предмета</option>
@@ -158,22 +135,13 @@ export default function TaskRow({
 
       <Menu
         trigger={({ ref, onClick, ...aria }) => (
-          <button
-            ref={ref}
-            type="button"
-            className="ds-icon-btn"
-            aria-label="Действия с задачей"
-            onClick={onClick}
-            {...aria}
-          >
+          <button ref={ref} type="button" className="c-task-row-menu-btn" aria-label="Действия с задачей" onClick={onClick} {...aria}>
             <MoreHorizontal size={18} />
           </button>
         )}
         items={[
           { label: "Изменить предмет", onClick: () => openSelect(subjectRef.current) },
-          ...(task.due
-            ? [{ label: "Убрать срок", onClick: () => onDue(null) }]
-            : []),
+          ...(task.due ? [{ label: "Убрать срок", onClick: () => onDue(null) }] : []),
           { label: "Удалить", icon: <Trash2 size={16} />, onClick: onDelete, danger: true },
         ]}
       />

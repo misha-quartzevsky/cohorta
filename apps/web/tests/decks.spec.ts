@@ -4,41 +4,38 @@
  * ============================================
  *
  * Seed-зависимый: проходит на свежей БД после `npm run seed` (демо-колода
- * «Сетчатка глаза» → /decks/retina-vision). Здесь используем глубокую ссылку
- * /decks/retina-vision (паттерн recording/_coldload): прямой page.goto
- * надёжнее кликов по плиткам в headed-Firefox.
+ * «Сетчатка глаза» → /decks/retina-vision). Здесь используем глубокие ссылки
+ * /decks/retina-vision/review и /edit (паттерн recording/_coldload): прямой
+ * page.goto надёжнее кликов по плиткам в headed-Firefox.
  */
 
 import { test, expect } from "@playwright/test";
 import { login } from "./helpers";
 
-test("деки: перелистывание колоды (flip + «Знаю»)", async ({ page }) => {
+test("деки: повторение колоды (показать ответ + оценка «Хорошо»)", async ({ page }) => {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
-  await page.goto("/decks/retina-vision");
-  await expect(page.locator(".flash-card-stage")).toBeVisible();
+  await page.goto("/decks/retina-vision/review");
+  await expect(page.locator(".c-review-card")).toBeVisible();
 
-  // Первая карточка: вопрос на лицевой стороне.
-  await expect(page.locator(".flash-face.front")).toContainText(
-    "Как называется светочувствительный слой"
-  );
+  // Первая карточка: вопрос; ответа и активных оценок ещё нет (Screen-cards-review).
+  await expect(page.locator(".c-review-card .q")).toContainText("Как называется светочувствительный слой");
+  await expect(page.locator(".c-review-card .a")).toHaveCount(0);
+  await expect(page.locator(".c-review-rate")).toHaveClass(/off/);
+  await expect(page.locator(".c-review-count")).toContainText("0 из");
 
-  // Переворачиваем — появляется .is-flipped, на обороте ответ.
-  // dispatchEvent вместо click: плеер анимируется framer-motion (flip, drag,
-  // AnimatePresence), поэтому кнопки не «успокаиваются» для headed-Firefox и
-  // штатный клик висит до таймаута. Тот же приём, что для микрофона и сайдбара.
-  await page
-    .getByRole("button", { name: "Показать ответ" })
-    .dispatchEvent("click");
-  await expect(page.locator(".flash-3d-inner.is-flipped")).toBeVisible();
-  await expect(page.locator(".flash-face.back")).toContainText("Сетчатка (лат");
+  // «Показать ответ» → на карточке ответ, четыре оценки доступны.
+  await page.getByRole("button", { name: "Показать ответ" }).click();
+  await expect(page.locator(".c-review-card .a")).toContainText("Сетчатка (лат");
+  for (const name of ["Снова", "Трудно", "Хорошо", "Легко"]) {
+    await expect(page.locator(".c-review-rate").getByRole("button", { name, exact: true })).toBeEnabled();
+  }
 
-  // «Знаю» → следующая карточка (новая монтируется неперевёрнутой).
-  await page.getByRole("button", { name: "Знаю" }).dispatchEvent("click");
-  await expect(page.locator(".flash-face.front")).toContainText(
-    "Какие фоторецепторы"
-  );
-  await expect(page.locator(".flash-3d-inner")).not.toHaveClass(/is-flipped/);
+  // «Хорошо» → следующая карточка (ответ снова скрыт), счётчик вырос.
+  await page.locator(".c-review-rate").getByRole("button", { name: "Хорошо", exact: true }).click();
+  await expect(page.locator(".c-review-card .q")).toContainText("Какие фоторецепторы");
+  await expect(page.locator(".c-review-card .a")).toHaveCount(0);
+  await expect(page.locator(".c-review-count")).toContainText("1 из");
 });
 
 test("деки: у каждой карточки есть доступный грип для перетаскивания", async ({
@@ -66,22 +63,19 @@ test("деки: у каждой карточки есть доступный г�
   // клавиатурный DnD @dnd-kit) — см. docs/EXPERIMENTS.md, EXP-065.
 });
 
-test("деки: клавиатура переворачивает и «Знаю» продвигает", async ({
-  page,
-}) => {
+test("деки: клавиатура — пробел показывает ответ, «3» = «Хорошо» продвигает", async ({ page }) => {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
-  await page.goto("/decks/retina-vision");
-  await expect(page.locator(".flash-card-stage")).toBeVisible();
+  await page.goto("/decks/retina-vision/review");
+  await expect(page.locator(".c-review-card")).toBeVisible();
 
-  // Space переворачивает карточку.
-  await page.locator(".flash-card-stage").dispatchEvent("click");
+  // Цифры до ответа ничего не делают, пробел показывает ответ.
+  await page.keyboard.press("3");
+  await expect(page.locator(".c-review-card .q")).toContainText("Как называется светочувствительный слой");
   await page.keyboard.press(" ");
-  await expect(page.locator(".flash-3d-inner.is-flipped")).toBeVisible();
+  await expect(page.locator(".c-review-card .a")).toBeVisible();
 
-  // Стрелка вправо = «Знаю» → следующая карточка.
-  await page.keyboard.press("ArrowRight");
-  await expect(page.locator(".flash-face.front")).toContainText(
-    "Какие фоторецепторы"
-  );
+  // «3» — «Хорошо» (горячие клавиши 1–4 по порядку кнопок) → следующая карточка.
+  await page.keyboard.press("3");
+  await expect(page.locator(".c-review-card .q")).toContainText("Какие фоторецепторы");
 });

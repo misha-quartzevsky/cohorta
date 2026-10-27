@@ -7,7 +7,7 @@
  * collections (the flashcards module).
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import type { Deck, DeckCard } from "../lib/types";
 import {
   FIELDS,
@@ -15,11 +15,6 @@ import {
 } from "../lib/types";
 import { slugify } from "../lib/slugify";
 import { uniqueSlugForCollection, fetchBySlug } from "./genericService";
-
-/** Id текущего пользователя ("" — не залогинен). */
-function currentUserId(): string {
-  return String(pb.authStore.record?.id ?? "");
-}
 
 /** Fetch all decks, most-recently-updated first. */
 export async function fetchDecks(limit: number = 0): Promise<Deck[]> {

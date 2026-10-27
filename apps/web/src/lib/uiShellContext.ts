@@ -22,7 +22,7 @@ export interface UIShellApi {
   closeSidebar: () => void;
   /**
    * Поиск по продукту (B2): открывается из строки в шапке
-   * (components/AppShellNew.tsx) или из иконки поиска на странице
+   * (components/AppShell.tsx) или из иконки поиска на странице
    * «Все лекции» (pages/LecturesAllPage.tsx) — одно состояние на
    * оба входа, вид (оверлей/полный экран) решает CSS по ширине.
    */

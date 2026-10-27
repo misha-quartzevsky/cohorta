@@ -3,17 +3,13 @@
  * предмет, дублировать, скачать .md. Удаление — `deleteLecture` (корзина).
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import type { Lecture } from "../lib/types";
 import { FIELDS, lectureTitle } from "../lib/types";
 import { slugify } from "../lib/slugify";
 import { htmlToMarkdown } from "../lib/htmlToMarkdown";
 import { uniqueSlugForCollection } from "./genericService";
 import { notifyLecturesChanged } from "../lib/lecturesChanged";
-
-function currentUserId(): string {
-  return String(pb.authStore.record?.id ?? "");
-}
 
 export async function renameLecture(id: string, title: string): Promise<Lecture> {
   const updated = await pb.collection("lectures").update<Lecture>(id, { [FIELDS.lectureTitle]: title });

@@ -7,7 +7,7 @@
  * `lectures` collection.
  */
 
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import { moveToTrash } from "./trashService";
 import type { Lecture } from "../lib/types";
 import { FIELDS, lectureFiles } from "../lib/types";
@@ -15,11 +15,6 @@ import { slugify } from "../lib/slugify";
 import { todayStr } from "../lib/localDate";
 import { uniqueSlugForCollection } from "./genericService";
 import { applyLectureTags } from "./tagService";
-
-/** Id текущего пользователя ("" — не залогинен). */
-function currentUserId(): string {
-  return String(pb.authStore.record?.id ?? "");
-}
 
 /**
  * Fetch a single lecture by its PocketBase ID.
@@ -225,23 +220,6 @@ export async function hideLectureFromGroup(lectureId: string): Promise<Lecture> 
 }
 
 /**
- * Assign an (unassigned) lecture to a course by updating
- * its course foreign-key field.
- *
- * @param lectureId — PocketBase record ID of the lecture
- * @param courseId  — target course ID (or "" to unassign)
- * @returns The updated Lecture record.
- */
-export async function assignLecture(
-  lectureId: string,
-  courseId: string
-): Promise<Lecture> {
-  return pb.collection("lectures").update<Lecture>(lectureId, {
-    [FIELDS.lectureCourse]: courseId,
-  });
-}
-
-/**
  * Full-text search across lecture titles and bodies.
  * Searches the raw HTML in `content` — good enough
  * for a live dropdown (worst case it matches a tag name).
@@ -345,23 +323,4 @@ export async function uploadLectureImages(
       name,
       url: pb.files.getURL(updated, name),
     }));
-}
-
-/**
- * Удаляет файлы из поля `file` лекции (например, осиротевшие картинки/аудио
- * после того, как пользователь вырезал соответствующий блок из текста).
- *
- * @param lecture — запись лекции (используется только id)
- * @param names    — имена файлов, которые нужно удалить
- */
-export async function deleteLectureFiles(
-  lecture: Lecture,
-  names: string[]
-): Promise<void> {
-  if (!names.length) return;
-  const fresh = await pb.collection("lectures").getOne<Lecture>(lecture.id);
-  const remaining = lectureFiles(fresh).filter((name) => !names.includes(name));
-  await pb.collection("lectures").update<Lecture>(fresh.id, {
-    [FIELDS.lectureFile]: remaining,
-  });
 }

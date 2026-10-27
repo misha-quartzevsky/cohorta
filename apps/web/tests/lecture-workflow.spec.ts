@@ -3,19 +3,18 @@
  *  tests/lecture-workflow.spec.ts — лекционный flow в новом UI
  * ============================================
  *
- * Проверяет работу LectureLayout + GlobalSidebar на лекции:
+ * Проверяет работу LectureLayout + AppShell на лекции:
  *   1. Seamless navigation: при переключении лекций из сайдбара Header
  *      остаётся ТЕМ ЖЕ DOM-узлом (layout-route не перемонтируется),
  *      карточка лекции сменяется с fade-анимацией content-in.
  *   2. TOC («Оглавление» в сайдбаре): пункты соответствуют H1–H3 заголовкам
  *      контента, клик по пункту плавно скроллит к заголовку.
- *   3. Дерево курсов: на дашборде видно дерево «Курсы», на лекции активный
- *      курс раскрыт и добавляется секция «Оглавление»; на странице курса
- *      «Оглавление» уходит, дерево остаётся.
+ *   3. Сайдбар: на дашборде список «Предметы», на лекции его заменяет
+ *      «Содержание» со ссылкой на предмет; на странице предмета снова «Предметы».
  */
 
 import { test, expect } from "@playwright/test";
-import { login } from "./helpers";
+import { login, openLectureViaSearch } from "./helpers";
 
 /**
  * Открывает лекцию «Предел последовательности». Используем прямой deep-link
@@ -43,29 +42,23 @@ test("seamless navigation: Header — тот же узел, карточка а�
   const hdrMarker = "hdr-" + Date.now();
   await page.evaluate((m) => {
     document
-      .querySelector(".app-header")
+      .querySelector(".c-shell-topbar")
       ?.setAttribute("data-test-hdr-marker", m);
   }, hdrMarker);
 
   // Метим текущую карточку — при смене лекции workspace-main пересоздаётся.
   await page.evaluate(() => {
     document
-      .querySelector(".workspace-main")
+      .querySelector(".lecture-view-content")
       ?.setAttribute("data-card-marker", "old");
   });
 
-  const headerBefore = await page.locator(".app-header").boundingBox();
+  const headerBefore = await page.locator(".c-shell-topbar").boundingBox();
 
-  // Переключение на другую лекцию курса из сайдбара.
-  // dispatchEvent: штатный .click() по сайдбарной ссылке хронически зависает
-  // в headed-Firefox («performing click action»), а событие клика всё равно
-  // обрабатывает React-обработчик Link → SPA-навигация.
-  const next = page
-    .locator(".global-sidebar .sidebar-note-row:not(.active)")
-    .filter({ hasText: "Производная функции" })
-    .first();
-  await expect(next).toBeVisible();
-  await next.dispatchEvent("click");
+  // Переключение на другую лекцию курса через поиск (списка лекций в новом
+  // сайдбаре нет): прямая SPA-навигация лекция → лекция. dispatchEvent: штатный
+  // .click() хронически зависает в headed-Firefox, а React-обработчик отрабатывает.
+  await openLectureViaSearch(page, "Производная функции", "Производная функции");
   await page.waitForURL("**/s/demo/math-analysis/derivative-geometry");
   await expect(page.locator(".lecture-title-input")).toHaveValue(
     "Производная функции"
@@ -75,12 +68,12 @@ test("seamless navigation: Header — тот же узел, карточка а�
   const hdrVal = await page.evaluate(
     () =>
       document
-        .querySelector(".app-header")
+        .querySelector(".c-shell-topbar")
         ?.getAttribute("data-test-hdr-marker") ?? null
   );
   expect(hdrVal, "Header перемонтировался при смене лекции").toBe(hdrMarker);
 
-  const headerAfter = await page.locator(".app-header").boundingBox();
+  const headerAfter = await page.locator(".c-shell-topbar").boundingBox();
   expect(
     Math.abs((headerAfter?.y ?? 0) - (headerBefore?.y ?? 0)),
     "Header сдвинулся по вертикали"
@@ -93,7 +86,7 @@ test("seamless navigation: Header — тот же узел, карточка а�
   // Карточка: элемент пересоздан (key=slug) → на новом нет старой метки.
   const cardMarker = await page.evaluate(
     () =>
-      document.querySelector(".workspace-main")?.getAttribute(
+      document.querySelector(".lecture-view-content")?.getAttribute(
         "data-card-marker"
       ) ?? null
   );
@@ -101,7 +94,7 @@ test("seamless navigation: Header — тот же узел, карточка а�
 
   // Fade-анимация content-in применена к (пересозданной) карточке.
   const anim = await page.evaluate(() => {
-    const el = document.querySelector(".workspace-main");
+    const el = document.querySelector(".lecture-view-content");
     return el ? getComputedStyle(el).animationName : "";
   });
   expect(["content-in", "none"]).toContain(anim);
@@ -112,14 +105,14 @@ test("TOC в сайдбаре: пункты = H1–H3, клик скроллит
   await page.waitForURL("**/s/demo");
   await openLimitOfSequence(page);
 
-  // Секция «Оглавление» в сайдбаре со списком toc-item.
+  // Секция «Содержание» в сайдбаре со списком пунктов (.c-toc a).
   await expect(
-    page.locator(".global-sidebar .sidebar-section-title", {
-      hasText: "Оглавление",
+    page.locator(".c-shell-sidebar .c-shell-section", {
+      hasText: "Содержание",
     })
   ).toBeVisible();
 
-  const tocItems = page.locator(".global-sidebar .toc-item");
+  const tocItems = page.locator(".c-shell-sidebar .c-toc a");
   await expect(tocItems).toHaveCount(5, { timeout: 10000 });
   await expect(tocItems.nth(0)).toHaveText("Предел последовательности");
   await expect(tocItems.nth(1)).toHaveText("Определение");
@@ -150,7 +143,7 @@ test("TOC в сайдбаре: пункты = H1–H3, клик скроллит
   });
 
   await page
-    .locator(".global-sidebar .toc-item", { hasText: "Единственность предела" })
+    .locator(".c-shell-sidebar .c-toc a", { hasText: "Единственность предела" })
     .dispatchEvent("click");
 
   await page.waitForFunction(
@@ -162,60 +155,26 @@ test("TOC в сайдбаре: пункты = H1–H3, клик скроллит
   );
 });
 
-test("дерево курсов: на дашборде дерево, на лекции активный курс раскрыт", async ({
-  page,
-}) => {
+test("сайдбар: на дашборде «Предметы», на лекции «Содержание» вместо них", async ({ page }) => {
   await login(page, "demo");
   await page.waitForURL("**/s/demo");
 
-  // Общие блоки: переключатель семестра + дерево «Курсы».
-  await expect(page.locator(".sidebar-semester-btn")).toBeVisible();
-  await expect(
-    page.locator(".global-sidebar .sidebar-section-title", {
-      hasText: "Курсы",
-    })
-  ).toBeVisible();
-  await expect(
-    page
-      .locator(".global-sidebar .sidebar-course-row", {
-        hasText: "Математический анализ",
-      })
-      .first()
-  ).toBeVisible();
-  // Секции ПОСЛЕДНИЕ ЗАМЕТКИ (НЕДАВНИЕ) больше нет.
-  await expect(
-    page.locator(".global-sidebar .sidebar-section-title", {
-      hasText: "НЕДАВНИЕ",
-    })
-  ).toHaveCount(0);
+  // Дашборд: плоский список предметов семестра (Foundation-shell), без вложенных лекций.
+  const section = (name: string) => page.locator(".c-shell-sidebar .c-shell-section", { hasText: name });
+  await expect(section("Предметы")).toBeVisible();
+  await expect(page.locator(".c-shell-courses a", { hasText: "Математический анализ" }).first()).toBeVisible();
+  await expect(section("Содержание")).toHaveCount(0);
 
-  // Входим в лекцию → активный курс раскрыт: вложенные лекции + «Оглавление».
+  // Лекция: «Содержание» заменяет список предметов, наверху ссылка на предмет (Screen-editor-toc).
   await openLimitOfSequence(page);
-  await expect(
-    page.locator(".global-sidebar .sidebar-section-title", {
-      hasText: "Оглавление",
-    })
-  ).toBeVisible();
-  await expect(
-    page
-      .locator(".global-sidebar .sidebar-course-row.open", {
-        hasText: "Математический анализ",
-      })
-      .first()
-  ).toBeVisible();
-  await expect(
-    page
-      .locator(".global-sidebar .sidebar-note-row", {
-        hasText: "Производная функции",
-      })
-      .first()
-  ).toBeVisible();
+  await expect(section("Содержание")).toBeVisible();
+  await expect(page.locator(".c-shell-sidebar .c-shell-back", { hasText: "Математический анализ" })).toBeVisible();
+  await expect(page.locator(".c-shell-courses")).toHaveCount(0);
 
-  // Переход на страницу курса → «Оглавление» уходит, дерево остаётся.
-  await page.goto("/s/demo/math-analysis");
-  await expect(
-    page.locator(".global-sidebar .sidebar-section-title", {
-      hasText: "Оглавление",
-    })
-  ).toHaveCount(0);
+  // Ссылка наверху ведёт на страницу предмета: «Содержание» уходит, список предметов возвращается,
+  // активный предмет отмечен.
+  await page.locator(".c-shell-sidebar .c-shell-back").click();
+  await expect(page).toHaveURL(/\/s\/demo\/math-analysis$/);
+  await expect(section("Содержание")).toHaveCount(0);
+  await expect(page.locator(".c-shell-courses a.on", { hasText: "Математический анализ" })).toBeVisible();
 });

@@ -23,6 +23,7 @@ import { useRecentLectures } from "./useRecentLectures";
 import { useDecks } from "./useDecks";
 import { parsePbDate } from "../lib/format";
 import type { Lecture } from "../lib/types";
+import { MS_PER_DAY } from "../lib/localDate";
 
 /** Local calendar-day key, e.g. "2026-08-21". */
 export function heatmapDayKey(date: Date): string {
@@ -44,9 +45,6 @@ export interface UseActivityHeatmapResult {
   notesThisWeek: number;
   loading: boolean;
 }
-
-/** Number of days rendered in the heatmap grid (≈3 months). */
-export const HEATMAP_DAYS = 13 * 7;
 
 /**
  * На какие day-key атрибутируется запись: день создания и, если правка была
@@ -106,7 +104,7 @@ export function useActivityHeatmap(): UseActivityHeatmapResult {
   // useRecentLectures(30) и фильтровал по `updated` — счётчик упирался в
   // лимит выборки и называл «новыми» просто отредактированные записи.
   const notesThisWeek = useMemo(() => {
-    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const weekAgo = Date.now() - 7 * MS_PER_DAY;
     return lectures.filter((lec) => {
       const created = parsePbDate(lec.created)?.getTime();
       return created !== undefined && created >= weekAgo;

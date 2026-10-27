@@ -1,24 +1,30 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import Header from "../components/Header";
-import ErrorBanner from "../components/ErrorBanner";
-import LoadingState from "../components/LoadingState";
+/**
+ * ============================================
+ *  TasksPage.tsx — «Задачи» (B3, 2026-10-20)
+ * ============================================
+ *
+ * Вёрстка 1:1 по docs/design/screens/Screen-tasks(-m).dc.html. Автозадачи
+ * повторения (spec 5.3, hooks/useReviewSuggestions.ts) показываются в
+ * группе «Сегодня» отдельными строками с подписью «Предложено», без
+ * срока — выполнение создаёт настоящую запись tasks (source=auto_review),
+ * «Скрыть» — запись с dismissed=true, дальше не предлагается (dedupe_key).
+ */
+
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import TaskRow from "../components/tasks/TaskRow";
-import {
-  Button,
-  Card,
-  SegmentedControl,
-  EmptyState,
-  SubjectCover,
-  useToast,
-  type Segment,
-} from "../components/ui";
+import { useNavigate } from "react-router-dom";
+import { Link2 } from "lucide-react";
+import { Button, Pills, EmptyState, SubjectCover, Toggletip, Checkbox } from "../ui";
+import PeriodSelect from "../components/lectures/PeriodSelect";
+import { useLecturePeriod } from "../hooks/useLecturePeriod";
 import { useTasks } from "../hooks/useTasks";
+import { useReviewSuggestions } from "../hooks/useReviewSuggestions";
+import type { ReviewSuggestion } from "../lib/getReviewSuggestions";
 import { fetchCourses } from "../services/courseService";
 import type { Course, Task } from "../lib/types";
 import { courseName } from "../lib/types";
-import { lastSemesterSlug } from "../lib/lastSemester";
 import { todayStr, fromDateStr, addDays, toDateStr } from "../lib/localDate";
-import { isOpen, isOverdue } from "../lib/taskView";
+import { isOpen, isOverdue, taskInPeriod } from "../lib/taskView";
 import { parseQuickTask, type SubjectRef } from "../lib/parseQuickTask";
 import { openSelect } from "../lib/openSelect";
 import { pluralRu } from "../lib/format";
@@ -32,24 +38,37 @@ const EXAMPLES = [
 ];
 
 export default function TasksPage() {
-  const semSlug = lastSemesterSlug();
-  const toast = useToast();
-  const { tasks, loading, error, createTask, updateTask, setDone, deleteTask } =
-    useTasks();
+  const { tasks: allTasks, loading, error, createTask, updateTask, setDone, deleteTask } = useTasks();
 
   const [courses, setCourses] = useState<Course[]>([]);
   useEffect(() => {
     void fetchCourses().then(setCourses).catch(() => setCourses([]));
   }, []);
 
+  // Период (Screen-period-lists): задача относится к периоду своего предмета, без предмета видна всегда.
+  const period = useLecturePeriod("tasks");
+  const tasks = useMemo(
+    () => allTasks.filter((t) => taskInPeriod(t, courses, period.value)),
+    [allTasks, courses, period.value]
+  );
+
+  const dismissedOrDoneDedupeKeys = useMemo(
+    () =>
+      new Set(
+        tasks
+          .filter((t) => t.dedupe_key && (!!t.done_at || t.dismissed))
+          .map((t) => t.dedupe_key as string)
+      ),
+    [tasks]
+  );
+  const { suggestions } = useReviewSuggestions(dismissedOrDoneDedupeKeys);
+
   const [tab, setTab] = useState<Tab>("today");
   const [draft, setDraft] = useState("");
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
-  // undefined = следовать автоопределению из текста; string|null = ручной выбор.
-  const [manualSubjectId, setManualSubjectId] = useState<string | null | undefined>(
-    undefined
-  );
+  const [manualSubjectId, setManualSubjectId] = useState<string | null | undefined>(undefined);
   const quickSubjectRef = useRef<HTMLSelectElement>(null);
+  const draftInputRef = useRef<HTMLInputElement>(null);
 
   const today = todayStr();
   const subjectRefs: SubjectRef[] = useMemo(
@@ -62,8 +81,6 @@ export default function TasksPage() {
     [draft, today, subjectRefs]
   );
 
-  // Ручной выбор предмета живёт, пока пользователь печатает; очищаем его,
-  // когда поле снова пустое (начинаем новую задачу).
   useEffect(() => {
     if (!draft.trim()) setManualSubjectId(undefined);
   }, [draft]);
@@ -73,17 +90,12 @@ export default function TasksPage() {
 
   const open = tasks.filter(isOpen);
   const overdueCount = open.filter((t) => isOverdue(t, today)).length;
-  const todayCount = open.filter((t) => t.due === today).length;
+  const todayCount = open.filter((t) => t.due === today).length + suggestions.length;
   const soonCount = open.filter(
     (t) => t.due && t.due > today && t.due <= toDateStr(addDays(fromDateStr(today), 14))
   ).length;
-
-  const tabs: Segment<Tab>[] = [
-    { value: "today", label: "Сегодня", count: todayCount + overdueCount },
-    { value: "soon", label: "Скоро", count: soonCount },
-    { value: "all", label: "Все" },
-    { value: "done", label: "Выполненные" },
-  ];
+  const allCount = open.length;
+  const doneCount = tasks.length - open.length;
 
   async function handleQuickAdd() {
     const text = draft.trim();
@@ -92,171 +104,183 @@ export default function TasksPage() {
     const subjectId = manualSubjectId !== undefined ? manualSubjectId : p.subjectId;
     setDraft("");
     setManualSubjectId(undefined);
-    const created = await createTask({
-      title: p.title || text,
-      due: p.due,
-      subject: subjectId,
-    });
-    if (created) toast.show("Задача добавлена");
+    await createTask({ title: p.title || text, due: p.due, subject: subjectId });
   }
 
-  if (loading && tasks.length === 0) return <LoadingState />;
+  async function handleSuggestionDone(s: ReviewSuggestion) {
+    await createTask({
+      title: s.title,
+      lecture: s.lectureId,
+      subject: s.subjectId ?? null,
+      source: "auto_review",
+      dedupe_key: s.dedupeKey,
+      done_at: today,
+    });
+  }
 
-  const filtered = subjectFilter
-    ? tasks.filter((t) => t.subject === subjectFilter)
-    : tasks;
+  async function handleSuggestionDismiss(s: ReviewSuggestion) {
+    await createTask({
+      title: s.title,
+      lecture: s.lectureId,
+      subject: s.subjectId ?? null,
+      source: "auto_review",
+      dedupe_key: s.dedupeKey,
+      dismissed: true,
+    });
+  }
+
+  if (loading && tasks.length === 0) return null;
+
+  const filtered = subjectFilter ? tasks.filter((t) => t.subject === subjectFilter) : tasks;
 
   return (
-    <>
-      <Header
-        crumbs={[{ label: "Рабочий стол", to: `/s/${semSlug}` }, { label: "Задачи" }]}
-      />
-      <div className="ds-page ds-root">
-        <div className="ds-page__inner">
-          <ErrorBanner message={error} />
-
-          <div className="ds-page__head">
-            <div className="ds-page__title-group">
-              <h1 className="ds-h1">Задачи</h1>
-              <p className="ds-page__subtitle ds-body">
-                {open.length} {pluralRu(open.length, ["открытая", "открытые", "открытых"])}
-                {overdueCount > 0 &&
-                  `, ${overdueCount} ${pluralRu(overdueCount, [
-                    "просрочена",
-                    "просрочено",
-                    "просрочено",
-                  ])}`}
-              </p>
-            </div>
-          </div>
-
-          <div className="ds-page__cols">
-            <div>
-              <div style={{ marginBottom: "var(--space-4)" }}>
-                <div className="ds-quickadd">
-                  <input
-                    className="ds-input"
-                    placeholder="Добавить задачу… «реферат по философии до 25 октября»"
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") void handleQuickAdd();
-                    }}
-                  />
-                  <Button onClick={() => void handleQuickAdd()} disabled={!draft.trim()}>
-                    Добавить
-                  </Button>
-                </div>
-                {draft.trim() && (
-                  <div className="ds-quickadd__hint">
-                    {parsed?.dueLabel && (
-                      <span className="ds-badge ds-badge--accent">
-                        Срок: {parsed.dueLabel}
-                      </span>
-                    )}
-                    {courses.length > 0 && (
-                      <>
-                        <button
-                          type="button"
-                          className={`ds-badge ds-badge--neutral`}
-                          style={{ cursor: "pointer", border: "none" }}
-                          onClick={() => openSelect(quickSubjectRef.current)}
-                        >
-                          {effectiveSubjectId
-                            ? courseName(
-                                courses.find((c) => c.id === effectiveSubjectId) as Course
-                              )
-                            : "+ Предмет"}
-                        </button>
-                        <select
-                          ref={quickSubjectRef}
-                          value={effectiveSubjectId ?? ""}
-                          onChange={(e) => setManualSubjectId(e.target.value || null)}
-                          aria-label="Предмет новой задачи"
-                          style={{ opacity: 0, width: 1, height: 1, pointerEvents: "none" }}
-                          tabIndex={-1}
-                        >
-                          <option value="">Без предмета</option>
-                          {courses.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {courseName(c)}
-                            </option>
-                          ))}
-                        </select>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div style={{ marginBottom: "var(--space-5)" }}>
-                <SegmentedControl segments={tabs} value={tab} onChange={setTab} />
-              </div>
-
-              <TaskList
-                tab={tab}
-                tasks={filtered}
-                today={today}
-                courses={courses}
-                onToggle={setDone}
-                onRename={(id, title) => void updateTask(id, { title })}
-                onDue={(id, due) => void updateTask(id, { due })}
-                onSubject={(id, subject) => void updateTask(id, { subject })}
-                onDelete={(id) => void deleteTask(id)}
-                onFocusInput={() => {
-                  const el = document.querySelector<HTMLInputElement>(".ds-quickadd .ds-input");
-                  el?.focus();
-                }}
-                onExample={(text) => {
-                  setDraft(text);
-                  const el = document.querySelector<HTMLInputElement>(".ds-quickadd .ds-input");
-                  el?.focus();
-                }}
-              />
-            </div>
-
-            <aside className="ds-panel">
-              <Card>
-                <h3 className="ds-h3" style={{ marginBottom: "var(--space-3)" }}>
-                  По предметам
-                </h3>
-                {courses.length === 0 ? (
-                  <p className="ds-body ds-muted">Пока нет предметов.</p>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-                    {courses.map((c) => {
-                      const count = open.filter((t) => t.subject === c.id).length;
-                      const active = subjectFilter === c.id;
-                      return (
-                        <button
-                          key={c.id}
-                          type="button"
-                          className="ds-menu__item"
-                          style={{
-                            background: active ? "var(--color-subtle)" : undefined,
-                          }}
-                          onClick={() => setSubjectFilter(active ? null : c.id)}
-                        >
-                          <SubjectCover subjectId={c.id} paletteKey={c.color} size={16} />
-                          <span style={{ flex: 1, textAlign: "left" }}>{courseName(c)}</span>
-                          <span className="ds-numeric ds-subtle-text">{count}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </Card>
-            </aside>
-          </div>
+    <div className="c-tasks">
+      <div className="c-tasks-head">
+        <div className="c-tasks-head-tx">
+          <h1>Задачи</h1>
+          <span>
+            {allCount} {pluralRu(allCount, ["открытая", "открытые", "открытых"])}
+            {overdueCount > 0 &&
+              `, ${overdueCount} ${pluralRu(overdueCount, ["просрочена", "просрочено", "просрочено"])}`}
+          </span>
+        </div>
+        <div className="c-tasks-head-end">
+          <PeriodSelect popover accent={!period.isCurrent} options={period.options} value={period.value} onChange={period.setValue} />
+          <TasksHint />
         </div>
       </div>
-    </>
+      <div className="c-tasks-m-head">
+        <h1>Задачи</h1>
+        <span>
+          {allCount} {pluralRu(allCount, ["открытая", "открытые", "открытых"])}
+          {overdueCount > 0 && `, ${overdueCount} просрочено`}
+        </span>
+        <PeriodSelect options={period.options} value={period.value} onChange={period.setValue} className="c-tasks-m-period" />
+      </div>
+
+      {error && <p style={{ color: "var(--danger-text)", fontSize: 14 }}>{error}</p>}
+
+      <div className="c-tasks-quickadd">
+        <input
+          ref={draftInputRef}
+          placeholder="Добавить задачу, например «реферат по философии до 25 октября»"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void handleQuickAdd();
+          }}
+        />
+        <Button onClick={() => void handleQuickAdd()}>
+          Добавить
+        </Button>
+      </div>
+      {draft.trim() && (
+        <div className="c-tasks-quickadd-hint">
+          {parsed?.dueLabel && (
+            <span className="c-tasks-quickadd-subject" style={{ background: "var(--accent-soft)", color: "var(--accent-strong)" }}>
+              Срок: {parsed.dueLabel}
+            </span>
+          )}
+          {courses.length > 0 && (
+            <>
+              <button type="button" className="c-tasks-quickadd-subject" onClick={() => openSelect(quickSubjectRef.current)}>
+                {effectiveSubjectId
+                  ? courseName(courses.find((c) => c.id === effectiveSubjectId) as Course)
+                  : "+ Предмет"}
+              </button>
+              <select
+                ref={quickSubjectRef}
+                value={effectiveSubjectId ?? ""}
+                onChange={(e) => setManualSubjectId(e.target.value || null)}
+                aria-label="Предмет новой задачи"
+                className="c-task-row-hidden-input"
+                tabIndex={-1}
+              >
+                <option value="">Без предмета</option>
+                {courses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {courseName(c)}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+        </div>
+      )}
+
+      <Pills
+        aria-label="Вкладки задач"
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: "today", label: "Сегодня", count: todayCount },
+          { value: "soon", label: "Скоро", count: soonCount },
+          { value: "all", label: "Все", count: allCount },
+          { value: "done", label: "Выполненные", count: doneCount },
+        ]}
+      />
+
+      <div className="c-tasks-cols">
+        <div className="c-tasks-main">
+          <TaskList
+            tab={tab}
+            tasks={filtered}
+            suggestions={tab === "today" || tab === "all" ? suggestions : []}
+            today={today}
+            courses={courses}
+            onToggle={setDone}
+            onRename={(id, title) => void updateTask(id, { title })}
+            onDue={(id, due) => void updateTask(id, { due })}
+            onSubject={(id, subject) => void updateTask(id, { subject })}
+            onDelete={(id) => void deleteTask(id)}
+            onSuggestionDone={(s) => void handleSuggestionDone(s)}
+            onSuggestionDismiss={(s) => void handleSuggestionDismiss(s)}
+            onFocusInput={() => draftInputRef.current?.focus()}
+            onExample={(text) => {
+              setDraft(text);
+              draftInputRef.current?.focus();
+            }}
+          />
+        </div>
+
+        <aside className="c-tasks-aside">
+          <div className="c-schedule-card">
+            <span className="c-schedule-card-label">По предметам</span>
+            {courses.length === 0 ? (
+              <p style={{ margin: 0, fontSize: 14, color: "var(--ink-3)" }}>Пока нет предметов.</p>
+            ) : (
+              <div className="c-tasks-subjects">
+                {courses.map((c) => {
+                  const count = open.filter((t) => t.subject === c.id).length;
+                  const active = subjectFilter === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className={`c-tasks-subject-row${active ? " on" : ""}`}
+                      onClick={() => setSubjectFilter(active ? null : c.id)}
+                    >
+                      <span className="c-tasks-subject-row-name">
+                        <SubjectCover seed={c.cover_seed} size={20} />
+                        {courseName(c)}
+                      </span>
+                      <span className="c-tasks-subject-row-count">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
+    </div>
   );
 }
 
 interface ListProps {
   tab: Tab;
   tasks: Task[];
+  suggestions: ReviewSuggestion[];
   today: string;
   courses: Course[];
   onToggle: (id: string, done: boolean) => void;
@@ -264,6 +288,8 @@ interface ListProps {
   onDue: (id: string, due: string | null) => void;
   onSubject: (id: string, subject: string | null) => void;
   onDelete: (id: string) => void;
+  onSuggestionDone: (s: ReviewSuggestion) => void;
+  onSuggestionDismiss: (s: ReviewSuggestion) => void;
   onFocusInput: () => void;
   onExample: (text: string) => void;
 }
@@ -271,6 +297,7 @@ interface ListProps {
 function TaskList({
   tab,
   tasks,
+  suggestions,
   today,
   courses,
   onToggle,
@@ -278,6 +305,8 @@ function TaskList({
   onDue,
   onSubject,
   onDelete,
+  onSuggestionDone,
+  onSuggestionDismiss,
   onFocusInput,
   onExample,
 }: ListProps) {
@@ -297,103 +326,155 @@ function TaskList({
     />
   );
 
+  const suggestionRow = (s: ReviewSuggestion) => (
+    <SuggestionRow
+      key={s.dedupeKey}
+      suggestion={s}
+      subject={courses.find((c) => c.id === s.subjectId)}
+      onDone={() => onSuggestionDone(s)}
+      onDismiss={() => onSuggestionDismiss(s)}
+    />
+  );
+
   if (tab === "done") {
     const done = tasks
       .filter((t) => !isOpen(t))
       .sort((a, b) => (b.done_at ?? "").localeCompare(a.done_at ?? ""));
     if (done.length === 0)
-      return <p className="ds-body ds-muted">Пока ничего не выполнено.</p>;
+      return <p style={{ fontSize: 14, color: "var(--ink-3)" }}>Пока ничего не выполнено.</p>;
     return <Group title="Выполненные">{done.map(row)}</Group>;
   }
 
-  const overdue = open
-    .filter((t) => isOverdue(t, today))
-    .sort((a, b) => (a.due ?? "").localeCompare(b.due ?? ""));
+  const overdue = open.filter((t) => isOverdue(t, today)).sort((a, b) => (a.due ?? "").localeCompare(b.due ?? ""));
   const todayTasks = open.filter((t) => t.due === today);
-  const future = open
-    .filter((t) => t.due && t.due > today)
-    .sort((a, b) => (a.due ?? "").localeCompare(b.due ?? ""));
+  const future = open.filter((t) => t.due && t.due > today).sort((a, b) => (a.due ?? "").localeCompare(b.due ?? ""));
   const noDue = open.filter((t) => !t.due);
 
+  // Задач нет вовсе: большая плашка на вкладках «Сегодня», «Скоро» и «Все».
+  const noOpenTasks = open.length === 0 && suggestions.length === 0;
+  const emptyState = (
+    <EmptyState
+            icon="task"
+            title="Задач пока нет"
+            description="Добавь первую — или начни с примера."
+            action={
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {EXAMPLES.map((ex) => (
+                    <button
+                      key={ex}
+                      type="button"
+                      className="c-tasks-quickadd-subject"
+                      onClick={() => onExample(ex)}
+                    >
+                      {ex}
+                    </button>
+                  ))}
+                </div>
+                <Button onClick={onFocusInput}>Создать задачу</Button>
+              </div>
+            }
+          />
+  );
+
   if (tab === "today") {
-    if (overdue.length + todayTasks.length === 0)
-      return <p className="ds-body ds-muted">На сегодня задач нет.</p>;
+    if (noOpenTasks) return emptyState;
+    if (overdue.length + todayTasks.length + suggestions.length === 0)
+      return <p style={{ fontSize: 14, color: "var(--ink-3)" }}>На сегодня задач нет.</p>;
     return (
       <>
-        {overdue.length > 0 && (
-          <Group title="Просрочено" danger>
-            {overdue.map(row)}
+        {overdue.length > 0 && <Group title="Просрочено" danger>{overdue.map(row)}</Group>}
+        {(todayTasks.length > 0 || suggestions.length > 0) && (
+          <Group title="Сегодня">
+            {todayTasks.map(row)}
+            {suggestions.map(suggestionRow)}
           </Group>
         )}
-        {todayTasks.length > 0 && <Group title="Сегодня">{todayTasks.map(row)}</Group>}
       </>
     );
   }
 
   if (tab === "soon") {
     const soon = future.filter((t) => (t.due ?? "") <= in14);
+    if (open.length === 0) return emptyState;
     if (soon.length === 0)
-      return <p className="ds-body ds-muted">На ближайшие две недели задач нет.</p>;
+      return <p style={{ fontSize: 14, color: "var(--ink-3)" }}>На ближайшие две недели задач нет.</p>;
     return <Group title="Завтра и позже">{soon.map(row)}</Group>;
   }
 
   // tab === "all"
-  if (open.length === 0) {
-    return (
-      <EmptyState
-        title="Задач пока нет"
-        text="Добавь первую — или начни с примера."
-        actions={
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", alignItems: "center" }}>
-            <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap", justifyContent: "center" }}>
-              {EXAMPLES.map((ex) => (
-                <button
-                  key={ex}
-                  type="button"
-                  className="ds-badge ds-badge--neutral"
-                  style={{ cursor: "pointer" }}
-                  onClick={() => onExample(ex)}
-                >
-                  {ex}
-                </button>
-              ))}
-            </div>
-            <Button onClick={onFocusInput}>Создать задачу</Button>
-          </div>
-        }
-      />
-    );
-  }
+  if (noOpenTasks) return emptyState;
 
   return (
     <>
-      {overdue.length > 0 && (
-        <Group title="Просрочено" danger>
-          {overdue.map(row)}
+      {overdue.length > 0 && <Group title="Просрочено" danger>{overdue.map(row)}</Group>}
+      {(todayTasks.length > 0 || suggestions.length > 0) && (
+        <Group title="Сегодня">
+          {todayTasks.map(row)}
+          {suggestions.map(suggestionRow)}
         </Group>
       )}
-      {todayTasks.length > 0 && <Group title="Сегодня">{todayTasks.map(row)}</Group>}
       {future.length > 0 && <Group title="Завтра и позже">{future.map(row)}</Group>}
       {noDue.length > 0 && <Group title="Без срока">{noDue.map(row)}</Group>}
     </>
   );
 }
 
-function Group({
-  title,
-  danger,
-  children,
+function SuggestionRow({
+  suggestion,
+  subject,
+  onDone,
+  onDismiss,
 }: {
-  title: string;
-  danger?: boolean;
-  children: React.ReactNode;
+  suggestion: ReviewSuggestion;
+  subject?: Course;
+  onDone: () => void;
+  onDismiss: () => void;
 }) {
+  const navigate = useNavigate();
   return (
-    <div className="ds-task-group">
-      <div className={`ds-task-group__title${danger ? " ds-task-group__title--danger" : ""}`}>
-        {title}
-      </div>
-      <div className="ds-task-list">{children}</div>
+    <div className="c-task-suggested-row">
+      <Checkbox checked={false} onChange={onDone} label={`Выполнить: ${suggestion.title}`} />
+      {/* Нажатие на название ведёт на квиз (или на лекцию), а не отмечает подсказку. */}
+      <button type="button" className="c-task-suggested-main" onClick={() => navigate(suggestion.href)}>
+        <span className="c-task-suggested-label">Предложено</span>
+        <span className="c-task-suggested-title">{suggestion.title}</span>
+        <span className="c-task-row-meta">
+          {subject && (
+            <span className="c-task-row-subject">
+              <SubjectCover seed={subject.cover_seed} size={16} />
+              <span>{courseName(subject)}</span>
+            </span>
+          )}
+          <span className="c-task-row-lecture">
+            <Link2 size={13} aria-hidden="true" />
+            Лекция
+          </span>
+        </span>
+      </button>
+      <button type="button" className="c-task-row-menu-btn" aria-label="Скрыть подсказку" onClick={onDismiss}>
+        ×
+      </button>
     </div>
+  );
+}
+
+function Group({ title, danger, children }: { title: string; danger?: boolean; children: ReactNode }) {
+  return (
+    <div className="c-task-group">
+      <div className={`c-task-group-title${danger ? " danger" : ""}`}>{title}</div>
+      <div className="c-task-list">{children}</div>
+    </div>
+  );
+}
+
+/** Лампочка в шапке: что за строки «Предложено» (spec 5.3). */
+function TasksHint() {
+  return (
+    <Toggletip label="Задачи из лекций" align="right">
+      <strong>Задачи из лекций.</strong> Рядом с твоими задачами мы предлагаем пройти квиз по вчерашней лекции
+      и повторить те, что плохо запомнились или давно не открывались. Такие строки помечены «Предложено» и без
+      срока. Отметь галочкой — она станет обычной выполненной задачей. Ненужную можно скрыть.
+    </Toggletip>
   );
 }

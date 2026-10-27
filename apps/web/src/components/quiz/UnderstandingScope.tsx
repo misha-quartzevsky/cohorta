@@ -12,6 +12,7 @@ import { fetchLecture } from "../../services/lectureService";
 import type { Lecture } from "../../lib/types";
 import QuizCreateDialog from "./QuizCreateDialog";
 import { Ctx, useUnderstanding, type Value } from "./understandingContext";
+import { MS_PER_DAY } from "../../lib/localDate";
 
 /**
  * Панель «Твоё понимание темы» (Screen-understanding, Screen-m-understanding,
@@ -287,7 +288,7 @@ function PanelBody() {
 /** Плашка-напоминание: 3 дня после последнего ответа (spec 6.5). */
 function reminderText(lastActivityAt: Date | null): string {
   if (!lastActivityAt) return "Через 3 дня стоит проверить себя ещё раз: так тема закрепится.";
-  const daysSince = Math.floor((Date.now() - lastActivityAt.getTime()) / 86400000);
+  const daysSince = Math.floor((Date.now() - lastActivityAt.getTime()) / MS_PER_DAY);
   return daysSince >= 3
     ? "Пора проверить себя ещё раз."
     : "Через 3 дня стоит проверить себя ещё раз: так тема закрепится.";

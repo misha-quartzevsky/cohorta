@@ -57,7 +57,7 @@ test("таблица вставляется из slash-меню, есть тул
   await expect(table.locator("td").first()).toContainText("e2e-table");
 
   // Автосохранение (debounce ~1.2 с) → reload → таблица с текстом на месте.
-  await expect(page.locator(".save-indicator.saved")).toContainText(
+  await expect(page.locator(".c-shell-save.saved")).toContainText(
     "Обновлено только что",
     { timeout: 20000 }
   );

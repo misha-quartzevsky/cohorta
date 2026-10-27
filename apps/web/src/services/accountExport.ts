@@ -9,7 +9,7 @@
  */
 
 import { htmlToMarkdown, toCsv } from "../lib/htmlToMarkdown";
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import { pbDateOnly } from "../lib/localDate";
 import { buildZip, safeFileName, textBytes, type ZipEntry } from "../lib/zipStore";
 
@@ -40,8 +40,8 @@ function uniquePath(taken: Set<string>, folder: string, name: string, ext: strin
 }
 
 /** Собрать все данные в файлы архива. */
-export async function collectExport(onProgress?: (done: number, total: number) => void): Promise<ZipEntry[]> {
-  const uid = String(pb.authStore.record?.id ?? "");
+async function collectExport(onProgress?: (done: number, total: number) => void): Promise<ZipEntry[]> {
+  const uid = currentUserId();
   if (!uid) throw new Error("Нужно войти.");
   const own = pb.filter("owner = {:u}", { u: uid });
   const steps = 6;

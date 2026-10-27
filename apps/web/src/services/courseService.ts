@@ -9,18 +9,13 @@
  */
 
 import { nextCoverSeed } from "../lib/coverSeed";
-import { pb } from "../lib/pocketbase";
+import { pb, currentUserId } from "../lib/pocketbase";
 import { moveToTrash } from "./trashService";
 import type { Course, Lecture } from "../lib/types";
 import { FIELDS } from "../lib/types";
 import { randomCourseColor } from "../lib/colors";
 import { slugify } from "../lib/slugify";
 import { uniqueSlugForCollection } from "./genericService";
-
-/** Id текущего пользователя ("" — не залогинен). */
-function currentUserId(): string {
-  return String(pb.authStore.record?.id ?? "");
-}
 
 /**
  * Fetch every course, newest-first.

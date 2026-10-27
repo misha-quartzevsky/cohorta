@@ -34,7 +34,7 @@ import {
 } from "react";
 
 /** Окно на отмену — совпадает с копирайтом тостов ("Отменить · 5 сек"). */
-export const UNDO_WINDOW_MS = 5000;
+const UNDO_WINDOW_MS = 5000;
 
 interface PendingEntry {
   /** Уникальный ключ записи, напр. `lecture:${id}`. */

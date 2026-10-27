@@ -9,8 +9,6 @@
  * Телефон (Screen-m-lectures-all / -subjects / -period): заголовок с иконками
  * поиска и «+», список сверху, внизу над панелью — переключатель «Все лекции /
  * Предметы», период и пилюли статуса. Старого Screen-m-lectures больше нет.
- *
- * За флагом VITE_NEW_UI (App.tsx).
  */
 
 import { useForms } from "../lib/formsContext";

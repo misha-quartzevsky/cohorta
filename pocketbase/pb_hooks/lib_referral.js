@@ -96,4 +96,4 @@ function grantReferralReward(app, lecture) {
   }
 }
 
-module.exports = { REWARD_DAYS, attributeReferral, grantReferralReward };
+module.exports = { attributeReferral, grantReferralReward };

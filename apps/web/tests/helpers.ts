@@ -44,82 +44,145 @@ export async function waitForStable(
 }
 
 /**
- * Клик по кнопке «Далее» мастера. Через dispatchEvent — обычный
- * .click() по .onb-next хронически завешивает headed-Firefox на
- * «performing click action» (тот же флак, что для сайдбара/логина).
+ * Клик по кнопке «Далее» (на последнем шаге «Готово») мастера онбординга.
+ * Через dispatchEvent — обычный .click() хронически завешивает headed-Firefox
+ * на «performing click action» (тот же флак, что для сайдбара/логина).
  */
 export async function onbNext(page: Page): Promise<void> {
-  await expect(page.locator(".onb-next")).toBeEnabled();
-  await page.locator(".onb-next").dispatchEvent("click");
+  const next = page.getByRole("button", { name: /^(Далее|Готово)$/ });
+  await expect(next).toBeEnabled();
+  await next.dispatchEvent("click");
 }
 
-/** Клик по выбираемому элементу мастера (плитка/пилюля/пункт списка). */
-export async function onbPick(page: Page, selector: string): Promise<void> {
-  await page.locator(selector).first().waitFor({ state: "visible" });
-  await page.locator(selector).first().dispatchEvent("click");
+/** Клик по кнопке мастера по её видимому названию («Бакалавриат», «Семестры», …). */
+export async function onbChip(page: Page, name: string): Promise<void> {
+  const chip = page.getByRole("button", { name, exact: true });
+  await chip.waitFor({ state: "visible" });
+  await chip.dispatchEvent("click");
 }
 
 /**
- * Проходит мастер онбординга по кратчайшему пути и оставляет
- * пользователя в приложении. После регистрации новый аккаунт
- * попадает на `/onboarding` — без этого шага нет ни одного периода
- * и роуты `/s/:slug` недоступны.
- *
- * По умолчанию создаёт `count` семестров (slug "1".."count"), так что
+ * Шаги 1–2 мастера: имя и «город + первый вуз из справочника».
+ * Останавливается на шаге «Уровень и курс».
+ */
+export async function onbNameAndUniversity(page: Page, name = "E2E Тест"): Promise<void> {
+  // Шаг 1 — имя
+  await page.getByLabel("Как тебя зовут").fill(name);
+  await onbNext(page);
+
+  // Шаг 2 — город и вуз. Подсказки города появляются, когда подгрузится справочник.
+  await page.getByLabel("Город").fill("Москва");
+  const city = page.locator(".c-onb-sugg button", { hasText: "Москва" }).first();
+  await city.waitFor({ state: "visible" });
+  await city.dispatchEvent("click");
+  const uni = page.getByRole("option").first();
+  await uni.waitFor({ state: "visible" });
+  await uni.dispatchEvent("click");
+  await onbNext(page);
+}
+
+/**
+ * Проходит мастер онбординга (4 шага) по кратчайшему пути и оставляет
+ * пользователя в приложении. После регистрации новый аккаунт попадает на
+ * `/onboarding`: пока он не пройден, нет ни одного периода, и маршруты
+ * `/s/:slug` недоступны. Бакалавриат, 1 курс, семестры: 8 периодов (slug «1»…«8»),
  * `/s/1` существует сразу после вызова.
  */
-export async function completeOnboardingFast(
-  page: Page,
-  opts: { username?: string; count?: number } = {}
-): Promise<void> {
-  // Логин = поддомен: только [a-z0-9-], поэтому дефисы, не подчёркивания.
-  const username =
-    opts.username ??
-    `e2e-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-  const count = opts.count ?? 2;
-
+export async function completeOnboardingFast(page: Page): Promise<void> {
   await page.waitForURL(/\/onboarding$/);
+  await onbNameAndUniversity(page);
 
-  // Шаг 1 — имя
-  await page.locator("#onb-name").fill("E2E Тест");
+  // Шаг 3 — уровень и курс
+  await onbChip(page, "Бакалавриат");
+  await page.getByRole("button", { name: "1 курс", exact: true }).dispatchEvent("click");
   await onbNext(page);
 
-  // Шаг 2 — адрес профиля (логин)
-  await page.locator("#onb-username").fill(username);
+  // Шаг 4 — период (семестры по умолчанию), «Готово»
   await onbNext(page);
 
-  // Шаг 3 — город + вуз. Ждём, пока подгрузится справочник городов
-  // (пункт "нет в списке" — .onb-combo-item--muted — не наш выбор).
-  await page.locator("#onb-city").fill("Москва");
-  await onbPick(
-    page,
-    '.onb-combo-item:not(.onb-combo-item--muted):has-text("Москва")'
+  // Мастер завершается переходом на «/» с дашбордом.
+  await expect(page.locator(".c-dash")).toBeVisible();
+}
+
+/** Открывает /login и переключает форму в режим регистрации. */
+export async function openRegister(page: Page): Promise<void> {
+  await page.addInitScript(
+    ({ key, slug }) => localStorage.setItem(key, slug),
+    { key: LAST_SEMESTER_KEY, slug: "1" }
   );
-  await onbPick(page, ".onb-option:not(.onb-option--dashed)");
-  await onbNext(page);
+  await page.goto("/login");
+  // dispatchEvent — тот же приём, что для сайдбара: обходит click-флак headed-Firefox.
+  await page.locator(".c-auth-switch a").dispatchEvent("click");
+  await expect(page.locator(".c-auth-head h1")).toHaveText("Регистрация в cohorta");
+}
 
-  // Шаг 4 — ступень
-  await onbPick(page, '.onb-option:has-text("Бакалавриат")');
-  await onbNext(page);
+/** Заполняет форму регистрации и отправляет её Enter'ом. */
+export async function submitRegister(
+  page: Page,
+  email: string,
+  password: string,
+  confirm: string
+): Promise<void> {
+  await page.locator('input[type="email"]').fill(email);
+  const pw = page.locator('input[type="password"]');
+  await pw.nth(0).fill(password);
+  await pw.nth(1).fill(confirm);
+  await pw.nth(1).press("Enter");
+}
 
-  // Шаг 5 — курс
-  await onbPick(page, '.onb-pill:has-text("1")');
-  await onbNext(page);
+/**
+ * Регистрирует новый аккаунт и оставляет его на /onboarding. Возвращает email.
+ */
+export async function registerBare(page: Page, prefix = "e2e"): Promise<string> {
+  const email = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@example.com`;
+  await openRegister(page);
+  await submitRegister(page, email, "test12345", "test12345");
+  await page.waitForURL(/\/onboarding$/);
+  return email;
+}
 
-  // Шаг 6 — тип периода
-  await onbPick(page, '.onb-option:has-text("Семестры")');
-  await onbNext(page);
+/** Регистрация + мастер онбординга: аккаунт в приложении на дашборде. Возвращает email. */
+export async function registerFresh(page: Page, prefix = "e2e"): Promise<string> {
+  const email = await registerBare(page, prefix);
+  await completeOnboardingFast(page);
+  return email;
+}
 
-  // Шаг 7 — количество и генерация
-  await page.locator("#onb-count").fill(String(count));
-  await page.locator('.btn-primary:has-text("Создать")').dispatchEvent("click");
-  await expect(page.locator(".onb-period-row")).toHaveCount(count);
-  await onbNext(page);
+/**
+ * Переходит на лекцию через поиск (кнопка «Поиск» в сайдбаре): прямая SPA-навигация
+ * лекция → лекция без промежуточных страниц, как раньше из списка лекций в сайдбаре.
+ */
+export async function openLectureViaSearch(page: Page, query: string, title: string): Promise<void> {
+  await page.locator(".c-shell-side-search").dispatchEvent("click");
+  await page.getByPlaceholder("Лекции, предметы, одногруппники").fill(query);
+  const hit = page.locator(".c-search-results .c-row", { hasText: title }).first();
+  await hit.waitFor({ state: "visible" });
+  await hit.dispatchEvent("click");
+}
 
-  // Шаг 8 — аватар пропускаем
-  await onbNext(page);
+/**
+ * Переходит на другую лекцию того же предмета: крошка «Предмет» → строка списка.
+ * В новом сайдбаре на лекции показано только содержание, списка лекций курса в нём нет.
+ */
+export async function openOtherLectureOfCourse(page: Page, course: string, title: string): Promise<void> {
+  await page.locator(".c-shell-crumbs a", { hasText: course }).dispatchEvent("click");
+  await page.locator(".c-lec-row", { hasText: title }).first().dispatchEvent("click");
+}
 
-  await page.waitForURL(/\/s\//);
+/**
+ * Проверяет email вошедшего пользователя. В новом интерфейсе он показан в
+ * «Профиль и настройки» (/settings), куда ведёт блок профиля в сайдбаре.
+ */
+export async function expectAccountEmail(page: Page, email: string): Promise<void> {
+  await page.locator(".c-shell-profile").dispatchEvent("click");
+  await expect(page.locator(".c-settings-me .e")).toHaveText(email);
+}
+
+/** Выход из аккаунта: строка «Аккаунт · Выйти» в /settings (на телефоне та же кнопка в «Профиле»). */
+export async function logout(page: Page): Promise<void> {
+  await page.goto("/settings");
+  await page.getByRole("button", { name: "Выйти", exact: true }).click();
+  await page.waitForURL("**/login");
 }
 
 /**

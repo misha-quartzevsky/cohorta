@@ -4,6 +4,7 @@ import {
   slotMatchesParity,
   findLectureForOccurrence,
   slotActiveOn,
+  dateForWeekday,
 } from "./weekParity";
 import type { Lecture, ScheduleSlot, ScheduleSlotLecture } from "./types";
 
@@ -148,5 +149,24 @@ describe("slotActiveOn (границы семестра и чётности)", (
     expect(slotActiveOn(slot, "2026-10-18", anchor)).toBe(true);
     // 2026-10-25 — воскресенье следующей (чётной) недели.
     expect(slotActiveOn(slot, "2026-10-25", anchor)).toBe(false);
+  });
+});
+
+describe("dateForWeekday", () => {
+  it("день недели в неделе, содержащей дату (1 = понедельник)", () => {
+    const ref = new Date(2026, 9, 14, 12); // среда
+    expect(dateForWeekday(ref, 1)).toBe("2026-10-12");
+    expect(dateForWeekday(ref, 3)).toBe("2026-10-14");
+    expect(dateForWeekday(ref, 7)).toBe("2026-10-18");
+  });
+  it("воскресенье относится к неделе, которая началась в понедельник до него", () => {
+    const sunday = new Date(2026, 9, 18, 12);
+    expect(dateForWeekday(sunday, 1)).toBe("2026-10-12");
+    expect(dateForWeekday(sunday, 7)).toBe("2026-10-18");
+  });
+  it("переход через конец года", () => {
+    const ref = new Date(2026, 11, 31, 12); // четверг
+    expect(dateForWeekday(ref, 1)).toBe("2026-12-28");
+    expect(dateForWeekday(ref, 5)).toBe("2027-01-01");
   });
 });

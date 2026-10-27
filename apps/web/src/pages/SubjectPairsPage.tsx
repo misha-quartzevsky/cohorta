@@ -7,7 +7,7 @@
  * Маршрут `/s/:semesterSlug/:courseSlug/pairs` — новый (решение по
  * умолчанию, спецификация адрес не называет), вход — пункт «Пары
  * предмета» в меню слота на /schedule (components/schedule/…SlotCard
- * в pages/SchedulePageNew.tsx). Записано в docs/decisions.md.
+ * в pages/SchedulePage.tsx). Записано в docs/decisions.md.
  *
  * Вкладки «Лекции N / Пары N / Экзамен» в мокапе — те же разделы,
  * что уже существуют отдельными страницами (курс, экзамен); здесь они
@@ -19,7 +19,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, MoreHorizontal } from "lucide-react";
 
 import { Button, Icon, StatusChip, Menu, SubjectTabs } from "../ui";
-import SlotFormNew from "../components/schedule/SlotFormNew";
+import SlotForm from "../components/schedule/SlotForm";
 import AttachLectureModal from "../components/schedule/AttachLectureModal";
 import { useCourseBySlug } from "../hooks/useCourseBySlug";
 import { useSchedule } from "../hooks/useSchedule";
@@ -74,7 +74,7 @@ export default function SubjectPairsPage() {
   }, [course]);
 
   // «Добавить конспект»: прикрепить существующую лекцию предмета к пустой
-  // паре на её ближайшую дату (см. pages/SchedulePageNew.tsx).
+  // паре на её ближайшую дату (см. pages/SchedulePage.tsx).
   const [attachTarget, setAttachTarget] = useState<{ slot: ScheduleSlot; dateStr: string } | null>(
     null
   );
@@ -289,7 +289,7 @@ export default function SubjectPairsPage() {
         </p>
       </div>
 
-      <SlotFormNew
+      <SlotForm
         open={formOpen}
         onClose={() => {
           setFormOpen(false);
