@@ -30,7 +30,6 @@ import CardLibraryPage from "./pages/CardLibraryPage";
 import CardStudyPage from "./pages/CardStudyPage";
 import DeckEditorPage from "./pages/DeckEditorPage";
 import ExamsPage from "./pages/ExamsPage";
-import GroupPage from "./pages/GroupPage";
 import ExamHubPage from "./pages/ExamHubPage";
 import ExamHubPageNew from "./pages/ExamHubPageNew";
 import ExamImportPage from "./pages/ExamImportPage";
@@ -202,7 +201,7 @@ function App() {
               <Route path="/s/:semesterSlug/exams" element={<ExamsPage />} />
               {/* Экран «Моя группа» — статический сегмент "group"
                   (RESERVED_SLUGS), тоже до :courseSlug. */}
-              <Route path="/s/:semesterSlug/group" element={isNewUI() ? <GroupHomeRoute /> : <GroupPage />} />
+              <Route path="/s/:semesterSlug/group" element={<GroupHomeRoute />} />
               {isNewUI() && (
                 <>
                   <Route path="/s/:semesterSlug/group/join" element={<GroupJoinRoute />} />

@@ -22,13 +22,8 @@
  */
 
 import { pb, currentUserId } from "../lib/pocketbase";
-import type { Group, GroupMember, LecturePreview } from "../lib/types";
+import type { Group, GroupMember } from "../lib/types";
 import { FIELDS } from "../lib/types";
-
-export interface GroupCandidate {
-  id: string;
-  name: string;
-}
 
 /** Группы, которыми пользователь владеет или в которых состоит. */
 export async function fetchMyGroups(): Promise<Group[]> {
@@ -57,70 +52,6 @@ export async function fetchMyGroups(): Promise<Group[]> {
   for (const g of owned) byId.set(g.id, g);
 
   return [...byId.values()];
-}
-
-/**
- * Нечёткий поиск СУЩЕСТВУЮЩИХ групп по названию — обязательный шаг
- * перед созданием новой (защита от фрагментации потока). Идёт через
- * серверный маршрут `/api/groups/search` (A0.5, 2026-10-18):
- * `groups.listRule` теперь ограничен участникам и владельцу, прямой
- * запрос к коллекции чужие группы не находит.
- */
-export async function searchSimilarGroups(
-  name: string,
-  limit = 6
-): Promise<GroupCandidate[]> {
-  const query = name.trim();
-  if (query.length < 2) return [];
-
-  try {
-    const results = await pb.send<GroupCandidate[]>("/api/groups/search", {
-      method: "GET",
-      query: { q: query },
-    });
-    return (results ?? []).slice(0, limit);
-  } catch {
-    return [];
-  }
-}
-
-/** Строку членства текущего пользователя в группе, либо null. */
-async function myMembership(groupId: string): Promise<GroupMember | null> {
-  const uid = currentUserId();
-  if (!uid || !groupId) return null;
-  try {
-    return await pb
-      .collection("group_members")
-      .getFirstListItem<GroupMember>(
-        pb.filter(`${FIELDS.memberGroup} = {:g} && ${FIELDS.memberUser} = {:u}`, {
-          g: groupId,
-          u: uid,
-        })
-      );
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Создать группу. Идёт серверным маршрутом `/api/groups/create` (волна C):
- * владелец — текущий пользователь, код приглашения ставит сервер, строку
- * членства создаёт он же (прямое создание групп и членства закрыто правилами).
- */
-export async function createGroup(name: string): Promise<Group> {
-  const uid = currentUserId();
-  if (!uid) throw new Error("Нужно войти, чтобы создать группу.");
-  const created = await pb.send<{ id: string }>("/api/groups/create", {
-    method: "POST",
-    body: { name: name.trim() },
-  });
-  return pb.collection("groups").getOne<Group>(created.id);
-}
-
-/** Код приглашения группы. Отдаёт только владельцу (остальным ошибка). */
-export async function fetchInviteCode(groupId: string): Promise<string> {
-  const r = await pb.send<{ code: string }>(`/api/groups/${groupId}/invite`, { method: "GET" });
-  return r.code;
 }
 
 /** Сбросить код: старый перестаёт работать, участники остаются. Только владелец. */
@@ -161,15 +92,6 @@ export async function joinByInviteCode(code: string): Promise<void> {
   }
 }
 
-/**
- * Вступить в группу по её id нельзя: вступление только по коду приглашения
- * (волна C, раздел 5 инструкции). Функция оставлена, чтобы старый экран
- * «Группа» не ломался при сборке; она всегда отказывает.
- */
-export async function joinGroupById(_groupId: string): Promise<void> {
-  throw new Error("Вступить в группу можно только по коду приглашения.");
-}
-
 interface RosterEntry {
   id: string;
   user: { id: string; name?: string; avatar?: string } | null;
@@ -203,43 +125,6 @@ export async function fetchRoster(groupId: string): Promise<GroupMember[]> {
       ? { user: { id: entry.user.id, name: entry.user.name, avatar: entry.user.avatar } }
       : undefined,
   })) as unknown as GroupMember[];
-}
-
-/** Покинуть группу (удалить свою строку членства). */
-export async function leaveGroup(groupId: string): Promise<void> {
-  const mine = await myMembership(groupId);
-  if (mine) await pb.collection("group_members").delete(mine.id);
-}
-
-/**
- * Переключить `preview_enabled` для текущего пользователя в группе —
- * персональное разрешение показывать свои конспекты участникам. Хук
- * `lecture_previews.pb.js` пересоберёт thumbnail-строки.
- */
-export async function setPreviewEnabled(
-  groupId: string,
-  enabled: boolean
-): Promise<void> {
-  const mine = await myMembership(groupId);
-  if (!mine) return;
-  await pb.collection("group_members").update(mine.id, {
-    [FIELDS.memberPreviewEnabled]: enabled,
-  });
-}
-
-/**
- * Thumbnail-превью лекций конкретного автора, видимые текущему
- * пользователю (правило `lecture_previews` = участник той же группы).
- * `content` лекции сюда не входит — только заголовок + короткий фрагмент.
- */
-export async function fetchOwnerPreviews(
-  ownerUserId: string
-): Promise<LecturePreview[]> {
-  if (!ownerUserId) return [];
-  return pb.collection("lecture_previews").getFullList<LecturePreview>({
-    filter: pb.filter(`${FIELDS.previewOwner} = {:o}`, { o: ownerUserId }),
-    sort: "-updated",
-  });
 }
 
 export interface GroupPreview {
