@@ -1440,11 +1440,7 @@ button.c-row.on:hover { background: var(--accent-soft); }
 /* ============================================================
  *  Каркас — A4, 2026-10-18 (components/AppShellNew.tsx).
  *
- *  За флагом VITE_NEW_UI: .app-shell/.app-main (v1, App.css) не
- *  трогаю — это разные деревья классов на разных деревьях DOM,
- *  включаются по очереди через isNewUI(), а не одновременно.
- *  Брейкпоинт 1024px — тот же, что и у старого каркаса
- *  (AppLayout.tsx: "desktop (>=1024px) the sidebar is always visible").
+ *  Брейкпоинт 1024px: на десктопе сайдбар виден всегда.
  * ============================================================ */
 .c-shell { display: flex; min-height: 100vh; background: var(--bg); }
 

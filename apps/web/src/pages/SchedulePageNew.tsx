@@ -15,9 +15,6 @@
  * главному правилу 4.2 и десктопному макету той же волны. Реализовано
  * по тексту спецификации и по десктопу (белая карточка без градиента),
  * расхождение зафиксировано в docs/decisions.md.
- *
- * За флагом VITE_NEW_UI — подключена в App.tsx вместо SchedulePage.tsx
- * только когда isNewUI().
  */
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";

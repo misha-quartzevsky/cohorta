@@ -12,8 +12,6 @@
  * ExamHubPage) — меняется только вёрстка и подключение «Добавить билет»
  * как отдельного модального действия (Screen-m-exam.dc.html: у «Добавить
  * билет» и «Импорт» разные кнопки, значит разные флоу — см. decisions.md).
- *
- * За флагом VITE_NEW_UI — подключена в App.tsx вместо ExamHubPage.tsx.
  */
 
 import { useState } from "react";

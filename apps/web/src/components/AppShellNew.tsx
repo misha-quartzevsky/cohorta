@@ -9,10 +9,6 @@
  * только поиск). Строка в шапке открывает поиск по продукту
  * (components/SearchOverlay.tsx, B2) — сам ввод живёт в оверлее, не
  * в самой шапке.
- *
- * За флагом VITE_NEW_UI (lib/featureFlags.ts): пока волны A/B1 не
- * закрыты, старый каркас (AppLayout → GlobalSidebar/Header) остаётся
- * дефолтным. Этот компонент не трогает их код.
  */
 
 import type { MouseEvent as ReactMouseEvent } from "react";

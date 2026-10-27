@@ -8,9 +8,6 @@
  * группе «Сегодня» отдельными строками с подписью «Предложено», без
  * срока — выполнение создаёт настоящую запись tasks (source=auto_review),
  * «Скрыть» — запись с dismissed=true, дальше не предлагается (dedupe_key).
- *
- * За флагом VITE_NEW_UI — подключена в App.tsx вместо TasksPage.tsx
- * только когда isNewUI().
  */
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";

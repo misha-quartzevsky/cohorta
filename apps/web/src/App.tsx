@@ -80,7 +80,6 @@ import {
   LAST_SEMESTER_KEY,
 } from "./lib/semesterContext";
 import { semesterSlug } from "./lib/types";
-import { isNewUI } from "./lib/featureFlags";
 import { LAND_IN_GROUP_KEY } from "./pages/auth/JoinGroupPage";
 import "./App.css";
 
@@ -153,17 +152,12 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPageNew mode="login" />} />
           <Route path="/privacy" element={<PolicyPageNew />} />
-          {/* Вход, регистрация, восстановление пароля и ссылка-приглашение
-              (B6). Старый интерфейс держит всё на /login (Login.tsx). */}
-          {isNewUI() && (
-            <>
-              <Route path="/register" element={<LoginPageNew mode="register" />} />
-              <Route path="/reset" element={<ResetEntryPage />} />
-              <Route path="/reset/confirm/:token" element={<ResetNewPasswordPage />} />
-              <Route path="/join" element={<JoinRoute />} />
-              <Route path="/join/:code" element={<JoinRoute />} />
-            </>
-          )}
+          {/* Вход, регистрация, восстановление пароля и ссылка-приглашение (B6). */}
+          <Route path="/register" element={<LoginPageNew mode="register" />} />
+          <Route path="/reset" element={<ResetEntryPage />} />
+          <Route path="/reset/confirm/:token" element={<ResetNewPasswordPage />} />
+          <Route path="/join" element={<JoinRoute />} />
+          <Route path="/join/:code" element={<JoinRoute />} />
           <Route element={<ProtectedRoute />}>
             {/* Мастер онбординга — фуллскрин, без сайдбара, вне AppLayout. */}
             <Route path="/onboarding" element={<OnboardingNew />} />
@@ -171,46 +165,31 @@ function App() {
             <Route path="/quiz/:lectureId" element={<QuizPage />} />
             <Route element={<AppLayout />}>
               <Route path="/" element={<HomeRedirect />} />
-              <Route
-                path="/s/:semesterSlug"
-                element={<DashboardNew />}
-              />
+              <Route path="/s/:semesterSlug" element={<DashboardNew />} />
               <Route path="/s/:semesterSlug/courses" element={<CoursesPage />} />
               {/* «Все лекции» (B2, pages/LecturesAllPage.tsx) — свой адрес,
-                  чтобы не подсвечиваться одновременно с «Предметы». За
-                  флагом VITE_NEW_UI: старый интерфейс не знает этого
-                  экрана, остаётся на алиасе к «Предметы». */}
-              <Route
-                path="/s/:semesterSlug/lectures"
-                element={isNewUI() ? <LecturesAllPage /> : <CoursesPage />}
-              />
+                  чтобы не подсвечиваться одновременно с «Предметы». */}
+              <Route path="/s/:semesterSlug/lectures" element={<LecturesAllPage />} />
               {/* Сводка по всем экзаменам семестра — статический сегмент
                   "exams" (RESERVED_SLUGS), встаёт до :courseSlug ниже. */}
               <Route path="/s/:semesterSlug/exams" element={<ExamsPage />} />
               {/* Экран «Моя группа» — статический сегмент "group"
                   (RESERVED_SLUGS), тоже до :courseSlug. */}
               <Route path="/s/:semesterSlug/group" element={<GroupHomeRoute />} />
-              {isNewUI() && (
-                <>
-                  <Route path="/s/:semesterSlug/group/join" element={<GroupJoinRoute />} />
-                  <Route path="/s/:semesterSlug/group/new" element={<GroupCreatePage />} />
-                  <Route path="/s/:semesterSlug/group/lecture/:lectureId" element={<GroupLectureRoute />} />
-                  <Route path="/s/:semesterSlug/group/access" element={<GroupAccessRoute />} />
-                  <Route path="/s/:semesterSlug/group/settings" element={<GroupSettingsRoute />} />
-                  <Route path="/s/:semesterSlug/group/exams" element={<GroupExamsRoute />} />
-                  <Route path="/s/:semesterSlug/group/exams/:examId" element={<GroupExamRoute />} />
-                  <Route path="/s/:semesterSlug/group/exams/:examId/import" element={<GroupExamImportRoute />} />
-                  <Route path="/s/:semesterSlug/group/exams/:examId/ticket/:number" element={<GroupTicketRoute />} />
-                  <Route path="/s/:semesterSlug/group/people/:userId" element={<GroupMemberRoute />} />
-                  <Route path="/s/:semesterSlug/group/people/:userId/:courseKey" element={<GroupMemberSubjectRoute />} />
-                </>
-              )}
+              <Route path="/s/:semesterSlug/group/join" element={<GroupJoinRoute />} />
+              <Route path="/s/:semesterSlug/group/new" element={<GroupCreatePage />} />
+              <Route path="/s/:semesterSlug/group/lecture/:lectureId" element={<GroupLectureRoute />} />
+              <Route path="/s/:semesterSlug/group/access" element={<GroupAccessRoute />} />
+              <Route path="/s/:semesterSlug/group/settings" element={<GroupSettingsRoute />} />
+              <Route path="/s/:semesterSlug/group/exams" element={<GroupExamsRoute />} />
+              <Route path="/s/:semesterSlug/group/exams/:examId" element={<GroupExamRoute />} />
+              <Route path="/s/:semesterSlug/group/exams/:examId/import" element={<GroupExamImportRoute />} />
+              <Route path="/s/:semesterSlug/group/exams/:examId/ticket/:number" element={<GroupTicketRoute />} />
+              <Route path="/s/:semesterSlug/group/people/:userId" element={<GroupMemberRoute />} />
+              <Route path="/s/:semesterSlug/group/people/:userId/:courseKey" element={<GroupMemberSubjectRoute />} />
               {/* «Черновики» — предмет по умолчанию для лекций без предмета (B2). */}
-              {isNewUI() && <Route path="/s/:semesterSlug/drafts" element={<DraftsPage />} />}
-              <Route
-                path="/s/:semesterSlug/:courseSlug"
-                element={<SubjectLecturesPage />}
-              />
+              <Route path="/s/:semesterSlug/drafts" element={<DraftsPage />} />
+              <Route path="/s/:semesterSlug/:courseSlug" element={<SubjectLecturesPage />} />
               {/* «Пары предмета» (B3, pages/SubjectPairsPage.tsx) — новый
                   экран, статический сегмент "pairs" (RESERVED_SLUGS), до
                   :lectureSlug ниже. Вход — из меню пары на /schedule
@@ -283,14 +262,12 @@ function App() {
               <Route path="/decks/:slug" element={<DeckPageNew />} />
               <Route path="/decks/:slug/review" element={<CardReviewPageNew />} />
               <Route path="/decks/:slug/edit" element={<DeckEditorPage />} />
-              {/* Расписание и задачи — глобальные, вне семестра. Новая
-                  дизайн-основа (B3) — за флагом VITE_NEW_UI, как и
-                  остальные перенесённые экраны волны B. */}
+              {/* Расписание и задачи — глобальные, вне семестра. */}
               <Route path="/schedule" element={<SchedulePageNew />} />
               <Route path="/tasks" element={<TasksPageNew />} />
             </Route>
           </Route>
-          <Route path="*" element={isNewUI() ? <NotFoundPage /> : <Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
         </ToastProvider>
         </SemesterProvider>
