@@ -3,31 +3,25 @@
  *  AppLayout.tsx — Global application shell
  * ============================================
  *
- * Wraps all protected routes with:
- *  - GlobalSidebar (fixed left, 280px)
- *  - Main content area (flex-1, offset by sidebar width)
+ * Wraps all protected routes with the shell (AppShellNew: sidebar, topbar, content).
  *
  * Also owns the shared LectureFrame context (breadcrumb title, TOC container
  * ref/version, pending-save flush). It is provided HERE — ABOVE the lecture
- * routes — so the GlobalSidebar (rendered by this very layout, outside
+ * routes — so the shell sidebar (rendered by this very layout, outside
  * LectureLayout) can show the lecture TOC. LectureLayout and its pages are
  * consumers of the same context.
  */
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import GlobalSidebar from "./GlobalSidebar";
-import BottomTabBar from "./BottomTabBar";
 import AppShellNew from "./AppShellNew";
-import DocumentScrollbar from "./scrollbar/DocumentScrollbar";
 import {
   LectureFrameContext,
   type LectureFrameApi,
   type SaveIndicatorState,
 } from "../lib/lectureFrame";
 import { UIShellContext, type UIShellApi } from "../lib/uiShellContext";
-import { isNewUI } from "../lib/featureFlags";
 
 export default function AppLayout() {
   // Онбординг-гейт: пока профиль не пройден — не пускаем в приложение.
@@ -103,31 +97,10 @@ export default function AppLayout() {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // Новый каркас (A4, components/AppShellNew.tsx) — за флагом VITE_NEW_UI,
-  // пока волны A и B1 не закрыты (раздел 3 инструкции). Старые экраны,
-  // ещё не перенесённые по волнам B, рендерятся внутри него как есть —
-  // это ожидаемое промежуточное состояние предпросмотра, не баг.
-  if (isNewUI()) {
-    return (
-      <LectureFrameContext.Provider value={api}>
-        <UIShellContext.Provider value={uiShell}>
-          <AppShellNew />
-        </UIShellContext.Provider>
-      </LectureFrameContext.Provider>
-    );
-  }
-
   return (
     <LectureFrameContext.Provider value={api}>
       <UIShellContext.Provider value={uiShell}>
-        <div className="app-shell">
-          <GlobalSidebar open={sidebarOpen} onClose={closeSidebar} />
-          <main className="app-main">
-            <Outlet />
-          </main>
-          <BottomTabBar />
-          <DocumentScrollbar />
-        </div>
+        <AppShellNew />
       </UIShellContext.Provider>
     </LectureFrameContext.Provider>
   );
