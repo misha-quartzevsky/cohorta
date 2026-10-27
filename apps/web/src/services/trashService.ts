@@ -10,6 +10,7 @@
  */
 
 import { pb } from "../lib/pocketbase";
+import { parsePbDate } from "../lib/format";
 import { MS_PER_DAY } from "../lib/localDate";
 
 export const TRASH_DAYS = 30;
@@ -52,8 +53,8 @@ export async function emptyTrash(): Promise<void> {
 
 /** Сколько дней ещё лежит в корзине (минимум 0). */
 export function trashDaysLeft(deletedAt: string, now: Date = new Date()): number {
-  const t = Date.parse(deletedAt.replace(" ", "T"));
-  if (Number.isNaN(t)) return TRASH_DAYS;
+  const t = parsePbDate(deletedAt)?.getTime();
+  if (t === undefined) return TRASH_DAYS;
   const left = TRASH_DAYS - Math.floor((now.getTime() - t) / MS_PER_DAY);
   return Math.max(0, Math.min(TRASH_DAYS, left));
 }

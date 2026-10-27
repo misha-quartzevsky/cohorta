@@ -7,7 +7,7 @@ import { Ava, Crumbs, useSem } from "../../components/group/common";
 import { useGroupCtx } from "../../lib/groupCtx";
 import { useMode } from "../../lib/modeContext";
 import { useAuth } from "../../hooks/useAuth";
-import { errorMessage } from "../../lib/format";
+import { errorMessage, parsePbDate } from "../../lib/format";
 import { sanitizeHtml } from "../../lib/sanitizeHtml";
 import { resolveFileTokensFor, tokenizeFileUrlsFor } from "../../lib/fileTokens";
 import { statusForAnswer, uploadTicketImages, updateTicket, fetchLecturesOpenedToMe } from "../../services/examService";
@@ -32,8 +32,8 @@ const STATUS_TONE: Record<TicketStatus, "ok" | "accent" | "neutral"> = { ready: 
 /** Сколько миллисекунд ещё держится блокировка (0 — свободен или держу я). */
 function busyLeft(t: ExamTicket, myId: string, now: number): number {
   if (!t.locked_by || t.locked_by === myId || !t.locked_until) return 0;
-  const until = new Date(String(t.locked_until).replace(" ", "T")).getTime();
-  return Number.isNaN(until) ? 0 : Math.max(0, until - now);
+  const until = parsePbDate(String(t.locked_until))?.getTime();
+  return until === undefined ? 0 : Math.max(0, until - now);
 }
 
 function plainStart(html: string, max = 60): string {

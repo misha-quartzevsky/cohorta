@@ -11,7 +11,7 @@ import { sanitizeHtml } from "../../lib/sanitizeHtml";
 import { lectureDateLabel } from "../../lib/lectureMeta";
 import { courseName, courseSlug as courseSlugOf, type Lecture } from "../../lib/types";
 import { copyLecture, ruDate, type ShareRow } from "../../services/groupApi";
-import { errorMessage } from "../../lib/format";
+import { errorMessage, parsePbDate } from "../../lib/format";
 import { markLectureSeen } from "../../lib/notifyCtx";
 
 type Target = "same" | "other" | "drafts";
@@ -176,7 +176,8 @@ export default function GroupLecturePage() {
     );
   }
 
-  const dateText = lecture?.lecture_date ? lectureDateLabel(new Date(String(lecture.lecture_date).replace(" ", "T"))) : "";
+  const lectureDate = parsePbDate(lecture?.lecture_date ? String(lecture.lecture_date) : "");
+  const dateText = lectureDate ? lectureDateLabel(lectureDate) : "";
 
   return (
     <UnderstandingScope lecture={lecture}>

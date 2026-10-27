@@ -5,6 +5,7 @@
  * индексной сигнатуры `[key: string]: unknown`.
  */
 
+import { parsePbDate } from "./format";
 import { MS_PER_DAY } from "./localDate";
 export interface PbRecord {
   id: string;
@@ -672,8 +673,8 @@ export function semesterLabel(s: Semester): string {
 export function isPremiumActive(u: User, now: Date = new Date()): boolean {
   const raw = String(u.premium_until ?? "").trim();
   if (!raw) return false;
-  const until = new Date(raw.replace(" ", "T"));
-  return !Number.isNaN(until.getTime()) && until > now;
+  const until = parsePbDate(raw);
+  return !!until && until > now;
 }
 
 /** PocketBase id of the semester a course belongs to ("" = none). */
