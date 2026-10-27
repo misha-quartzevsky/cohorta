@@ -3,7 +3,7 @@
  *  AppLayout.tsx — Global application shell
  * ============================================
  *
- * Wraps all protected routes with the shell (AppShellNew: sidebar, topbar, content).
+ * Wraps all protected routes with the shell (AppShell: sidebar, topbar, content).
  *
  * Also owns the shared LectureFrame context (breadcrumb title, TOC container
  * ref/version, pending-save flush). It is provided HERE — ABOVE the lecture
@@ -15,7 +15,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import AppShellNew from "./AppShellNew";
+import AppShell from "./AppShell";
 import {
   LectureFrameContext,
   type LectureFrameApi,
@@ -100,7 +100,7 @@ export default function AppLayout() {
   return (
     <LectureFrameContext.Provider value={api}>
       <UIShellContext.Provider value={uiShell}>
-        <AppShellNew />
+        <AppShell />
       </UIShellContext.Provider>
     </LectureFrameContext.Provider>
   );

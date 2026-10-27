@@ -3,7 +3,7 @@
  *  tests/lecture-workflow.spec.ts — лекционный flow в новом UI
  * ============================================
  *
- * Проверяет работу LectureLayout + AppShellNew на лекции:
+ * Проверяет работу LectureLayout + AppShell на лекции:
  *   1. Seamless navigation: при переключении лекций из сайдбара Header
  *      остаётся ТЕМ ЖЕ DOM-узлом (layout-route не перемонтируется),
  *      карточка лекции сменяется с fade-анимацией content-in.

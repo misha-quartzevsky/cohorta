@@ -15,7 +15,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
  * Подсказки об ошибках — под полем, не сверху. Регистрация: почта, пароль,
  * повтор; шаг «подтверди почту» подготовлен (ResetPages), но выключен.
  */
-export default function LoginPageNew({ mode }: { mode: "login" | "register" }) {
+export default function LoginPage({ mode }: { mode: "login" | "register" }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { isValid, login, register } = useAuth();

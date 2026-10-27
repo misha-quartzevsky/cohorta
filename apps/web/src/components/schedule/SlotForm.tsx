@@ -46,7 +46,7 @@ interface Props {
 }
 
 /** Форма пары (Screen-forms-create, Screen-m-form-pair; spec 4.4). Занятая клетка — текст под «Недели», сохранить нельзя. */
-export default function SlotFormNew({
+export default function SlotForm({
   open,
   onClose,
   courses,

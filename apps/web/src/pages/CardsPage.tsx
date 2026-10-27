@@ -13,7 +13,7 @@ import { Button, EmptyState, Icon, List } from "../ui";
  * меток «Сегодня 6», «Новые 8» и вкладки «Расписание повторов» (решение владелицы, B5).
  * «Новая колода» ведёт в существующий редактор колоды (формы в макетах нет).
  */
-export default function CardsPageNew() {
+export default function CardsPage() {
   const navigate = useNavigate();
   const forms = useForms();
   const { decks, loading, error } = useDecks();

@@ -1,6 +1,6 @@
 /**
  * ============================================
- *  TasksPageNew.tsx — «Задачи» (B3, 2026-10-20)
+ *  TasksPage.tsx — «Задачи» (B3, 2026-10-20)
  * ============================================
  *
  * Вёрстка 1:1 по docs/design/screens/Screen-tasks(-m).dc.html. Автозадачи
@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import TaskRowNew from "../components/tasks/TaskRowNew";
+import TaskRow from "../components/tasks/TaskRow";
 import { useNavigate } from "react-router-dom";
 import { Link2 } from "lucide-react";
 import { Button, Pills, EmptyState, SubjectCover, Toggletip, Checkbox } from "../ui";
@@ -37,7 +37,7 @@ const EXAMPLES = [
   "Прочитать главу 3 до пятницы",
 ];
 
-export default function TasksPageNew() {
+export default function TasksPage() {
   const { tasks: allTasks, loading, error, createTask, updateTask, setDone, deleteTask } = useTasks();
 
   const [courses, setCourses] = useState<Course[]>([]);
@@ -314,7 +314,7 @@ function TaskList({
   const in14 = toDateStr(addDays(fromDateStr(today), 14));
 
   const row = (t: Task) => (
-    <TaskRowNew
+    <TaskRow
       key={t.id}
       task={t}
       courses={courses}

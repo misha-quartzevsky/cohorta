@@ -71,7 +71,7 @@ function startOfWeekMon(d: Date): Date {
   return date;
 }
 
-export default function DashboardNew() {
+export default function Dashboard() {
   const navigate = useNavigate();
   const forms = useForms();
   const { user } = useAuth();

@@ -1,6 +1,6 @@
 /**
  * ============================================
- *  CheatsheetPageNew.tsx — «Шпаргалка» (B4, 2026-10-20)
+ *  CheatsheetPage.tsx — «Шпаргалка» (B4, 2026-10-20)
  * ============================================
  *
  * Вёрстка 1:1 по docs/design/screens/Screen-cheatsheet.dc.html (своей
@@ -31,7 +31,7 @@ import { resolveFileTokensFor } from "../lib/fileTokens";
 import { pluralRu } from "../lib/format";
 import { renderLatexInto } from "../components/math/renderLatex";
 
-export default function CheatsheetPageNew() {
+export default function CheatsheetPage() {
   const { courseSlug: courseSlugParam } = useParams();
   const { current } = useSemester();
   const semSlug = current ? semesterSlug(current) : "";

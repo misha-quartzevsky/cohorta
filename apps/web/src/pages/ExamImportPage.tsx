@@ -1,6 +1,6 @@
 /**
  * ============================================
- *  ExamImportPageNew.tsx — «Импорт билетов» личного экзамена
+ *  ExamImportPage.tsx — «Импорт билетов» личного экзамена
  * ============================================
  *
  * Экран и разбор — components/exam/ImportScreen.tsx и lib/examImport.ts (общие с экзаменом группы).
@@ -17,7 +17,7 @@ import { courseName, semesterSlug, ticketNumber } from "../lib/types";
 import { examDateLabel } from "../lib/groupExamText";
 import { createExam, createTicketsBulk } from "../services/examService";
 
-export default function ExamImportPageNew() {
+export default function ExamImportPage() {
   const navigate = useNavigate();
   const { courseSlug: courseSlugParam } = useParams();
   const { current } = useSemester();

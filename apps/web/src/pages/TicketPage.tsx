@@ -1,6 +1,6 @@
 /**
  * ============================================
- *  TicketPageNew.tsx — «Билет» (B4, 2026-10-20)
+ *  TicketPage.tsx — «Билет» (B4, 2026-10-20)
  * ============================================
  *
  * Вёрстка 1:1 по docs/design/screens/Screen-ticket.dc.html (своей
@@ -65,7 +65,7 @@ const STATUS_TONE: Record<TicketStatus, "ok" | "accent" | "neutral"> = {
   empty: "neutral",
 };
 
-export default function TicketPageNew() {
+export default function TicketPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { courseSlug: courseSlugParam, number: numberParam } = useParams();

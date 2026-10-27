@@ -60,7 +60,7 @@ const DEGREE_NAME: Record<DegreeLevel, string> = {
   other: "Другое",
 };
 
-export default function OnboardingNew() {
+export default function Onboarding() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { refetch: refetchPeriods } = useSemester();

@@ -13,7 +13,7 @@ import RichCardFace from "../components/cards/RichCardFace";
  * владелицы, B5). Маршруты: `/decks/:slug/review` — одна колода, `/cards/review` — все.
  * Телефонного макета нет: тот же экран одной колонкой. Экран «колода пройдена» не нарисован.
  */
-export default function CardReviewPageNew() {
+export default function CardReviewPage() {
   const { slug } = useParams<{ slug?: string }>();
   const single = useDeck(slug ?? "", !!slug);
   const [all, setAll] = useState<DeckCard[] | null>(null);

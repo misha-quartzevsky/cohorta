@@ -22,7 +22,7 @@ const SECTIONS: { title: string; text: string }[] = [
 ];
 
 /** Политика данных (Screen-policy). Публичная: открывается и со входа, и из профиля. */
-export default function PolicyPageNew() {
+export default function PolicyPage() {
   return (
     <main className="c-policy">
       <div className="c-policy-col">

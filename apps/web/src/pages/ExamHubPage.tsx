@@ -1,6 +1,6 @@
 /**
  * ============================================
- *  ExamHubPageNew.tsx — «Экзамен» (B4, 2026-10-20)
+ *  ExamHubPage.tsx — «Экзамен» (B4, 2026-10-20)
  * ============================================
  *
  * Вёрстка 1:1 по docs/design/screens/Screen-exam(-m).dc.html.
@@ -57,7 +57,7 @@ const STATUS_CSS: Record<TicketStatus, string> = {
   empty: "todo",
 };
 
-export default function ExamHubPageNew() {
+export default function ExamHubPage() {
   const navigate = useNavigate();
   const { courseSlug: courseSlugParam } = useParams();
   const { current } = useSemester();

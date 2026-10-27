@@ -1,6 +1,6 @@
 /**
  * ============================================
- *  SchedulePageNew.tsx — «Расписание» (B3, 2026-10-20)
+ *  SchedulePage.tsx — «Расписание» (B3, 2026-10-20)
  * ============================================
  *
  * Вёрстка 1:1 по docs/design/screens/Screen-schedule(-m).dc.html.
@@ -24,7 +24,7 @@ import { ChevronRight } from "lucide-react";
 
 import { useForms } from "../lib/formsContext";
 import { Button, Icon, Pills, StatusChip, SubjectCover, EmptyState, Menu } from "../ui";
-import SlotFormNew from "../components/schedule/SlotFormNew";
+import SlotForm from "../components/schedule/SlotForm";
 import AttachLectureModal from "../components/schedule/AttachLectureModal";
 import { useSchedule } from "../hooks/useSchedule";
 import { useSemester } from "../lib/semesterContext";
@@ -61,7 +61,7 @@ const DAY_NAMES = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 
 type Parity = "odd" | "even";
 
-export default function SchedulePageNew() {
+export default function SchedulePage() {
   const navigate = useNavigate();
   const forms = useForms();
   const { semesters } = useSemester();
@@ -331,7 +331,7 @@ export default function SchedulePageNew() {
         </>
       )}
 
-      <SlotFormNew
+      <SlotForm
         open={formOpen}
         onClose={() => {
           setFormOpen(false);

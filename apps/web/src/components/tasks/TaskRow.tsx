@@ -18,7 +18,7 @@ interface Props {
 }
 
 /** Строка задачи (spec 5.1): чекбокс, название (inline), предмет, срок. */
-export default function TaskRowNew({
+export default function TaskRow({
   task,
   courses,
   onToggle,

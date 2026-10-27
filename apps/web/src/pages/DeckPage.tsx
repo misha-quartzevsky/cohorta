@@ -13,7 +13,7 @@ import CardFormDialog from "../components/forms/CardFormDialog";
  * (решение владелицы, B5). «Добавить карточку» открывает окно «Новая карточка»
  * (Screen-forms-create). Правка карточки в макетах не нарисована: строки не открываются.
  */
-export default function DeckPageNew() {
+export default function DeckPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { deck, cards, loading, error, refetch } = useDeck(slug ?? "");

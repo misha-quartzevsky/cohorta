@@ -1,6 +1,6 @@
 /**
  * ============================================
- *  AppShellNew.tsx — новый каркас (A4, 2026-10-18)
+ *  AppShell.tsx — новый каркас (A4, 2026-10-18)
  * ============================================
  *
  * Левое меню 264px, контент до 1120px по центру, телефон — TabBar.
@@ -519,7 +519,7 @@ function Topbar({ open, onBurger, lecture }: { open: boolean; onBurger: () => vo
   );
 }
 
-export default function AppShellNew() {
+export default function AppShell() {
   const { sidebarOpen, toggleSidebar, closeSidebar, openSearch } = useUiShell();
 
   // ⌘K / Ctrl+K открывает поиск с любого экрана.

@@ -17,25 +17,25 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-import DashboardNew from "./pages/DashboardNew";
+import Dashboard from "./pages/Dashboard";
 import CoursesPage from "./pages/CoursesPage";
 import LecturesAllPage from "./pages/LecturesAllPage";
 import SubjectLecturesPage from "./pages/SubjectLecturesPage";
 import DraftsPage from "./pages/DraftsPage";
-import LectureViewNew from "./pages/LectureView";
+import LectureView from "./pages/LectureView";
 import NotesPage from "./pages/NotesPage";
 import NewDraftRedirect from "./pages/NewDraftRedirect";
 import DeckEditorPage from "./pages/DeckEditorPage";
 import ExamsPage from "./pages/ExamsPage";
-import ExamHubPageNew from "./pages/ExamHubPageNew";
-import ExamImportPageNew from "./pages/ExamImportPageNew";
-import TicketPageNew from "./pages/TicketPageNew";
-import CheatsheetPageNew from "./pages/CheatsheetPageNew";
+import ExamHubPage from "./pages/ExamHubPage";
+import ExamImportPage from "./pages/ExamImportPage";
+import TicketPage from "./pages/TicketPage";
+import CheatsheetPage from "./pages/CheatsheetPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MorePage from "./pages/MorePage";
-import CardsPageNew from "./pages/CardsPageNew";
-import DeckPageNew from "./pages/DeckPageNew";
-import CardReviewPageNew from "./pages/CardReviewPageNew";
+import CardsPage from "./pages/CardsPage";
+import DeckPage from "./pages/DeckPage";
+import CardReviewPage from "./pages/CardReviewPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFoundPage from "./pages/NotFoundPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -45,8 +45,8 @@ import LoadingState from "./components/LoadingState";
 import ErrorBanner from "./components/ErrorBanner";
 import Header from "./components/Header";
 import { useAuth } from "./hooks/useAuth";
-import LoginPageNew from "./pages/auth/LoginPageNew";
-import PolicyPageNew from "./pages/auth/PolicyPageNew";
+import LoginPage from "./pages/auth/LoginPage";
+import PolicyPage from "./pages/auth/PolicyPage";
 import { ResetEntryPage, ResetNewPasswordPage } from "./pages/auth/ResetPages";
 import { JoinRoute } from "./pages/auth/JoinGroupPage";
 import {
@@ -63,7 +63,7 @@ import {
   GroupTicketRoute,
   GroupCreatePage,
 } from "./pages/group/GroupRoutes";
-import OnboardingNew from "./features/onboarding/OnboardingNew";
+import Onboarding from "./features/onboarding/Onboarding";
 import LectureLayout from "./components/LectureLayout";
 import AppLayout from "./components/AppLayout";
 import { SemesterProvider } from "./lib/SemesterProvider";
@@ -71,8 +71,8 @@ import { SpeechProvider } from "./lib/SpeechProvider";
 import { ModeProvider } from "./lib/ModeProvider";
 import { UndoProvider } from "./lib/undoContext";
 import { ToastProvider } from "./ui";
-import SchedulePageNew from "./pages/SchedulePageNew";
-import TasksPageNew from "./pages/TasksPageNew";
+import SchedulePage from "./pages/SchedulePage";
+import TasksPage from "./pages/TasksPage";
 import SubjectPairsPage from "./pages/SubjectPairsPage";
 import QuizPage from "./pages/QuizPage";
 import {
@@ -149,22 +149,22 @@ function App() {
         <SemesterProvider>
         <ToastProvider>
         <Routes>
-          <Route path="/login" element={<LoginPageNew mode="login" />} />
-          <Route path="/privacy" element={<PolicyPageNew />} />
+          <Route path="/login" element={<LoginPage mode="login" />} />
+          <Route path="/privacy" element={<PolicyPage />} />
           {/* Вход, регистрация, восстановление пароля и ссылка-приглашение (B6). */}
-          <Route path="/register" element={<LoginPageNew mode="register" />} />
+          <Route path="/register" element={<LoginPage mode="register" />} />
           <Route path="/reset" element={<ResetEntryPage />} />
           <Route path="/reset/confirm/:token" element={<ResetNewPasswordPage />} />
           <Route path="/join" element={<JoinRoute />} />
           <Route path="/join/:code" element={<JoinRoute />} />
           <Route element={<ProtectedRoute />}>
             {/* Мастер онбординга — фуллскрин, без сайдбара, вне AppLayout. */}
-            <Route path="/onboarding" element={<OnboardingNew />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             {/* Квиз — фуллскрин, без сайдбара и нижней панели (spec 6.3). */}
             <Route path="/quiz/:lectureId" element={<QuizPage />} />
             <Route element={<AppLayout />}>
               <Route path="/" element={<HomeRedirect />} />
-              <Route path="/s/:semesterSlug" element={<DashboardNew />} />
+              <Route path="/s/:semesterSlug" element={<Dashboard />} />
               <Route path="/s/:semesterSlug/courses" element={<CoursesPage />} />
               {/* «Все лекции» (B2, pages/LecturesAllPage.tsx) — свой адрес,
                   чтобы не подсвечиваться одновременно с «Предметы». */}
@@ -214,20 +214,20 @@ function App() {
               <Route element={<LectureLayout />}>
                 <Route
                   path="/s/:semesterSlug/:courseSlug/:lectureSlug"
-                  element={<LectureViewNew />}
+                  element={<LectureView />}
                 />
                 <Route
                   path="/s/:semesterSlug/:courseSlug/:lectureSlug/edit"
-                  element={<LectureViewNew />}
+                  element={<LectureView />}
                 />
                 {/* Unassigned notes (no semester in URL) */}
                 <Route
                   path="/note/:lectureSlug"
-                  element={<LectureViewNew />}
+                  element={<LectureView />}
                 />
                 <Route
                   path="/note/:lectureSlug/edit"
-                  element={<LectureViewNew />}
+                  element={<LectureView />}
                 />
               </Route>
               {/* Exam Engine: экзамен — свойство курса, singleton внутри него.
@@ -236,34 +236,34 @@ function App() {
                   со слагом "exam" туда не попадёт (см. RESERVED_SLUGS). */}
               <Route
                 path="/s/:semesterSlug/:courseSlug/exam"
-                element={<ExamHubPageNew />}
+                element={<ExamHubPage />}
               />
               <Route
                 path="/s/:semesterSlug/:courseSlug/exam/import"
-                element={<ExamImportPageNew />}
+                element={<ExamImportPage />}
               />
               <Route
                 path="/s/:semesterSlug/:courseSlug/exam/cheatsheet"
-                element={<CheatsheetPageNew />}
+                element={<CheatsheetPage />}
               />
               <Route
                 path="/s/:semesterSlug/:courseSlug/exam/:number"
-                element={<TicketPageNew />}
+                element={<TicketPage />}
               />
               <Route
                 path="/s/:semesterSlug/:courseSlug/exam/:number/edit"
-                element={<TicketPageNew />}
+                element={<TicketPage />}
               />
               {/* Flashcards: cards module (not semester-scoped) */}
-              <Route path="/decks" element={<CardsPageNew />} />
+              <Route path="/decks" element={<CardsPage />} />
               <Route path="/decks/new" element={<DeckEditorPage />} />
-              <Route path="/cards/review" element={<CardReviewPageNew />} />
-              <Route path="/decks/:slug" element={<DeckPageNew />} />
-              <Route path="/decks/:slug/review" element={<CardReviewPageNew />} />
+              <Route path="/cards/review" element={<CardReviewPage />} />
+              <Route path="/decks/:slug" element={<DeckPage />} />
+              <Route path="/decks/:slug/review" element={<CardReviewPage />} />
               <Route path="/decks/:slug/edit" element={<DeckEditorPage />} />
               {/* Расписание и задачи — глобальные, вне семестра. */}
-              <Route path="/schedule" element={<SchedulePageNew />} />
-              <Route path="/tasks" element={<TasksPageNew />} />
+              <Route path="/schedule" element={<SchedulePage />} />
+              <Route path="/tasks" element={<TasksPage />} />
             </Route>
           </Route>
           <Route path="*" element={<NotFoundPage />} />
