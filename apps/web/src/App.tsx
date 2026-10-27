@@ -25,7 +25,6 @@ import DraftsPage from "./pages/DraftsPage";
 import LectureViewNew from "./pages/LectureView";
 import NotesPage from "./pages/NotesPage";
 import NewDraftRedirect from "./pages/NewDraftRedirect";
-import NoteCreate from "./pages/NoteCreate";
 import CardLibraryPage from "./pages/CardLibraryPage";
 import CardStudyPage from "./pages/CardStudyPage";
 import DeckEditorPage from "./pages/DeckEditorPage";
@@ -80,9 +79,7 @@ import { SpeechProvider } from "./lib/SpeechProvider";
 import { ModeProvider } from "./lib/ModeProvider";
 import { UndoProvider } from "./lib/undoContext";
 import { ToastProvider } from "./ui";
-import SchedulePage from "./pages/SchedulePage";
 import SchedulePageNew from "./pages/SchedulePageNew";
-import TasksPage from "./pages/TasksPage";
 import TasksPageNew from "./pages/TasksPageNew";
 import SubjectPairsPage from "./pages/SubjectPairsPage";
 import QuizPage from "./pages/QuizPage";
@@ -238,7 +235,7 @@ function App() {
               <Route path="/settings/periods" element={<SettingsPeriodsPage />} />
               <Route path="/trash" element={<TrashPage />} />
               <Route path="/notes" element={<NotesPage />} />
-              <Route path="/note/new" element={isNewUI() ? <NewDraftRedirect /> : <NoteCreate />} />
+              <Route path="/note/new" element={<NewDraftRedirect />} />
               {/* Lecture view + edit are ONE surface (Notion-style inline
                   editing): LectureView shows the record and mounts the editor
                   in place on first click. `/…/edit` stays as an alias that
@@ -298,14 +295,8 @@ function App() {
               {/* Расписание и задачи — глобальные, вне семестра. Новая
                   дизайн-основа (B3) — за флагом VITE_NEW_UI, как и
                   остальные перенесённые экраны волны B. */}
-              <Route
-                path="/schedule"
-                element={isNewUI() ? <SchedulePageNew /> : <SchedulePage />}
-              />
-              <Route
-                path="/tasks"
-                element={isNewUI() ? <TasksPageNew /> : <TasksPage />}
-              />
+              <Route path="/schedule" element={<SchedulePageNew />} />
+              <Route path="/tasks" element={<TasksPageNew />} />
               {import.meta.env.DEV && (
                 <Route path="/_design" element={<DesignPage />} />
               )}
