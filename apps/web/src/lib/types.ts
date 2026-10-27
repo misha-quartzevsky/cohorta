@@ -608,7 +608,7 @@ export function lectureFiles(l: Lecture): string[] {
   return [];
 }
 
-export function lectureCourseId(l: Lecture): string {
+export function lectureCourseId(l: Pick<Lecture, "field">): string {
   return String(l.field ?? "");
 }
 

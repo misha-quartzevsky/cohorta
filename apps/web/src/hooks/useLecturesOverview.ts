@@ -11,13 +11,8 @@
 
 import { useCallback } from "react";
 import type { Lecture } from "../lib/types";
-import { fetchAllLectures } from "../services/lectureService";
+import { loadLectureReadinessRows } from "../services/lectureReadinessService";
 import {
-  fetchReadinessAnswersByLecture,
-  fetchReadinessQuestionsByLecture,
-} from "../services/quizService";
-import {
-  computeLectureReadiness,
   lectureListStatus,
   type LectureListStatus,
   type ReadinessResult,
@@ -32,20 +27,8 @@ export interface LectureOverviewRow {
 }
 
 async function loadOverview(): Promise<LectureOverviewRow[]> {
-  const [lectures, questionsByLecture, answersByLecture] = await Promise.all([
-    fetchAllLectures(),
-    fetchReadinessQuestionsByLecture(),
-    fetchReadinessAnswersByLecture(),
-  ]);
-  const now = new Date();
-  return lectures.map((lecture) => {
-    const readiness = computeLectureReadiness(
-      questionsByLecture.get(lecture.id) ?? [],
-      answersByLecture.get(lecture.id) ?? [],
-      now
-    );
-    return { lecture, readiness, status: lectureListStatus(readiness) };
-  });
+  const { rows } = await loadLectureReadinessRows();
+  return rows.map(({ lecture, readiness }) => ({ lecture, readiness, status: lectureListStatus(readiness) }));
 }
 
 export function useLecturesOverview() {

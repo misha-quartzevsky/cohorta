@@ -10,7 +10,7 @@
 
 import { useCallback } from "react";
 import type { Lecture } from "../lib/types";
-import { fetchRecentLectures as fetchRecentLecturesService } from "../services/lectureService";
+import { fetchRecentLectureMeta, fetchRecentLectures as fetchRecentLecturesService, type LectureMeta } from "../services/lectureService";
 import { useAsyncData } from "./useAsyncData";
 import { useLecturesChanged } from "../lib/lecturesChanged";
 
@@ -37,6 +37,22 @@ export function useRecentLectures(
   );
   const { data, loading, error, refetch } = useAsyncData<Lecture[]>(fetcher);
 
+  useLecturesChanged(refetch);
+  return { lectures: data ?? [], loading, error, refetch };
+}
+
+/**
+ * То же, что useRecentLectures, но без текста и без раскрытого предмета: id, даты, ссылка на предмет.
+ * Для счётчиков, активности и проверки «есть ли хоть одна лекция».
+ */
+export function useRecentLectureMeta(limit: number = 10): {
+  lectures: LectureMeta[];
+  loading: boolean;
+  error: string;
+  refetch: () => Promise<void>;
+} {
+  const fetcher = useCallback(() => fetchRecentLectureMeta(limit), [limit]);
+  const { data, loading, error, refetch } = useAsyncData<LectureMeta[]>(fetcher);
   useLecturesChanged(refetch);
   return { lectures: data ?? [], loading, error, refetch };
 }

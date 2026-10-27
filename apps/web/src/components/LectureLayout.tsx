@@ -20,7 +20,7 @@ import { useEffect } from "react";
 import { Outlet, useParams } from "react-router-dom";
 
 import Header from "./Header";
-import { useLectures } from "../hooks/useLectures";
+import { useCourseBySlug } from "../hooks/useCourseBySlug";
 import { lectureCrumbs } from "../lib/lectureCrumbs";
 import { useLectureFrame } from "../lib/lectureFrame";
 import { lastSemesterSlug } from "../lib/lastSemester";
@@ -29,7 +29,7 @@ export default function LectureLayout() {
   const { semesterSlug, courseSlug, lectureSlug } = useParams();
 
   // Course for breadcrumbs
-  const { course } = useLectures(courseSlug || "");
+  const { course } = useCourseBySlug(courseSlug || "");
 
   // Frame state lives in <AppLayout/>; here we only read it.
   const { title, setTitle, bumpToc } = useLectureFrame();

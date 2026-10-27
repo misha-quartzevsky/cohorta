@@ -32,9 +32,9 @@ import { lastSemesterSlug } from "../lib/lastSemester";
 import { pickActiveSemester } from "../lib/activeSemester";
 import { semesterSlug, courseName, courseSlug as courseSlugOf, courseSemesterId, lectureCourseId, lectureSlug, lectureTitle } from "../lib/types";
 import { useLectureFrame } from "../lib/lectureFrame";
-import { useLectures } from "../hooks/useLectures";
+import { useCourseBySlug } from "../hooks/useCourseBySlug";
 import { useLectureBySlug } from "../hooks/useLectureBySlug";
-import { useRecentLectures } from "../hooks/useRecentLectures";
+import { useRecentLectureMeta } from "../hooks/useRecentLectures";
 import { useCourses } from "../hooks/useCourses";
 import { useAuth } from "../hooks/useAuth";
 import { useTocScan } from "../hooks/useTocScan";
@@ -69,12 +69,12 @@ function useSemSlug(): string {
 
 /** Курсы семестра + число лекций каждого — для раздела «Предметы»
  * и счётчика «Все лекции» (Screen-dashboard.dc.html). Тот же источник,
- * что у старого сайдбара (components/GlobalSidebar.tsx: useRecentLectures(100)). */
+ * что у старого сайдбара (useRecentLectureMeta(100)). */
 function useCourseList() {
   const { current, semesters } = useSemester();
   const activeSemester = current ?? pickActiveSemester(semesters);
   const { courses, loading: coursesLoading } = useCourses(activeSemester?.id ?? "");
-  const { lectures } = useRecentLectures(100);
+  const { lectures } = useRecentLectureMeta(100);
 
   const countByCourse = new Map<string, number>();
   let draftsCount = 0;
@@ -160,7 +160,7 @@ function SidebarLectureToc({ courseSlug, onNavigate }: { courseSlug?: string; on
   const semSlug = useSemSlug();
   const navigate = useNavigate();
   const { tocContainerRef, tocVersion } = useLectureFrame();
-  const { course } = useLectures(courseSlug ?? "", !!courseSlug);
+  const { course } = useCourseBySlug(courseSlug ?? "", !!courseSlug);
   const { items: scanned, activeIndex, scrollTo } = useTocScan(tocContainerRef, tocVersion);
 
   const items: TocItem[] = scanned.map((it, i) => ({
