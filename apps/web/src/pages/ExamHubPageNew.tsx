@@ -49,7 +49,7 @@ const STATUS_TONE: Record<TicketStatus, "ok" | "accent" | "neutral"> = {
   empty: "neutral",
 };
 /** Модификатор класса для .c-exam-chip/.c-exam-legend-swatch — не берём
- * статус "empty" как есть: App.css уже определяет глобальный класс
+ * статус "empty" как есть: components.css уже определяет глобальный класс
  * `.empty` (пустые состояния старых экранов), он бы перебил наш 44×44. */
 const STATUS_CSS: Record<TicketStatus, string> = {
   ready: "ready",

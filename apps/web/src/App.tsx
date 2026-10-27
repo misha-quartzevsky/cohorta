@@ -81,7 +81,6 @@ import {
 } from "./lib/semesterContext";
 import { semesterSlug } from "./lib/types";
 import { LAND_IN_GROUP_KEY } from "./pages/auth/JoinGroupPage";
-import "./App.css";
 
 /**
  * Redirects "/" to the last visited semester
