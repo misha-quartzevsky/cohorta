@@ -25,8 +25,6 @@ import DraftsPage from "./pages/DraftsPage";
 import LectureViewNew from "./pages/LectureView";
 import NotesPage from "./pages/NotesPage";
 import NewDraftRedirect from "./pages/NewDraftRedirect";
-import CardLibraryPage from "./pages/CardLibraryPage";
-import CardStudyPage from "./pages/CardStudyPage";
 import DeckEditorPage from "./pages/DeckEditorPage";
 import ExamsPage from "./pages/ExamsPage";
 import ExamHubPageNew from "./pages/ExamHubPageNew";
@@ -281,10 +279,10 @@ function App() {
                 element={<TicketPageNew />}
               />
               {/* Flashcards: cards module (not semester-scoped) */}
-              <Route path="/decks" element={isNewUI() ? <CardsPageNew /> : <CardLibraryPage />} />
+              <Route path="/decks" element={<CardsPageNew />} />
               <Route path="/decks/new" element={<DeckEditorPage />} />
               <Route path="/cards/review" element={<CardReviewPageNew />} />
-              <Route path="/decks/:slug" element={isNewUI() ? <DeckPageNew /> : <CardStudyPage />} />
+              <Route path="/decks/:slug" element={<DeckPageNew />} />
               <Route path="/decks/:slug/review" element={<CardReviewPageNew />} />
               <Route path="/decks/:slug/edit" element={<DeckEditorPage />} />
               {/* Расписание и задачи — глобальные, вне семестра. Новая
