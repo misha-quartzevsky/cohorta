@@ -54,15 +54,6 @@ export async function onbNext(page: Page): Promise<void> {
   await next.dispatchEvent("click");
 }
 
-/**
- * Клик по первому элементу по CSS-селектору (dispatchEvent). Остался от прежнего
- * мастера: им пользуются тесты, которые ждут решения (логин, правка периодов).
- */
-export async function onbPick(page: Page, selector: string): Promise<void> {
-  await page.locator(selector).first().waitFor({ state: "visible" });
-  await page.locator(selector).first().dispatchEvent("click");
-}
-
 /** Клик по кнопке мастера по её видимому названию («Бакалавриат», «Семестры», …). */
 export async function onbChip(page: Page, name: string): Promise<void> {
   const chip = page.getByRole("button", { name, exact: true });

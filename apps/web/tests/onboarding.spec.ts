@@ -6,15 +6,13 @@
  * Новый аккаунт после регистрации попадает на /onboarding и не
  * видит приложения, пока не пройдёт мастер (4 шага). Проверяем:
  *  - полный проход → дашборд;
- *  - имя + формат адреса профиля (логин = поддомен);
- *  - коллизия логина;
+ *  - формат адреса профиля и коллизия логина (в /settings: в мастере адреса нет);
  *  - эскейп «вуз не найден»;
  *  - пересчёт диапазона курса при смене ступени;
- *  - переименование/удаление периода;
- *  - пересоздание набора периодов без дублей.
+ *  - переименование/удаление периода и уменьшение набора без дублей (/settings/periods).
  *
- * Клики по кнопкам мастера — через onbNext/onbPick (dispatchEvent):
- * обычный .click() по .onb-next завешивает headed-Firefox.
+ * Клики по кнопкам мастера — через onbNext/onbChip (dispatchEvent):
+ * обычный .click() завешивает headed-Firefox.
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -24,8 +22,8 @@ import {
   onbChip,
   onbNameAndUniversity,
   onbNext,
-  onbPick,
   registerBare,
+  registerFresh,
 } from "./helpers";
 
 /** Валидный логин-поддомен из метки. */
@@ -33,10 +31,9 @@ const handle = (label: string) => `${label}-${Date.now().toString(36)}`;
 
 /**
  * Шаги 1–2 (имя + Москва + первый вуз), останавливается на «Уровне и курсе».
- * Параметр username остался от прежнего мастера (шаг «Адрес профиля»): в новом
- * мастере логина нет, значение игнорируется, тесты на логин ждут решения.
+ * Адреса профиля в мастере нет (решение Д1): логин меняется в /settings.
  */
-async function walkPastUniversity(page: Page, _username?: string): Promise<void> {
+async function walkPastUniversity(page: Page): Promise<void> {
   await onbNameAndUniversity(page, "Тестовый Пользователь");
 }
 
@@ -66,47 +63,53 @@ test("полный проход мастера → дашборд с перио�
   await expect(page).toHaveURL(/\/s\/8$/);
 });
 
-test("имя обязательно, адрес профиля проверяет формат", async ({ page }) => {
-  await registerBare(page);
-  const next = page.locator(".onb-next");
+/** /settings → строка «Имя пользователя» → «Изменить» (логин живёт в настройках, в мастере его нет). */
+async function openHandleEditor(page: Page): Promise<void> {
+  await page.goto("/settings");
+  await page.locator(".c-erow", { hasText: "Имя пользователя" }).locator("button.act").click();
+}
 
-  // Экран 1: без имени «Далее» недоступна.
-  await expect(next).toBeDisabled();
-  await page.locator("#onb-name").fill("Даша");
-  await onbNext(page);
+test("адрес профиля в настройках проверяет формат", async ({ page }) => {
+  await registerFresh(page);
+  await openHandleEditor(page);
+  const field = page.getByLabel("Имя пользователя");
+  const save = page.locator(".c-erow.editing").getByRole("button", { name: "Сохранить" });
 
-  // Экран 2: невалидный логин (подчёркивание/заглавные) не пускает дальше.
-  await page.locator("#onb-username").fill("Bad_Handle");
-  await expect(page.locator(".onb-error")).toContainText("латинск");
-  await expect(next).toBeDisabled();
+  // Подчёркивание и заглавные не проходят, запись не уходит на сервер.
+  await field.fill("Bad_Handle");
+  await save.click();
+  await expect(page.locator(".c-erow.editing")).toContainText("латинские буквы");
 
-  await page.locator("#onb-username").fill(handle("ok"));
-  await expect(next).toBeEnabled();
+  await field.fill(handle("ok"));
+  await save.click();
+  await expect(page.locator(".c-erow", { hasText: "Имя пользователя" })).toContainText("Сохранено");
 });
 
 test("коллизия логина", async ({ page, browser }) => {
   const taken = handle("dup");
 
   // Первый аккаунт занимает логин.
-  await registerBare(page);
-  await completeOnboardingFast(page, { username: taken, count: 1 });
+  await registerFresh(page);
+  await openHandleEditor(page);
+  await page.getByLabel("Имя пользователя").fill(taken);
+  await page.locator(".c-erow.editing").getByRole("button", { name: "Сохранить" }).click();
+  await expect(page.locator(".c-erow", { hasText: "Имя пользователя" })).toContainText(`@${taken}`);
 
   // Второй аккаунт — в отдельном контексте (свой localStorage, иначе
   // общий токен PocketBase уводит /login на дашборд первого аккаунта).
   const ctx2 = await browser.newContext();
   const page2 = await ctx2.newPage();
-  await registerBare(page2);
-  await page2.locator("#onb-name").fill("Второй");
-  await onbNext(page2);
-  await page2.locator("#onb-username").fill(taken);
-  await onbNext(page2);
-  await expect(page2.locator(".onb-error")).toContainText("занят");
-  await expect(page2.locator(".onb-progress")).toHaveText("Шаг 2 из 8");
+  await registerFresh(page2);
+  await openHandleEditor(page2);
+  const save2 = page2.locator(".c-erow.editing").getByRole("button", { name: "Сохранить" });
+  await page2.getByLabel("Имя пользователя").fill(taken);
+  await save2.click();
+  await expect(page2.locator(".c-erow.editing")).toContainText("занято");
 
-  // Другой логин — проходит дальше.
-  await page2.locator("#onb-username").fill(`${taken}-ok`);
-  await onbNext(page2);
-  await expect(page2.locator(".onb-progress")).toHaveText("Шаг 3 из 8");
+  // Другой логин — сохраняется.
+  await page2.getByLabel("Имя пользователя").fill(`${taken}-ok`);
+  await save2.click();
+  await expect(page2.locator(".c-erow", { hasText: "Имя пользователя" })).toContainText(`@${taken}-ok`);
   await ctx2.close();
 });
 
@@ -140,67 +143,54 @@ test("смена ступени пересчитывает диапазон ку
   await expect(page.locator(".c-onb-round")).toHaveCount(2);
 });
 
-test("периоды: переименование и удаление", async ({ page }) => {
-  await registerBare(page);
-  await walkPastUniversity(page, handle("per"));
-  await onbPick(page, '.onb-option:has-text("Бакалавриат")');
-  await onbNext(page);
-  await onbPick(page, '.onb-pill:has-text("1")');
-  await onbNext(page);
-  await onbPick(page, '.onb-option:has-text("Семестры")');
-  await onbNext(page);
+/** Экран /settings/periods (десктоп): показаны первые 4 периода, «и ещё N периодов» раскрывает остальные. */
+async function openPeriods(page: Page): Promise<void> {
+  await page.goto("/settings/periods");
+  await expect(page.locator(".c-period-row").first()).toBeVisible();
+  const more = page.locator(".c-periods-more");
+  if (await more.isVisible()) await more.click();
+}
 
-  await page.locator("#onb-count").fill("4");
-  await page.locator('.btn-primary:has-text("Создать")').dispatchEvent("click");
-  await expect(page.locator(".onb-period-row")).toHaveCount(4);
+test("периоды: переименование и удаление", async ({ page }) => {
+  await registerFresh(page);
+  await openPeriods(page);
+  // Бакалавриат, 1 курс, семестры: 8 периодов.
+  await expect(page.locator(".c-period-row")).toHaveCount(8);
 
   // Переименовать первый период.
-  const first = page.locator(".onb-period-input").first();
-  await first.fill("Вводный семестр");
-  await first.blur();
-  await expect(page.locator(".onb-period-input").first()).toHaveValue(
-    "Вводный семестр"
-  );
+  await page.locator(".c-period-name").first().fill("Вводный семестр");
 
   // Удалить последний период.
-  await page
-    .locator(".onb-period-row")
-    .last()
-    .locator(".onb-period-del")
-    .dispatchEvent("click");
-  await expect(page.locator(".onb-period-row")).toHaveCount(3);
+  await page.locator(".c-period-row").last().locator("button.del").click();
+  await expect(page.locator(".c-period-row")).toHaveCount(7);
+
+  await page.locator(".c-periods-foot").getByRole("button", { name: "Сохранить" }).click();
+  await expect(page.locator(".c-periods-saved")).toHaveText("Сохранено");
+
+  // После перезагрузки изменения на месте.
+  await page.reload();
+  await openPeriods(page);
+  await expect(page.locator(".c-period-row")).toHaveCount(7);
+  await expect(page.locator(".c-period-name").first()).toHaveValue("Вводный семестр");
 });
 
 test("периоды: пересоздание набора не плодит дублей", async ({ page }) => {
-  await registerBare(page);
-  await walkPastUniversity(page, handle("recr"));
-  await onbPick(page, '.onb-option:has-text("Бакалавриат")');
-  await onbNext(page);
-  await onbPick(page, '.onb-pill:has-text("1")');
-  await onbNext(page);
-  await onbPick(page, '.onb-option:has-text("Семестры")');
-  await onbNext(page);
+  await registerFresh(page);
+  await openPeriods(page);
+  await expect(page.locator(".c-period-row")).toHaveCount(8);
 
-  await page.locator("#onb-count").fill("5");
-  await page.locator('.btn-primary:has-text("Создать")').dispatchEvent("click");
-  await expect(page.locator(".onb-period-row")).toHaveCount(5);
+  // Уменьшить число периодов до 2 (кнопка «−» у счётчика) и сохранить.
+  const less = page.getByRole("button", { name: "Меньше" });
+  for (let i = 0; i < 6; i += 1) await less.click();
+  await expect(page.locator(".c-periods-count output")).toHaveText("2");
+  await page.locator(".c-periods-foot").getByRole("button", { name: "Сохранить" }).click();
+  await expect(page.locator(".c-periods-saved")).toHaveText("Сохранено");
 
-  // Пересоздать меньшим числом — с подтверждением.
-  await page.locator("#onb-count").fill("2");
-  await page.locator('.btn-primary:has-text("Создать")').dispatchEvent("click");
-  await page
-    .locator('.confirm-content .btn-primary:has-text("Пересоздать")')
-    .dispatchEvent("click");
-  await expect(page.locator(".onb-period-row")).toHaveCount(2);
-
-  // Завершаем и проверяем, что в приложении ровно 2 периода.
-  await onbNext(page); // шаг 8 — аватар
-  await onbNext(page); // готово
-  await page.waitForURL(/\/s\//);
+  // В приложении ровно 2 периода: /s/2 есть, /s/3 нет.
   await page.goto("/s/2");
   await expect(page).toHaveURL(/\/s\/2$/);
   await page.goto("/s/3");
-  await expect(page.locator(".error-banner, .empty")).toBeVisible();
+  await expect(page.locator(".error-banner, .empty, .c-empty")).toBeVisible();
 });
 
 test("имя обязательно: без имени «Далее» недоступна (шаг 1 нового мастера)", async ({ page }) => {
