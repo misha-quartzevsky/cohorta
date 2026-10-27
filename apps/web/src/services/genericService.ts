@@ -39,7 +39,7 @@ export async function fetchBySlug<T extends PbRecord>(
   try {
     return await pb
       .collection(collection)
-      .getFirstListItem<T>(`${slugField}="${slug}"`, expand ? { expand } : undefined);
+      .getFirstListItem<T>(pb.filter(`${slugField}={:s}`, { s: slug }), expand ? { expand } : undefined);
   } catch {
     // Legacy fallback: URL contains the record id.
     return pb.collection(collection).getOne<T>(slug, expand ? { expand } : undefined);

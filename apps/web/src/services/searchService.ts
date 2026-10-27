@@ -66,10 +66,9 @@ const EMPTY: SearchResult = { lectures: [], previews: [], courses: [], classmate
  * `lectures.listRule`) по тексту искаться не должны (подпись в Screen-search).
  */
 async function searchLectures(query: string, limit: number): Promise<Lecture[]> {
-  const escaped = query.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   const result = await pb.collection("lectures").getList<Lecture>(1, limit, {
     sort: "-created",
-    filter: `${FIELDS.lectureTitle}~"${escaped}"`,
+    filter: pb.filter(`${FIELDS.lectureTitle}~{:q}`, { q: query }),
     expand: "field",
   });
   return result.items;
@@ -77,10 +76,9 @@ async function searchLectures(query: string, limit: number): Promise<Lecture[]> 
 
 /** Чужие лекции по названию (предпросмотр группы). Содержимое не ищем. */
 async function searchPreviews(query: string, limit: number): Promise<SearchPreviewHit[]> {
-  const escaped = query.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   try {
     const result = await pb.collection("lecture_previews").getList<LecturePreview>(1, limit, {
-      filter: `${FIELDS.previewTitle}~"${escaped}"`,
+      filter: pb.filter(`${FIELDS.previewTitle}~{:q}`, { q: query }),
       sort: "-updated",
     });
     return result.items
@@ -100,7 +98,7 @@ async function searchCourses(query: string, limit: number): Promise<SearchCourse
     matches.map((c) =>
       pb
         .collection("lectures")
-        .getList(1, 1, { filter: `${FIELDS.lectureCourse}="${c.id}"` })
+        .getList(1, 1, { filter: pb.filter(`${FIELDS.lectureCourse}={:c}`, { c: c.id }) })
         .then((r) => r.totalItems)
         .catch(() => undefined)
     )

@@ -35,7 +35,7 @@ export async function fetchLecture(lectureId: string, expand?: string): Promise<
  */
 export async function fetchLectures(courseId: string): Promise<Lecture[]> {
   return pb.collection("lectures").getFullList<Lecture>({
-    filter: `${FIELDS.lectureCourse}="${courseId}"`,
+    filter: pb.filter(`${FIELDS.lectureCourse}={:c}`, { c: courseId }),
     sort: "-created",
   });
 }
@@ -51,11 +51,21 @@ export async function fetchLectures(courseId: string): Promise<Lecture[]> {
 export async function fetchRecentLectures(
   limit: number = 10
 ): Promise<Lecture[]> {
-  return pb.collection("lectures").getFullList<Lecture>({
-    sort: "-updated",
-    filter: "",
-    expand: "field",
-  }).then((items) => items.slice(0, limit));
+  const options = { sort: "-updated", filter: "", expand: "field" };
+  // Первые `limit` записей одним запросом; PocketBase отдаёт не больше 500 на страницу.
+  if (limit <= MAX_PAGE) return (await pb.collection("lectures").getList<Lecture>(1, limit, options)).items;
+  return (await pb.collection("lectures").getFullList<Lecture>(options)).slice(0, limit);
+}
+
+const MAX_PAGE = 500;
+
+/** Метаданные недавних лекций без текста (`content`): счётчики, активность, привязка к предметам. */
+export type LectureMeta = Pick<Lecture, "id" | "created" | "updated" | "field">;
+
+export async function fetchRecentLectureMeta(limit: number = 10): Promise<LectureMeta[]> {
+  const options = { sort: "-updated", filter: "", fields: "id,created,updated,field" };
+  if (limit <= MAX_PAGE) return (await pb.collection("lectures").getList<LectureMeta>(1, limit, options)).items;
+  return (await pb.collection("lectures").getFullList<LectureMeta>(options)).slice(0, limit);
 }
 
 /**
@@ -63,13 +73,18 @@ export async function fetchRecentLectures(
  * `fetchRecentLectures`, но без отреза по лимиту и с сортировкой по
  * дате пары/создания (новые выше), а не по последней правке.
  */
-export async function fetchAllLectures(): Promise<Lecture[]> {
+export async function fetchAllLectures(options: { content?: boolean } = {}): Promise<Lecture[]> {
   return pb.collection("lectures").getFullList<Lecture>({
     sort: "-lecture_date,-created",
     filter: "",
     expand: "field",
+    // Без текста: все поля, кроме `content` (PocketBase не умеет «всё кроме»).
+    ...(options.content === false ? { fields: LECTURE_FIELDS_NO_CONTENT } : {}),
   });
 }
+
+const LECTURE_FIELDS_NO_CONTENT =
+  "id,collectionId,collectionName,created,updated,deleted_at,title,slug,field,file,group,owner,slot,lecture_date,number,expand";
 
 /**
  * Create a brand-new lecture inside a course.

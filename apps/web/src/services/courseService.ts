@@ -61,7 +61,7 @@ export async function createCourse(
   // Обложка создаётся сама и больше не меняется (subject-cover-generator.md).
   const owned = await pb
     .collection("courses")
-    .getList(1, 1, { filter: `${FIELDS.courseOwner} = "${currentUserId()}"`, fields: "id" });
+    .getList(1, 1, { filter: pb.filter(`${FIELDS.courseOwner} = {:o}`, { o: currentUserId() }), fields: "id" });
   payload[FIELDS.courseCoverSeed] = nextCoverSeed(owned.totalItems);
   return pb.collection("courses").create<Course>(payload);
 }
@@ -135,7 +135,7 @@ export async function fetchLatestLectureTitles(
   for (const c of courses) {
     try {
       const last = await pb.collection("lectures").getList<Lecture>(1, 1, {
-        filter: `${FIELDS.lectureCourse}="${c.id}"`,
+        filter: pb.filter(`${FIELDS.lectureCourse}={:c}`, { c: c.id }),
         sort: "-created",
       });
       if (last.items[0]) {

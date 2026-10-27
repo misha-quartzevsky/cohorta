@@ -87,11 +87,15 @@ export async function fetchExamsForCourses(courseIds: string[]): Promise<Exam[]>
   if (courseIds.length === 0) return [];
   const owner = currentUserId();
   if (!owner) return [];
+  const params: Record<string, string> = { owner };
   const courseFilter = courseIds
-    .map((id) => `${FIELDS.examCourse}="${id}"`)
+    .map((id, i) => {
+      params[`c${i}`] = id;
+      return `${FIELDS.examCourse}={:c${i}}`;
+    })
     .join(" || ");
   return pb.collection("exams").getFullList<Exam>({
-    filter: `(${courseFilter}) && ${FIELDS.examOwner}="${owner}"`,
+    filter: pb.filter(`(${courseFilter}) && ${FIELDS.examOwner}={:owner}`, params),
   });
 }
 
