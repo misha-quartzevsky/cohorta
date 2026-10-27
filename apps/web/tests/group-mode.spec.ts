@@ -322,7 +322,7 @@ test.fixme("[Д9] этап C ч.2: коллективная подготовка
   page,
   request,
 }) => {
-  const PB = "http://127.0.0.1:8090";
+  const PB = process.env.PB_URL ?? "http://127.0.0.1:8090";
   // демо-юзер владеет сид-экзаменом math-analysis (mode solo)
   await page.addInitScript(
     ({ key, slug }) => localStorage.setItem(key, slug),

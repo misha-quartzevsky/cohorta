@@ -17,7 +17,7 @@
 import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
 import { login, DEMO_EMAIL, DEMO_PASSWORD } from "./helpers";
 
-const PB = "http://127.0.0.1:8090";
+const PB = process.env.PB_URL ?? "http://127.0.0.1:8090";
 const EXAM_BASE = "/s/demo/math-analysis/exam";
 
 /** login-хелпер НЕ ждёт редиректа — дожидаемся его здесь, иначе

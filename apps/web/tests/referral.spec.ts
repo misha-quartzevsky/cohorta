@@ -21,7 +21,7 @@ import { test, expect, type Page, type APIRequestContext } from "@playwright/tes
 import { LAST_SEMESTER_KEY, completeOnboardingFast } from "./helpers";
 import { cleanup, createGroup, createLecture, inviteCode, join, register, type Session } from "./group-api";
 
-const PB = "http://127.0.0.1:8090";
+const PB = process.env.PB_URL ?? "http://127.0.0.1:8090";
 const PASSWORD = "test12345";
 
 async function registerFresh(page: Page): Promise<string> {
