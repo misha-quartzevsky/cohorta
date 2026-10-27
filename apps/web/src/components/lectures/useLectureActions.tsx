@@ -9,9 +9,8 @@ import { useForms } from "../../lib/formsContext";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Button, Icon, Menu, Modal, SubjectCover } from "../../ui";
+import { Button, Icon, Menu, Modal, SubjectCover, useToast } from "../../ui";
 import type { MenuItem } from "../../ui";
-import { useToast } from "../ui/Toast";
 import { useUndo } from "../../lib/undoContext";
 import { useSemester } from "../../lib/semesterContext";
 import { pickActiveSemester } from "../../lib/activeSemester";

@@ -14,4 +14,4 @@ export { default as Menu } from "./Menu";
 export type { MenuItem } from "./Menu";
 export { default as EmptyState } from "./EmptyState";
 export { default as SubjectCover } from "./SubjectCover";
-export { ToastProvider, useToast } from "./Toast";
+export { ToastProvider, useToast } from "../../ui/Toast"; // временно для старых страниц, уйдёт с ними

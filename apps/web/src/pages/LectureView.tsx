@@ -26,8 +26,7 @@ import {
 } from "../services/lectureService";
 import { fetchTags } from "../services/tagService";
 import { createTaskFromLecture } from "../services/taskService";
-import { useToast } from "../components/ui";
-import { Modal, StatusChip } from "../ui";
+import { Modal, StatusChip, useToast } from "../ui";
 import { lectureListStatus } from "../lib/computeLectureReadiness";
 import { lectureDateLabel, repeatedAgoLabel } from "../lib/lectureMeta";
 import { parsePbDate } from "../lib/format";

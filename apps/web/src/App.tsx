@@ -85,7 +85,7 @@ import { SemesterProvider } from "./lib/SemesterProvider";
 import { SpeechProvider } from "./lib/SpeechProvider";
 import { ModeProvider } from "./lib/ModeProvider";
 import { UndoProvider } from "./lib/undoContext";
-import { ToastProvider } from "./components/ui";
+import { ToastProvider } from "./ui";
 import SchedulePage from "./pages/SchedulePage";
 import SchedulePageNew from "./pages/SchedulePageNew";
 import TasksPage from "./pages/TasksPage";
