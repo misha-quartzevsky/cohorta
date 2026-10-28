@@ -63,23 +63,56 @@ test.describe("создание группы (Screen-group-create)", () => {
     }
   });
 
-  // Класс C: в макете окно «Пригласить» работает (Открыть ссылку, Копировать, Сбросить код), в продукте на десктопе
-  // клик по любой кнопке внутри окна закрывает его раньше, чем дойдёт до кнопки: `GroupHomePage` рисует
-  // `InvitePopover` дважды (шапка телефона и десктопа) с общим `open`, и `pointerdown` внутри окна десктопа для скрытого
-  // экземпляра телефона «клик мимо» (`useDismissable`). Владелец не может открыть ссылку мышью.
-  test.fixme("[C] «Открыть ссылку» в окне «Пригласить» открывает ссылку и показывает код", async ({ browser, request }) => {
+  /** Окно «Пригласить» мышью: открыть ссылку, скопировать, сбросить код, закрыть; `?invite=1` после закрытия очищается. */
+  async function useInvitePopover(owner: Person, groupName: string) {
+    const page = owner.page;
+    const pop = page.locator(".c-gr-invite-pop");
+    await expect(pop).toHaveCount(1);
+    await expect(pop).toContainText(`Пригласить в ${groupName}`);
+    await pop.getByRole("button", { name: "Открыть ссылку" }).click();
+    const code = pop.locator(".code b");
+    await expect(code).toHaveText(/\S{4,}/);
+    const first = ((await code.textContent()) ?? "").trim();
+    await expect(pop).toContainText(`cohorta.ru/join/${first}`);
+
+    await pop.getByRole("button", { name: "Копировать" }).click();
+    await expect(pop.getByRole("button", { name: "Скопировано" })).toBeVisible();
+
+    await pop.getByRole("button", { name: "Сбросить код" }).click();
+    await expect(code).not.toHaveText(first);
+    const second = ((await code.textContent()) ?? "").trim();
+    await expect(pop).toContainText(`cohorta.ru/join/${second}`);
+    await expect(pop, "окно не закрылось от кликов внутри").toBeVisible();
+
+    await pop.getByRole("button", { name: "Закрыть" }).click();
+    await expect(pop).toHaveCount(0);
+    await expect(page).toHaveURL(/\/s\/1\/group$/);
+  }
+
+  test("окно «Пригласить» на 1440: «Открыть ссылку», «Копировать», «Сбросить код» работают мышью, ?invite=1 очищается", async ({ browser, request }) => {
     const a = await newPerson(browser, request, "Создатель");
     try {
+      await a.page.setViewportSize({ width: 1440, height: 900 });
       await a.page.goto("/s/1/group/new");
-      const codebox = a.page.locator(".c-gr-codebox");
-      await expect(codebox).toHaveText(/\S{4,}/);
-      const code = ((await codebox.textContent()) ?? "").trim();
-      await a.page.getByLabel("Название").fill(`МК ${uid()}`);
+      await expect(a.page.locator(".c-gr-codebox")).toHaveText(/\S{4,}/);
+      const groupName = `МК ${uid()}`;
+      await a.page.getByLabel("Название").fill(groupName);
       await a.page.getByRole("button", { name: "Создать группу", exact: true }).click();
-      const pop = a.page.locator(".c-gr-invite-pop:visible");
-      await pop.getByRole("button", { name: "Открыть ссылку" }).click();
-      await expect(pop).toContainText(`cohorta.ru/join/${code}`);
-      await expect(pop.locator(".code b")).toHaveText(code);
+      await expect(a.page).toHaveURL(/\/s\/1\/group\?invite=1$/);
+      await useInvitePopover(a, groupName);
+    } finally {
+      await closeAll(a);
+    }
+  });
+
+  test("окно «Пригласить» на 390: те же действия, ?invite=1 очищается", async ({ browser, request }) => {
+    const a = await newPerson(browser, request, "Создатель");
+    try {
+      const groupName = `МК ${uid()}`;
+      await createGroup(request, a.api, groupName, false);
+      await a.page.setViewportSize({ width: 390, height: 844 });
+      await a.page.goto("/s/1/group?invite=1");
+      await useInvitePopover(a, groupName);
     } finally {
       await closeAll(a);
     }
