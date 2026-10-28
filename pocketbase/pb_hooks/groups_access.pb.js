@@ -184,14 +184,10 @@ routerAdd(
   "GET",
   "/api/groups/{id}/roster",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const groupId = e.request.pathValue("id");
 
-    let group;
-    try {
-      group = e.app.findRecordById("groups", groupId);
-    } catch (err) {
-      throw new NotFoundError("Группа не найдена.");
-    }
+    const group = db.getOr404(e.app, "groups", groupId, "Группа не найдена.");
 
     const isOwner = group.get("owner") === e.auth.id;
     let myMembership = null;

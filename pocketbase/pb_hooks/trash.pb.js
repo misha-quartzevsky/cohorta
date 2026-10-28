@@ -98,14 +98,14 @@ routerAdd(
   "POST",
   "/api/trash/delete",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const data = new DynamicModel({ type: "", id: "" });
     e.bindBody(data);
     const uid = e.auth.id;
     const now = new Date().toISOString().replace("T", " ");
 
     if (data.type === "lecture") {
-      let rec;
-      try { rec = e.app.findRecordById("lectures", data.id); } catch (err) { throw new NotFoundError("Лекция не найдена."); }
+      const rec = db.getOr404(e.app, "lectures", data.id, "Лекция не найдена.");
       if (String(rec.get("owner")) !== uid) throw new ForbiddenError("Это не твоя лекция.");
       if (String(rec.get("deleted_at") || "") === "") {
         rec.set("deleted_at", now);
@@ -114,8 +114,7 @@ routerAdd(
       return e.json(200, { ok: true, deleted_at: now });
     }
     if (data.type === "course") {
-      let rec;
-      try { rec = e.app.findRecordById("courses", data.id); } catch (err) { throw new NotFoundError("Предмет не найден."); }
+      const rec = db.getOr404(e.app, "courses", data.id, "Предмет не найден.");
       if (String(rec.get("owner")) !== uid) throw new ForbiddenError("Это не твой предмет.");
       if (String(rec.get("deleted_at") || "") === "") {
         const lectures = e.app.findRecordsByFilter("lectures", 'field = {:c} && deleted_at = ""', "", 5000, 0, { c: rec.id });
@@ -137,13 +136,13 @@ routerAdd(
   "POST",
   "/api/trash/restore",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const data = new DynamicModel({ type: "", id: "" });
     e.bindBody(data);
     const uid = e.auth.id;
 
     if (data.type === "lecture") {
-      let rec;
-      try { rec = e.app.findRecordById("lectures", data.id); } catch (err) { throw new NotFoundError("Лекция не найдена."); }
+      const rec = db.getOr404(e.app, "lectures", data.id, "Лекция не найдена.");
       if (String(rec.get("owner")) !== uid) throw new ForbiddenError("Это не твоя лекция.");
       // Предмет лекции тоже в корзине — возвращаем и его (только сам предмет).
       const courseId = String(rec.get("field") || "");
@@ -163,8 +162,7 @@ routerAdd(
       return e.json(200, { ok: true });
     }
     if (data.type === "course") {
-      let rec;
-      try { rec = e.app.findRecordById("courses", data.id); } catch (err) { throw new NotFoundError("Предмет не найден."); }
+      const rec = db.getOr404(e.app, "courses", data.id, "Предмет не найден.");
       if (String(rec.get("owner")) !== uid) throw new ForbiddenError("Это не твой предмет.");
       const at = String(rec.get("deleted_at") || "");
       if (at !== "") {
@@ -187,21 +185,20 @@ routerAdd(
   "POST",
   "/api/trash/purge",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const data = new DynamicModel({ type: "", id: "" });
     e.bindBody(data);
     const uid = e.auth.id;
 
     if (data.type === "lecture") {
-      let rec;
-      try { rec = e.app.findRecordById("lectures", data.id); } catch (err) { throw new NotFoundError("Лекция не найдена."); }
+      const rec = db.getOr404(e.app, "lectures", data.id, "Лекция не найдена.");
       if (String(rec.get("owner")) !== uid) throw new ForbiddenError("Это не твоя лекция.");
       if (String(rec.get("deleted_at") || "") === "") throw new BadRequestError("Сначала положи в корзину.");
       e.app.delete(rec);
       return e.json(200, { ok: true });
     }
     if (data.type === "course") {
-      let rec;
-      try { rec = e.app.findRecordById("courses", data.id); } catch (err) { throw new NotFoundError("Предмет не найден."); }
+      const rec = db.getOr404(e.app, "courses", data.id, "Предмет не найден.");
       if (String(rec.get("owner")) !== uid) throw new ForbiddenError("Это не твой предмет.");
       if (String(rec.get("deleted_at") || "") === "") throw new BadRequestError("Сначала положи в корзину.");
       const lectures = e.app.findRecordsByFilter("lectures", "field = {:c}", "", 5000, 0, { c: rec.id });

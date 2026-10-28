@@ -18,25 +18,15 @@ routerAdd(
   "POST",
   "/api/lectures/{id}/share-subgroup",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
-    const lecture = (() => {
-      try {
-        return e.app.findRecordById("lectures", e.request.pathValue("id"));
-      } catch (err) {
-        throw new NotFoundError("Лекция не найдена.");
-      }
-    })();
+    const lecture = db.getOr404(e.app, "lectures", e.request.pathValue("id"), "Лекция не найдена.");
     if (lecture.get("owner") !== e.auth.id || String(lecture.get("deleted_at") || "") !== "") {
       throw new NotFoundError("Лекция не найдена.");
     }
     const data = new DynamicModel({ subgroup: "", allow_copy: false });
     e.bindBody(data);
-    let sub;
-    try {
-      sub = e.app.findRecordById("exam_subgroups", String(data.subgroup));
-    } catch (err) {
-      throw new NotFoundError("Подгруппа не найдена.");
-    }
+    const sub = db.getOr404(e.app, "exam_subgroups", String(data.subgroup), "Подгруппа не найдена.");
     if (!g.first(e.app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: sub.id, u: e.auth.id })) {
       throw new NotFoundError("Подгруппа не найдена.");
     }
@@ -91,14 +81,10 @@ routerAdd(
   "POST",
   "/api/lectures/{id}/request-access",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
     const me = e.auth.id;
-    let lecture;
-    try {
-      lecture = e.app.findRecordById("lectures", e.request.pathValue("id"));
-    } catch (err) {
-      throw new NotFoundError("Лекция не найдена.");
-    }
+    const lecture = db.getOr404(e.app, "lectures", e.request.pathValue("id"), "Лекция не найдена.");
     const owner = String(lecture.get("owner") || "");
     // Название видно в той группе, где автор включил предпросмотр и ты состоишь.
     const preview = g.all(e.app, "lecture_previews", "lecture = {:l}", { l: lecture.id }).find((p) => g.isMember(e.app, String(p.get("group")), me)) || null;
@@ -131,13 +117,9 @@ routerAdd(
   "POST",
   "/api/access-requests/{id}/resolve",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
-    let req;
-    try {
-      req = e.app.findRecordById("access_requests", e.request.pathValue("id"));
-    } catch (err) {
-      throw new NotFoundError("Запрос не найден.");
-    }
+    const req = db.getOr404(e.app, "access_requests", e.request.pathValue("id"), "Запрос не найден.");
     if (req.get("owner") !== e.auth.id) throw new NotFoundError("Запрос не найден.");
     if (req.get("status") !== "open") return e.json(409, { code: "not_open" });
     const data = new DynamicModel({ action: "", allow_copy: false });
@@ -185,14 +167,10 @@ routerAdd(
   "POST",
   "/api/lectures/{id}/copy",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
     const me = e.auth.id;
-    let lecture;
-    try {
-      lecture = e.app.findRecordById("lectures", e.request.pathValue("id"));
-    } catch (err) {
-      throw new NotFoundError("Лекция не найдена.");
-    }
+    const lecture = db.getOr404(e.app, "lectures", e.request.pathValue("id"), "Лекция не найдена.");
     if (String(lecture.get("deleted_at") || "") !== "") throw new NotFoundError("Лекция не найдена.");
     const shares = g.all(e.app, "lecture_shares", "lecture = {:l} && grantee = {:u} && suspended != true", { l: lecture.id, u: me });
     if (shares.length === 0) throw new NotFoundError("Лекция не найдена.");

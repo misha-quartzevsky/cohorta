@@ -26,14 +26,10 @@ routerAdd(
   "POST",
   "/api/exams/{id}/subgroups",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
     const me = e.auth.id;
-    let exam;
-    try {
-      exam = e.app.findRecordById("exams", e.request.pathValue("id"));
-    } catch (err) {
-      throw new NotFoundError("Экзамен не найден.");
-    }
+    const exam = db.getOr404(e.app, "exams", e.request.pathValue("id"), "Экзамен не найден.");
     const groupId = String(exam.get("group") || "");
     if (!groupId || !g.isMember(e.app, groupId, me)) throw new NotFoundError("Экзамен не найден.");
     const data = new DynamicModel({ name: "", members: [] });
@@ -222,14 +218,10 @@ routerAdd(
   "POST",
   "/api/tickets/{id}/assign",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
     const t = (() => {
-      let x;
-      try {
-        x = e.app.findRecordById("exam_tickets", e.request.pathValue("id"));
-      } catch (err) {
-        throw new NotFoundError("Не найдено.");
-      }
+      const x = db.getOr404(e.app, "exam_tickets", e.request.pathValue("id"), "Не найдено.");
       const sid = String(x.get("subgroup") || "");
       if (!sid || !g.first(e.app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: sid, u: e.auth.id })) {
         throw new NotFoundError("Не найдено.");
@@ -257,14 +249,10 @@ routerAdd(
   "POST",
   "/api/tickets/{id}/lock",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
     const t = (() => {
-      let x;
-      try {
-        x = e.app.findRecordById("exam_tickets", e.request.pathValue("id"));
-      } catch (err) {
-        throw new NotFoundError("Не найдено.");
-      }
+      const x = db.getOr404(e.app, "exam_tickets", e.request.pathValue("id"), "Не найдено.");
       const sid = String(x.get("subgroup") || "");
       if (!sid || !g.first(e.app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: sid, u: e.auth.id })) {
         throw new NotFoundError("Не найдено.");
@@ -289,13 +277,9 @@ routerAdd(
   "POST",
   "/api/tickets/{id}/unlock",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
-    let t;
-    try {
-      t = e.app.findRecordById("exam_tickets", e.request.pathValue("id"));
-    } catch (err) {
-      throw new NotFoundError("Не найдено.");
-    }
+    const t = db.getOr404(e.app, "exam_tickets", e.request.pathValue("id"), "Не найдено.");
     const sid = String(t.get("subgroup") || "");
     if (!sid || !g.first(e.app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: sid, u: e.auth.id })) {
       throw new NotFoundError("Не найдено.");
@@ -315,13 +299,9 @@ routerAdd(
   "POST",
   "/api/tickets/{id}/take-my-answer",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
-    let t;
-    try {
-      t = e.app.findRecordById("exam_tickets", e.request.pathValue("id"));
-    } catch (err) {
-      throw new NotFoundError("Не найдено.");
-    }
+    const t = db.getOr404(e.app, "exam_tickets", e.request.pathValue("id"), "Не найдено.");
     const sid = String(t.get("subgroup") || "");
     if (!sid || !g.first(e.app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: sid, u: e.auth.id })) {
       throw new NotFoundError("Не найдено.");
@@ -357,14 +337,10 @@ routerAdd(
   "GET",
   "/api/exams/group-match",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
     const me = e.auth.id;
-    let course;
-    try {
-      course = e.app.findRecordById("courses", String(e.request.url.query().get("course") || ""));
-    } catch (err) {
-      throw new NotFoundError("Предмет не найден.");
-    }
+    const course = db.getOr404(e.app, "courses", String(e.request.url.query().get("course") || ""), "Предмет не найден.");
     if (course.get("owner") !== me) throw new NotFoundError("Предмет не найден.");
     const want = g.norm(course.get("name"));
     const out = [];
@@ -391,23 +367,14 @@ routerAdd(
   "POST",
   "/api/exams/{id}/join-group",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
     const me = e.auth.id;
-    let mine;
-    try {
-      mine = e.app.findRecordById("exams", e.request.pathValue("id"));
-    } catch (err) {
-      throw new NotFoundError("Экзамен не найден.");
-    }
+    const mine = db.getOr404(e.app, "exams", e.request.pathValue("id"), "Экзамен не найден.");
     if (mine.get("owner") !== me) throw new NotFoundError("Экзамен не найден.");
     const data = new DynamicModel({ exam: "" });
     e.bindBody(data);
-    let target;
-    try {
-      target = e.app.findRecordById("exams", String(data.exam));
-    } catch (err) {
-      throw new NotFoundError("Экзамен не найден.");
-    }
+    const target = db.getOr404(e.app, "exams", String(data.exam), "Экзамен не найден.");
     const gid = String(target.get("group") || "");
     if (!gid || !g.isMember(e.app, gid, me)) throw new NotFoundError("Экзамен не найден.");
     const nameOf = (ex) => {
@@ -458,13 +425,9 @@ routerAdd(
   "GET",
   "/api/exams/{id}/group-info",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
-    let exam;
-    try {
-      exam = e.app.findRecordById("exams", e.request.pathValue("id"));
-    } catch (err) {
-      throw new NotFoundError("Экзамен не найден.");
-    }
+    const exam = db.getOr404(e.app, "exams", e.request.pathValue("id"), "Экзамен не найден.");
     const gid = String(exam.get("group") || "");
     if (!gid || !g.isMember(e.app, gid, e.auth.id)) throw new NotFoundError("Экзамен не найден.");
     const taken = [];

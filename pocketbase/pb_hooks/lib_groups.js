@@ -3,7 +3,7 @@
 // Хелперы группы (JSVM изолирует scope обработчиков — подключаются через
 // require(`${__hooks}/lib_groups.js`) внутри обработчика).
 
-const { nowStr, inSeconds, first, all } = require(`${__hooks}/lib_db.js`);
+const { nowStr, inSeconds, first, all, getOr404 } = require("./lib_db.js");
 
 /** Название предмета для сравнения: без регистра и пробелов. */
 function norm(s) {
@@ -22,12 +22,7 @@ function isMember(app, groupId, userId) {
  */
 function ownerOnlyGroup(e) {
   const groupId = e.request.pathValue("id");
-  let group;
-  try {
-    group = e.app.findRecordById("groups", groupId);
-  } catch (err) {
-    throw new NotFoundError("Группа не найдена.");
-  }
+  const group = getOr404(e.app, "groups", groupId, "Группа не найдена.");
   if (group.get("owner") === e.auth.id) return group;
   if (!isMember(e.app, group.id, e.auth.id)) throw new NotFoundError("Группа не найдена.");
   throw new ForbiddenError("Это может только владелец группы.");
@@ -36,12 +31,7 @@ function ownerOnlyGroup(e) {
 /** Подгруппа из пути, только для её участника; постороннему — 404 (существование не раскрывается). */
 function memberSubgroup(e, paramName) {
   const id = e.request.pathValue(paramName || "id");
-  let sub;
-  try {
-    sub = e.app.findRecordById("exam_subgroups", id);
-  } catch (err) {
-    throw new NotFoundError("Не найдено.");
-  }
+  const sub = getOr404(e.app, "exam_subgroups", id, "Не найдено.");
   if (!first(e.app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: sub.id, u: e.auth.id })) {
     throw new NotFoundError("Не найдено.");
   }
