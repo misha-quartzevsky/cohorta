@@ -109,7 +109,6 @@ routerAdd(
   "POST",
   "/api/tickets/{id}/assign",
   (e) => {
-    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
     const t = g.memberTicket(e);
     const data = new DynamicModel({ users: [] });
@@ -133,7 +132,6 @@ routerAdd(
   "POST",
   "/api/tickets/{id}/lock",
   (e) => {
-    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
     const t = g.memberTicket(e);
     const holder = String(t.get("locked_by") || "");
@@ -154,7 +152,6 @@ routerAdd(
   "POST",
   "/api/tickets/{id}/unlock",
   (e) => {
-    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
     const t = g.memberTicket(e);
     if (String(t.get("locked_by") || "") === e.auth.id) {
@@ -172,7 +169,6 @@ routerAdd(
   "POST",
   "/api/tickets/{id}/take-my-answer",
   (e) => {
-    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
     const t = g.memberTicket(e);
     const holder = String(t.get("locked_by") || "");

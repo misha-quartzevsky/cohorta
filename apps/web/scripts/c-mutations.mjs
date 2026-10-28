@@ -17,6 +17,7 @@ import path from "node:path";
 
 const PB = process.env.PB_URL ?? "http://127.0.0.1:8091";
 const PORT = new URL(PB).port;
+if (!/^\d+$/.test(PORT)) throw new Error("в PB_URL нужен порт, например http://127.0.0.1:8091");
 const EMAIL = process.env.SUPER_EMAIL ?? "sandbox@test.local";
 const PASS = process.env.SUPER_PASS ?? "SandboxPass12345";
 const REPO = path.resolve(import.meta.dirname, "..", "..", "..");
@@ -24,7 +25,7 @@ const PB_BIN = process.env.PB_BIN ?? path.join(REPO, "pocketbase", "pocketbase.e
 const SANDBOX = process.env.SANDBOX_DIR ?? path.join(process.env.TEMP ?? tmpdir(), "pbsandbox", "pb_data");
 const SPEC = process.argv[2]
   ? [process.argv[2]]
-  : ["tests/group-access.spec.ts", "tests/group-exams.spec.ts", "tests/group-subgroup-leave.spec.ts", "tests/group-lifecycle.spec.ts", "tests/group-code.spec.ts", "tests/group-exam-link.spec.ts"];
+  : ["tests/group-access.spec.ts", "tests/group-exams.spec.ts", "tests/group-subgroup-leave.spec.ts", "tests/group-lifecycle.spec.ts", "tests/group-code.spec.ts", "tests/group-exam-link.spec.ts", "tests/hooks-contract.spec.ts"];
 
 async function api(method, url, token, body) {
   const res = await fetch(`${PB}${url}`, {
@@ -232,7 +233,7 @@ function killSandbox() {
   try {
     const out = execFileSync("wmic", ["process", "where", "name='pocketbase.exe'", "get", "ProcessId,CommandLine"], { encoding: "utf8" });
     for (const line of out.split("\n")) {
-      if (!line.includes(`:${PORT}`)) continue;
+      if (!line.includes(`--http=127.0.0.1:${PORT}`)) continue;
       const pid = line.trim().split(/\s+/).pop();
       if (/^\d+$/.test(pid)) execFileSync("taskkill", ["/F", "/PID", pid], { stdio: "ignore" });
     }
