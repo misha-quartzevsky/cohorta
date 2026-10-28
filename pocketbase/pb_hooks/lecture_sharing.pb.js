@@ -1,7 +1,7 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 // ============================================================
-//  group_access.pb.js — волна C: доступ к лекциям в группе.
+//  lecture_sharing.pb.js — волна C: доступ к лекциям в группе.
 //
 //  POST   /api/lectures/{id}/share-subgroup        {subgroup, allow_copy}  доступ подгруппе (автор — её участник)
 //  DELETE /api/lectures/{id}/share-subgroup/{sub}                           снять доступ подгруппе (интерфейс пока не вызывает, заготовка)
