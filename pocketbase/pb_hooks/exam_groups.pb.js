@@ -247,10 +247,10 @@ routerAdd(
     const t = g.memberTicket(e);
     const holder = String(t.get("locked_by") || "");
     const until = String(t.get("locked_until") || "");
-    if (holder && holder !== e.auth.id && until > g.nowStr()) {
+    if (g.isLockedByOther(t, e.auth.id)) {
       return e.json(409, { code: "busy", locked_by: holder, locked_until: until });
     }
-    const next = g.inSeconds(30);
+    const next = g.inSeconds(g.LOCK_SECONDS);
     t.set("locked_by", e.auth.id);
     t.set("locked_until", next);
     e.app.save(t);
@@ -285,7 +285,7 @@ routerAdd(
     const g = require(`${__hooks}/lib_groups.js`);
     const t = g.memberTicket(e);
     const holder = String(t.get("locked_by") || "");
-    if (holder && holder !== e.auth.id && String(t.get("locked_until") || "") > g.nowStr()) {
+    if (g.isLockedByOther(t, e.auth.id)) {
       return e.json(409, { code: "busy", locked_by: holder });
     }
     const data = new DynamicModel({ source: "" });
@@ -304,7 +304,7 @@ routerAdd(
     t.set("answer", answer);
     t.set("status", answer ? "draft" : "empty");
     t.set("locked_by", e.auth.id);
-    t.set("locked_until", g.inSeconds(30));
+    t.set("locked_until", g.inSeconds(g.LOCK_SECONDS));
     e.app.save(t);
     return e.json(200, { ok: true });
   },
@@ -425,13 +425,11 @@ onRecordUpdateRequest((e) => {
     if (!g.isSubgroupMember(e.app, sid, me)) {
       throw new NotFoundError("Не найдено.");
     }
-    const holder = String(e.record.get("locked_by") || "");
-    const until = String(e.record.get("locked_until") || "");
-    if (holder && holder !== me && until > g.nowStr()) {
+    if (g.isLockedByOther(e.record, me)) {
       throw new ApiError(409, "Билет занят: его сейчас правит другой участник.", { code: "busy" });
     }
     e.record.set("locked_by", me);
-    e.record.set("locked_until", g.inSeconds(30));
+    e.record.set("locked_until", g.inSeconds(g.LOCK_SECONDS));
   }
   e.next();
 }, "exam_tickets");

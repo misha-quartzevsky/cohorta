@@ -28,6 +28,16 @@ function ownerOnlyGroup(e) {
   throw new ForbiddenError("Это может только владелец группы.");
 }
 
+/** Сколько секунд билет подгруппы остаётся занятым после последнего действия. */
+const LOCK_SECONDS = 30;
+
+/** Держит ли билет (запись `exam_tickets`) другой человек, и блокировка ещё не истекла. */
+function isLockedByOther(ticket, userId) {
+  const holder = String(ticket.get("locked_by") || "");
+  const until = String(ticket.get("locked_until") || "");
+  return !!holder && holder !== userId && until > nowStr();
+}
+
 /** Состоит ли пользователь в подгруппе экзамена. */
 function isSubgroupMember(app, subId, userId) {
   return !!first(app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: subId, u: userId });
@@ -262,6 +272,8 @@ module.exports = {
   all,
   isMember,
   ownerOnlyGroup,
+  LOCK_SECONDS,
+  isLockedByOther,
   isSubgroupMember,
   memberSubgroup,
   memberTicket,
