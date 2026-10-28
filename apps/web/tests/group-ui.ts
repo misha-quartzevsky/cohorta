@@ -76,13 +76,16 @@ export async function openGroup(p: Person, path = ""): Promise<void> {
   await p.page.goto(`/s/1/group${path}`);
 }
 
-/** «Мой доступ»: включает или выключает предпросмотр для группы переключателем на экране. */
-export async function setPreviewInUi(p: Person, groupName: string, on: boolean): Promise<void> {
+/** «Мой доступ»: переключает предпросмотр для группы и ждёт, пока сервер действительно запишет значение. */
+export async function setPreviewInUi(p: Person, request: APIRequestContext, group: { id: string; name: string }, on: boolean): Promise<void> {
   await openGroup(p, "/access");
-  const sw = p.page.getByRole("switch", { name: `Предпросмотр для ${groupName}` });
+  const sw = p.page.getByRole("switch", { name: `Предпросмотр для ${group.name}` });
   await expect(sw).toBeVisible();
   if ((await sw.getAttribute("aria-checked")) !== String(on)) await sw.click();
   await expect(sw).toHaveAttribute("aria-checked", String(on));
+  await expect
+    .poll(async () => (await list(request, p.api, "group_members", `group="${group.id}" && user="${p.api.id}"`))[0]?.preview_enabled === true)
+    .toBe(on);
 }
 
 export async function closeAll(...people: (Person | undefined)[]): Promise<void> {

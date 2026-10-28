@@ -13,8 +13,6 @@ import { test, expect } from "@playwright/test";
 import { createExam, createGroup, h, list, PB, setPreview, uid } from "./group-api";
 import { addLecture, closeAll, lectureInCourse, makeGroup, newPerson, openGroup, setPreviewInUi, type Person } from "./group-ui";
 
-test.describe.configure({ mode: "serial" });
-
 /** Код приглашения с экрана владельца: «Пригласить» → строка «Код …». */
 async function readInviteCode(owner: Person): Promise<string> {
   await openGroup(owner);
@@ -40,7 +38,6 @@ test.describe("создание группы (Screen-group-create)", () => {
       // код выдан сразу и виден на форме
       const codebox = a.page.locator(".c-gr-codebox");
       await expect(codebox).toHaveText(/\S{4,}/);
-      await expect(codebox).not.toHaveText("…");
 
       const groupName = `МК ${uid()}`;
       await a.page.getByLabel("Название").fill(groupName);
@@ -171,7 +168,7 @@ test.describe("предпросмотр (Screen-group-home, Screen-group-member,
       await expect(b.page.getByText(secret)).toHaveCount(0);
 
       // автор открывает предпросмотр переключателем на «Мой доступ»
-      await setPreviewInUi(a, group.name, true);
+      await setPreviewInUi(a, request, group, true);
 
       await openGroup(b);
       await expect(card).toContainText("Предпросмотр открыт");
@@ -236,6 +233,8 @@ test.describe("выдача и отзыв доступа (Screen-group-access, S
       await b.page.goto(readerUrl);
       await expect(b.page.getByRole("heading", { level: 1, name: title })).toBeVisible();
       await expect(b.page.getByText(secret)).toBeVisible();
+      // выданный доступ загружен (в шапке «доступ открыт …»), и только теперь проверяем, что копирования нет
+      await expect(b.page.locator(".c-lecture-meta")).toContainText("доступ открыт");
       await expect(b.page.getByRole("button", { name: "Добавить в мои конспекты" })).toHaveCount(0);
 
       // автор видит читателя и на экране «Мой доступ»
@@ -339,7 +338,7 @@ test.describe("коллективный экзамен (Screen-group-exams, Scre
       await examDialog.getByRole("button", { name: "Создать экзамен" }).click();
       await expect(a.page).toHaveURL(/\/group\/exams\/[^/]+$/);
       const examId = a.page.url().split("/").pop() as string;
-      await expect(a.page.getByRole("heading", { level: 1 })).toContainText("Экзамен ·");
+      await expect(a.page.getByRole("heading", { level: 1 })).toContainText(`Экзамен · ${course}`);
 
       // подгруппа с напарником
       await expect(a.page.getByText("Ты пока не в подгруппе")).toBeVisible();
@@ -359,7 +358,9 @@ test.describe("коллективный экзамен (Screen-group-exams, Scre
       const question = `Оферта и акцепт ${uid()}`;
       const t = await request.post(`${PB}/api/subgroups/${sub.id}/tickets`, { headers: h(a.api), data: { question, answer: "" } });
       expect(t.ok(), await t.text()).toBeTruthy();
-      const ticketUrl = `/s/1/group/exams/${examId}/ticket/${(await t.json()).number}`;
+      const created = await t.json();
+      const ticketId = created.id as string;
+      const ticketUrl = `/s/1/group/exams/${examId}/ticket/${created.number}`;
 
       // напарник видит экзамен в списке с подписью «Ты в …» и открывает билет
       await openGroup(b, "/exams");
@@ -380,6 +381,8 @@ test.describe("коллективный экзамен (Screen-group-exams, Scre
       // напарник отпускает билет: у автора баннер уходит (билет перечитывается раз в 5 секунд) и правка включается
       await b.page.getByRole("button", { name: "Отмена" }).click();
       await expect(b.page.locator(".c-gx-banner.edit")).toHaveCount(0);
+      // билет отпущен на сервере сразу, а не по истечении 30 секунд
+      await expect.poll(async () => (await list(request, a.api, "exam_tickets", `id="${ticketId}"`))[0]?.locked_by ?? "").toBe("");
       await expect(a.page.locator(".c-gx-banner.warn")).toHaveCount(0, { timeout: 15_000 });
       await expect(editA).toBeEnabled();
 
