@@ -25,7 +25,7 @@ const PB_BIN = process.env.PB_BIN ?? path.join(REPO, "pocketbase", "pocketbase.e
 const SANDBOX = process.env.SANDBOX_DIR ?? path.join(process.env.TEMP ?? tmpdir(), "pbsandbox", "pb_data");
 const SPEC = process.argv[2]
   ? [process.argv[2]]
-  : ["tests/group-access.spec.ts", "tests/group-exams.spec.ts", "tests/group-subgroup-leave.spec.ts", "tests/group-lifecycle.spec.ts", "tests/group-code.spec.ts", "tests/group-exam-link.spec.ts", "tests/hooks-contract.spec.ts"];
+  : ["tests/group-access.spec.ts", "tests/group-exams.spec.ts", "tests/group-subgroup-leave.spec.ts", "tests/group-lifecycle.spec.ts", "tests/group-code.spec.ts", "tests/group-exam-link.spec.ts", "tests/hooks-contract.spec.ts", "tests/lecture-request-access.spec.ts"];
 
 async function api(method, url, token, body) {
   const res = await fetch(`${PB}${url}`, {
@@ -151,7 +151,7 @@ const HOOK_MUTATIONS = [
   ["hook: владелец выходит без передачи группы", "groups_manage.pb.js", [/if \(group\.get\("owner"\) === e\.auth\.id && others > 0\) \{/, "if (false) {"], "владелец с участниками не может выйти"],
   ["hook: закрытая ссылка пускает по коду", "groups_join.pb.js", [/if \(group\.get\("invite_enabled"\) !== true\) \{\n        throw/, "if (false) {\n        throw"], "закрыта"],
   ["hook: запрос доступа к лекции без предпросмотра", "lecture_sharing.pb.js", [/String\(lecture\.get\("deleted_at"\) \|\| ""\) !== "" \|\| !preview\) \{/, 'String(lecture.get("deleted_at") || "") !== "") {'], "запросить можно только"],
-  ["hook: запрос доступа от не участника группы", "lecture_sharing.pb.js", [/if \(!g\.isMember\(e\.app, groupId, me\) \|\| !g\.isMember\(e\.app, groupId, owner\)\) \{/, "if (false) {"], "запросить можно только"],
+  ["hook: запрос доступа от не участника группы", "lecture_sharing.pb.js", [/if \(!g\.isMember\(e\.app, groupId, me\) \|\| !g\.isMember\(e\.app, groupId, owner\)\) \{/, "if (false) {"], "запрос принимается только пока"],
   ["hook: запрос решает не автор", "lecture_sharing.pb.js", [/if \(req\.get\("owner"\) !== e\.auth\.id\) throw new NotFoundError\("Запрос не найден\."\);/, "/* пропуск */"], "запросить можно только"],
   ["hook: копирование без разрешения автора", "lecture_sharing.pb.js", [/if \(!shares\.some\(\(s\) => s\.get\("allow_copy"\) === true\)\) \{/, "if (false) {"], "копировать можно"],
   ["hook: копия кладётся в чужой предмет", "lecture_sharing.pb.js", [/if \(!c \|\| c\.get\("owner"\) !== me\) throw/, "if (!c) throw"], "копировать можно"],
