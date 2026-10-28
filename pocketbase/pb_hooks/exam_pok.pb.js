@@ -27,7 +27,7 @@ onRecordEnrich((e) => {
     const auth = e.requestInfo && e.requestInfo.auth;
     const uid = auth ? String(auth.id || "") : "";
     if (uid) {
-      const lib = require(`${__hooks}/lib_exam.js`);
+      const lib = require(`${__hooks}/lib_exam_pok.js`);
       const examId = String(e.record.get("exam") || "");
       const ownerId = lib.examOwnerId(e.app, examId);
       // Билеты подгруппы видят только её участники — им ответы открыты целиком.

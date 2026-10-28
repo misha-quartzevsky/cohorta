@@ -98,37 +98,14 @@ routerAdd(
   "POST",
   "/api/trash/delete",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
+    const trash = require(`${__hooks}/lib_trash.js`);
     const data = new DynamicModel({ type: "", id: "" });
     e.bindBody(data);
-    const uid = e.auth.id;
-    const now = new Date().toISOString().replace("T", " ");
-
-    if (data.type === "lecture") {
-      let rec;
-      try { rec = e.app.findRecordById("lectures", data.id); } catch (err) { throw new NotFoundError("Лекция не найдена."); }
-      if (String(rec.get("owner")) !== uid) throw new ForbiddenError("Это не твоя лекция.");
-      if (String(rec.get("deleted_at") || "") === "") {
-        rec.set("deleted_at", now);
-        e.app.save(rec);
-      }
-      return e.json(200, { ok: true, deleted_at: now });
-    }
-    if (data.type === "course") {
-      let rec;
-      try { rec = e.app.findRecordById("courses", data.id); } catch (err) { throw new NotFoundError("Предмет не найден."); }
-      if (String(rec.get("owner")) !== uid) throw new ForbiddenError("Это не твой предмет.");
-      if (String(rec.get("deleted_at") || "") === "") {
-        const lectures = e.app.findRecordsByFilter("lectures", 'field = {:c} && deleted_at = ""', "", 5000, 0, { c: rec.id });
-        for (const l of lectures) {
-          l.set("deleted_at", now);
-          e.app.save(l);
-        }
-        rec.set("deleted_at", now);
-        e.app.save(rec);
-      }
-      return e.json(200, { ok: true, deleted_at: now });
-    }
-    throw new BadRequestError("Неизвестный тип.");
+    const now = db.nowStr();
+    const rec = trash.ownedRecord(e.app, e.auth.id, data.type, data.id);
+    trash.trash(e.app, data.type, rec, now);
+    return e.json(200, { ok: true, deleted_at: now });
   },
   $apis.requireAuth()
 );
@@ -137,48 +114,11 @@ routerAdd(
   "POST",
   "/api/trash/restore",
   (e) => {
+    const trash = require(`${__hooks}/lib_trash.js`);
     const data = new DynamicModel({ type: "", id: "" });
     e.bindBody(data);
-    const uid = e.auth.id;
-
-    if (data.type === "lecture") {
-      let rec;
-      try { rec = e.app.findRecordById("lectures", data.id); } catch (err) { throw new NotFoundError("Лекция не найдена."); }
-      if (String(rec.get("owner")) !== uid) throw new ForbiddenError("Это не твоя лекция.");
-      // Предмет лекции тоже в корзине — возвращаем и его (только сам предмет).
-      const courseId = String(rec.get("field") || "");
-      if (courseId) {
-        try {
-          const c = e.app.findRecordById("courses", courseId);
-          if (String(c.get("deleted_at") || "") !== "") {
-            c.set("deleted_at", "");
-            e.app.save(c);
-          }
-        } catch (err) {
-          /* предмета уже нет — лекция вернётся без предмета */
-        }
-      }
-      rec.set("deleted_at", "");
-      e.app.save(rec);
-      return e.json(200, { ok: true });
-    }
-    if (data.type === "course") {
-      let rec;
-      try { rec = e.app.findRecordById("courses", data.id); } catch (err) { throw new NotFoundError("Предмет не найден."); }
-      if (String(rec.get("owner")) !== uid) throw new ForbiddenError("Это не твой предмет.");
-      const at = String(rec.get("deleted_at") || "");
-      if (at !== "") {
-        const lectures = e.app.findRecordsByFilter("lectures", "field = {:c} && deleted_at = {:d}", "", 5000, 0, { c: rec.id, d: at });
-        rec.set("deleted_at", "");
-        e.app.save(rec);
-        for (const l of lectures) {
-          l.set("deleted_at", "");
-          e.app.save(l);
-        }
-      }
-      return e.json(200, { ok: true });
-    }
-    throw new BadRequestError("Неизвестный тип.");
+    trash.restore(e.app, data.type, trash.ownedRecord(e.app, e.auth.id, data.type, data.id));
+    return e.json(200, { ok: true });
   },
   $apis.requireAuth()
 );
@@ -187,29 +127,11 @@ routerAdd(
   "POST",
   "/api/trash/purge",
   (e) => {
+    const trash = require(`${__hooks}/lib_trash.js`);
     const data = new DynamicModel({ type: "", id: "" });
     e.bindBody(data);
-    const uid = e.auth.id;
-
-    if (data.type === "lecture") {
-      let rec;
-      try { rec = e.app.findRecordById("lectures", data.id); } catch (err) { throw new NotFoundError("Лекция не найдена."); }
-      if (String(rec.get("owner")) !== uid) throw new ForbiddenError("Это не твоя лекция.");
-      if (String(rec.get("deleted_at") || "") === "") throw new BadRequestError("Сначала положи в корзину.");
-      e.app.delete(rec);
-      return e.json(200, { ok: true });
-    }
-    if (data.type === "course") {
-      let rec;
-      try { rec = e.app.findRecordById("courses", data.id); } catch (err) { throw new NotFoundError("Предмет не найден."); }
-      if (String(rec.get("owner")) !== uid) throw new ForbiddenError("Это не твой предмет.");
-      if (String(rec.get("deleted_at") || "") === "") throw new BadRequestError("Сначала положи в корзину.");
-      const lectures = e.app.findRecordsByFilter("lectures", "field = {:c}", "", 5000, 0, { c: rec.id });
-      for (const l of lectures) e.app.delete(l);
-      e.app.delete(rec);
-      return e.json(200, { ok: true });
-    }
-    throw new BadRequestError("Неизвестный тип.");
+    trash.purge(e.app, data.type, trash.ownedRecord(e.app, e.auth.id, data.type, data.id));
+    return e.json(200, { ok: true });
   },
   $apis.requireAuth()
 );
@@ -218,15 +140,12 @@ routerAdd(
   "POST",
   "/api/trash/empty",
   (e) => {
+    const trash = require(`${__hooks}/lib_trash.js`);
     const uid = e.auth.id;
     const lectures = e.app.findRecordsByFilter("lectures", 'owner = {:u} && deleted_at != ""', "", 5000, 0, { u: uid });
     for (const l of lectures) e.app.delete(l);
     const courses = e.app.findRecordsByFilter("courses", 'owner = {:u} && deleted_at != ""', "", 1000, 0, { u: uid });
-    for (const c of courses) {
-      const rest = e.app.findRecordsByFilter("lectures", "field = {:c}", "", 5000, 0, { c: c.id });
-      for (const l of rest) e.app.delete(l);
-      e.app.delete(c);
-    }
+    for (const c of courses) trash.purgeCourse(e.app, c);
     return e.json(200, { ok: true });
   },
   $apis.requireAuth()
@@ -234,16 +153,13 @@ routerAdd(
 
 // Раз в сутки (03:00 по времени сервера): стереть всё, что пролежало больше 30 дней.
 cronAdd("trash_purge", "0 3 * * *", () => {
-  const cut = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString().replace("T", " ");
+  const cut = require(`${__hooks}/lib_db.js`).daysFromNow(-30);
+  const trash = require(`${__hooks}/lib_trash.js`);
   try {
     const old = $app.findRecordsByFilter("lectures", 'deleted_at != "" && deleted_at < {:c}', "", 5000, 0, { c: cut });
     for (const l of old) $app.delete(l);
     const oldCourses = $app.findRecordsByFilter("courses", 'deleted_at != "" && deleted_at < {:c}', "", 1000, 0, { c: cut });
-    for (const c of oldCourses) {
-      const rest = $app.findRecordsByFilter("lectures", "field = {:c}", "", 5000, 0, { c: c.id });
-      for (const l of rest) $app.delete(l);
-      $app.delete(c);
-    }
+    for (const c of oldCourses) trash.purgeCourse($app, c);
   } catch (err) {
     console.log("[trash] purge failed:", err);
   }

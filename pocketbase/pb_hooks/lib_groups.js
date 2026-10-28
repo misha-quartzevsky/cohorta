@@ -3,26 +3,20 @@
 // Хелперы группы (JSVM изолирует scope обработчиков — подключаются через
 // require(`${__hooks}/lib_groups.js`) внутри обработчика).
 
-function nowStr() {
-  return new Date().toISOString().replace("T", " ");
-}
-
-function inSeconds(n) {
-  return new Date(Date.now() + n * 1000).toISOString().replace("T", " ");
-}
+const { nowStr, inSeconds, first, all, getOr404 } = require("./lib_db.js");
 
 /** Название предмета для сравнения: без регистра и пробелов. */
 function norm(s) {
   return String(s || "").toLowerCase().replace(/\s+/g, "");
 }
 
-function first(app, collection, filter, params) {
-  const rows = app.findRecordsByFilter(collection, filter, "", 1, 0, params || {});
-  return rows && rows[0] ? rows[0] : null;
-}
-
-function all(app, collection, filter, params) {
-  return app.findRecordsByFilter(collection, filter, "", 5000, 0, params || {}) || [];
+/**
+ * Подпись человека: имя, иначе часть почты до «@» (почту целиком наружу не отдаём). Принимает запись users;
+ * что отдавать, если записи нет, решает вызывающий (в разных маршрутах это разный ответ).
+ */
+function userLabel(user) {
+  const name = String(user.get("name") || "").trim();
+  return name || String(user.get("email") || "").split("@")[0];
 }
 
 /** Состоит ли пользователь в группе (владелец тоже имеет строку членства). */
@@ -37,30 +31,46 @@ function isMember(app, groupId, userId) {
  */
 function ownerOnlyGroup(e) {
   const groupId = e.request.pathValue("id");
-  let group;
-  try {
-    group = e.app.findRecordById("groups", groupId);
-  } catch (err) {
-    throw new NotFoundError("Группа не найдена.");
-  }
+  const group = getOr404(e.app, "groups", groupId, "Группа не найдена.");
   if (group.get("owner") === e.auth.id) return group;
   if (!isMember(e.app, group.id, e.auth.id)) throw new NotFoundError("Группа не найдена.");
   throw new ForbiddenError("Это может только владелец группы.");
 }
 
+/** Сколько секунд билет подгруппы остаётся занятым после последнего действия. */
+const LOCK_SECONDS = 30;
+
+/** Держит ли билет (запись `exam_tickets`) другой человек, и блокировка ещё не истекла. */
+function isLockedByOther(ticket, userId) {
+  const holder = String(ticket.get("locked_by") || "");
+  const until = String(ticket.get("locked_until") || "");
+  return !!holder && holder !== userId && until > nowStr();
+}
+
+/** Состоит ли пользователь в подгруппе экзамена. */
+function isSubgroupMember(app, subId, userId) {
+  return !!first(app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: subId, u: userId });
+}
+
 /** Подгруппа из пути, только для её участника; постороннему — 404 (существование не раскрывается). */
 function memberSubgroup(e, paramName) {
   const id = e.request.pathValue(paramName || "id");
-  let sub;
-  try {
-    sub = e.app.findRecordById("exam_subgroups", id);
-  } catch (err) {
-    throw new NotFoundError("Не найдено.");
-  }
-  if (!first(e.app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: sub.id, u: e.auth.id })) {
+  const sub = getOr404(e.app, "exam_subgroups", id, "Не найдено.");
+  if (!isSubgroupMember(e.app, sub.id, e.auth.id)) {
     throw new NotFoundError("Не найдено.");
   }
   return sub;
+}
+
+/**
+ * Билет подгруппы из пути, только для участника этой подгруппы; постороннему и билету без подгруппы — 404
+ * (существование не раскрывается).
+ */
+function memberTicket(e) {
+  const t = getOr404(e.app, "exam_tickets", e.request.pathValue("id"), "Не найдено.");
+  const sid = String(t.get("subgroup") || "");
+  if (!sid || !isSubgroupMember(e.app, sid, e.auth.id)) throw new NotFoundError("Не найдено.");
+  return t;
 }
 
 /** Группа экзамена по подгруппе. */
@@ -69,26 +79,31 @@ function subgroupGroupId(app, sub) {
   return String(exam.get("group") || "");
 }
 
+/** Новая запись доступа к лекции; `subgroup` не задаётся, если доступ личный. */
+function createShare(app, fields) {
+  const rec = new Record(app.findCollectionByNameOrId("lecture_shares"));
+  rec.set("lecture", fields.lecture);
+  rec.set("owner", fields.owner);
+  rec.set("grantee", fields.grantee);
+  rec.set("group", fields.group);
+  if (fields.subgroup) rec.set("subgroup", fields.subgroup);
+  rec.set("allow_copy", !!fields.allowCopy);
+  rec.set("suspended", false);
+  app.save(rec);
+  return rec;
+}
+
 /** Доступ подгруппе: создать доступы на все лекции, открытые подгруппе, для нового участника. */
 function grantSubgroupShares(app, sub, userId) {
   const rows = all(app, "lecture_shares", "subgroup = {:s}", { s: sub.id });
   const seen = {};
-  const col = app.findCollectionByNameOrId("lecture_shares");
   for (const r of rows) {
     const lecture = String(r.get("lecture"));
     if (seen[lecture]) continue;
     seen[lecture] = true;
     if (String(r.get("owner")) === userId) continue;
     if (first(app, "lecture_shares", "lecture = {:l} && grantee = {:u} && subgroup = {:s}", { l: lecture, u: userId, s: sub.id })) continue;
-    const rec = new Record(col);
-    rec.set("lecture", lecture);
-    rec.set("owner", r.get("owner"));
-    rec.set("grantee", userId);
-    rec.set("group", r.get("group"));
-    rec.set("subgroup", sub.id);
-    rec.set("allow_copy", !!r.get("allow_copy"));
-    rec.set("suspended", false);
-    app.save(rec);
+    createShare(app, { lecture: lecture, owner: r.get("owner"), grantee: userId, group: r.get("group"), subgroup: sub.id, allowCopy: r.get("allow_copy") });
   }
 }
 
@@ -270,9 +285,15 @@ module.exports = {
   first,
   all,
   isMember,
+  userLabel,
   ownerOnlyGroup,
+  LOCK_SECONDS,
+  isLockedByOther,
+  isSubgroupMember,
   memberSubgroup,
+  memberTicket,
   subgroupGroupId,
+  createShare,
   grantSubgroupShares,
   removeFromSubgroup,
   leaveGroupCore,

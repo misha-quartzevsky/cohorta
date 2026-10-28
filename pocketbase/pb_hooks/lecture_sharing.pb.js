@@ -1,10 +1,10 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 // ============================================================
-//  group_access.pb.js — волна C: доступ к лекциям в группе.
+//  lecture_sharing.pb.js — волна C: доступ к лекциям в группе.
 //
 //  POST   /api/lectures/{id}/share-subgroup        {subgroup, allow_copy}  доступ подгруппе (автор — её участник)
-//  DELETE /api/lectures/{id}/share-subgroup/{sub}                           снять доступ подгруппе
+//  DELETE /api/lectures/{id}/share-subgroup/{sub}                           снять доступ подгруппе (интерфейс пока не вызывает, заготовка)
 //  POST   /api/lectures/{id}/request-access                                 запрос доступа к закрытой лекции
 //  POST   /api/access-requests/{id}/resolve        {action, allow_copy}    автор: grant | decline
 //  POST   /api/lectures/{id}/copy                  {course}                 «Добавить в мои конспекты»
@@ -18,30 +18,19 @@ routerAdd(
   "POST",
   "/api/lectures/{id}/share-subgroup",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
-    const lecture = (() => {
-      try {
-        return e.app.findRecordById("lectures", e.request.pathValue("id"));
-      } catch (err) {
-        throw new NotFoundError("Лекция не найдена.");
-      }
-    })();
+    const lecture = db.getOr404(e.app, "lectures", e.request.pathValue("id"), "Лекция не найдена.");
     if (lecture.get("owner") !== e.auth.id || String(lecture.get("deleted_at") || "") !== "") {
       throw new NotFoundError("Лекция не найдена.");
     }
     const data = new DynamicModel({ subgroup: "", allow_copy: false });
     e.bindBody(data);
-    let sub;
-    try {
-      sub = e.app.findRecordById("exam_subgroups", String(data.subgroup));
-    } catch (err) {
-      throw new NotFoundError("Подгруппа не найдена.");
-    }
-    if (!g.first(e.app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: sub.id, u: e.auth.id })) {
+    const sub = db.getOr404(e.app, "exam_subgroups", String(data.subgroup), "Подгруппа не найдена.");
+    if (!g.isSubgroupMember(e.app, sub.id, e.auth.id)) {
       throw new NotFoundError("Подгруппа не найдена.");
     }
     const groupId = g.subgroupGroupId(e.app, sub);
-    const col = e.app.findCollectionByNameOrId("lecture_shares");
     let n = 0;
     for (const p of g.all(e.app, "exam_participants", "subgroup = {:s}", { s: sub.id })) {
       const uid = String(p.get("user"));
@@ -52,20 +41,10 @@ routerAdd(
         e.app.save(have);
         continue;
       }
-      const rec = new Record(col);
-      rec.set("lecture", lecture.id);
-      rec.set("owner", e.auth.id);
-      rec.set("grantee", uid);
-      rec.set("group", groupId);
-      rec.set("subgroup", sub.id);
-      rec.set("allow_copy", !!data.allow_copy);
-      rec.set("suspended", false);
-      e.app.save(rec);
+      g.createShare(e.app, { lecture: lecture.id, owner: e.auth.id, grantee: uid, group: groupId, subgroup: sub.id, allowCopy: data.allow_copy });
       n += 1;
     }
-    // Если в подгруппе только автор, доступ некому выдавать — но «строка подгруппы»
-    // тоже должна существовать: ставим маркер-доступ самому себе нельзя, поэтому
-    // возвращаем число новых доступов.
+    // Автору доступ не выдаётся: если в подгруппе только он, выдавать некому и вернётся granted: 0.
     return e.json(200, { granted: n });
   },
   $apis.requireAuth()
@@ -91,14 +70,10 @@ routerAdd(
   "POST",
   "/api/lectures/{id}/request-access",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
     const me = e.auth.id;
-    let lecture;
-    try {
-      lecture = e.app.findRecordById("lectures", e.request.pathValue("id"));
-    } catch (err) {
-      throw new NotFoundError("Лекция не найдена.");
-    }
+    const lecture = db.getOr404(e.app, "lectures", e.request.pathValue("id"), "Лекция не найдена.");
     const owner = String(lecture.get("owner") || "");
     // Название видно в той группе, где автор включил предпросмотр и ты состоишь.
     const preview = g.all(e.app, "lecture_previews", "lecture = {:l}", { l: lecture.id }).find((p) => g.isMember(e.app, String(p.get("group")), me)) || null;
@@ -131,13 +106,9 @@ routerAdd(
   "POST",
   "/api/access-requests/{id}/resolve",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
-    let req;
-    try {
-      req = e.app.findRecordById("access_requests", e.request.pathValue("id"));
-    } catch (err) {
-      throw new NotFoundError("Запрос не найден.");
-    }
+    const req = db.getOr404(e.app, "access_requests", e.request.pathValue("id"), "Запрос не найден.");
     if (req.get("owner") !== e.auth.id) throw new NotFoundError("Запрос не найден.");
     if (req.get("status") !== "open") return e.json(409, { code: "not_open" });
     const data = new DynamicModel({ action: "", allow_copy: false });
@@ -164,14 +135,7 @@ routerAdd(
       have.set("allow_copy", !!data.allow_copy);
       e.app.save(have);
     } else {
-      const rec = new Record(e.app.findCollectionByNameOrId("lecture_shares"));
-      rec.set("lecture", lectureId);
-      rec.set("owner", e.auth.id);
-      rec.set("grantee", requester);
-      rec.set("group", groupId);
-      rec.set("allow_copy", !!data.allow_copy);
-      rec.set("suspended", false);
-      e.app.save(rec);
+      g.createShare(e.app, { lecture: lectureId, owner: e.auth.id, grantee: requester, group: groupId, allowCopy: data.allow_copy });
     }
     req.set("status", "granted");
     e.app.save(req);
@@ -185,14 +149,10 @@ routerAdd(
   "POST",
   "/api/lectures/{id}/copy",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
     const me = e.auth.id;
-    let lecture;
-    try {
-      lecture = e.app.findRecordById("lectures", e.request.pathValue("id"));
-    } catch (err) {
-      throw new NotFoundError("Лекция не найдена.");
-    }
+    const lecture = db.getOr404(e.app, "lectures", e.request.pathValue("id"), "Лекция не найдена.");
     if (String(lecture.get("deleted_at") || "") !== "") throw new NotFoundError("Лекция не найдена.");
     const shares = g.all(e.app, "lecture_shares", "lecture = {:l} && grantee = {:u} && suspended != true", { l: lecture.id, u: me });
     if (shares.length === 0) throw new NotFoundError("Лекция не найдена.");
@@ -236,9 +196,7 @@ routerAdd(
     since = since.replace("T", " ");
     const name = (uid) => {
       try {
-        const u = e.app.findRecordById("users", uid);
-        const n = String(u.get("name") || "").trim();
-        return n || String(u.get("email") || "").split("@")[0];
+        return g.userLabel(e.app.findRecordById("users", uid));
       } catch (err) {
         return "";
       }

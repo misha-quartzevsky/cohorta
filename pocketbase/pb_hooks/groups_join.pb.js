@@ -1,19 +1,21 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 // ============================================================
-//  groups_access.pb.js — серверные маршруты для вступления в
+//  groups_join.pb.js — серверные маршруты для вступления в
 //  группу и ростера, взамен прямых запросов к `groups`/`users`
 //  после ужесточения их правил (миграция
 //  1790001100_close_group_access_holes.js, A0.5 разведки
-//  2026-10-18). Все три маршрута требуют входа.
+//  2026-10-18). Все маршруты требуют входа.
 //
-//  POST /api/groups/join   {code}      → вступить по invite_code
-//  GET  /api/groups/search ?q=         → нечёткий поиск групп по названию
-//  GET  /api/groups/:id/roster         → ростер группы (участник/владелец)
+//  POST /api/groups/join    {code}     → вступить по invite_code (закрытая ссылка не пускает)
+//  GET  /api/groups/preview ?code=     → название, число участников и создатель группы по коду (экран подтверждения)
+//  GET  /api/groups/search  ?q=        → нечёткий поиск групп по названию (интерфейс его больше не вызывает:
+//                                        вступление только по коду; маршрут оставлен, см. отчёт refactor-2026-10)
+//  GET  /api/groups/{id}/roster        → ростер группы (участник/владелец)
 //
 //  Поиск и ростер отдают только поля, нужные экрану «Группа»
-//  (name/id/slug; name/email участника) — не invite_code, не
-//  весь профиль пользователя.
+//  (id/name группы; id/name/avatar участника) — не invite_code, не
+//  весь профиль пользователя и не почта.
 // ============================================================
 
 routerAdd(
@@ -23,7 +25,8 @@ routerAdd(
     const data = new DynamicModel({ code: "" });
     e.bindBody(data);
 
-    const code = require(`${__hooks}/lib_groups.js`).normalizeCode(data.code);
+    const g = require(`${__hooks}/lib_groups.js`);
+    const code = g.normalizeCode(data.code);
     if (!code) {
       throw new BadRequestError("Введите код приглашения.");
     }
@@ -37,7 +40,6 @@ routerAdd(
       throw new NotFoundError("Группа с таким кодом не найдена.");
     }
 
-    const g = require(`${__hooks}/lib_groups.js`);
     let restorable = 0;
     if (!g.isMember(e.app, group.id, e.auth.id)) {
       // Закрытая ссылка не раскрывает, что группа существует.
@@ -69,7 +71,8 @@ routerAdd(
   "GET",
   "/api/groups/preview",
   (e) => {
-    const code = require(`${__hooks}/lib_groups.js`).normalizeCode(e.request.url.query().get("code"));
+    const g = require(`${__hooks}/lib_groups.js`);
+    const code = g.normalizeCode(e.request.url.query().get("code"));
     if (!code) {
       throw new BadRequestError("Введите код приглашения.");
     }
@@ -91,8 +94,7 @@ routerAdd(
     let ownerName = "";
     try {
       const owner = e.app.findRecordById("users", group.get("owner"));
-      ownerName = String(owner.get("name") || "").trim();
-      if (!ownerName) ownerName = String(owner.get("email") || "").split("@")[0];
+      ownerName = g.userLabel(owner);
     } catch (err) {
       ownerName = "";
     }
@@ -184,14 +186,11 @@ routerAdd(
   "GET",
   "/api/groups/{id}/roster",
   (e) => {
+    const db = require(`${__hooks}/lib_db.js`);
+    const g = require(`${__hooks}/lib_groups.js`);
     const groupId = e.request.pathValue("id");
 
-    let group;
-    try {
-      group = e.app.findRecordById("groups", groupId);
-    } catch (err) {
-      throw new NotFoundError("Группа не найдена.");
-    }
+    const group = db.getOr404(e.app, "groups", groupId, "Группа не найдена.");
 
     const isOwner = group.get("owner") === e.auth.id;
     let myMembership = null;
@@ -225,8 +224,7 @@ routerAdd(
         const u = e.app.findRecordById("users", m.get("user"));
         // Почту одногруппникам не отдаём: для подписи нужно имя (если его нет —
         // часть почты до «@»), и аватар.
-        let label = String(u.get("name") || "").trim();
-        if (!label) label = String(u.get("email") || "").split("@")[0];
+        const label = g.userLabel(u);
         user = { id: u.id, name: label, avatar: String(u.get("avatar") || "") };
       } catch (err) {
         user = null;
