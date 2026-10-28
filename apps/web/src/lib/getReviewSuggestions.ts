@@ -7,14 +7,15 @@
  * семестру относится её предмет, так смена семестра не меняет её поведение.
  */
 
-import { READINESS_THRESHOLDS } from "./computeLectureReadiness";
+import { READINESS_THRESHOLDS, type ReadinessResult } from "./computeLectureReadiness";
+import type { Lecture } from "./types";
 import { toDateStr, addDays, fromDateStr, MS_PER_DAY } from "./localDate";
 
 export type SuggestionKind = "quiz_yesterday" | "review" | "stale";
 
 export interface SuggestionLecture {
-  id: string;
-  title: string;
+  id: Lecture["id"];
+  title: Lecture["title"];
   /** Предмет лекции (id курса): подсказка получает тот же предмет при выполнении и скрытии. */
   subjectId?: string;
   /** Адрес лекции — куда ведёт подсказка «Давно не открывали». */
@@ -28,7 +29,7 @@ export interface SuggestionLecture {
   /** Было ли хотя бы одно прохождение (любой ответ quiz_answers). */
   hasAnyAttempt: boolean;
   /** Готовность лекции (computeLectureReadiness().percent). */
-  readinessPercent: number | null;
+  readinessPercent: ReadinessResult["percent"];
   /** YYYY-MM-DD последнего ответа или правки конспекта, что позже. */
   lastActivityDate: string | null;
 }

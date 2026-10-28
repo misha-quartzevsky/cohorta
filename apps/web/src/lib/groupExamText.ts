@@ -1,14 +1,10 @@
-import { MONTHS_GENITIVE, pluralRu } from "./format";
-import { MS_PER_DAY } from "./localDate";
+import { formatDayMonth, parsePbDate, pluralRu } from "./format";
+import { calendarDaysUntil } from "./localDate";
 
 /** Дней до даты экзамена (ISO или «ГГГГ-ММ-ДД чч:мм»); null — даты нет. Прошедшая дата даёт 0. */
 export function daysUntil(iso: string, now: Date = new Date()): number | null {
-  if (!iso) return null;
-  const d = new Date(iso.replace(" ", "T"));
-  if (Number.isNaN(d.getTime())) return null;
-  const a = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
-  const b = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  return Math.max(0, Math.round((a - b) / MS_PER_DAY));
+  const days = calendarDaysUntil(iso, now);
+  return days === null ? null : Math.max(0, days);
 }
 
 /** «через 87 дней», «завтра», «сегодня». */
@@ -27,7 +23,7 @@ export function examWhen(iso: string, dateText: (iso: string) => string): string
 
 /** «экзамен 12 января» или «дата экзамена не задана» (подпись под заголовком импорта и экзамена). */
 export function examDateLabel(iso: string | undefined | null): string {
-  const d = iso ? new Date(String(iso).replace(" ", "T")) : null;
-  if (!d || Number.isNaN(d.getTime())) return "дата экзамена не задана";
-  return `экзамен ${d.getDate()} ${MONTHS_GENITIVE[d.getMonth()]}`;
+  const d = parsePbDate(iso);
+  if (!d) return "дата экзамена не задана";
+  return `экзамен ${formatDayMonth(d)}`;
 }

@@ -21,18 +21,11 @@ import { pickActiveSemester } from "../lib/activeSemester";
 import { fetchCourses } from "../services/courseService";
 import { wordCount } from "../services/lectureActions";
 import { courseName, courseSemesterId, lectureHref, lectureTitle, semesterSlug, type Course, type Lecture } from "../lib/types";
-import { pluralRu } from "../lib/format";
+import { formatLocaleDayMonth, pluralRu } from "../lib/format";
 import { Icon, Menu, Modal, SubjectCover } from "../ui";
 import DraftCover from "../components/lectures/DraftCover";
 import { useLectureActions } from "../components/lectures/useLectureActions";
 import LoadingState from "../components/LoadingState";
-
-function formatDate(dateStr: string | undefined, month: "long" | "short"): string {
-  if (!dateStr) return "";
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("ru-RU", { day: "numeric", month }).replace(".", "");
-}
 
 export default function DraftsPage() {
   const navigate = useNavigate();
@@ -127,8 +120,8 @@ export default function DraftsPage() {
                   <span className="t">{lectureTitle(lecture)}</span>
                   <span className="m">
                     {phone
-                      ? `${formatDate(date, "short")} · ${wordsText}`
-                      : `Создана ${formatDate(date, "long")} · ${wordsText}`}
+                      ? `${formatLocaleDayMonth(date, "short")} · ${wordsText}`
+                      : `Создана ${formatLocaleDayMonth(date, "long")} · ${wordsText}`}
                   </span>
                 </>
               )}

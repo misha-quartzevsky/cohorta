@@ -14,20 +14,12 @@ import { useNavigate } from "react-router-dom";
 import type { LectureOverviewRow } from "../../hooks/useLecturesOverview";
 import { useLongPress } from "../../hooks/useLongPress";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
+import { formatLocaleDayMonth } from "../../lib/format";
 import { useSemester } from "../../lib/semesterContext";
 import { courseName, courseSemesterId, lectureHref, lectureTitle, semesterLabel, type Lecture } from "../../lib/types";
 import { groupByPeriod, groupByWeek, type LectureGroup } from "../../lib/lectureGroups";
 import { Icon, List, StatusChip, SubjectCover } from "../../ui";
 import { useLectureActions } from "./useLectureActions";
-
-function formatDate(dateStr: string | undefined, month: "long" | "short"): string {
-  if (!dateStr) return "";
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return "";
-  return d
-    .toLocaleDateString("ru-RU", { day: "numeric", month })
-    .replace(".", "");
-}
 
 function RenameField({ lecture, onSave, onCancel }: { lecture: Lecture; onSave: (v: string) => void; onCancel: () => void }) {
   const [value, setValue] = useState(lectureTitle(lecture));
@@ -66,8 +58,8 @@ function LectureRow({ row, semSlug, showSubject, phone, actions }: RowProps) {
   const subject = course ? courseName(course) : "Без предмета";
   const number = lecture.number ? `Лекция ${lecture.number}` : "";
   const date = lecture.lecture_date || lecture.created;
-  const long = formatDate(date, "long");
-  const short = formatDate(date, "short");
+  const long = formatLocaleDayMonth(date, "long");
+  const short = formatLocaleDayMonth(date, "short");
   const renaming = actions.renamingId === lecture.id;
   const open = () => navigate(lectureHref(lecture, semSlug));
   const press = useLongPress(() => actions.openSheet(lecture), phone && !renaming);

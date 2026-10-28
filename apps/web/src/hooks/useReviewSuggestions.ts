@@ -1,17 +1,11 @@
 /**
  * Автозадачи повторения (spec 5.3) — данные для lib/getReviewSuggestions.ts.
- * Переиспользует тот же слой, что и «Все лекции» (B2, useLecturesOverview):
- * fetchAllLectures + fetchReadinessQuestionsByLecture/AnswersByLecture,
- * один заход, без N+1.
+ * Источник тот же, что у «Все лекции» (services/lectureReadinessService.ts), текст лекций не
+ * тянем. Запросы идут один раз; когда меняется набор уже выполненных/скрытых подсказок
+ * (`existingDedupeKeys`) или семестры, список только пересчитывается, без новой загрузки.
  */
 
-import { useCallback } from "react";
-import { fetchAllLectures } from "../services/lectureService";
-import {
-  fetchReadinessAnswersByLecture,
-  fetchReadinessQuestionsByLecture,
-} from "../services/quizService";
-import { computeLectureReadiness } from "../lib/computeLectureReadiness";
+import { useMemo } from "react";
 import { getReviewSuggestions, type ReviewSuggestion } from "../lib/getReviewSuggestions";
 import { todayStr, pbDateOnly } from "../lib/localDate";
 import { useAsyncData } from "./useAsyncData";
@@ -19,19 +13,17 @@ import { lectureTitle, lectureHref } from "../lib/types";
 import { semesterSlugForLecture } from "../lib/lectureSemester";
 import { useSemester } from "../lib/semesterContext";
 import type { Semester } from "../lib/types";
+import { loadLectureReadinessRows, type LectureReadinessData } from "../services/lectureReadinessService";
 
-async function loadSuggestions(existingDedupeKeys: ReadonlySet<string>, semesters: Semester[]): Promise<ReviewSuggestion[]> {
-  const [lectures, questionsByLecture, answersByLecture] = await Promise.all([
-    fetchAllLectures(),
-    fetchReadinessQuestionsByLecture(),
-    fetchReadinessAnswersByLecture(),
-  ]);
-  const now = new Date();
+const loadRows = () => loadLectureReadinessRows({ lectureContent: false });
+const NONE: ReviewSuggestion[] = [];
 
-  const suggestionLectures = lectures.map((lecture) => {
-    const questions = questionsByLecture.get(lecture.id) ?? [];
-    const answers = answersByLecture.get(lecture.id) ?? [];
-    const readiness = computeLectureReadiness(questions, answers, now);
+function buildSuggestions(
+  { rows, now }: LectureReadinessData,
+  existingDedupeKeys: ReadonlySet<string>,
+  semesters: Semester[]
+): ReviewSuggestion[] {
+  const suggestionLectures = rows.map(({ lecture, questions, answers, readiness }) => {
     const lastAnswerDate = readiness.lastActivityAt ? pbDateOnly(readiness.lastActivityAt.toISOString()) : null;
     const updatedDate = pbDateOnly(lecture.updated);
     return {
@@ -54,7 +46,10 @@ async function loadSuggestions(existingDedupeKeys: ReadonlySet<string>, semester
 
 export function useReviewSuggestions(existingDedupeKeys: ReadonlySet<string>) {
   const { semesters } = useSemester();
-  const fetcher = useCallback(() => loadSuggestions(existingDedupeKeys, semesters), [existingDedupeKeys, semesters]);
-  const { data, loading, error, refetch } = useAsyncData<ReviewSuggestion[]>(fetcher);
-  return { suggestions: data ?? [], loading, error, refetch };
+  const { data, loading, error, refetch } = useAsyncData<LectureReadinessData>(loadRows);
+  const suggestions = useMemo(
+    () => (data ? buildSuggestions(data, existingDedupeKeys, semesters) : NONE),
+    [data, existingDedupeKeys, semesters]
+  );
+  return { suggestions, loading, error, refetch };
 }

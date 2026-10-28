@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { NotifyCtx, readSeen, writeSeen, type NotifySection } from "./notifyCtx";
+import type { RecordModel } from "pocketbase";
 import { pb } from "./pocketbase";
 import { lastSemesterSlug } from "./lastSemester";
 import { useAuth } from "../hooks/useAuth";
@@ -23,6 +24,21 @@ interface Msg {
   text: string;
   action: string;
   to: string;
+}
+
+/** Запись запроса доступа и выданного доступа, как их отдаёт подписка PocketBase. */
+interface AccessRequestRecord extends RecordModel {
+  owner: string;
+  requester: string;
+  lecture: string;
+  group: string;
+  status: string;
+}
+interface LectureShareRecord extends RecordModel {
+  owner: string;
+  grantee: string;
+  lecture: string;
+  group: string;
 }
 
 const TOAST_MS = 6000;
@@ -87,8 +103,8 @@ export default function NotifyProvider({ children }: { children: ReactNode }) {
     if (!me) return;
     const sem = lastSemesterSlug() || "1";
     const unsubs: (() => void)[] = [];
-    void pb.collection("access_requests").subscribe("*", async (e) => {
-      const r = e.record as unknown as { owner: string; requester: string; lecture: string; group: string; status: string };
+    void pb.collection<AccessRequestRecord>("access_requests").subscribe("*", async (e) => {
+      const r = e.record;
       if (e.action !== "create" || r.owner !== me || r.status !== "open") return;
       const who = await personName(r.requester, r.group);
       let title = "лекции";
@@ -100,8 +116,8 @@ export default function NotifyProvider({ children }: { children: ReactNode }) {
       push({ initials: groupInitials(who), who, text: `запрос доступа к «${title}»`, action: "Ответить", to: `/s/${sem}/group/access` });
       void load();
     }).then((u) => unsubs.push(u));
-    void pb.collection("lecture_shares").subscribe("*", async (e) => {
-      const r = e.record as unknown as { owner: string; grantee: string; lecture: string; group: string };
+    void pb.collection<LectureShareRecord>("lecture_shares").subscribe("*", async (e) => {
+      const r = e.record;
       if (r.grantee !== me) return;
       const who = await personName(r.owner, r.group);
       if (e.action === "create") {

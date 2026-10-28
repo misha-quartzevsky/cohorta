@@ -11,15 +11,9 @@ import {
   type ReadinessQuestion,
 } from "./computeLectureReadiness";
 
-export interface QuestionRef {
-  id: string;
-  topic?: string;
-}
+export type QuestionRef = Pick<ReadinessQuestion, "id"> & Partial<Pick<ReadinessQuestion, "topic">>;
 
-export interface AnswerRef {
-  questionId: string;
-  correct: boolean;
-}
+export type AnswerRef = Pick<ReadinessAnswer, "questionId" | "correct">;
 
 export interface AttemptTopic {
   /** Нормализованный ключ темы (нижний регистр) — по нему же считает панель. */

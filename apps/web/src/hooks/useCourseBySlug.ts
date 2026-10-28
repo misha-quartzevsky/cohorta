@@ -22,7 +22,7 @@ export interface UseCourseBySlugResult {
   error: string;
 }
 
-export function useCourseBySlug(slug: string): UseCourseBySlugResult {
+export function useCourseBySlug(slug: string, enabled: boolean = true): UseCourseBySlugResult {
   const fetcher = useCallback(async (): Promise<Course> => {
     try {
       return await fetchBySlug<Course>("courses", slug, FIELDS.courseSlug);
@@ -32,7 +32,7 @@ export function useCourseBySlug(slug: string): UseCourseBySlugResult {
     }
   }, [slug]);
 
-  const { data, loading, error } = useAsyncData<Course>(fetcher, !!slug);
+  const { data, loading, error } = useAsyncData<Course>(fetcher, enabled && !!slug);
 
   return { course: data, loading, error };
 }

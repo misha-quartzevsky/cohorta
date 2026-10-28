@@ -22,7 +22,7 @@
  */
 
 import { pb, currentUserId } from "../lib/pocketbase";
-import type { Group, GroupMember } from "../lib/types";
+import type { Group, GroupMember, User } from "../lib/types";
 import { FIELDS } from "../lib/types";
 
 /** Группы, которыми пользователь владеет или в которых состоит. */
@@ -92,6 +92,15 @@ export async function joinByInviteCode(code: string): Promise<void> {
   }
 }
 
+/** Участник группы в ростере: строка членства с id, именем и аватаром человека (остальных полей сервер не отдаёт). */
+export interface RosterMember {
+  id: string;
+  user: string;
+  joined_at?: string;
+  preview_enabled?: boolean;
+  expand?: { user?: Pick<User, "id" | "name" | "avatar"> };
+}
+
 interface RosterEntry {
   id: string;
   user: { id: string; name?: string; avatar?: string } | null;
@@ -106,25 +115,18 @@ interface RosterEntry {
  * на `group_members.user` для чужих строк больше ничего не отдаёт —
  * хук берёт только name/email, которые нужны экрану «Группа».
  */
-export async function fetchRoster(groupId: string): Promise<GroupMember[]> {
+export async function fetchRoster(groupId: string): Promise<RosterMember[]> {
   if (!groupId) return [];
   const entries = await pb.send<RosterEntry[]>(`/api/groups/${groupId}/roster`, {
     method: "GET",
   });
   return (entries ?? []).map((entry) => ({
     id: entry.id,
-    created: "",
-    updated: "",
-    collectionId: "",
-    collectionName: "group_members",
-    [FIELDS.memberGroup]: groupId,
-    [FIELDS.memberUser]: entry.user?.id ?? "",
+    user: entry.user?.id ?? "",
     joined_at: entry.joined_at,
     preview_enabled: entry.preview_enabled,
-    expand: entry.user
-      ? { user: { id: entry.user.id, name: entry.user.name, avatar: entry.user.avatar } }
-      : undefined,
-  })) as unknown as GroupMember[];
+    expand: entry.user ? { user: { id: entry.user.id, name: entry.user.name, avatar: entry.user.avatar } } : undefined,
+  }));
 }
 
 export interface GroupPreview {

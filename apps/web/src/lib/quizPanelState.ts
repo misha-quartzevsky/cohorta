@@ -14,11 +14,8 @@
 
 import type { ReadinessAnswer, ReadinessQuestion } from "./computeLectureReadiness";
 
-export interface PanelAnswer {
-  questionId: string;
-  attempt: string;
-  answeredAt: Date;
-}
+/** Ответ для панели квиза: ReadinessAnswer, у которого `attempt` обязателен. */
+export type PanelAnswer = Required<Pick<ReadinessAnswer, "questionId" | "attempt" | "answeredAt">>;
 
 export type QuizPanelState =
   | { kind: "none" }

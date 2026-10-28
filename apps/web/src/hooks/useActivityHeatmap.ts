@@ -19,10 +19,10 @@
  */
 
 import { useMemo } from "react";
-import { useRecentLectures } from "./useRecentLectures";
+import { useRecentLectureMeta } from "./useRecentLectures";
 import { useDecks } from "./useDecks";
 import { parsePbDate } from "../lib/format";
-import type { Lecture } from "../lib/types";
+import type { LectureMeta } from "../services/lectureService";
 import { MS_PER_DAY } from "../lib/localDate";
 
 /** Local calendar-day key, e.g. "2026-08-21". */
@@ -37,7 +37,7 @@ export interface UseActivityHeatmapResult {
   /** day key ("YYYY-MM-DD") → number of actions that day. */
   days: Map<string, number>;
   /** day key → лекции, атрибутированные на этот день (созданы и/или правились). */
-  dayLectures: Map<string, Lecture[]>;
+  dayLectures: Map<string, LectureMeta[]>;
   /** day key → число правок колод в этот день (колоды не привязаны к курсу,
    *  поэтому их нельзя сгруппировать так же, как лекции). */
   dayDeckCount: Map<string, number>;
@@ -73,13 +73,13 @@ function attributedDayKeys(created?: string, updated?: string): string[] {
 }
 
 export function useActivityHeatmap(): UseActivityHeatmapResult {
-  // `useRecentLectures` слайсит по лимиту — огромное число возвращает всё.
-  const { lectures, loading: lecturesLoading } = useRecentLectures(1e9);
+  // `useRecentLectureMeta` слайсит по лимиту — огромное число возвращает всё.
+  const { lectures, loading: lecturesLoading } = useRecentLectureMeta(1e9);
   const { decks, loading: decksLoading } = useDecks(0);
 
   const { days, dayLectures, dayDeckCount } = useMemo(() => {
     const days = new Map<string, number>();
-    const dayLectures = new Map<string, Lecture[]>();
+    const dayLectures = new Map<string, LectureMeta[]>();
     const dayDeckCount = new Map<string, number>();
 
     for (const lec of lectures) {

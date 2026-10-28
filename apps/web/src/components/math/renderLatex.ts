@@ -47,7 +47,7 @@ export async function renderLatexInto(
 
       container.innerHTML = "";
       const host = document.createElement("math-div");
-      (host as unknown as { textContent: string }).textContent = value;
+      host.textContent = value;
       host.className = "math-render";
       container.appendChild(host);
     };

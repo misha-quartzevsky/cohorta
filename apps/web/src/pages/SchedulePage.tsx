@@ -55,7 +55,7 @@ import {
   findLectureForOccurrence,
   dateForWeekday,
 } from "../lib/weekParity";
-import { MONTHS_GENITIVE, pluralRu } from "../lib/format";
+import { formatDayMonth, pluralRu } from "../lib/format";
 
 const DAY_NAMES = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 
@@ -139,8 +139,8 @@ export default function SchedulePage() {
     const sameMonth = monday.getMonth() === end.getMonth();
     const left = sameMonth
       ? `${monday.getDate()}`
-      : `${monday.getDate()} ${MONTHS_GENITIVE[monday.getMonth()]}`;
-    return `${left}–${end.getDate()} ${MONTHS_GENITIVE[end.getMonth()]}`;
+      : formatDayMonth(monday);
+    return `${left}–${formatDayMonth(end)}`;
   }
 
   async function handleStartNote(slot: ScheduleSlot, dateStr: string) {

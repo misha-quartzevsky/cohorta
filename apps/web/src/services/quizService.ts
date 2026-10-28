@@ -72,7 +72,7 @@ export async function findCachedQuiz(
 /** Вопросы конкретного квиза, по порядку. */
 export async function fetchQuizQuestions(quizId: string): Promise<QuizQuestion[]> {
   return pb.collection("quiz_questions").getFullList<QuizQuestion>({
-    filter: `${FIELDS.qqQuiz}="${quizId}" && ${FIELDS.qqHidden}=false && ${FIELDS.qqFlagged}=false`,
+    filter: pb.filter(`${FIELDS.qqQuiz}={:q} && ${FIELDS.qqHidden}=false && ${FIELDS.qqFlagged}=false`, { q: quizId }),
     sort: FIELDS.qqPosition,
   });
 }
@@ -248,23 +248,38 @@ export async function hideQuestion(questionId: string): Promise<void> {
   await pb.collection("quiz_questions").update(questionId, { [FIELDS.qqHidden]: true });
 }
 
+// Поля, которые читает расчёт готовности (остальное с сервера не тянем).
+const READINESS_QUESTION_FIELDS = "id,quiz,topic,hidden,flagged";
+const READINESS_QUIZ_FIELDS = "id,created";
+const READINESS_ANSWER_FIELDS = "question,correct,answered_at,created,attempt";
+
 /** Все не скрытые/не «плохие» вопросы лекции + дата создания их квиза (для готовности). */
 export async function fetchReadinessQuestions(
   lectureId: string
 ): Promise<ReadinessQuestion[]> {
   const questions = await pb.collection("quiz_questions").getFullList<QuizQuestion>({
-    filter: `${FIELDS.qqLecture}="${lectureId}" && ${FIELDS.qqHidden}=false && ${FIELDS.qqFlagged}=false`,
+    filter: pb.filter(`${FIELDS.qqLecture}={:l} && ${FIELDS.qqHidden}=false && ${FIELDS.qqFlagged}=false`, { l: lectureId }),
+    fields: READINESS_QUESTION_FIELDS,
   });
   if (questions.length === 0) return [];
 
+  // Квизы этих вопросов одним запросом (раньше getOne на каждый квиз).
   const quizIds = Array.from(new Set(questions.map((q) => q.quiz)));
-  const quizzes = await Promise.all(
-    quizIds.map((id) => pb.collection("quizzes").getOne<Quiz>(id).catch(() => null))
-  );
+  const params: Record<string, string> = {};
+  const quizFilter = quizIds
+    .map((id, i) => {
+      params[`q${i}`] = id;
+      return `id={:q${i}}`;
+    })
+    .join(" || ");
+  const quizzes = await pb
+    .collection("quizzes")
+    .getFullList<Quiz>({ filter: pb.filter(quizFilter, params), fields: READINESS_QUIZ_FIELDS })
+    .catch(() => [] as Quiz[]);
   const quizCreatedById = new Map<string, Date>();
   for (const q of quizzes) {
-    const created = q && parsePbDate(q.created);
-    if (q && created) quizCreatedById.set(q.id, created);
+    const created = parsePbDate(q.created);
+    if (created) quizCreatedById.set(q.id, created);
   }
 
   return questions
@@ -284,8 +299,9 @@ export async function fetchReadinessAnswers(
   lectureId: string
 ): Promise<ReadinessAnswer[]> {
   const answers = await pb.collection("quiz_answers").getFullList<QuizAnswer>({
-    filter: `${FIELDS.qaLecture}="${lectureId}"`,
+    filter: pb.filter(`${FIELDS.qaLecture}={:l}`, { l: lectureId }),
     sort: "created",
+    fields: READINESS_ANSWER_FIELDS,
   });
   return answers.map((a) => ({
     questionId: a.question,
@@ -308,10 +324,12 @@ export async function fetchReadinessQuestionsByLecture(): Promise<
 
   const [questions, quizzes] = await Promise.all([
     pb.collection("quiz_questions").getFullList<QuizQuestion>({
-      filter: `${FIELDS.qqOwner}="${owner}" && ${FIELDS.qqHidden}=false && ${FIELDS.qqFlagged}=false`,
+      filter: pb.filter(`${FIELDS.qqOwner}={:o} && ${FIELDS.qqHidden}=false && ${FIELDS.qqFlagged}=false`, { o: owner }),
+      fields: `${READINESS_QUESTION_FIELDS},lecture`,
     }),
     pb.collection("quizzes").getFullList<Quiz>({
-      filter: `${FIELDS.quizOwner}="${owner}"`,
+      filter: pb.filter(`${FIELDS.quizOwner}={:o}`, { o: owner }),
+      fields: READINESS_QUIZ_FIELDS,
     }),
   ]);
 
@@ -347,8 +365,9 @@ export async function fetchReadinessAnswersByLecture(): Promise<
   if (!owner) return new Map();
 
   const answers = await pb.collection("quiz_answers").getFullList<QuizAnswer>({
-    filter: `${FIELDS.qaOwner}="${owner}"`,
+    filter: pb.filter(`${FIELDS.qaOwner}={:o}`, { o: owner }),
     sort: FIELDS.qaAnsweredAt,
+    fields: `${READINESS_ANSWER_FIELDS},lecture`,
   });
 
   const byLecture = new Map<string, ReadinessAnswer[]>();

@@ -4,7 +4,7 @@
 //   node scripts/e2e-sandbox.mjs --stop     остановить её
 //
 // Что делает: копирует pocketbase/pb_data во временную папку, заводит там суперпользователя,
-// запускает pocketbase serve на 127.0.0.1:8090 с хуками и миграциями из репозитория
+// запускает pocketbase serve на 127.0.0.1:8090 (или E2E_PB_PORT) с хуками и миграциями из репозитория
 // (--automigrate=false, чтобы PocketBase не писал миграции в репозиторий) и прогоняет
 // scripts/seed.ts (демо-пользователь, семестр demo, курсы, лекции, колода, экзамен).
 // Рабочая БД и прод не затрагиваются; если на 8090 уже кто-то отвечает, скрипт останавливается.
@@ -22,7 +22,8 @@ const pbDir = join(repo, "pocketbase");
 const exe = join(pbDir, process.platform === "win32" ? "pocketbase.exe" : "pocketbase");
 const work = join(tmpdir(), "cohorta-e2e");
 const pidFile = join(work, "pb.pid");
-const URL = "http://127.0.0.1:8090";
+const PORT = process.env.E2E_PB_PORT ?? "8090";
+const URL = `http://127.0.0.1:${PORT}`;
 const SU_EMAIL = "e2e@local.test";
 const SU_PASS = "E2E-pass-12345";
 
@@ -51,7 +52,7 @@ if (process.argv.includes("--stop")) {
 }
 
 if (!existsSync(exe)) throw new Error(`нет ${exe}`);
-if (await healthy()) throw new Error("на 127.0.0.1:8090 уже отвечает PocketBase: остановись, чтобы не трогать рабочую БД");
+if (await healthy()) throw new Error(`на ${URL} уже отвечает PocketBase: остановись или задай другой порт (E2E_PB_PORT), чтобы не трогать рабочую БД`);
 
 rmSync(work, { recursive: true, force: true });
 mkdirSync(work, { recursive: true });
@@ -62,7 +63,7 @@ const common = [`--dir=${join(work, "pb_data")}`, `--hooksDir=${join(pbDir, "pb_
 const su = spawnSync(exe, ["superuser", "upsert", SU_EMAIL, SU_PASS, ...common], { encoding: "utf8" });
 if (su.status !== 0) throw new Error(`суперпользователь не создан: ${su.stderr || su.stdout}`);
 
-const child = spawn(exe, ["serve", "--http=127.0.0.1:8090", ...common], { detached: true, stdio: "ignore" });
+const child = spawn(exe, ["serve", `--http=127.0.0.1:${PORT}`, ...common], { detached: true, stdio: "ignore" });
 child.unref();
 writeFileSync(pidFile, String(child.pid));
 

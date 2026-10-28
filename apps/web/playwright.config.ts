@@ -22,7 +22,7 @@ export default defineConfig({
   reporter: "list",
   timeout: 60_000,
   use: {
-    baseURL: "http://localhost:5173",
+    baseURL: process.env.E2E_BASE_URL ?? "http://localhost:5173",
     headless: false,
     trace: "on-first-retry",
     // Ширина 1280px важна: при <1180px лекционный сайдбар скрывается
@@ -37,7 +37,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "npm run dev",
-    url: "http://localhost:5173",
+    url: process.env.E2E_BASE_URL ?? "http://localhost:5173",
     reuseExistingServer: true,
     timeout: 60_000,
   },

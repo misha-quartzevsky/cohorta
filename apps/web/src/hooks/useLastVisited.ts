@@ -24,8 +24,7 @@ export type { LastVisitedEntry };
 
 /** Лекция по слагу есть и видна текущему пользователю (правила чтения скрывают удалённые). */
 async function lectureExists(slug: string): Promise<boolean> {
-  const escaped = slug.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-  const res = await pb.collection("lectures").getList(1, 1, { filter: `slug="${escaped}"`, fields: "id" });
+  const res = await pb.collection("lectures").getList(1, 1, { filter: pb.filter("slug={:s}", { s: slug }), fields: "id" });
   return res.totalItems > 0;
 }
 

@@ -228,7 +228,7 @@ export async function fetchLecturesOfSubject(
   subjectId: string
 ): Promise<Lecture[]> {
   const items = await pb.collection("lectures").getFullList<Lecture>({
-    filter: `${FIELDS.lectureCourse}="${subjectId}"`,
+    filter: pb.filter(`${FIELDS.lectureCourse}={:s}`, { s: subjectId }),
     sort: "-created",
   });
   return items.map(normalizeLecture);

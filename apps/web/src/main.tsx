@@ -14,7 +14,7 @@ import "mathlive/static.css";
 // Локальные шрифты Excalidraw (схемы) — для офлайна и без CDN.
 if (typeof window !== "undefined") {
   // Вешаем путь на window до импорта @excalidraw/excalidraw.
-  (window as unknown as { EXCALIDRAW_ASSET_PATH?: string }).EXCALIDRAW_ASSET_PATH = "/excalidraw-fonts/";
+  window.EXCALIDRAW_ASSET_PATH = "/excalidraw-fonts/";
 }
 
 // Inter локально через @fontsource (A1, 2026-10-18) — без внешнего

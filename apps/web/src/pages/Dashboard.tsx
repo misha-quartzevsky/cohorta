@@ -10,7 +10,7 @@ import { useLastVisited } from "../hooks/useLastVisited";
 import { useUpcomingExam, useExam } from "../hooks/useExam";
 import { useActivityHeatmap, heatmapDayKey } from "../hooks/useActivityHeatmap";
 import { useDecks } from "../hooks/useDecks";
-import { useRecentLectures } from "../hooks/useRecentLectures";
+import { useRecentLectureMeta } from "../hooks/useRecentLectures";
 import StartCard from "./dashboard/StartCard";
 import MobileSearchButton from "../components/MobileSearchButton";
 import {
@@ -91,7 +91,7 @@ export default function Dashboard() {
   const heatmap = useActivityHeatmap();
   const { decks } = useDecks(3);
 
-  const { lectures: anyLecture, loading: lecturesLoading } = useRecentLectures(1);
+  const { lectures: anyLecture, loading: lecturesLoading } = useRecentLectureMeta(1);
   const [courses, setCourses] = useState<Course[]>([]);
   const [coursesLoaded, setCoursesLoaded] = useState(false);
   const [scheduled, setScheduled] = useState<Lecture[]>([]);

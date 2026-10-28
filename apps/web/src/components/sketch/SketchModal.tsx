@@ -25,14 +25,13 @@ import {
 import { createPortal } from "react-dom";
 import { Loader2, X } from "lucide-react";
 
+import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import type { SketchRequest } from "./sketchBus";
 
 // Локальные шрифты Excalidraw: путь задаём ДО того, как пакет начнёт
 // подтягивать ассеты (иначе в проде улетит на CDN).
 if (typeof window !== "undefined") {
-  (
-    window as unknown as { EXCALIDRAW_ASSET_PATH?: string }
-  ).EXCALIDRAW_ASSET_PATH = "/excalidraw-fonts/";
+  window.EXCALIDRAW_ASSET_PATH = "/excalidraw-fonts/";
 }
 
 const Excalidraw = lazy(() =>
@@ -49,7 +48,7 @@ interface Props {
 }
 
 export default function SketchModal({ request, onClose }: Props) {
-  const apiRef = useRef<any>(null);
+  const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [initialData, setInitialData] = useState<{

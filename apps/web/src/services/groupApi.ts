@@ -11,7 +11,7 @@
  * текст — только по выданному доступу.
  */
 
-import { MONTHS_GENITIVE, MONTHS_SHORT } from "../lib/format";
+import { formatDayMonth, parsePbDate } from "../lib/format";
 import { pb, currentUserId } from "../lib/pocketbase";
 import type { Group } from "../lib/types";
 
@@ -154,7 +154,7 @@ export async function fetchShares(groupId: string): Promise<ShareRow[]> {
     filter: pb.filter("group = {:g} && (owner = {:u} || grantee = {:u})", { g: groupId, u: uid }),
     sort: "-created",
   });
-  return rows.map((r) => toShare(r as unknown as Record<string, unknown>));
+  return rows.map((r) => toShare(r));
 }
 
 export async function fetchRequests(groupId: string): Promise<RequestRow[]> {
@@ -319,16 +319,16 @@ export function subjectsOf(previews: PreviewRow[], shares: ShareRow[], ownerId: 
 }
 
 export function ruDate(iso: string): string {
-  const d = new Date(String(iso).replace(" ", "T"));
-  if (Number.isNaN(d.getTime())) return "";
-  return `${d.getDate()} ${MONTHS_GENITIVE[d.getMonth()]}`;
+  const d = parsePbDate(String(iso));
+  if (!d) return "";
+  return formatDayMonth(d);
 }
 
 /** Короткая дата для строк списка: «11 окт». */
 export function shortDate(iso: string): string {
-  const d = new Date(String(iso).replace(" ", "T"));
-  if (!iso || Number.isNaN(d.getTime())) return "";
-  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
+  const d = iso ? parsePbDate(String(iso)) : null;
+  if (!d) return "";
+  return formatDayMonth(d, "short");
 }
 
 /** «Лекция 5 · 11 окт»; без номера и даты — пустая строка (вызывающий подставит предмет). */

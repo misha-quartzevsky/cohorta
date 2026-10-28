@@ -139,7 +139,7 @@ function LectureView() {
     // Остался несохранённый текст (закрыли вкладку без связи или сессия истекла)?
     // Берём его, если он новее записи на сервере, и сразу пробуем отправить.
     const draft = readDraft(lecture.id);
-    const useDraft = Boolean(draft && draft.ts > Date.parse(String(lecture.updated).replace(" ", "T")));
+    const useDraft = Boolean(draft && draft.ts > (parsePbDate(String(lecture.updated))?.getTime() ?? NaN));
     const t = useDraft && draft ? draft.title : lectureTitle(lecture);
     // Токены `[[file:…]]` → абсолютные URL (чтобы картинки видел и TipTap).
     const c = resolveFileTokens(useDraft && draft ? draft.content : lectureBody(lecture), lecture);

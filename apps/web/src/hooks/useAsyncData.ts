@@ -15,7 +15,7 @@
  * firing a request.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { errorMessage } from "../lib/format";
 
 export interface UseAsyncDataResult<T> {
@@ -42,8 +42,12 @@ export function useAsyncData<T>(
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState("");
+  // Номер последнего запуска: ответ устаревшего запроса (сменился fetcher или вызван refetch
+  // до ответа) не должен перезаписывать данные более нового.
+  const latest = useRef(0);
 
   const load = useCallback(async () => {
+    const run = ++latest.current;
     if (!enabled) {
       setData(null);
       setError("");
@@ -54,12 +58,14 @@ export function useAsyncData<T>(
     setError("");
     try {
       const result = await fetcher();
-      setData(result);
+      if (run === latest.current) setData(result);
     } catch (e) {
-      console.error("useAsyncData: fetch failed", e);
-      setError(errorMessage(e));
+      if (run === latest.current) {
+        console.error("useAsyncData: fetch failed", e);
+        setError(errorMessage(e));
+      }
     } finally {
-      setLoading(false);
+      if (run === latest.current) setLoading(false);
     }
   }, [enabled, fetcher]);
 

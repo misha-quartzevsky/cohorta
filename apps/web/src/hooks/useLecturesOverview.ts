@@ -10,42 +10,16 @@
  */
 
 import { useCallback } from "react";
-import type { Lecture } from "../lib/types";
-import { fetchAllLectures } from "../services/lectureService";
-import {
-  fetchReadinessAnswersByLecture,
-  fetchReadinessQuestionsByLecture,
-} from "../services/quizService";
-import {
-  computeLectureReadiness,
-  lectureListStatus,
-  type LectureListStatus,
-  type ReadinessResult,
-} from "../lib/computeLectureReadiness";
+import { loadLectureReadinessRows, type LectureReadinessRow } from "../services/lectureReadinessService";
+import { lectureListStatus, type LectureListStatus } from "../lib/computeLectureReadiness";
 import { useAsyncData } from "./useAsyncData";
 import { useLecturesChanged } from "../lib/lecturesChanged";
 
-export interface LectureOverviewRow {
-  lecture: Lecture;
-  readiness: ReadinessResult;
-  status: LectureListStatus;
-}
+export type LectureOverviewRow = Pick<LectureReadinessRow, "lecture" | "readiness"> & { status: LectureListStatus };
 
 async function loadOverview(): Promise<LectureOverviewRow[]> {
-  const [lectures, questionsByLecture, answersByLecture] = await Promise.all([
-    fetchAllLectures(),
-    fetchReadinessQuestionsByLecture(),
-    fetchReadinessAnswersByLecture(),
-  ]);
-  const now = new Date();
-  return lectures.map((lecture) => {
-    const readiness = computeLectureReadiness(
-      questionsByLecture.get(lecture.id) ?? [],
-      answersByLecture.get(lecture.id) ?? [],
-      now
-    );
-    return { lecture, readiness, status: lectureListStatus(readiness) };
-  });
+  const { rows } = await loadLectureReadinessRows();
+  return rows.map(({ lecture, readiness }) => ({ lecture, readiness, status: lectureListStatus(readiness) }));
 }
 
 export function useLecturesOverview() {
