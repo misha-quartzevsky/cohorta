@@ -27,7 +27,7 @@ routerAdd(
     const data = new DynamicModel({ subgroup: "", allow_copy: false });
     e.bindBody(data);
     const sub = db.getOr404(e.app, "exam_subgroups", String(data.subgroup), "Подгруппа не найдена.");
-    if (!g.first(e.app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: sub.id, u: e.auth.id })) {
+    if (!g.isSubgroupMember(e.app, sub.id, e.auth.id)) {
       throw new NotFoundError("Подгруппа не найдена.");
     }
     const groupId = g.subgroupGroupId(e.app, sub);

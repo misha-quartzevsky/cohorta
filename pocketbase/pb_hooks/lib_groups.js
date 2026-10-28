@@ -28,14 +28,30 @@ function ownerOnlyGroup(e) {
   throw new ForbiddenError("Это может только владелец группы.");
 }
 
+/** Состоит ли пользователь в подгруппе экзамена. */
+function isSubgroupMember(app, subId, userId) {
+  return !!first(app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: subId, u: userId });
+}
+
 /** Подгруппа из пути, только для её участника; постороннему — 404 (существование не раскрывается). */
 function memberSubgroup(e, paramName) {
   const id = e.request.pathValue(paramName || "id");
   const sub = getOr404(e.app, "exam_subgroups", id, "Не найдено.");
-  if (!first(e.app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: sub.id, u: e.auth.id })) {
+  if (!isSubgroupMember(e.app, sub.id, e.auth.id)) {
     throw new NotFoundError("Не найдено.");
   }
   return sub;
+}
+
+/**
+ * Билет подгруппы из пути, только для участника этой подгруппы; постороннему и билету без подгруппы — 404
+ * (существование не раскрывается).
+ */
+function memberTicket(e) {
+  const t = getOr404(e.app, "exam_tickets", e.request.pathValue("id"), "Не найдено.");
+  const sid = String(t.get("subgroup") || "");
+  if (!sid || !isSubgroupMember(e.app, sid, e.auth.id)) throw new NotFoundError("Не найдено.");
+  return t;
 }
 
 /** Группа экзамена по подгруппе. */
@@ -246,7 +262,9 @@ module.exports = {
   all,
   isMember,
   ownerOnlyGroup,
+  isSubgroupMember,
   memberSubgroup,
+  memberTicket,
   subgroupGroupId,
   grantSubgroupShares,
   removeFromSubgroup,

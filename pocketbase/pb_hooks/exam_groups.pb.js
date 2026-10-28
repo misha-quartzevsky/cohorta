@@ -220,20 +220,13 @@ routerAdd(
   (e) => {
     const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
-    const t = (() => {
-      const x = db.getOr404(e.app, "exam_tickets", e.request.pathValue("id"), "Не найдено.");
-      const sid = String(x.get("subgroup") || "");
-      if (!sid || !g.first(e.app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: sid, u: e.auth.id })) {
-        throw new NotFoundError("Не найдено.");
-      }
-      return x;
-    })();
+    const t = g.memberTicket(e);
     const data = new DynamicModel({ users: [] });
     e.bindBody(data);
     const users = [];
     for (const u of data.users || []) {
       const uid = String(u);
-      if (!g.first(e.app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: String(t.get("subgroup")), u: uid })) {
+      if (!g.isSubgroupMember(e.app, String(t.get("subgroup")), uid)) {
         throw new BadRequestError("Назначить можно только участника подгруппы.");
       }
       users.push(uid);
@@ -251,14 +244,7 @@ routerAdd(
   (e) => {
     const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
-    const t = (() => {
-      const x = db.getOr404(e.app, "exam_tickets", e.request.pathValue("id"), "Не найдено.");
-      const sid = String(x.get("subgroup") || "");
-      if (!sid || !g.first(e.app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: sid, u: e.auth.id })) {
-        throw new NotFoundError("Не найдено.");
-      }
-      return x;
-    })();
+    const t = g.memberTicket(e);
     const holder = String(t.get("locked_by") || "");
     const until = String(t.get("locked_until") || "");
     if (holder && holder !== e.auth.id && until > g.nowStr()) {
@@ -279,11 +265,7 @@ routerAdd(
   (e) => {
     const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
-    const t = db.getOr404(e.app, "exam_tickets", e.request.pathValue("id"), "Не найдено.");
-    const sid = String(t.get("subgroup") || "");
-    if (!sid || !g.first(e.app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: sid, u: e.auth.id })) {
-      throw new NotFoundError("Не найдено.");
-    }
+    const t = g.memberTicket(e);
     if (String(t.get("locked_by") || "") === e.auth.id) {
       t.set("locked_by", "");
       t.set("locked_until", "");
@@ -301,11 +283,7 @@ routerAdd(
   (e) => {
     const db = require(`${__hooks}/lib_db.js`);
     const g = require(`${__hooks}/lib_groups.js`);
-    const t = db.getOr404(e.app, "exam_tickets", e.request.pathValue("id"), "Не найдено.");
-    const sid = String(t.get("subgroup") || "");
-    if (!sid || !g.first(e.app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: sid, u: e.auth.id })) {
-      throw new NotFoundError("Не найдено.");
-    }
+    const t = g.memberTicket(e);
     const holder = String(t.get("locked_by") || "");
     if (holder && holder !== e.auth.id && String(t.get("locked_until") || "") > g.nowStr()) {
       return e.json(409, { code: "busy", locked_by: holder });
@@ -444,7 +422,7 @@ onRecordUpdateRequest((e) => {
   if (sid && e.auth && !e.hasSuperuserAuth()) {
     const g = require(`${__hooks}/lib_groups.js`);
     const me = e.auth.id;
-    if (!g.first(e.app, "exam_participants", "subgroup = {:s} && user = {:u}", { s: sid, u: me })) {
+    if (!g.isSubgroupMember(e.app, sid, me)) {
       throw new NotFoundError("Не найдено.");
     }
     const holder = String(e.record.get("locked_by") || "");
