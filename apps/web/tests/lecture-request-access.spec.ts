@@ -6,7 +6,8 @@
  * `POST /api/lectures/{id}/request-access` отказывает (404 «Лекция не найдена.»), если запрашивающий или автор не состоят
  * в группе, где видна лекция. Через интерфейс до проверки членства автора не дойти: при выходе и исключении сервер сам
  * стирает превью автора. Поэтому состояние «превью осталось, а автора в группе нет» создаётся напрямую (нужен суперпользователь
- * песочницы: SUPER_EMAIL/SUPER_PASS) и закрепляет саму проверку членства. Тест красный, если проверка снята
+ * песочницы: SUPER_EMAIL/SUPER_PASS) и закрепляет проверку членства автора. Проверка членства самого запрашивающего достижима только вместе с превью
+ * в его группе, поэтому отдельно не покрыта. Тест красный, если проверка снята
  * (мутант c-mutations.mjs «запрос доступа от не участника группы»).
  */
 import { test, expect } from "@playwright/test";
@@ -51,6 +52,8 @@ test.describe("запрос доступа: членство в группе", (
       (((await (await request.get(`${PB}/api/collections/${collection}/records`, { headers: { Authorization: su }, params: { filter } })).json()).items ?? []) as unknown[]).length;
     expect(await asSuper("lecture_previews", `lecture="${second}"`), "превью второй лекции на месте").toBe(1);
 
+    expect(await asSuper("lectures", `id="${second}"`), "лекция на месте").toBe(1);
+    expect(await asSuper("group_members", `group="${group.id}" && user="${b.id}"`), "запрашивающий по-прежнему в группе").toBe(1);
     const denied = await ask(b, second);
     expect([denied.status(), (await denied.json()).message]).toEqual([404, "Лекция не найдена."]);
     expect(await asSuper("access_requests", `lecture="${second}"`), "запрос не создан").toBe(0);
