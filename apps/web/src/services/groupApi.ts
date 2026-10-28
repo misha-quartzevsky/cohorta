@@ -154,7 +154,7 @@ export async function fetchShares(groupId: string): Promise<ShareRow[]> {
     filter: pb.filter("group = {:g} && (owner = {:u} || grantee = {:u})", { g: groupId, u: uid }),
     sort: "-created",
   });
-  return rows.map((r) => toShare(r as unknown as Record<string, unknown>));
+  return rows.map((r) => toShare(r));
 }
 
 export async function fetchRequests(groupId: string): Promise<RequestRow[]> {
