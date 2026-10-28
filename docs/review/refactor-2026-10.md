@@ -295,6 +295,48 @@
 - `/login?invite=` работал только в старом `Login.tsx`; в новом интерфейсе приглашение идёт через `/join/КОД`.
 - `scripts/refactor-shots.mjs` и `scripts/css-unused.mjs` не закоммичены (ждут вашего ответа: коммитить или удалить).
 
+### Запуск 5 (28.10): слияние, мелочи, темы 3, 4, 7
+**Часть А (слияние и пуш).** `refactor/cleanup-2026-10` была отрезана от `design/c-group` (e45b20b); у веток не было апстрима, основная ветка репозитория `main`. Проверки на конце ветки: tsc, oxlint 11, vitest, build. Файлов, которых в репозитории быть не должно (`*.db`, `pb_data/`, `.env*`, ключи, токены, крупные blob), в 75 новых коммитах нет (`apps/web/.env.example` и `.env.https` — пример и конфиг без секретов, `.env.https` был в репозитории и раньше). Тег `pre-refactor-2026-10` создан на e45b20b. Слияние `git merge --no-ff` в `design/c-group`: коммит 51339c2, конфликтов нет, проверки после слияния зелёные. Запушены только именованные ссылки в `cohorta` (github.com/misha-quartzevsky/cohorta): ветка `design/c-group` (до этого её на remote не было; Cloudflare Pages собирает только preview, прод обновляется слиянием в `main`) и тег `pre-refactor-2026-10`; удалённая копия совпадает с HEAD (51339c2). Первая попытка пуша ветки оборвалась по сети (`connection reset`), вторая прошла. Без `--all`, `--mirror`, `--tags`, `--force`. Дальнейшая работа в ветке `refactor/cleanup-2026-10b`; `refactor/cleanup-2026-10` не удалена.
+
+**Мелочи (шаг 0).** `framer-motion` удалён (импортов не было). `refactor-shots.mjs` перенесён в `apps/web/scripts/dev/` с переносимыми путями (tmpdir и `process.cwd()`, `DEMO_EMAIL`/`DEMO_PASSWORD`), `css-unused.mjs` удалён. `deleteDeck`: действия «Удалить колоду» нет в `Screen-deck`, `Screen-cards`, `Screen-m-deck`, `Screen-m-cards` (и в `decisions.md`, `ia/`): дефекта класса C нет, записано в раздел 9, `deleteDeck` оставлен. Поиск похожих групп не возвращался.
+
+**Коммиты (12, 51339c2..HEAD)** и объём: 61 файл, +1505 / −1177 (в `src`: 51 файл, +1344 / −1068; в плюсе новые тесты и разрезанный `lib/types.ts`).
+| Коммит | Что |
+|---|---|
+| 919448e | `framer-motion` убран |
+| c30c214 | `refactor-shots.mjs` в `scripts/dev`, `css-unused.mjs` удалён |
+| 9d037ce | отчёт после удаления старого UI (шаг 1) |
+| 15f9c63 | тема 3: vitest гоняет каждый тест в UTC и Europe/Moscow (проекты `utc`, `msk`); тесты дат до замены |
+| 35dafde | e2e: порты песочницы настраиваются (`E2E_PB_PORT`, `E2E_BASE_URL`, `PB_URL`): на 8090 работал собственный PocketBase владельца, песочница шла на 8091 |
+| 6041767 | 3.1: 11 копий `new Date(x.replace(" ", "T"))` → `parsePbDate` |
+| aecc101 | 3.2: `formatDayMonth`, `formatLocaleDayMonth` (3 копии `formatDate`), `calendarDaysUntil` (одна «дней до экзамена»), `parsePbDate` понимает дату без времени |
+| 2e6b712 | 4.1: `pb.filter` с параметрами (courseService, examService, lectureService, scheduleService, searchService, genericService, useLastVisited, quizService); N+1 в `fetchReadinessQuestions`; `fields` у `fetchReadiness*`; `fetchRecentLectures` через `getList`; `fetchAllLectures({content:false})`, `fetchRecentLectureMeta` |
+| 3324309 | 4.2: `loadLectureReadinessRows`, `useReviewSuggestions` без повторных запросов, `useCourseBySlug` вместо `useLectures` в `AppShell` и `LectureLayout`, `useRecentLectureMeta`, защита от устаревшего ответа в `useAsyncData` |
+| a4c5290 | 7.1: `lib/types.ts` → `recordTypes.ts`, `fields.ts`, `accessors.ts`, `types.ts` только реэкспортирует (77 имён, потерь нет) |
+| 3637997 | 7.2: убраны `as unknown as` (кроме `SpeechProvider`), `globals.d.ts`, типизированный ref Excalidraw вместо `any` |
+| 9d75a90 | 7.3: `PanelAnswer`, `QuestionRef`, `AnswerRef`, `LectureOverviewRow`, `SuggestionLecture` через `Pick` и индексированные типы |
+
+**Не менялось намеренно (по правилам):** `examService.fetchUpcomingExam` берёт UTC-день (добавлен `services/examService.test.ts`, фиксирует отличие от `todayStr()` в Europe/Moscow), метки чётности и массивы дней недели (разной формы), округление `floor`/`round` в днях, строковые сравнения дат в `notifyCtx.ts` и `NotifyProvider.tsx` (лексикографическое сравнение ISO-строк, не разбор даты), `SpeechProvider`, схема и миграции.
+
+**Проверки:** после каждого коммита tsc, oxlint (11), vitest, build, затронутые Playwright-спеки. vitest теперь гоняет каждый тест в двух часовых поясах: 301 → 322 теста × 2 проекта = 644 (с тестом входа без зоны 644+2). В конце каждой темы полный Playwright на песочнице (8091): темы 3, 4, 7 — **125 прошли / 6 fixme / 0 красных** каждый раз; скриншоты 20 × 2 до/после каждой темы совпадают побайтно, кроме `d-groupnew`, `m-groupnew` (случайный код приглашения на экране) и, иногда, шапки лекции (индикатор «Сохранено/Обновлено только что» зависит от автосейва при съёмке).
+
+**Заключение ревьюера (независимый субагент, правок не вносил): можно принимать, блокеров и видимых расхождений нет.** Расхождение `parsePbDate` и старой формулы только на входе без зоны со временем (раньше локальное время, теперь UTC; в данных PocketBase не встречается, закреплено тестом) и на мусоре (раньше Invalid Date, теперь `null`, каждое место обрабатывает как раньше). Все `fields` покрывают читаемые поля; `fields=...,expand` отдаёт всё поддерево `expand` (проверено на живом ответе песочницы). `loading` в `useAsyncData` не залипает (в том числе при `enabled` true→false→true и StrictMode).
+
+**Нашёл по пути (запуск 5):**
+- `useReviewSuggestions`: «сегодня» фиксируется на момент загрузки данных; страница задач, открытая через полночь, не пересчитает дату до перехода на другой маршрут. Раньше смена dedupe-ключей приводила к новой загрузке. Практически не достижимо.
+- `formatLocaleDayMonth` (бывшие три `formatDate`) читает строку через `new Date(dateStr)` без `parsePbDate`: в Safari строка «YYYY-MM-DD hh:mm:ss.000Z» с пробелом даёт Invalid Date, а UTC-полночь в поясах с отрицательным смещением показывает предыдущий день. Унаследовано, не менялось.
+- `examDaysLeft` теперь читает дату через `parsePbDate`: в Safari «дней до экзамена» может появиться там, где раньше было `null` (видимое улучшение, формально отличие).
+- Осталось ещё несколько склеек значений в фильтрах PocketBase (все на id): `GroupAccessPage.tsx:83`, `courseService.ts:30`, `deckService.ts:46`, `examService.ts:109`, `quizService.ts:64,191`, `scheduleService.ts:53,100`, `lectureService.ts:254-255`; в `quizService.fetchReadinessQuestions` при сбое запроса квизов теперь пропадают все квизы, а не один (сбой общий, на практике не различим).
+- `fetchRecentLectures` и `fetchRecentLectureMeta` через `getList` делают лишний запрос подсчёта: можно `skipTotal: true`.
+- Необязательные поля, которые на деле обязательны (только пометка, нужна миграция): в создающих миграциях `required: false` у `schedule_slots.week_parity` и `kind`, `quizzes.size`, `quiz_questions.prompt` и `topic`, `quiz_answers.correct`, `attempt`, `answered_at` (клиент их всегда пишет); для `lectures.slug`, `courses.slug`, `decks.slug` создающих миграций в репозитории нет (коллекции появились раньше).
+- Тестов на новую логику слоя данных нет (`pb.filter`, N+1, `loadLectureReadinessRows`, счётчик запусков `useAsyncData`): нет React-тестовой среды; ценнее всего был бы тест гонки двух запусков.
+- На 8090 у владельца работает собственный PocketBase; `e2e-sandbox.mjs` отказывается там стартовать, песочница идёт на другом порту (см. `docs/design/PROGRESS.md`).
+
+**Не сделано и почему (вопросы к вам):**
+1. **Двойная загрузка лекции** (`AppShell` через `useLectureBySlug` и `LectureView`): не делал. Общий источник данных меняет момент появления данных и состояние сохранения в шапке, это видимое поведение. Нужно ли это делать, и с каким допустимым отличием?
+2. **Текст лекций в `fetchAllLectures`:** для «Все лекции» оставлен, потому что `DraftsPage` показывает число слов черновика по `content`. Убрать текст можно, только если счётчик слов брать иначе (видимое изменение либо серверный счётчик). Решение за вами.
+3. Остальное из тем 3, 4 и 7 выполнено; темы 6, 8, 9, 10 не начинались.
+
 ## Разбор Playwright (27.10)
 
 Метод: песочница на копии `pocketbase/pb_data` (теперь `apps/web/scripts/e2e-sandbox.mjs`), красные спеки запускались по одной (`--workers=1`, trace и скриншот при падении, таймаут 15–40 с), для каждого записана первая упавшая строка и селектор, скриншот сверен с реальным экраном. Класс по доказательству: A (старый селектор или ожидание, продукт работает), B (окружение), C (дефект продукта, воспроизведён скриптом), D (тест проверяет то, чего в новом интерфейсе нет, ждёт решения). Код продукта не менялся.

@@ -29,6 +29,18 @@ describe("parsePbDate против new Date(x.replace(' ', 'T'))", () => {
   });
 });
 
+describe("вход без зоны (в данных PocketBase не встречается)", () => {
+  // Единственное известное расхождение старой формулы и parsePbDate: строка со временем, но без зоны.
+  // Раньше она читалась как локальное время, теперь как UTC. Закрепляем, чтобы расхождение было явным.
+  it("parsePbDate читает как UTC, старая формула — как локальное", () => {
+    const v = "2026-10-26 09:30:00";
+    expect(parsePbDate(v)?.toISOString()).toBe("2026-10-26T09:30:00.000Z");
+    expect(new Date(v.replace(" ", "T")).getTime()).toBe(
+      MSK ? Date.parse("2026-10-26T06:30:00.000Z") : Date.parse("2026-10-26T09:30:00.000Z")
+    );
+  });
+});
+
 describe("deletionDateLabel", () => {
   it("день считается по локальному времени", () => {
     expect(deletionDateLabel("2026-11-02 09:30:00.000Z")).toBe("2 ноября");
