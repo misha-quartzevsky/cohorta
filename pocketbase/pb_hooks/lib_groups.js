@@ -10,6 +10,15 @@ function norm(s) {
   return String(s || "").toLowerCase().replace(/\s+/g, "");
 }
 
+/**
+ * Подпись человека: имя, иначе часть почты до «@» (почту целиком наружу не отдаём). Принимает запись users;
+ * что отдавать, если записи нет, решает вызывающий (в разных маршрутах это разный ответ).
+ */
+function userLabel(user) {
+  const name = String(user.get("name") || "").trim();
+  return name || String(user.get("email") || "").split("@")[0];
+}
+
 /** Состоит ли пользователь в группе (владелец тоже имеет строку членства). */
 function isMember(app, groupId, userId) {
   if (!groupId || !userId) return false;
@@ -70,26 +79,31 @@ function subgroupGroupId(app, sub) {
   return String(exam.get("group") || "");
 }
 
+/** Новая запись доступа к лекции; `subgroup` не задаётся, если доступ личный. */
+function createShare(app, fields) {
+  const rec = new Record(app.findCollectionByNameOrId("lecture_shares"));
+  rec.set("lecture", fields.lecture);
+  rec.set("owner", fields.owner);
+  rec.set("grantee", fields.grantee);
+  rec.set("group", fields.group);
+  if (fields.subgroup) rec.set("subgroup", fields.subgroup);
+  rec.set("allow_copy", !!fields.allowCopy);
+  rec.set("suspended", false);
+  app.save(rec);
+  return rec;
+}
+
 /** Доступ подгруппе: создать доступы на все лекции, открытые подгруппе, для нового участника. */
 function grantSubgroupShares(app, sub, userId) {
   const rows = all(app, "lecture_shares", "subgroup = {:s}", { s: sub.id });
   const seen = {};
-  const col = app.findCollectionByNameOrId("lecture_shares");
   for (const r of rows) {
     const lecture = String(r.get("lecture"));
     if (seen[lecture]) continue;
     seen[lecture] = true;
     if (String(r.get("owner")) === userId) continue;
     if (first(app, "lecture_shares", "lecture = {:l} && grantee = {:u} && subgroup = {:s}", { l: lecture, u: userId, s: sub.id })) continue;
-    const rec = new Record(col);
-    rec.set("lecture", lecture);
-    rec.set("owner", r.get("owner"));
-    rec.set("grantee", userId);
-    rec.set("group", r.get("group"));
-    rec.set("subgroup", sub.id);
-    rec.set("allow_copy", !!r.get("allow_copy"));
-    rec.set("suspended", false);
-    app.save(rec);
+    createShare(app, { lecture: lecture, owner: r.get("owner"), grantee: userId, group: r.get("group"), subgroup: sub.id, allowCopy: r.get("allow_copy") });
   }
 }
 
@@ -271,6 +285,7 @@ module.exports = {
   first,
   all,
   isMember,
+  userLabel,
   ownerOnlyGroup,
   LOCK_SECONDS,
   isLockedByOther,
@@ -278,6 +293,7 @@ module.exports = {
   memberSubgroup,
   memberTicket,
   subgroupGroupId,
+  createShare,
   grantSubgroupShares,
   removeFromSubgroup,
   leaveGroupCore,

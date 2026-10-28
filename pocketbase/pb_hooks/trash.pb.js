@@ -102,7 +102,7 @@ routerAdd(
     const data = new DynamicModel({ type: "", id: "" });
     e.bindBody(data);
     const uid = e.auth.id;
-    const now = new Date().toISOString().replace("T", " ");
+    const now = db.nowStr();
 
     if (data.type === "lecture") {
       const rec = db.getOr404(e.app, "lectures", data.id, "Лекция не найдена.");
@@ -231,7 +231,7 @@ routerAdd(
 
 // Раз в сутки (03:00 по времени сервера): стереть всё, что пролежало больше 30 дней.
 cronAdd("trash_purge", "0 3 * * *", () => {
-  const cut = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString().replace("T", " ");
+  const cut = require(`${__hooks}/lib_db.js`).daysFromNow(-30);
   try {
     const old = $app.findRecordsByFilter("lectures", 'deleted_at != "" && deleted_at < {:c}', "", 5000, 0, { c: cut });
     for (const l of old) $app.delete(l);

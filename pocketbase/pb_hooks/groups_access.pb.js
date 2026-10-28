@@ -23,7 +23,8 @@ routerAdd(
     const data = new DynamicModel({ code: "" });
     e.bindBody(data);
 
-    const code = require(`${__hooks}/lib_groups.js`).normalizeCode(data.code);
+    const g = require(`${__hooks}/lib_groups.js`);
+    const code = g.normalizeCode(data.code);
     if (!code) {
       throw new BadRequestError("Введите код приглашения.");
     }
@@ -37,7 +38,6 @@ routerAdd(
       throw new NotFoundError("Группа с таким кодом не найдена.");
     }
 
-    const g = require(`${__hooks}/lib_groups.js`);
     let restorable = 0;
     if (!g.isMember(e.app, group.id, e.auth.id)) {
       // Закрытая ссылка не раскрывает, что группа существует.
@@ -69,7 +69,8 @@ routerAdd(
   "GET",
   "/api/groups/preview",
   (e) => {
-    const code = require(`${__hooks}/lib_groups.js`).normalizeCode(e.request.url.query().get("code"));
+    const g = require(`${__hooks}/lib_groups.js`);
+    const code = g.normalizeCode(e.request.url.query().get("code"));
     if (!code) {
       throw new BadRequestError("Введите код приглашения.");
     }
@@ -91,8 +92,7 @@ routerAdd(
     let ownerName = "";
     try {
       const owner = e.app.findRecordById("users", group.get("owner"));
-      ownerName = String(owner.get("name") || "").trim();
-      if (!ownerName) ownerName = String(owner.get("email") || "").split("@")[0];
+      ownerName = g.userLabel(owner);
     } catch (err) {
       ownerName = "";
     }
@@ -185,6 +185,7 @@ routerAdd(
   "/api/groups/{id}/roster",
   (e) => {
     const db = require(`${__hooks}/lib_db.js`);
+    const g = require(`${__hooks}/lib_groups.js`);
     const groupId = e.request.pathValue("id");
 
     const group = db.getOr404(e.app, "groups", groupId, "Группа не найдена.");
@@ -221,8 +222,7 @@ routerAdd(
         const u = e.app.findRecordById("users", m.get("user"));
         // Почту одногруппникам не отдаём: для подписи нужно имя (если его нет —
         // часть почты до «@»), и аватар.
-        let label = String(u.get("name") || "").trim();
-        if (!label) label = String(u.get("email") || "").split("@")[0];
+        const label = g.userLabel(u);
         user = { id: u.id, name: label, avatar: String(u.get("avatar") || "") };
       } catch (err) {
         user = null;

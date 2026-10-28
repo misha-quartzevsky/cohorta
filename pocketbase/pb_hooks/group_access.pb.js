@@ -31,7 +31,6 @@ routerAdd(
       throw new NotFoundError("Подгруппа не найдена.");
     }
     const groupId = g.subgroupGroupId(e.app, sub);
-    const col = e.app.findCollectionByNameOrId("lecture_shares");
     let n = 0;
     for (const p of g.all(e.app, "exam_participants", "subgroup = {:s}", { s: sub.id })) {
       const uid = String(p.get("user"));
@@ -42,15 +41,7 @@ routerAdd(
         e.app.save(have);
         continue;
       }
-      const rec = new Record(col);
-      rec.set("lecture", lecture.id);
-      rec.set("owner", e.auth.id);
-      rec.set("grantee", uid);
-      rec.set("group", groupId);
-      rec.set("subgroup", sub.id);
-      rec.set("allow_copy", !!data.allow_copy);
-      rec.set("suspended", false);
-      e.app.save(rec);
+      g.createShare(e.app, { lecture: lecture.id, owner: e.auth.id, grantee: uid, group: groupId, subgroup: sub.id, allowCopy: data.allow_copy });
       n += 1;
     }
     // Если в подгруппе только автор, доступ некому выдавать — но «строка подгруппы»
@@ -146,14 +137,7 @@ routerAdd(
       have.set("allow_copy", !!data.allow_copy);
       e.app.save(have);
     } else {
-      const rec = new Record(e.app.findCollectionByNameOrId("lecture_shares"));
-      rec.set("lecture", lectureId);
-      rec.set("owner", e.auth.id);
-      rec.set("grantee", requester);
-      rec.set("group", groupId);
-      rec.set("allow_copy", !!data.allow_copy);
-      rec.set("suspended", false);
-      e.app.save(rec);
+      g.createShare(e.app, { lecture: lectureId, owner: e.auth.id, grantee: requester, group: groupId, allowCopy: data.allow_copy });
     }
     req.set("status", "granted");
     e.app.save(req);
@@ -214,9 +198,7 @@ routerAdd(
     since = since.replace("T", " ");
     const name = (uid) => {
       try {
-        const u = e.app.findRecordById("users", uid);
-        const n = String(u.get("name") || "").trim();
-        return n || String(u.get("email") || "").split("@")[0];
+        return g.userLabel(e.app.findRecordById("users", uid));
       } catch (err) {
         return "";
       }

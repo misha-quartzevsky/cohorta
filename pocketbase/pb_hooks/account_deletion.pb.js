@@ -47,7 +47,7 @@ routerAdd(
       return e.json(200, { scheduled_for: String(existing.get("scheduled_for")) });
     }
 
-    const when = new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString().replace("T", " ");
+    const when = require(`${__hooks}/lib_db.js`).daysFromNow(14);
     const col = e.app.findCollectionByNameOrId("deletion_requests");
     const rec = new Record(col);
     rec.set("user", uid);
@@ -75,7 +75,7 @@ routerAdd(
 );
 
 cronAdd("account_deletion", "30 3 * * *", () => {
-  const nowStr = new Date().toISOString().replace("T", " ");
+  const nowStr = require(`${__hooks}/lib_db.js`).nowStr();
   let due = [];
   try {
     due = $app.findRecordsByFilter("deletion_requests", 'status = "new" && scheduled_for != "" && scheduled_for < {:n}', "", 100, 0, { n: nowStr });
