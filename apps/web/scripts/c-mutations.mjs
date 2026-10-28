@@ -7,7 +7,7 @@
  *
  *   node scripts/c-mutations.mjs            (песочница на 8091, см. PROGRESS.md)
  *
- * Переменные: PB_URL (по умолчанию http://127.0.0.1:8091), SUPER_EMAIL, SUPER_PASS,
+ * Переменные: PB_URL (по умолчанию http://127.0.0.1:8091; порт задаёт и порт перезапускаемой песочницы), SUPER_EMAIL, SUPER_PASS,
  * SANDBOX_DIR (папка pb_data песочницы), PB_BIN (путь к pocketbase.exe).
  */
 import { execFileSync, spawn } from "node:child_process";
@@ -16,6 +16,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 const PB = process.env.PB_URL ?? "http://127.0.0.1:8091";
+const PORT = new URL(PB).port;
 const EMAIL = process.env.SUPER_EMAIL ?? "sandbox@test.local";
 const PASS = process.env.SUPER_PASS ?? "SandboxPass12345";
 const REPO = path.resolve(import.meta.dirname, "..", "..", "..");
@@ -231,7 +232,7 @@ function killSandbox() {
   try {
     const out = execFileSync("wmic", ["process", "where", "name='pocketbase.exe'", "get", "ProcessId,CommandLine"], { encoding: "utf8" });
     for (const line of out.split("\n")) {
-      if (!line.includes(":8091")) continue;
+      if (!line.includes(`:${PORT}`)) continue;
       const pid = line.trim().split(/\s+/).pop();
       if (/^\d+$/.test(pid)) execFileSync("taskkill", ["/F", "/PID", pid], { stdio: "ignore" });
     }
@@ -244,7 +245,7 @@ async function startSandbox(hooksDir) {
   await new Promise((r) => setTimeout(r, 1500));
   const child = spawn(
     PB_BIN,
-    ["serve", `--dir=${SANDBOX}`, `--hooksDir=${hooksDir}`, `--migrationsDir=${path.join(REPO, "pocketbase", "pb_migrations")}`, "--http=127.0.0.1:8091", "--automigrate=false"],
+    ["serve", `--dir=${SANDBOX}`, `--hooksDir=${hooksDir}`, `--migrationsDir=${path.join(REPO, "pocketbase", "pb_migrations")}`, `--http=127.0.0.1:${PORT}`, "--automigrate=false"],
     { detached: true, stdio: "ignore", windowsHide: true }
   );
   child.unref();
