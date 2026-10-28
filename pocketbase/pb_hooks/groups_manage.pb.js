@@ -11,7 +11,12 @@
 //  POST /api/groups/create               {name, code?} → создать группу (владелец — я); код из формы, если свободен, иначе новый
 //  GET  /api/groups/{id}/invite                  → код приглашения (только владелец)
 //  POST /api/groups/{id}/invite/reset            → новый код, участники остаются (только владелец)
+//  POST /api/groups/{id}/invite/enable   {enabled} → открыть или закрыть ссылку-приглашение (только владелец)
 //  POST /api/groups/{id}/transfer        {user}  → передать группу участнику (только владелец)
+//  POST /api/groups/{id}/leave           {remember?} → выйти (владелец с другими участниками сначала передаёт группу)
+//  POST /api/groups/{id}/kick            {user}  → исключить участника (только владелец)
+//  POST /api/groups/{id}/restore-access          → вернуть приостановленные выданные мной доступы
+//  GET  /api/groups/{id}/restorable              → сколько доступов можно вернуть
 //
 //  + хук на lecture_shares: доступ можно выдать только тому, кто
 //  состоит с автором в одной группе.

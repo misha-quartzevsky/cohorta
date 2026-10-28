@@ -7,9 +7,10 @@
 //  POST /api/subgroups/{id}/members          {user}             пригласить в подгруппу
 //  POST /api/subgroups/{id}/leave                               выйти из подгруппы
 //  POST /api/subgroups/{id}/tickets          {question}         добавить билет
+//  POST /api/subgroups/{id}/tickets/bulk     {questions[]}      импорт списка билетов (не больше 500 за раз)
 //  POST /api/subgroups/{id}/distribute                          раздать свободные билеты поровну
-//  POST /api/tickets/{id}/assign             {users[]}          назначить билет
-//  POST /api/tickets/{id}/lock | /unlock                         блокировка «Занят» (30 секунд)
+//  POST /api/tickets/{id}/assign             {users[]}          назначить билет (интерфейс пока не вызывает, заготовка)
+//  POST /api/tickets/{id}/lock | /unlock                         блокировка «Занят» (LOCK_SECONDS, 30 секунд)
 //  POST /api/tickets/{id}/take-my-answer     {source}           «Взять мой ответ»
 //  GET  /api/groups/{id}/exams                                  экзамены группы (предмет, дата, моя подгруппа)
 //  GET  /api/exams/{id}/group-info                              экзамен группы и кто уже в подгруппах (без названий)

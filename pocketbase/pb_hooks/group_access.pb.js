@@ -4,7 +4,7 @@
 //  group_access.pb.js — волна C: доступ к лекциям в группе.
 //
 //  POST   /api/lectures/{id}/share-subgroup        {subgroup, allow_copy}  доступ подгруппе (автор — её участник)
-//  DELETE /api/lectures/{id}/share-subgroup/{sub}                           снять доступ подгруппе
+//  DELETE /api/lectures/{id}/share-subgroup/{sub}                           снять доступ подгруппе (интерфейс пока не вызывает, заготовка)
 //  POST   /api/lectures/{id}/request-access                                 запрос доступа к закрытой лекции
 //  POST   /api/access-requests/{id}/resolve        {action, allow_copy}    автор: grant | decline
 //  POST   /api/lectures/{id}/copy                  {course}                 «Добавить в мои конспекты»
@@ -44,9 +44,7 @@ routerAdd(
       g.createShare(e.app, { lecture: lecture.id, owner: e.auth.id, grantee: uid, group: groupId, subgroup: sub.id, allowCopy: data.allow_copy });
       n += 1;
     }
-    // Если в подгруппе только автор, доступ некому выдавать — но «строка подгруппы»
-    // тоже должна существовать: ставим маркер-доступ самому себе нельзя, поэтому
-    // возвращаем число новых доступов.
+    // Автору доступ не выдаётся: если в подгруппе только он, выдавать некому и вернётся granted: 0.
     return e.json(200, { granted: n });
   },
   $apis.requireAuth()
