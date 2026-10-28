@@ -3,26 +3,11 @@
 // Хелперы группы (JSVM изолирует scope обработчиков — подключаются через
 // require(`${__hooks}/lib_groups.js`) внутри обработчика).
 
-function nowStr() {
-  return new Date().toISOString().replace("T", " ");
-}
-
-function inSeconds(n) {
-  return new Date(Date.now() + n * 1000).toISOString().replace("T", " ");
-}
+const { nowStr, inSeconds, first, all } = require(`${__hooks}/lib_db.js`);
 
 /** Название предмета для сравнения: без регистра и пробелов. */
 function norm(s) {
   return String(s || "").toLowerCase().replace(/\s+/g, "");
-}
-
-function first(app, collection, filter, params) {
-  const rows = app.findRecordsByFilter(collection, filter, "", 1, 0, params || {});
-  return rows && rows[0] ? rows[0] : null;
-}
-
-function all(app, collection, filter, params) {
-  return app.findRecordsByFilter(collection, filter, "", 5000, 0, params || {}) || [];
 }
 
 /** Состоит ли пользователь в группе (владелец тоже имеет строку членства). */
