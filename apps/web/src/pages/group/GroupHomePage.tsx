@@ -43,6 +43,11 @@ export default function GroupHomePage() {
   useEffect(() => markSeen("group"), [markSeen]);
   const [filter, setFilter] = useState<"all" | "open">("all");
   const [inviteOpen, setInviteOpen] = useState(params.get("invite") === "1");
+  // Окно «Пригласить» одно на обе шапки: два экземпляра с общим состоянием закрывали друг другу окно «кликом мимо».
+  const closeInvite = () => {
+    setInviteOpen(false);
+    if (params.get("invite")) setParams({}, { replace: true });
+  };
   const [sheet, setSheet] = useState(false);
   const [restore, setRestore] = useState<number>(0);
   const [restoring, setRestoring] = useState(false);
@@ -108,23 +113,17 @@ export default function GroupHomePage() {
             <Icon name="gear" size={20} />
           </button>
           {isOwner && (
-            <InvitePopover
-              groupId={g.group.id}
-              groupName={g.group.name}
-              enabled={g.group.invite_enabled === true}
-              open={inviteOpen}
-              onOpen={() => setInviteOpen(true)}
-              onClose={() => {
-                setInviteOpen(false);
-                if (params.get("invite")) setParams({}, { replace: true });
-              }}
-              onChanged={() => void refresh()}
-              trigger={(p) => (
-                <button type="button" className="sq" aria-label="Пригласить" onClick={p.onClick}>
-                  <Icon name="plus" size={20} />
-                </button>
-              )}
-            />
+            // Окно «Пригласить» одно (в шапке ниже); «+» на телефоне только открывает его. pointerdown не пускаем выше,
+            // чтобы «клик мимо» окна не закрывал его перед этим же нажатием.
+            <button
+              type="button"
+              className="sq"
+              aria-label="Пригласить"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => (inviteOpen ? closeInvite() : setInviteOpen(true))}
+            >
+              <Icon name="plus" size={20} />
+            </button>
           )}
           <button type="button" className="sq ghost" aria-label="Поиск" onClick={openSearch}>
             <Icon name="search" size={22} />
@@ -147,7 +146,7 @@ export default function GroupHomePage() {
               enabled={g.group.invite_enabled === true}
               open={inviteOpen}
               onOpen={() => setInviteOpen(true)}
-              onClose={() => setInviteOpen(false)}
+              onClose={closeInvite}
               onChanged={() => void refresh()}
               trigger={inviteBtn}
             />

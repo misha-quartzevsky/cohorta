@@ -88,9 +88,9 @@ export async function onbNameAndUniversity(page: Page, name = "E2E Тест"): P
  * `/s/:slug` недоступны. Бакалавриат, 1 курс, семестры: 8 периодов (slug «1»…«8»),
  * `/s/1` существует сразу после вызова.
  */
-export async function completeOnboardingFast(page: Page): Promise<void> {
+export async function completeOnboardingFast(page: Page, name?: string): Promise<void> {
   await page.waitForURL(/\/onboarding$/);
-  await onbNameAndUniversity(page);
+  await onbNameAndUniversity(page, name);
 
   // Шаг 3 — уровень и курс
   await onbChip(page, "Бакалавриат");
@@ -141,10 +141,10 @@ export async function registerBare(page: Page, prefix = "e2e"): Promise<string> 
   return email;
 }
 
-/** Регистрация + мастер онбординга: аккаунт в приложении на дашборде. Возвращает email. */
-export async function registerFresh(page: Page, prefix = "e2e"): Promise<string> {
+/** Регистрация + мастер онбординга: аккаунт в приложении на дашборде. Возвращает email. Имя по умолчанию «E2E Тест». */
+export async function registerFresh(page: Page, prefix = "e2e", name?: string): Promise<string> {
   const email = await registerBare(page, prefix);
-  await completeOnboardingFast(page);
+  await completeOnboardingFast(page, name);
   return email;
 }
 
