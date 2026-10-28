@@ -10,21 +10,12 @@
  */
 
 import { useCallback } from "react";
-import type { Lecture } from "../lib/types";
-import { loadLectureReadinessRows } from "../services/lectureReadinessService";
-import {
-  lectureListStatus,
-  type LectureListStatus,
-  type ReadinessResult,
-} from "../lib/computeLectureReadiness";
+import { loadLectureReadinessRows, type LectureReadinessRow } from "../services/lectureReadinessService";
+import { lectureListStatus, type LectureListStatus } from "../lib/computeLectureReadiness";
 import { useAsyncData } from "./useAsyncData";
 import { useLecturesChanged } from "../lib/lecturesChanged";
 
-export interface LectureOverviewRow {
-  lecture: Lecture;
-  readiness: ReadinessResult;
-  status: LectureListStatus;
-}
+export type LectureOverviewRow = Pick<LectureReadinessRow, "lecture" | "readiness"> & { status: LectureListStatus };
 
 async function loadOverview(): Promise<LectureOverviewRow[]> {
   const { rows } = await loadLectureReadinessRows();
