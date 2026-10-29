@@ -117,6 +117,28 @@ RULE_MUTATIONS.push(
   ["tags: теги создаёт и удаляет любой", "tags", { createRule: "", updateRule: "", deleteRule: "" }, "теги"],
 );
 
+// ---- волна 1 аудита безопасности (2026-10): правила, которые закрывают находки; каждая мутация возвращает прежнее (дырявое) правило
+// и проверяется своим файлом tests/security-*.spec.ts. Правило с защитой имеет вид `(было) && @request.body.<поле>:isset = false …`.
+const UNGUARD = (r) => String(r).replace(/^\((.*)\)( && @request\.body\.[a-z_]+:isset = false)+$/s, "$1");
+const SEC_USERS = "tests/security-users.spec.ts";
+const SEC_OWN = "tests/security-ownership.spec.ts";
+const SEC_SPECS = [SEC_USERS, SEC_OWN, "tests/security-delete.spec.ts", "tests/security-deletion-requests.spec.ts", "tests/security-groups.spec.ts"];
+const SEC_MUTATIONS = [
+  ["users: клиент пишет premium_until и реферальные поля (update без запрета, A-2)", "users", { updateRule: "id = @request.auth.id" }, "PATCH своей записи", SEC_USERS],
+  ["users: регистрация принимает premium_until (create без запрета, A-3)", "users", { createRule: "" }, "регистрация не принимает", SEC_USERS],
+  ["users: прямое удаление аккаунта разрешено (A-1)", "users", { deleteRule: "id = @request.auth.id" }, "DELETE своей записи", "tests/security-delete.spec.ts"],
+  ["deletion_requests: запись создаёт клиент со своим сроком (A-11)", "deletion_requests", { createRule: '@request.auth.id != "" && user = @request.auth.id' }, "deletion_requests клиентом не создаётся", "tests/security-deletion-requests.spec.ts"],
+  ["quizzes: можно сменить lecture/owner (A-4)", "quizzes", { updateRule: UNGUARD }, "quizzes: перенос", SEC_OWN],
+  ["quiz_questions: можно сменить lecture/quiz/owner (A-4)", "quiz_questions", { updateRule: UNGUARD }, "quiz_questions: перенос", SEC_OWN],
+  ["quiz_answers: можно сменить owner/lecture/question (A-7)", "quiz_answers", { updateRule: UNGUARD }, "quiz_answers: перенос", SEC_OWN],
+  ["deck_cards: можно перенести карточку в чужую колоду (A-5)", "deck_cards", { updateRule: UNGUARD }, "deck_cards: перенос", SEC_OWN],
+  ["exam_tickets: можно перенести билет в чужой экзамен (A-6)", "exam_tickets", { updateRule: UNGUARD }, "exam_tickets: перенос", SEC_OWN],
+  ["tasks: можно сменить владельца задачи (A-7)", "tasks", { updateRule: UNGUARD }, "tasks: перенос", SEC_OWN],
+  ["schedule_slots: можно сменить владельца пары (A-7)", "schedule_slots", { updateRule: UNGUARD }, "schedule_slots: перенос", SEC_OWN],
+  ["semesters: можно сменить владельца периода (A-7)", "semesters", { updateRule: UNGUARD }, "semesters: перенос", SEC_OWN],
+  ["exams: можно сменить владельца экзамена (A-7)", "exams", { updateRule: UNGUARD }, "exams: перенос", SEC_OWN],
+];
+
 // ---- правила квиза: проверяются файлом quiz-privacy (гость не создаёт/не удаляет квиз, ответы личные)
 const QUIZ_SPEC = "tests/quiz-privacy.spec.ts";
 const QUIZ_MUTATIONS = [
@@ -186,6 +208,10 @@ const HOOK_MUTATIONS = [
   ["hook: присоединение затирает уже существующие личные билеты", "exam_subgroups.pb.js", [/if \(have\[String\(t\.get\("number"\)\)\]\) continue;/, "/* пропуск */"], "присоединение не теряет"],
   ["hook: «Взять мой ответ» берёт чужой личный билет", "exam_tickets.pb.js", [/if \(srcExam\.get\("owner"\) !== e\.auth\.id \|\| String\(src\.get\("subgroup"\) \|\| ""\) !== ""\) \{/, "if (false) {"], "личные ответы не видны"],
   ["hook: присоединиться к групповому экзамену может не участник группы", "exam_subgroups.pb.js", [/const gid = String\(target\.get\("group"\) \|\| ""\);\n    if \(!gid \|\| !g\.isMember\(e\.app, gid, me\)\) throw/, 'const gid = String(target.get("group") || "");\n    if (!gid) throw'], "выход из подгруппы и из группы"],
+  // волна 1 аудита безопасности
+  ["hook: join без лимита частоты (B-7)", "groups_join.pb.js", [/g\.rateLimit\(e\.app, `join:\$\{e\.auth\.id\}`, 20, 600\);/, "/* без лимита */"], "join: после 20 запросов"],
+  ["hook: preview без лимита частоты (B-7)", "groups_join.pb.js", [/g\.rateLimit\(e\.app, `preview:\$\{e\.auth\.id\}`, 40, 600\);/, "/* без лимита */"], "preview: после 40 запросов"],
+  ["hook: выход автора не отвязывает его экзамены (B-3)", "lib_groups.js", [/detachExams\(tx, g, userId\);/, "/* пропуск */"], "выход автора"],
   ["hook: удаление аккаунта владельцем группы разрешено", "account_deletion.pb.js", [/if \(others > 0\) \{\n        return e\.json\(409/, "if (false) {\n        return e.json(409"], "выйти и удалить аккаунт"],
 ];
 
@@ -193,14 +219,14 @@ let token = await login();
 const results = [];
 
 console.log("Базовый прогон без ослаблений…");
-const baseline = [...runTests(), ...runTests(QUIZ_SPEC)];
+const baseline = [...runTests(), ...runTests(QUIZ_SPEC), ...runTests(SEC_SPECS)];
 console.log(baseline.length === 0 ? "  все тесты зелёные" : `  КРАСНЫЕ: ${baseline.join("; ")}`);
 if (baseline.length) process.exit(1);
 
 // SKIP_RULES=1 пропускает ослабления правил коллекций (быстрый повторный прогон только хуков через ONLY=…)
 for (const [title, collection, patch, expected, spec = SPEC] of process.env.SKIP_RULES
   ? []
-  : [...RULE_MUTATIONS, ...QUIZ_MUTATIONS.map((m) => [...m, QUIZ_SPEC])]) {
+  : [...RULE_MUTATIONS, ...QUIZ_MUTATIONS.map((m) => [...m, QUIZ_SPEC]), ...SEC_MUTATIONS]) {
   token = await login();
   const original = await api("GET", `/api/collections/${collection}`, token);
   const body = {};
@@ -276,7 +302,7 @@ for (const [title, file, [re, repl], expected] of HOOK_MUTATIONS.filter((m) => w
   }
   writeFileSync(target, src.replace(re, repl));
   await startSandbox(dir);
-  const failed = runTests();
+  const failed = runTests([...SPEC, ...SEC_SPECS]);
   const caught = failed.some((t) => t.includes(expected));
   results.push({ title, caught, failed });
   console.log(`${caught ? "КРАСНЫЙ (ловится)" : "ЗЕЛЁНЫЙ (НЕ ЛОВИТСЯ!)"}  ${title}\n      упали: ${failed.length ? failed.join(" | ") : "ничего"}`);

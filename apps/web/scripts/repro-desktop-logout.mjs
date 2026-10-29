@@ -14,7 +14,7 @@ const auth = await (
   await fetch(`${pb}/api/collections/users/auth-with-password`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ identity: "asyaobraz17@gmail.com", password: "12345678" }),
+    body: JSON.stringify({ identity: process.env.DEMO_EMAIL, password: process.env.DEMO_PASSWORD }),
   })
 ).json();
 

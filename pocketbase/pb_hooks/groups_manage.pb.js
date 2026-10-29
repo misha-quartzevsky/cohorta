@@ -160,7 +160,10 @@ routerAdd(
       return e.json(409, { code: "transfer_required", message: "Сначала передай группу." });
     }
     g.leaveGroupCore(e.app, group, e.auth.id, { remember: !!data.remember });
-    if (others === 0) e.app.delete(group); // последний участник ушёл — группы больше нет
+    if (others === 0) {
+      g.detachExams(e.app, group.id, ""); // остатки экзаменов группы становятся личными, не удаляются вместе с ней
+      e.app.delete(group); // последний участник ушёл — группы больше нет
+    }
     return e.json(200, { ok: true });
   },
   $apis.requireAuth()

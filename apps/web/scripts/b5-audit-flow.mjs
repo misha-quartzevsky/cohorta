@@ -10,7 +10,7 @@ const PB = process.env.PB_URL ?? "http://127.0.0.1:8090";
 const mobile = mode === "mobile";
 
 const pb = new PocketBase(PB);
-await pb.collection("users").authWithPassword("asyaobraz17@gmail.com", "12345678");
+await pb.collection("users").authWithPassword(process.env.DEMO_EMAIL, process.env.DEMO_PASSWORD);
 const idOf = async (slug) => (await pb.collection("lectures").getFirstListItem(`slug="${slug}"`)).id;
 const LECT = (slug) => `/s/demo/math-analysis/${slug}`;
 
@@ -22,8 +22,8 @@ const ctx = await b.newContext(
 );
 const p = await ctx.newPage();
 await p.goto(`${BASE}/login`);
-await p.fill('input[type="email"]', "asyaobraz17@gmail.com");
-await p.fill('input[type="password"]', "12345678");
+await p.fill('input[type="email"]', process.env.DEMO_EMAIL);
+await p.fill('input[type="password"]', process.env.DEMO_PASSWORD);
 await p.click('button[type="submit"]');
 await p.waitForURL(/\/s\//, { timeout: 15000 });
 const shot = (n) => p.screenshot({ path: `${out}/${mode}-${n}.png` });

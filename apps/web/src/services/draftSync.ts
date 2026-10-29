@@ -9,7 +9,7 @@
  * закрытой вкладке нет — черновик дождётся следующего открытия.
  */
 
-import { classifySaveError, listDrafts, removeDraft, readDraft } from "../lib/draftQueue";
+import { classifySaveError, listDrafts, purgeForeignDrafts, removeDraft, readDraft } from "../lib/draftQueue";
 import { pb } from "../lib/pocketbase";
 import { getSaveStatus, setSaveStatus } from "../lib/saveStatus";
 import { updateLecture } from "./lectureService";
@@ -30,7 +30,7 @@ export async function syncDrafts(): Promise<boolean> {
         const now = readDraft(d.id);
         if (!now || now.ts === d.ts) removeDraft(d.id);
       } catch (e) {
-        // Лекции больше нет (удалена или закрыта) — черновик не нужен.
+        // Лекции больше нет (удалена или закрыта) — этот черновик не нужен (removeDraft трогает только черновики текущего пользователя).
         if ((e as { status?: number })?.status === 404) {
           removeDraft(d.id);
           continue;
@@ -53,8 +53,15 @@ export async function syncDrafts(): Promise<boolean> {
   }
 }
 
+/** Перед выходом: отправить черновики, если связь есть (не дольше `limitMs`); дальше выход всё равно удалит оставшиеся. */
+export async function flushDraftsBeforeSignOut(limitMs = 3000): Promise<void> {
+  if (listDrafts().length === 0) return;
+  await Promise.race([syncDrafts(), new Promise<void>((resolve) => setTimeout(resolve, limitMs))]).catch(() => undefined);
+}
+
 /** Запустить повторные попытки на всё время работы приложения. Возвращает отписку. */
 export function startDraftSync(): () => void {
+  purgeForeignDrafts();
   const tick = () => {
     if (listDrafts().length > 0) void syncDrafts();
   };

@@ -73,14 +73,25 @@ if exist "apps\web\.env" (
   echo       Created apps\web\.env
 )
 
+rem ---- 5a. Demo account (credentials are not stored in the repository) ----
+rem PocketBase creates the demo user on its first start only when PB_SEED_DEMO=1.
+rem Set DEMO_EMAIL / DEMO_PASSWORD yourself, or a random password is generated for this run.
+if not defined DEMO_EMAIL set "DEMO_EMAIL=demo@local.test"
+if not defined DEMO_PASSWORD (
+  for /f %%p in ('powershell -NoProfile -Command "-join ((48..57)+(97..122) | Get-Random -Count 14 | ForEach-Object {[char]$_})"') do set "DEMO_PASSWORD=%%p"
+)
+set "PB_SEED_DEMO=1"
+set "PB_DEMO_EMAIL=%DEMO_EMAIL%"
+set "PB_DEMO_PASSWORD=%DEMO_PASSWORD%"
+
 rem ---- 6. Launch ----
 echo [5/5] Starting services...
 echo.
 echo   Frontend:    http://localhost:5173
 echo   PocketBase:  http://127.0.0.1:8090   (admin: /_/)
 echo.
-echo   Demo login:  asyaobraz17@gmail.com
-echo   Demo pass:   12345678
+echo   Demo login:  %DEMO_EMAIL%
+echo   Demo pass:   %DEMO_PASSWORD%   (only if the database is new; an existing demo user keeps its old password)
 echo.
 echo   PocketBase starts in a separate window. DO NOT close it.
 echo.

@@ -297,7 +297,7 @@
 - Серверные хуки (без схемы): `pb_hooks/trash.pb.js`, `account_deletion.pb.js`, `groups_join.pb.js` (+`/api/groups/preview`), `lib_previews.js` (превью лекции из корзины не показывается). Для прода нужны и миграции, и хуки.
 
 **Как посмотреть**
-- Локально: `npm run dev` в `apps/web` (порт 5173) и PocketBase на 8090. Демо-вход: `asyaobraz17@gmail.com` / `12345678`.
+- Локально: `npm run dev` в `apps/web` (порт 5173) и PocketBase на 8090. Демо-вход: почта и пароль из `DEMO_EMAIL`, `DEMO_PASSWORD` (их печатают `start-cohorta.bat` и `node scripts/e2e-sandbox.mjs`; в репозитории их нет).
 - Проверочные сценарии (Playwright, одноразовые пользователи): `apps/web/scripts/b6-join-flow.mjs`, `b6-onb-flow.mjs`, `b6-settings-flow.mjs`, `b6-states-flow.mjs`, `b6-session-export.mjs`, скриншоты — `b6-shot.mjs`, `b6-mobile-shots.mjs`.
 - Скриншоты рядом с макетом: `docs/screenshots/b6/`.
 
@@ -517,3 +517,10 @@ B6 принята владелицей 21.10: ветка `design/b6-auth-setting
 - **Итог:** темы 0–7 и 10 выполнены, темы 8 и 9 не начаты (причины в отчёте). Строк TS/TSX −21,5%, CSS −38%, vitest 242 → 644 прогона, Playwright 79/129 → 178 прошли, 2 fixme, 0 красных, мутации хуков 54 из 54, oxlint 11. Подробности и откат: `docs/review/refactor-2026-10.md`, «Итог рефакторинга».
 - **Ветки:** всё влито в `design/c-group` и запушено; тег отката `pre-refactor-2026-10`.
 - **Осталось (бэклог):** Д11 микрофон, «Готовность подгруппы», страницы старой вёрстки, заготовки волны C, удаление колоды, двойная загрузка лекции, тесты `draftSync` и `access.ts`; аудит безопасности не выполнен (`docs/review/security-2026-10.md` нет).
+
+## Волна 1 безопасности (29 октября 2026, ветка `security/wave1`, от `design/c-group`)
+
+- **Что сделано:** по аудиту `docs/review/security-2026-10.md` исправлены A-1, A-2/B-6, A-3, A-4…A-7, A-11, B-3/B-4, B-5, B-7, C-1, C-2, C-5, C-6/D-8, D-7, D-1 (кодовая часть), A-9/B-2 (без `protected`). Статус по каждой находке с коммитом и тестом: раздел 12 отчёта; варианты по B-1, C-3 и `protected`: раздел 13. Пять новых миграций `1790013000…1790017000` (все с `down`, проверено), тесты `apps/web/tests/security-*.spec.ts`.
+- **Решения:** выход автора группы делает его экзамен личным (`group = ""`), не удаляет; `onboarding_completed` остаётся записываемым; в файловых полях только картинки jpeg/png/gif/webp/avif до 5 МБ (аватар без svg; lectures.file также svg и аудио); DOMPurify 3.4.17 зафиксирован; серверной очистки в `/copy` нет (запись 13.4); `style-src 'unsafe-inline'` и `'wasm-unsafe-eval'` в CSP нужны приложению (причины в `docs/security/headers.md`).
+- **Ждёт вашего решения:** B-1 (ответы групповых билетов, вариант а или б), C-3 (лимит ИИ), `protected` для файлов; запасные шрифты Excalidraw на `esm.sh` (разрешить в CSP или положить шрифты в `public`); смена пароля демо-аккаунта на проде и накатка на прод по разделу 7 отчёта (бэкап `pb_data` перед ней).
+- **Как запускать проверки теперь:** `node scripts/e2e-sandbox.mjs` печатает `DEMO_EMAIL` и `DEMO_PASSWORD` (случайный), их нужно передать в `npx playwright test`; прод-подобная база: `node scripts/prod-like-check.mjs --down`; CSP: `docs/security/headers.md`, раздел «Как проверить политику».

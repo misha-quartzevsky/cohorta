@@ -6,8 +6,8 @@ import { chromium } from "playwright";
 
 const out = process.argv[2];
 const arg = (n, d) => (process.argv.find((a) => a.startsWith(`--${n}=`)) ?? `--${n}=${d}`).split("=")[1];
-const email = arg("email", "asyaobraz17@gmail.com");
-const password = arg("password", "12345678");
+const email = arg("email", process.env.DEMO_EMAIL);
+const password = arg("password", process.env.DEMO_PASSWORD);
 const sem = arg("sem", "demo");
 const subject = arg("subject", "math-analysis");
 const BASE = process.env.BASE ?? "http://127.0.0.1:5173";

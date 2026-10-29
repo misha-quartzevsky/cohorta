@@ -53,6 +53,7 @@ import {
   uploadTicketImages,
 } from "../services/examService";
 import { renderLatexInto } from "../components/math/renderLatex";
+import RichHtml from "../components/RichHtml";
 
 const STATUS_LABEL: Record<TicketStatus, string> = {
   ready: "Готов",
@@ -261,11 +262,7 @@ export default function TicketPage() {
                 onUploadImages={handleUploadImages}
               />
             ) : (
-              <div
-                ref={viewRef}
-                className="body lecture-view-content is-html"
-                dangerouslySetInnerHTML={{ __html: content }}
-              />
+              <RichHtml ref={viewRef} className="body lecture-view-content is-html" html={content} />
             )}
           </div>
         </div>

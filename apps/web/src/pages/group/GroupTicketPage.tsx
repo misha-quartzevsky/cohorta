@@ -7,8 +7,8 @@ import { Ava, Crumbs, useSem } from "../../components/group/common";
 import { useGroupCtx } from "../../lib/groupCtx";
 import { useMode } from "../../lib/modeContext";
 import { useAuth } from "../../hooks/useAuth";
+import RichHtml from "../../components/RichHtml";
 import { errorMessage, parsePbDate } from "../../lib/format";
-import { sanitizeHtml } from "../../lib/sanitizeHtml";
 import { resolveFileTokensFor, tokenizeFileUrlsFor } from "../../lib/fileTokens";
 import { statusForAnswer, uploadTicketImages, updateTicket, fetchLecturesOpenedToMe } from "../../services/examService";
 import { fetchOpenedMeta, fetchRosterPeople, type OpenedMeta, type RosterPerson } from "../../services/groupApi";
@@ -271,7 +271,6 @@ export default function GroupTicketPage() {
 
   const st = ticketStatus(ticket);
   const sg = info.exam.mySubgroup!;
-  const html = sanitizeHtml(content);
   const guard = protectedView
     ? {
         onCopy: (e: React.ClipboardEvent) => e.preventDefault(),
@@ -346,10 +345,10 @@ export default function GroupTicketPage() {
             />
           </div>
         ) : (
-          <div
+          <RichHtml
             className={`c-gx-answer${busy ? " busy" : ""}${protectedView ? " protected" : ""}`}
             {...guard}
-            dangerouslySetInnerHTML={{ __html: html || "<p>Ответа пока нет.</p>" }}
+            html={content.trim() ? content : "<p>Ответа пока нет.</p>"}
           />
         )}
 

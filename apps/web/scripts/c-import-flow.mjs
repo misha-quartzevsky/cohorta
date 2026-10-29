@@ -23,7 +23,7 @@ const login = async (identity, password) => {
   const r = await api("POST", "/api/collections/users/auth-with-password", null, { identity, password });
   return { token: r.json.token, id: r.json.record.id };
 };
-const demo = await login("asyaobraz17@gmail.com", "12345678");
+const demo = await login(process.env.DEMO_EMAIL, process.env.DEMO_PASSWORD);
 const mk = (await api("GET", `/api/collections/groups/records?filter=${encodeURIComponent('name="МК-31"')}`, demo.token)).json.items[0].id;
 
 // предмет с экзаменом и тремя билетами для соло-импорта
@@ -40,8 +40,8 @@ async function session(w, h) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: w < 500 ? 2 : 1 });
   const p = await ctx.newPage();
   await p.goto(`${BASE}/login`);
-  await p.fill('input[type="email"]', "asyaobraz17@gmail.com");
-  await p.fill('input[type="password"]', "12345678");
+  await p.fill('input[type="email"]', process.env.DEMO_EMAIL);
+  await p.fill('input[type="password"]', process.env.DEMO_PASSWORD);
   await p.click('button[type="submit"]');
   await p.waitForURL(/\/s\//, { timeout: 20000 });
   await p.evaluate((g) => localStorage.setItem("cohorta:group", g), mk);

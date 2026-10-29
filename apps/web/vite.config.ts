@@ -1,7 +1,8 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import basicSsl from '@vitejs/plugin-basic-ssl'
+import { headersFile, securityHeaders } from './security-headers.ts'
 
 // Мобильный HTTPS-режим запускается отдельной командой `npm run dev:https`
 // (= `vite --mode https`). Обычный `npm run dev` остаётся на
@@ -11,10 +12,23 @@ const isHttpsMode = (mode: string) => mode === 'https'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const https = isHttpsMode(mode)
+  const env = loadEnv(mode, process.cwd(), 'VITE_')
+  const pbUrl = env.VITE_PB_URL ?? env.VITE_POCKETBASE_URL ?? 'http://127.0.0.1:8090'
+
+  // Заголовки безопасности (CSP и др.): dist/_headers для Cloudflare Pages при сборке,
+  // те же значения отдаёт `vite preview` (tests/security-csp.spec.ts). Описание: security-headers.ts.
+  const securityHeadersPlugin = (): Plugin => ({
+    name: 'cohorta-security-headers',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: '_headers', source: headersFile(pbUrl) })
+    },
+  })
 
   return {
     plugins: [
       react(),
+      securityHeadersPlugin(),
       VitePWA({
         registerType: 'autoUpdate',
         // main.tsx регистрирует SW вручную через '/sw.js' (graceful degradation
@@ -84,6 +98,7 @@ export default defineConfig(({ mode }) => {
       // защита от ошибки «Invalid hook call»
       dedupe: ['react', 'react-dom', '@tiptap/react', '@tiptap/core', '@tiptap/pm'],
     },
+    preview: { headers: securityHeaders(pbUrl) },
     server: {
       // Bind to all interfaces so the app is reachable via
       // both IPv4 (127.0.0.1) and IPv6 (::1) localhost.

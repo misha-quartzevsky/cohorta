@@ -13,8 +13,8 @@ async function session(w, h) {
   const ctx = await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: w < 500 ? 2 : 1 });
   const p = await ctx.newPage();
   await p.goto(`${BASE}/login`);
-  await p.fill('input[type="email"]', "asyaobraz17@gmail.com");
-  await p.fill('input[type="password"]', "12345678");
+  await p.fill('input[type="email"]', process.env.DEMO_EMAIL);
+  await p.fill('input[type="password"]', process.env.DEMO_PASSWORD);
   await p.click('button[type="submit"]');
   await p.waitForURL(/\/s\//);
   return p;

@@ -1,7 +1,7 @@
 // Проверка руками: ссылка /join/КОД → регистрация → подтверждение → онбординг.
 import { chromium } from "playwright";
 const PB = "http://127.0.0.1:8090", BASE = "http://127.0.0.1:5173";
-const auth = await (await fetch(`${PB}/api/collections/users/auth-with-password`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ identity: "asyaobraz17@gmail.com", password: "12345678" }) })).json();
+const auth = await (await fetch(`${PB}/api/collections/users/auth-with-password`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ identity: process.env.DEMO_EMAIL, password: process.env.DEMO_PASSWORD }) })).json();
 const H = { "content-type": "application/json", Authorization: auth.token };
 const code = "b6test" + Date.now().toString(36);
 const g = await (await fetch(`${PB}/api/collections/groups/records`, { method: "POST", headers: H, body: JSON.stringify({ name: "МК-31 тест", slug: code, owner: auth.record.id, invite_code: code }) })).json();
