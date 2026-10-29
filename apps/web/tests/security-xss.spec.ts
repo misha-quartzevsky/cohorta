@@ -43,7 +43,8 @@ async function expectClean(page: Page, selector: string) {
   }, selector);
   expect(dom.onAttrs, "нет on*-атрибутов").toBe(false);
   expect(dom.fixed, "нет position:fixed").toBe(false);
-  expect(dom.html).not.toMatch(/java\s*script|\u0001|<animate|<svg|position\s*:\s*fixed|onerror|onmouseover/i);
+  expect(dom.html).not.toMatch(/java\s*script|<animate|<svg|position\s*:\s*fixed|onerror|onmouseover/i);
+  expect(dom.html.includes("\u0001"), "нет управляющих символов в адресах").toBe(false);
   for (const p of dom.protocols) expect(["http:", "https:", "mailto:", "tel:"], `протокол ссылки ${p}`).toContain(p);
   expect(dom.html).toContain("ячейка таблицы");
   expect(dom.html).toContain('data-latex="x^2"');
