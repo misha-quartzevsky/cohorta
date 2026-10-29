@@ -7,12 +7,12 @@ import { useGroupData } from "../../hooks/useGroupData";
 import { useCourses } from "../../hooks/useCourses";
 import { useSemester } from "../../lib/semesterContext";
 import { pb } from "../../lib/pocketbase";
-import { sanitizeHtml } from "../../lib/sanitizeHtml";
 import { lectureDateLabel } from "../../lib/lectureMeta";
 import { courseName, courseSlug as courseSlugOf, type Lecture } from "../../lib/types";
 import { copyLecture, ruDate, type ShareRow } from "../../services/groupApi";
 import { errorMessage, parsePbDate } from "../../lib/format";
 import { markLectureSeen } from "../../lib/notifyCtx";
+import RichHtml from "../../components/RichHtml";
 
 type Target = "same" | "other" | "drafts";
 
@@ -163,7 +163,6 @@ export default function GroupLecturePage() {
 
   const preview = data.previews.find((p) => p.lecture === lectureId);
   const ownerName = data.nameOf(lecture?.owner ?? "");
-  const html = useMemo(() => sanitizeHtml(lecture?.content ?? ""), [lecture?.content]);
   const subject = preview?.courseTitle ?? "";
   const numberLabel = lecture?.number ? `Лекция ${lecture.number}` : "";
 
@@ -213,7 +212,7 @@ export default function GroupLecturePage() {
               </p>
             </header>
             <div className="c-lecture-body">
-              <div className="lecture-view-content is-html c-gr-readbody" dangerouslySetInnerHTML={{ __html: html }} />
+              <RichHtml className="lecture-view-content is-html c-gr-readbody" html={lecture?.content ?? ""} />
             </div>
           </article>
           <UnderstandingAside />

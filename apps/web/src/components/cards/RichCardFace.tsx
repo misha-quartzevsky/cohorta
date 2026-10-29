@@ -16,6 +16,7 @@ import {
   resolveDeckCardTokens,
 } from "../../services/deckService";
 import { renderLatexInto } from "../math/renderLatex";
+import RichHtml from "../RichHtml";
 
 interface Props {
   html: string;
@@ -45,12 +46,12 @@ export default function RichCardFace({ html, card, className }: Props) {
   const isHtml = /<[a-z][\s\S]*>/i.test(resolved);
 
   return (
-    <div
+    <RichHtml
       ref={ref}
       className={`card-face-content${isHtml ? " is-html" : " is-plain"}${
         className ? ` ${className}` : ""
       }`}
-      dangerouslySetInnerHTML={{ __html: resolved }}
+      html={resolved}
     />
   );
 }

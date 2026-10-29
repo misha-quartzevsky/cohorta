@@ -30,6 +30,7 @@ import {
 import { resolveFileTokensFor } from "../lib/fileTokens";
 import { pluralRu } from "../lib/format";
 import { renderLatexInto } from "../components/math/renderLatex";
+import RichHtml from "../components/RichHtml";
 
 export default function CheatsheetPage() {
   const { courseSlug: courseSlugParam } = useParams();
@@ -119,10 +120,7 @@ export default function CheatsheetPage() {
               <span className="num">{ticketNumber(t)}</span>
               <div className="tx">
                 <h2>{ticketQuestion(t)}</h2>
-                <div
-                  className="body lecture-view-content is-html"
-                  dangerouslySetInnerHTML={{ __html: resolveFileTokensFor(ticketAnswer(t), t) }}
-                />
+                <RichHtml className="body lecture-view-content is-html" html={resolveFileTokensFor(ticketAnswer(t), t)} />
               </div>
             </div>
           ))}

@@ -48,6 +48,7 @@ import CardSkeleton from "../components/CardSkeleton";
 import Editor from "../components/Editor";
 import SpeechToText from "../components/SpeechToText";
 import TagEditor from "../components/TagEditor";
+import RichHtml from "../components/RichHtml";
 import { renderLatexInto } from "../components/math/renderLatex";
 
 /**
@@ -482,14 +483,14 @@ function LectureView() {
 
             <div ref={contentWrapRef} className="c-lecture-body">
               {mode === "static" ? (
-                <div
+                <RichHtml
                   ref={staticBodyRef}
                   className={`lecture-view-content editable-surface ${
                     isHtmlContent ? "is-html" : "is-plain"
                   }`}
                   title="Нажмите, чтобы редактировать"
                   onPointerDown={enterLiveAt}
-                  dangerouslySetInnerHTML={{ __html: content || "" }}
+                  html={content || ""}
                 />
               ) : (
                 <>
