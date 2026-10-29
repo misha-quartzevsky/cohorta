@@ -42,3 +42,13 @@ skills-main/
 # Личные учебные материалы (исходники билетов/ответов).
 # Тестам достаточно текстовых фикстур в apps/web/tests/fixtures/.
 *.docx
+
+# Секреты и базы данных: не коммитить (аудит безопасности 2026-10, D-7)
+.env.production
+.env.*.local
+.dev.vars.*
+!.dev.vars.example
+*.pem
+*.key
+*.db
+*.sqlite
