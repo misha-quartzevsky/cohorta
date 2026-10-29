@@ -12,6 +12,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { clearMyDrafts } from "../lib/draftQueue";
 import { pb } from "../lib/pocketbase";
 import type { User } from "../lib/types";
 import { withTimeout } from "../lib/withTimeout";
@@ -102,6 +103,8 @@ export function useAuth(): UseAuthResult {
   );
 
   const logout = useCallback(() => {
+    // Выход: несохранённый текст этого человека на устройстве не остаётся (общий компьютер, C-5).
+    clearMyDrafts();
     pb.authStore.clear();
   }, []);
 

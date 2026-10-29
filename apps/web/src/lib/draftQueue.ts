@@ -13,10 +13,18 @@
  * сохраняются сразу, без очереди.
  */
 
-const PREFIX = "cohorta:draft:lecture:";
+import { currentUserId } from "./pocketbase";
+
+// Ключ содержит id пользователя: на общем устройстве чужой черновик не виден и не отправляется (аудит 2026-10, C-5).
+const NS = "cohorta:draft:v2:";
+/** Ключ до исправления C-5 (без владельца): у такого черновика нет хозяина, при запуске очереди он удаляется. */
+const LEGACY_PREFIX = "cohorta:draft:lecture:";
+const prefixOf = (uid: string) => `${NS}${uid}:lecture:`;
 
 export interface LectureDraft {
   id: string;
+  /** Чей черновик: id пользователя, который его писал. */
+  uid: string;
   title: string;
   /** Содержимое в виде, готовом к записи (с токенами [[file:…]]). */
   content: string;
@@ -27,42 +35,56 @@ export interface LectureDraft {
 
 export type SaveFailure = "offline" | "session" | "failed";
 
-/** Записать черновик. false — хранилище недоступно или переполнено. */
-export function saveDraft(d: Omit<LectureDraft, "ts"> & { ts?: number }): boolean {
+/**
+ * Записать черновик текущего пользователя. false — хранилище недоступно или переполнено
+ * (или некому приписать черновик: нет сессии).
+ */
+export function saveDraft(d: Omit<LectureDraft, "ts" | "uid"> & { ts?: number }): boolean {
+  const uid = currentUserId();
+  if (!uid) return false;
   try {
-    localStorage.setItem(PREFIX + d.id, JSON.stringify({ ...d, ts: d.ts ?? Date.now() }));
+    localStorage.setItem(prefixOf(uid) + d.id, JSON.stringify({ ...d, uid, ts: d.ts ?? Date.now() }));
     return true;
   } catch {
     return false;
   }
 }
 
+/** Черновик текущего пользователя; чужой (в теле другой uid) не отдаётся. */
 export function readDraft(id: string): LectureDraft | null {
+  const uid = currentUserId();
+  if (!uid) return null;
   try {
-    const raw = localStorage.getItem(PREFIX + id);
+    const raw = localStorage.getItem(prefixOf(uid) + id);
     if (!raw) return null;
     const d = JSON.parse(raw) as LectureDraft;
-    return typeof d?.content === "string" ? d : null;
+    return typeof d?.content === "string" && d.uid === uid ? d : null;
   } catch {
     return null;
   }
 }
 
+/** Удалить черновик текущего пользователя: чужие этим вызовом не затрагиваются. */
 export function removeDraft(id: string): void {
+  const uid = currentUserId();
+  if (!uid) return;
   try {
-    localStorage.removeItem(PREFIX + id);
+    localStorage.removeItem(prefixOf(uid) + id);
   } catch {
     /* ничего: хранилище недоступно */
   }
 }
 
 export function listDrafts(): LectureDraft[] {
+  const uid = currentUserId();
   const out: LectureDraft[] = [];
+  if (!uid) return out;
+  const prefix = prefixOf(uid);
   try {
     for (let i = 0; i < localStorage.length; i += 1) {
       const k = localStorage.key(i);
-      if (k && k.startsWith(PREFIX)) {
-        const d = readDraft(k.slice(PREFIX.length));
+      if (k && k.startsWith(prefix)) {
+        const d = readDraft(k.slice(prefix.length));
         if (d) out.push(d);
       }
     }
@@ -70,6 +92,45 @@ export function listDrafts(): LectureDraft[] {
     /* ничего */
   }
   return out.sort((a, b) => a.ts - b.ts);
+}
+
+/** Ключи localStorage, подходящие под условие (список снимается до удаления: удаление сдвигает индексы). */
+function keysWhere(test: (key: string) => boolean): string[] {
+  const keys: string[] = [];
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const k = localStorage.key(i);
+      if (k && test(k)) keys.push(k);
+    }
+  } catch {
+    /* ничего */
+  }
+  return keys;
+}
+
+function removeKeys(keys: string[]): void {
+  for (const k of keys) {
+    try {
+      localStorage.removeItem(k);
+    } catch {
+      /* ничего */
+    }
+  }
+}
+
+/** Выход: удалить все черновики текущего пользователя с этого устройства. */
+export function clearMyDrafts(): void {
+  const uid = currentUserId();
+  if (uid) removeKeys(keysWhere((k) => k.startsWith(prefixOf(uid))));
+}
+
+/**
+ * При запуске очереди: убрать черновики без хозяина (старый формат ключа) и чужие (другой пользователь вошёл на
+ * этом устройстве после выхода или истечения сессии прежнего). Приватность общего устройства важнее чужих несохранённых правок.
+ */
+export function purgeForeignDrafts(): void {
+  const uid = currentUserId();
+  removeKeys(keysWhere((k) => k.startsWith(LEGACY_PREFIX) || (k.startsWith(NS) && !(uid && k.startsWith(prefixOf(uid))))));
 }
 
 /**
