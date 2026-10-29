@@ -43,17 +43,20 @@ const tail = (fields) => " && " + fields.map((f) => `@request.body.${f}:isset = 
 migrate((app) => {
   for (const [name, fields] of Object.entries(GUARDED)) {
     const col = app.findCollectionByNameOrId(name);
-    const rule = col.updateRule;
-    if (rule === null || rule === undefined || rule.endsWith(tail(fields))) continue;
+    if (col.updateRule === null || col.updateRule === undefined) continue;
+    const rule = String(col.updateRule);
+    if (rule.endsWith(tail(fields))) continue;
     col.updateRule = `(${rule})${tail(fields)}`;
     app.save(col);
   }
 }, (app) => {
   for (const [name, fields] of Object.entries(GUARDED)) {
     const col = app.findCollectionByNameOrId(name);
-    const rule = col.updateRule;
+    // updateRule в JSVM приходит не примитивной строкой (typeof даёт не "string"), поэтому приводим явно
+    if (col.updateRule === null || col.updateRule === undefined) continue;
+    const rule = String(col.updateRule);
     const t = tail(fields);
-    if (typeof rule === "string" && rule.startsWith("(") && rule.endsWith(")" + t)) {
+    if (rule.startsWith("(") && rule.endsWith(")" + t)) {
       col.updateRule = rule.slice(1, rule.length - t.length - 1);
       app.save(col);
     }
