@@ -131,6 +131,22 @@ function removeFromSubgroup(app, sub, userId) {
  *  remember — оставить выданные мной доступы приостановленными (иначе удалить);
  *  kicked   — исключение: доступы в обе стороны удаляются.
  */
+/**
+ * Экзамены автора, привязанные к группе, становятся личными (group = ""): без этого участники группы
+ * продолжали бы видеть его билеты после выхода или исключения автора, а пустая группа сносила бы экзамен.
+ * Подгруппы экзамена и чужие участники снимаются (их доступ шёл через группу). `groupId` + `authorId`
+ * (пустой автор = все экзамены группы).
+ */
+function detachExams(app, groupId, authorId) {
+  const filter = authorId ? "group = {:g} && owner = {:u}" : "group = {:g}";
+  for (const ex of all(app, "exams", filter, { g: groupId, u: authorId || "" })) {
+    for (const p of all(app, "exam_participants", "exam = {:x} && user != {:o}", { x: ex.id, o: String(ex.get("owner")) })) app.delete(p);
+    for (const sub of all(app, "exam_subgroups", "exam = {:x}", { x: ex.id })) app.delete(sub);
+    ex.set("group", "");
+    app.save(ex);
+  }
+}
+
 function leaveGroupCore(app, group, userId, opts) {
   const remember = !!(opts && opts.remember);
   const kicked = !!(opts && opts.kicked);
@@ -164,6 +180,7 @@ function leaveGroupCore(app, group, userId, opts) {
     }
     for (const pv of all(tx, "lecture_previews", "owner = {:u} && group = {:g}", { u: userId, g: g })) tx.delete(pv);
     for (const rq of all(tx, "access_requests", "(requester = {:u} || owner = {:u}) && group = {:g}", { u: userId, g: g })) tx.delete(rq);
+    detachExams(tx, g, userId);
     const m = first(tx, "group_members", "group = {:g} && user = {:u}", { g: g, u: userId });
     if (m) tx.delete(m);
   });
@@ -297,6 +314,7 @@ module.exports = {
   grantSubgroupShares,
   removeFromSubgroup,
   leaveGroupCore,
+  detachExams,
   onRejoin,
   restorableShares,
   restorableCount,
