@@ -9,13 +9,12 @@
 //
 //  POST /api/groups/join    {code}     → вступить по invite_code (закрытая ссылка не пускает)
 //  GET  /api/groups/preview ?code=     → название, число участников и создатель группы по коду (экран подтверждения)
-//  GET  /api/groups/search  ?q=        → нечёткий поиск групп по названию (интерфейс его больше не вызывает:
-//                                        вступление только по коду; маршрут оставлен, см. отчёт refactor-2026-10)
 //  GET  /api/groups/{id}/roster        → ростер группы (участник/владелец)
 //
-//  Поиск и ростер отдают только поля, нужные экрану «Группа»
-//  (id/name группы; id/name/avatar участника) — не invite_code, не
-//  весь профиль пользователя и не почта.
+//  Поиска групп по названию нет (маршрут GET /api/groups/search удалён в волне 1 аудита безопасности, B-5:
+//  он перечислял названия всех групп; вступление только по коду). join и preview ограничены по частоте
+//  (B-7), чтобы код нельзя было подбирать. Ростер отдаёт только поля, нужные экрану «Группа»
+//  (id/name участника, avatar) — не invite_code, не весь профиль пользователя и не почта.
 // ============================================================
 
 routerAdd(
@@ -26,6 +25,7 @@ routerAdd(
     e.bindBody(data);
 
     const g = require(`${__hooks}/lib_groups.js`);
+    g.rateLimit(e.app, `join:${e.auth.id}`, 20, 600);
     const code = g.normalizeCode(data.code);
     if (!code) {
       throw new BadRequestError("Введите код приглашения.");
@@ -72,6 +72,7 @@ routerAdd(
   "/api/groups/preview",
   (e) => {
     const g = require(`${__hooks}/lib_groups.js`);
+    g.rateLimit(e.app, `preview:${e.auth.id}`, 40, 600);
     const code = g.normalizeCode(e.request.url.query().get("code"));
     if (!code) {
       throw new BadRequestError("Введите код приглашения.");
@@ -112,72 +113,6 @@ routerAdd(
       owner_name: ownerName,
       is_member: isMember,
     });
-  },
-  $apis.requireAuth()
-);
-
-routerAdd(
-  "GET",
-  "/api/groups/search",
-  (e) => {
-    // JSVM изолирует scope обработчиков — хелперы объявляем внутри.
-    const TRANSLIT = {
-      а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "yo", ж: "zh",
-      з: "z", и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o",
-      п: "p", р: "r", с: "s", т: "t", у: "u", ф: "f", х: "h", ц: "ts",
-      ч: "ch", ш: "sh", щ: "shch", ъ: "", ы: "y", ь: "", э: "e", ю: "yu", я: "ya",
-    };
-    function normalizeGroupName(text) {
-      const lower = String(text || "").trim().toLowerCase();
-      let out = "";
-      for (const ch of lower) {
-        out += TRANSLIT[ch] !== undefined ? TRANSLIT[ch] : ch;
-      }
-      return out.replace(/[^a-z0-9]+/g, "");
-    }
-
-    const q = (e.request.url.query().get("q") || "").trim();
-    if (q.length < 2) {
-      return e.json(200, []);
-    }
-
-    const found = new Map();
-    const limit = 6;
-
-    try {
-      const contains = e.app.findRecordsByFilter(
-        "groups",
-        "name ~ {:q}",
-        "name",
-        limit,
-        0,
-        { q: q }
-      );
-      for (const g of contains) found.set(g.id, g);
-    } catch (err) {
-      /* ignore — пробуем нормализованное сравнение ниже */
-    }
-
-    const norm = normalizeGroupName(q);
-    if (found.size < limit && norm.length >= 2) {
-      try {
-        const all = e.app.findRecordsByFilter("groups", "", "name", 500, 0, {});
-        for (const g of all) {
-          if (found.size >= limit + 20) break;
-          const gn = normalizeGroupName(g.get("name"));
-          if (gn.indexOf(norm) >= 0 || norm.indexOf(gn) >= 0) found.set(g.id, g);
-        }
-      } catch (err) {
-        /* оставляем то, что нашли ~-фильтром */
-      }
-    }
-
-    const out = [];
-    for (const g of found.values()) {
-      if (out.length >= limit) break;
-      out.push({ id: g.id, name: g.get("name") });
-    }
-    return e.json(200, out);
   },
   $apis.requireAuth()
 );

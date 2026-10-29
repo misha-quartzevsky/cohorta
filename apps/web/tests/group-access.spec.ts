@@ -419,8 +419,9 @@ test.describe("группа: правила доступа", () => {
     expect(groups[0]).not.toHaveProperty("invite_code");
     const other = await request.get(`${PB}/api/collections/groups/records/${g2}`, { headers: h(e) });
     expect(other.status()).toBe(404);
+    // маршрута поиска групп нет (B-5, tests/security-groups.spec.ts)
     const search = await request.get(`${PB}/api/groups/search`, { headers: h(e), params: { q: "C-группа" } });
-    expect(JSON.stringify(await search.json())).not.toContain("invite");
+    expect(search.status()).toBe(404);
     // перепрыгнуть в другую группу сменой строки членства нельзя
     const mine = await myMembership(request, e, g1);
     const hop = await request.patch(`${PB}/api/collections/group_members/records/${mine.id}`, {
