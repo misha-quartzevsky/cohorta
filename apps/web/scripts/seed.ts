@@ -23,6 +23,7 @@
  * Works without auth — PocketBase list/view rules are "" (open).
  */
 
+import { crc32, deflateSync } from "node:zlib";
 import PocketBase from "pocketbase";
 
 const PB_URL = process.env.PB_URL ?? "http://127.0.0.1:8090";
@@ -184,22 +185,51 @@ export const SEED_DECK = {
       back:
         para("Место выхода зрительного нерва — здесь нет фоторецепторов.") +
         para("Рисунок:") +
-        para("[[file:retina.svg]]"),
+        para("[[file:retina.png]]"),
     },
   ],
 };
 
-/** SVG-картинка-вложение (встраивается в `attachments` карточки). */
-function retinaSvg(): File {
-  const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200">` +
-    `<rect width="100%" height="100%" fill="#5843f6"/>` +
-    `<circle cx="160" cy="100" r="46" fill="#fff" opacity="0.9"/>` +
-    `<text x="160" y="112" font-size="22" fill="#5843f6" text-anchor="middle" font-family="sans-serif">Сетчатка</text>` +
-    `</svg>`;
-  // File (а не голый Blob) несёт имя — PocketBase сохранит имя «retina.svg»,
-  // и токен [[file:retina.svg]] в карточке совпадёт с фактическим файлом.
-  return new File([svg], "retina.svg", { type: "image/svg+xml" });
+/**
+ * PNG-картинка-вложение (встраивается в `attachments` карточки): однотонный фон с кругом, 320x200.
+ * Раньше здесь был SVG; svg в файловых полях запрещён (миграция 1790017000, аудит 2026-10, A-9).
+ */
+function retinaPng(): File {
+  const w = 320;
+  const h = 200;
+  const row = w * 3 + 1;
+  const raw = Buffer.alloc(row * h);
+  for (let y = 0; y < h; y += 1) {
+    for (let x = 0; x < w; x += 1) {
+      const o = y * row + 1 + x * 3;
+      const inside = (x - 160) ** 2 + (y - 100) ** 2 < 46 ** 2;
+      raw[o] = inside ? 255 : 0x58;
+      raw[o + 1] = inside ? 255 : 0x43;
+      raw[o + 2] = inside ? 255 : 0xf6;
+    }
+  }
+  const chunk = (type: string, data: Buffer): Buffer => {
+    const len = Buffer.alloc(4);
+    len.writeUInt32BE(data.length);
+    const body = Buffer.concat([Buffer.from(type), data]);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(crc32(body) >>> 0);
+    return Buffer.concat([len, body, crc]);
+  };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(w, 0);
+  ihdr.writeUInt32BE(h, 4);
+  ihdr[8] = 8; // 8 бит на канал
+  ihdr[9] = 2; // RGB
+  const png = Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk("IHDR", ihdr),
+    chunk("IDAT", deflateSync(raw)),
+    chunk("IEND", Buffer.alloc(0)),
+  ]);
+  // File (а не голый Blob) несёт имя: PocketBase сохранит имя «retina.png»,
+  // и токен [[file:retina.png]] в карточке совпадёт с фактическим файлом.
+  return new File([new Uint8Array(png)], "retina.png", { type: "image/png" });
 }
 
 /** Идемпотентный upsert демо-колоды (по slug) с детерминированным набором карточек. */
@@ -249,7 +279,7 @@ async function upsertDeck(pb: PocketBase, ownerId: string): Promise<void> {
       position: i,
     };
     if (i === SEED_DECK.cards.length - 1) {
-      payload.attachments = [retinaSvg()];
+      payload.attachments = [retinaPng()];
     }
     const created = await pb.collection("deck_cards").create<{
       id: string;
@@ -261,7 +291,7 @@ async function upsertDeck(pb: PocketBase, ownerId: string): Promise<void> {
     if (i === SEED_DECK.cards.length - 1 && created.attachments?.[0]) {
       const actual = created.attachments[0];
       const back = String(created.back).replaceAll(
-        "[[file:retina.svg]]",
+        "[[file:retina.png]]",
         `[[file:${actual}]]`
       );
       if (back !== created.back) {
@@ -399,7 +429,9 @@ async function upsertExam(pb: PocketBase, courseId: string): Promise<void> {
         status: t.status,
       };
       if (existing) {
-        await pb.collection("exam_tickets").update(existing.id, payload);
+        // exam при правке не отправляем: родитель билета неизменяем (миграция 1790015000, аудит 2026-10)
+        const { exam: _exam, ...fields } = payload;
+        await pb.collection("exam_tickets").update(existing.id, fields);
       } else {
         await pb.collection("exam_tickets").create(payload);
       }
@@ -418,9 +450,15 @@ function log(msg: string): void {
   console.log(`[seed] ${msg}`);
 }
 
-/** Тест-пользователь — та же запись, что кладёт сид-миграция 1787043973. */
-const DEMO_EMAIL = "asyaobraz17@gmail.com";
-const DEMO_PASSWORD = "12345678";
+/**
+ * Тест-пользователь. Почта и пароль берутся из окружения (DEMO_EMAIL, DEMO_PASSWORD): в репозитории их нет
+ * (аудит безопасности 2026-10, D-1). node scripts/e2e-sandbox.mjs задаёт их сам и печатает в конце.
+ */
+const DEMO_EMAIL = process.env.DEMO_EMAIL ?? "";
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD ?? "";
+if (!DEMO_EMAIL || !DEMO_PASSWORD) {
+  throw new Error("Задай DEMO_EMAIL и DEMO_PASSWORD (учётные данные тест-пользователя; в репозитории их нет).");
+}
 
 async function ensureDemoUser(pb: PocketBase): Promise<void> {
   // Анонимный LIST коллекции `users` пуст (listRule = «свои»), поэтому
@@ -440,7 +478,6 @@ async function ensureDemoUser(pb: PocketBase): Promise<void> {
       password: DEMO_PASSWORD,
       passwordConfirm: DEMO_PASSWORD,
       emailVisibility: true,
-      verified: true,
       name: "Демо",
     });
     log(`Demo user ${DEMO_EMAIL} created.`);
@@ -506,11 +543,21 @@ export async function seed(pb: PocketBase): Promise<void> {
     })
   )[0];
   if (semester) {
-    await pb.collection("semesters").update(semester.id, demoPeriod);
+    // владельца при правке не отправляем: user у семестра неизменяем (миграция 1790015000, аудит 2026-10)
+    await pb.collection("semesters").update(semester.id, { slug: demoPeriod.slug, label: demoPeriod.label, order: demoPeriod.order, type: demoPeriod.type });
     log(`Semester "demo" already exists (${semester.id}) — upserting data.`);
   } else {
     semester = await pb.collection("semesters").create<{ id: string }>(demoPeriod);
     log(`Semester "demo" created (${semester.id}).`);
+  }
+
+  // 1a. Обычные периоды «Семестр 1…8»: у демо-аккаунта они есть всегда (фильтр «Период» в «Все лекции», навигация;
+  //     раньше их давала сид-миграция вместе с демо-пользователем).
+  const existingPeriods = await pb.collection("semesters").getFullList<{ slug: string }>({ fields: "slug", perPage: 200 });
+  const have = new Set(existingPeriods.map((p) => p.slug));
+  for (let n = 1; n <= 8; n += 1) {
+    if (have.has(String(n))) continue;
+    await pb.collection("semesters").create({ slug: String(n), user: demoUser.id, label: `Семестр ${n}`, order: n, type: "semester" });
   }
 
   // 2. Courses — find by slug → update, otherwise create.
@@ -588,7 +635,8 @@ async function main(): Promise<void> {
   try {
     await seed(pb);
   } catch (e) {
-    console.error(`\n[seed] FAILED: ${(e as Error).message}\n`);
+    const err = e as { message?: string; url?: string; response?: unknown };
+    console.error(`\n[seed] FAILED: ${err.message}${err.url ? ` (${err.url})` : ""}${err.response ? ` ${JSON.stringify(err.response)}` : ""}\n`);
     process.exitCode = 1;
   }
 }

@@ -11,6 +11,7 @@
 //
 // Потом:  PB_URL=http://127.0.0.1:8090 SUPER_EMAIL=e2e@local.test SUPER_PASS=E2E-pass-12345 npx playwright test
 import { spawn, spawnSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -24,6 +25,10 @@ const work = join(tmpdir(), "cohorta-e2e");
 const pidFile = join(work, "pb.pid");
 const PORT = process.env.E2E_PB_PORT ?? "8090";
 const URL = `http://127.0.0.1:${PORT}`;
+// Тест-пользователь для seed.ts и спек: почта и пароль из окружения (DEMO_EMAIL, DEMO_PASSWORD) или случайные.
+// В репозитории учётных данных нет (аудит безопасности 2026-10, D-1). Значения печатаются в конце и пишутся в demo.env рядом с песочницей.
+const DEMO_EMAIL = process.env.DEMO_EMAIL ?? "demo@local.test";
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD ?? randomBytes(9).toString("base64url");
 const SU_EMAIL = "e2e@local.test";
 const SU_PASS = "E2E-pass-12345";
 
@@ -71,8 +76,12 @@ for (let i = 0; i < 40 && !(await healthy()); i += 1) await new Promise((r) => s
 if (!(await healthy())) throw new Error("PocketBase не поднялся");
 console.log("PocketBase песочницы поднят, PID", child.pid);
 
-const seed = spawnSync(process.execPath, [join(here, "seed.ts")], { env: { ...process.env, PB_URL: URL }, encoding: "utf8" });
+const seed = spawnSync(process.execPath, [join(here, "seed.ts")], { env: { ...process.env, PB_URL: URL, DEMO_EMAIL, DEMO_PASSWORD }, encoding: "utf8" });
 console.log(seed.stdout.trim().split("\n").slice(-3).join("\n"));
 if (seed.status !== 0) throw new Error(`seed не прошёл: ${seed.stderr}`);
 
-console.log(`\nГотово. Запуск спек:\n  PB_URL=${URL} SUPER_EMAIL=${SU_EMAIL} SUPER_PASS=${SU_PASS} npx playwright test\nОстановка: node scripts/e2e-sandbox.mjs --stop`);
+writeFileSync(join(work, "demo.env"), `DEMO_EMAIL=${DEMO_EMAIL}\nDEMO_PASSWORD=${DEMO_PASSWORD}\n`);
+console.log(
+  `\nГотово. Запуск спек:\n  PB_URL=${URL} SUPER_EMAIL=${SU_EMAIL} SUPER_PASS=${SU_PASS} DEMO_EMAIL=${DEMO_EMAIL} DEMO_PASSWORD=${DEMO_PASSWORD} npx playwright test\n` +
+    `(тест-пользователь также записан в ${join(work, "demo.env")})\nОстановка: node scripts/e2e-sandbox.mjs --stop`,
+);

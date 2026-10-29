@@ -4,8 +4,8 @@ const BASE = "http://127.0.0.1:5173", PB = "http://127.0.0.1:8090";
 const b = await chromium.launch();
 const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
 await p.goto(`${BASE}/login`);
-await p.fill('input[type="email"]', "asyaobraz17@gmail.com");
-await p.fill('input[type="password"]', "12345678");
+await p.fill('input[type="email"]', process.env.DEMO_EMAIL);
+await p.fill('input[type="password"]', process.env.DEMO_PASSWORD);
 await p.click('button[type="submit"]');
 await p.waitForURL(/\/s\//);
 const made = await p.evaluate(async (pb) => {

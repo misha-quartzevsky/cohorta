@@ -148,13 +148,13 @@ try {
   check("после передачи прежний владелец вышел из группы", g2 === 404 || g2 === 403, String(g2));
 
   // ---------- телефон ----------
-  const demo = (await api("POST", "/api/collections/users/auth-with-password", null, { identity: "asyaobraz17@gmail.com", password: "12345678" })).json;
+  const demo = (await api("POST", "/api/collections/users/auth-with-password", null, { identity: process.env.DEMO_EMAIL, password: process.env.DEMO_PASSWORD })).json;
   const mk = (await api("GET", `/api/collections/groups/records?filter=${encodeURIComponent('name="МК-31"')}`, demo.token)).json.items[0]?.id;
   const m = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   const mp = await m.newPage();
   await mp.goto(`${BASE}/login`);
-  await mp.fill('input[type="email"]', "asyaobraz17@gmail.com");
-  await mp.fill('input[type="password"]', "12345678");
+  await mp.fill('input[type="email"]', process.env.DEMO_EMAIL);
+  await mp.fill('input[type="password"]', process.env.DEMO_PASSWORD);
   await mp.click('button[type="submit"]');
   await mp.waitForURL(/\/s\//, { timeout: 20000 });
   await mp.evaluate((g) => { localStorage.setItem("cohorta:mode", "group"); localStorage.setItem("cohorta:group", g); }, mk);

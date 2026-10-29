@@ -10,8 +10,8 @@ const p = await ctx.newPage();
 p.on("pageerror", (e) => console.log("pageerror", e.message));
 
 await p.goto(`${BASE}/login`);
-await p.fill('input[type="email"]', "asyaobraz17@gmail.com");
-await p.fill('input[type="password"]', "12345678");
+await p.fill('input[type="email"]', process.env.DEMO_EMAIL);
+await p.fill('input[type="password"]', process.env.DEMO_PASSWORD);
 await p.click('button[type="submit"]');
 await p.waitForURL(/\/s\//, { timeout: 15000 });
 console.log("login ->", p.url().replace(BASE, ""));

@@ -8,8 +8,9 @@
 
 import { expect, type Locator, type Page } from "@playwright/test";
 
-export const DEMO_EMAIL = "asyaobraz17@gmail.com";
-export const DEMO_PASSWORD = "12345678";
+/** Тест-пользователь песочницы: учётные данные из окружения (DEMO_EMAIL, DEMO_PASSWORD), в репозитории их нет. */
+export const DEMO_EMAIL = process.env.DEMO_EMAIL ?? "";
+export const DEMO_PASSWORD = process.env.DEMO_PASSWORD ?? "";
 
 /** localStorage-ключ последнего семестра (см. lib/semesterContext.ts). */
 export const LAST_SEMESTER_KEY = "cohorta:lastSemester";
@@ -191,6 +192,7 @@ export async function logout(page: Page): Promise<void> {
  * а редирект после входа был детерминированным.
  */
 export async function login(page: Page, semesterSlug: string): Promise<void> {
+  if (!DEMO_EMAIL || !DEMO_PASSWORD) throw new Error("Задай DEMO_EMAIL и DEMO_PASSWORD (их печатает node scripts/e2e-sandbox.mjs).");
   await page.addInitScript(
     ({ key, slug }) => localStorage.setItem(key, slug),
     { key: LAST_SEMESTER_KEY, slug: semesterSlug }

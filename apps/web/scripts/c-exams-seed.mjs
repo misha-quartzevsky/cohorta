@@ -3,7 +3,7 @@
 // Лена создаёт экзамены «Философия» и «Гражданское право», Игорь — «История России»; подгруппа «Девчонки»
 // (Лена + демо-аккаунт) и «Дима и Игорь» у философии; «Вечерняя подготовка» (Марина + Катя) у права.
 const PB = process.env.PB_URL ?? "http://127.0.0.1:8092";
-const DEMO = { email: "asyaobraz17@gmail.com", password: "12345678" };
+const DEMO = { email: process.env.DEMO_EMAIL, password: process.env.DEMO_PASSWORD };
 const PASS = "Test-pass-12345";
 
 async function api(method, url, token, body, allowFail = false) {

@@ -297,7 +297,7 @@
 - Серверные хуки (без схемы): `pb_hooks/trash.pb.js`, `account_deletion.pb.js`, `groups_join.pb.js` (+`/api/groups/preview`), `lib_previews.js` (превью лекции из корзины не показывается). Для прода нужны и миграции, и хуки.
 
 **Как посмотреть**
-- Локально: `npm run dev` в `apps/web` (порт 5173) и PocketBase на 8090. Демо-вход: `asyaobraz17@gmail.com` / `12345678`.
+- Локально: `npm run dev` в `apps/web` (порт 5173) и PocketBase на 8090. Демо-вход: почта и пароль из `DEMO_EMAIL`, `DEMO_PASSWORD` (их печатают `start-cohorta.bat` и `node scripts/e2e-sandbox.mjs`; в репозитории их нет).
 - Проверочные сценарии (Playwright, одноразовые пользователи): `apps/web/scripts/b6-join-flow.mjs`, `b6-onb-flow.mjs`, `b6-settings-flow.mjs`, `b6-states-flow.mjs`, `b6-session-export.mjs`, скриншоты — `b6-shot.mjs`, `b6-mobile-shots.mjs`.
 - Скриншоты рядом с макетом: `docs/screenshots/b6/`.
 

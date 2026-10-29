@@ -2,7 +2,7 @@
 // Запуск из apps/web: node scripts/dev/refactor-shots.mjs [папка] [http://localhost:5173] [http://127.0.0.1:8090]
 // Папка по умолчанию — <tmp>/cohorta-shots/<время>; относительный путь считается от текущего каталога.
 // Нужны PocketBase (копия БД, node scripts/e2e-sandbox.mjs) и Vite; вход демо-аккаунтом через API, без UI
-// (DEMO_EMAIL / DEMO_PASSWORD переопределяют учётные данные). Время в браузере зафиксировано, анимации выключены.
+// (учётные данные: DEMO_EMAIL и DEMO_PASSWORD, их печатает e2e-sandbox.mjs). Время в браузере зафиксировано, анимации выключены.
 import { firefox } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -17,7 +17,7 @@ const auth = await (
   await fetch(`${pbUrl}/api/collections/users/auth-with-password`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ identity: process.env.DEMO_EMAIL ?? "asyaobraz17@gmail.com", password: process.env.DEMO_PASSWORD ?? "12345678" }),
+    body: JSON.stringify({ identity: process.env.DEMO_EMAIL, password: process.env.DEMO_PASSWORD }),
   })
 ).json();
 if (!auth.token) throw new Error("вход не удался");

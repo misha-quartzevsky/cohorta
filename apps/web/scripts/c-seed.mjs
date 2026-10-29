@@ -2,7 +2,7 @@
 //   PB_URL=http://127.0.0.1:8091 SUPER_EMAIL=... SUPER_PASS=... node scripts/c-seed.mjs [--clean]
 // Создаёт группу «МК-31» (владелец — демо-аккаунт) и «ЭК-21», одногруппников с лекциями и предпросмотром.
 const PB = process.env.PB_URL ?? "http://127.0.0.1:8091";
-const DEMO = { email: "asyaobraz17@gmail.com", password: "12345678" };
+const DEMO = { email: process.env.DEMO_EMAIL, password: process.env.DEMO_PASSWORD };
 const PASS = "Test-pass-12345";
 const TAG = "gseed";
 
