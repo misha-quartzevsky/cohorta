@@ -81,9 +81,16 @@ test("выход (кнопка «Выйти») удаляет несохранё
   await expect.poll(() => draftKeys(page), { timeout: 30_000 }).toHaveLength(1);
 
   // в приложении без перезагрузки: профиль → «Выйти» (без связи отправить нечего, ожидание ограничено 3 секундами)
+  // несохранённый текст не ушёл: приложение спрашивает подтверждение выхода
+  let asked = "";
+  page.on("dialog", (d) => {
+    asked = d.message();
+    void d.accept();
+  });
   await page.locator(".c-shell-profile").first().dispatchEvent("click");
   await page.getByRole("button", { name: "Выйти", exact: true }).click();
   await page.waitForURL("**/login", { timeout: 20_000 });
+  expect(asked, "спросили подтверждение").toContain("несохранённый текст");
   expect(await draftKeys(page), "после выхода черновиков не осталось").toEqual([]);
   await context.setOffline(false);
 });

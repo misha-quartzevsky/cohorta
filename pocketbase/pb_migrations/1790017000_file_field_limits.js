@@ -7,7 +7,7 @@
 //  Клиент грузит только картинки (редактор: accept="image/*", аватар в мастере), поэтому:
 //
 //    lectures.file, deck_cards.attachments, exam_tickets.attachments:
-//        mimeTypes jpeg/png/gif/webp/avif, maxSize 10 МБ, maxSelect 99
+//        mimeTypes jpeg/png/gif/webp/avif, maxSize 5 МБ (прежний неявный предел PocketBase), maxSelect 99
 //    users.avatar: mimeTypes jpeg/png/gif/webp (без svg), maxSize 5 МБ
 //
 //  maxSelect: у вложений карточки и билета было 0, и PocketBase при нескольких файлах молча
@@ -21,13 +21,15 @@
 // ============================================================
 
 const IMAGES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif"];
-const TEN_MB = 10 * 1024 * 1024;
+// maxSize 0 в PocketBase означает лимит по умолчанию 5 МБ, поэтому потолок остаётся 5 МБ (не ослабляем)
 const FIVE_MB = 5 * 1024 * 1024;
+// lectures.file принимает и то, что реально грузит клиент: схемы Excalidraw (svg, SketchModal) и аудиозаписи (SpeechProvider)
+const LECTURE_FILES = [...IMAGES, "image/svg+xml", "audio/webm", "audio/ogg", "audio/mp4", "audio/mpeg", "audio/x-m4a", "video/webm", "video/mp4", "application/ogg"]; // PocketBase определяет тип по содержимому: аудио в контейнере webm/mp4 приходит как video/*
 
 const PLAN = [
-  { col: "lectures", field: "file", was: { mimeTypes: [], maxSize: 0, maxSelect: 99 }, now: { mimeTypes: IMAGES, maxSize: TEN_MB, maxSelect: 99 } },
-  { col: "deck_cards", field: "attachments", was: { mimeTypes: [], maxSize: 0, maxSelect: 0 }, now: { mimeTypes: IMAGES, maxSize: TEN_MB, maxSelect: 99 } },
-  { col: "exam_tickets", field: "attachments", was: { mimeTypes: [], maxSize: 0, maxSelect: 0 }, now: { mimeTypes: IMAGES, maxSize: TEN_MB, maxSelect: 99 } },
+  { col: "lectures", field: "file", was: { mimeTypes: [], maxSize: 0, maxSelect: 99 }, now: { mimeTypes: LECTURE_FILES, maxSize: FIVE_MB, maxSelect: 99 } },
+  { col: "deck_cards", field: "attachments", was: { mimeTypes: [], maxSize: 0, maxSelect: 0 }, now: { mimeTypes: IMAGES, maxSize: FIVE_MB, maxSelect: 99 } },
+  { col: "exam_tickets", field: "attachments", was: { mimeTypes: [], maxSize: 0, maxSelect: 0 }, now: { mimeTypes: IMAGES, maxSize: FIVE_MB, maxSelect: 99 } },
   {
     col: "users",
     field: "avatar",

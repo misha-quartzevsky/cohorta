@@ -14,16 +14,19 @@ const rejected = (s: number) => [400, 403, 404].includes(s);
 
 test.describe("users: защищённые поля", () => {
   test("регистрация не принимает premium_until, referral_rewarded, invited_by, invited_group; onboarding_completed не затронут", async ({ request }) => {
+    // настоящие id: иначе запрос отклонила бы проверка связи, а не правило
+    const real = await register(request, "sec-reg-real");
+    const realGroup = await createGroup(request, real, `Группа ${uid()}`);
     for (const extra of [
       { premium_until: "2099-12-31 00:00:00.000Z" },
       { referral_rewarded: true },
-      { invited_by: "aaaaaaaaaaaaaaa" },
-      { invited_group: "aaaaaaaaaaaaaaa" },
+      { invited_by: real.id },
+      { invited_group: realGroup.id },
     ]) {
       const r = await request.post(`${PB}/api/collections/users/records`, {
         data: { email: `sec-${uid()}@example.test`, password: PASSWORD, passwordConfirm: PASSWORD, ...extra },
       });
-      expect(rejected(r.status()), `${JSON.stringify(extra)} → ${r.status()}`).toBeTruthy();
+      expect(r.status(), `${JSON.stringify(extra)}`).toBe(400);
     }
     // обычная регистрация проходит
     const ok = await request.post(`${PB}/api/collections/users/records`, {
@@ -35,15 +38,16 @@ test.describe("users: защищённые поля", () => {
   test("PATCH своей записи: премиум и реферальные поля отклоняются, профиль и onboarding_completed пишутся", async ({ request }) => {
     const a = await register(request, "sec-patch");
     const owner = await register(request, "sec-patch-owner");
+    const realGroup2 = await createGroup(request, owner, `Группа ${uid()}`);
     const url = `${PB}/api/collections/users/records/${a.id}`;
     for (const patch of [
       { premium_until: "2099-12-31 00:00:00.000Z" },
       { referral_rewarded: true },
       { invited_by: owner.id },
-      { invited_group: "aaaaaaaaaaaaaaa" },
+      { invited_group: realGroup2.id },
     ]) {
       const r = await request.patch(url, { headers: h(a), data: patch });
-      expect(rejected(r.status()), `${JSON.stringify(patch)} → ${r.status()}`).toBeTruthy();
+      expect(r.status(), `${JSON.stringify(patch)}`).toBe(404); // правило update не выполнено: PocketBase отвечает 404
     }
     const me = await (await request.get(url, { headers: h(a) })).json();
     expect(me.premium_until || "").toBe("");
